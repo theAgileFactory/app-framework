@@ -1,0 +1,81 @@
+@* LICENSE
+ *
+ * Copyright (c) 2015, The Agile Factory SA and/or its affiliates. All rights
+ * reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ *@
+@(sidebarInstance: framework.utils.SideBar)
+@import framework_views.parts
+@import be.objectify.deadbolt.java.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
+
+<div class="btn-group btn-group-vertical hidden-sm hidden-md" style="width: 100%;">
+    @for((menuItem, menuItemIndex) <- sidebarInstance.getMenuItems().zipWithIndex) {
+        @if(menuItem.restrict()){
+            @if(menuItem.hasSubMenuItems()){
+                <div class="btn-group">
+                    <button type="button" class="btn dropdown-toggle @if(menuItem.isSelected()){ btn-primary } else { @if(menuItem.isImportant()) { btn-info } else { btn-light } }" data-toggle="dropdown">
+                        <span class="@menuItem.getCssIcon() glyphicons-menu-large"></span><br/>@parts.Msg(menuItem.getLabel()) <span class="caret right-caret"></span>
+                    </button>
+                    <ul class="dropdown-menu right-dropdown-menu">
+                        @for(subMenuItem <- menuItem.getSubMenuItems()){
+                            @if(!subMenuItem.isSeparator()){
+                                 @if(subMenuItem.restrict()){
+                                     <li><a href="@subMenuItem.getActionUrl()"><span class="@subMenuItem.getCssIcon() glyphicons-menu-small"></span>&nbsp; @parts.Msg(subMenuItem.getLabel())</a></li>
+                                 }
+                             }
+                        }
+                    </ul>
+                </div>
+            }else{
+                <a href="@menuItem.getActionUrl()" class="btn btn-group-lg @if(menuItem.isSelected()){ btn-primary } else { @if(menuItem.isImportant()) { btn-info } else { btn-light }}" >
+                    <span class="@menuItem.getCssIcon() glyphicons-menu-large"></span><br/>@parts.Msg(menuItem.getLabel())
+                </a>
+            }
+        }
+    }
+</div>
+
+
+<div class="btn-group btn-group-justified hidden-lg hidden-xs" style="width: auto;">
+    @for((menuItem, menuItemIndex) <- sidebarInstance.getMenuItems().zipWithIndex) {
+        @if(menuItem.restrict()){
+            @if(menuItem.hasSubMenuItems()){
+                <div class="btn-group">
+                    <a data-toggle="dropdown" class="btn @if(menuItem.isSelected()){ btn-primary } else { @if(menuItem.isImportant()) { btn-info } else { btn-light } } dropdown-toggle" href="#">
+                        <span class="@menuItem.getCssIcon() glyphicons-menu-large"></span> <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu" style="left: auto;">
+                        @for(subMenuItem <- menuItem.getSubMenuItems()){
+                            @if(!subMenuItem.isSeparator()){
+                                 @if(subMenuItem.restrict()){
+                                     <li><a href="@subMenuItem.getActionUrl()"><span class="@subMenuItem.getCssIcon() glyphicons-menu-small"></span>&nbsp; @parts.Msg(subMenuItem.getLabel())</a></li>
+                                 }
+                             }
+                        }
+                    </ul>
+                </div>
+            }else{
+                <a href="@menuItem.getActionUrl()" class="btn @if(menuItem.isSelected()){ btn-primary } else { @if(menuItem.isImportant()) { btn-info } else { btn-light }}" >
+                    <span class="@menuItem.getCssIcon() glyphicons-menu-large"></span>
+                </a>
+            }
+        }
+    }
+</div>
+@******************************************************
+ Component to be used with the utils.SideBar class
+ to manage a side menu with icons.
+ The icons bar only mange two levels of menus.
+ ******************************************************@ 

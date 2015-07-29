@@ -1,0 +1,39 @@
+@* LICENSE
+ *
+ * Copyright (c) 2015, The Agile Factory SA and/or its affiliates. All rights
+ * reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ *@
+@(objectType: Class[_])
+
+@import framework_views.parts
+
+@customAttributes=@{
+models.framework_models.common.CustomAttributeDefinition.getOrderedCustomAttributeDefinitions(objectType);
+}
+
+@if(customAttributes!=null && customAttributes.size()!=0){
+    @for(customAttribute <- customAttributes){
+        @if(customAttribute.description != null && !customAttribute.description.equals("")) {
+            @parts.Msg(customAttribute.name)<br/>
+            <small>@parts.Msg(customAttribute.description)</small><br/><br/>
+        }
+    }
+} else {
+    @parts.Msg("table.empty")
+}
+
+@*********************************************************
+ * Display the name and the description of all custom attributes for an object type
+ *********************************************************@

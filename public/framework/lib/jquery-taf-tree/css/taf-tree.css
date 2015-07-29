@@ -1,0 +1,51 @@
+.taf-tree {
+    min-height:20px;
+}
+.taf-tree li {
+    list-style-type:none;
+    margin:0;
+    padding:10px 5px 0 5px;
+    position:relative
+}
+.taf-tree li::before, .taf-tree li::after {
+    content:'';
+    left:-20px;
+    position:absolute;
+    right:auto
+}
+.taf-tree li::before {
+    border-left:1px solid #999;
+    bottom:50px;
+    height:100%;
+    top:0;
+    width:1px
+}
+.taf-tree li::after {
+    border-top:1px solid #999;
+    height:20px;
+    top:30px;
+    width:25px
+}
+.taf-tree li span.leaf {
+    -moz-border-radius:5px;
+    -webkit-border-radius:5px;
+    border:1px solid #999;
+    border-radius:5px;
+    display:inline-block;
+    padding:3px 8px;
+    text-decoration:none
+}
+.taf-tree li>span.leaf {
+    cursor:pointer
+}
+.taf-tree>ul>li::before, .taf-tree>ul>li::after {
+    border:0
+}
+.taf-tree li:last-child::before {
+    height:30px
+}
+.taf-tree li span.leaf:hover, li.parent_li>span.leaf:hover, .taf-tree li.parent_li>span.leaf:hover+ul li span.leaf {
+    background:#eee;
+    border:1px solid #94a0b4;
+    color:#000
+}

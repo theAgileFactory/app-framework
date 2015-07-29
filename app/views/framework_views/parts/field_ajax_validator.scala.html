@@ -1,0 +1,71 @@
+@* LICENSE
+ *
+ * Copyright (c) 2015, The Agile Factory SA and/or its affiliates. All rights
+ * reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ *@
+@(fieldName: String, ajaxUrl: String, placement: String = "auto")
+
+$("#@fieldName").blur(function() {
+		if($("#@fieldName").val()!="" && $("#@fieldName").val().trim()!=""){
+			var d={ "@fieldName": $("#@fieldName").val()};
+			$.ajax({
+				type: "POST",
+				dataType: 'json',
+				contentType: "application/json; charset=utf-8",
+				url: '@ajaxUrl',
+				data: JSON.stringify(d)
+			}).done(function(result) {
+				if(!result.valid){
+					$('#@fieldName').popover('destroy');
+					var formattedMessage='<font color="red">'+result.message+'</font>';
+					var options={placement:'@placement', html: true, content: formattedMessage};
+					$('#@fieldName').popover(options);
+					$('#@fieldName').popover('show');
+				}else{
+					$('#@fieldName').popover('destroy');
+					var formattedMessage='<font color="green">'+result.message+'</font>';
+					var options={placement:'@placement', html: true, content: formattedMessage};
+					$('#@fieldName').popover(options);
+					$('#@fieldName').popover('show');
+				}
+			});
+		}
+	});
+@*********************************************************
+ * A template which perform an ajax validation of a field
+ * content by calling an ajax function.
+ * It displays a message in a popover (green if success, red if not valid)
+ * fieldName : name of the HTML input field to validate
+ * ajaxUrl :  AJAX URL
+ *
+ * The AJAX URL is used to post a JSON request (format is : {"fieldName" : "<value of the field>"})
+ * Here is an example of the code to put in the controller method:
+ * 		String fieldValue = null;
+ *		ObjectNode result = Json.newObject();
+ *		try {
+ *			// Get the fieldName value passed as a parameter
+ *			JsonNode json = request().body().asJson();
+ *			fieldValue = json.get("fieldName").asText();
+ *          //(...) validate the field
+ *          if(fieldIsValid){
+ *          	result.put("valid", false);
+ *				result.put("message", "A success message");
+ *				return ok(result);
+ *          }else{
+ *          	result.put("valid", false);
+ *				result.put("message", "An error message");
+ *				return ok(result);
+ *           }
+ *********************************************************@

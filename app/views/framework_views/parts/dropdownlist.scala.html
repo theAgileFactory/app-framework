@@ -1,0 +1,64 @@
+@* LICENSE
+ *
+ * Copyright (c) 2015, The Agile Factory SA and/or its affiliates. All rights
+ * reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ *@
+@(field: Field, fieldLabel: String, selectableValues: framework.utils.ISelectableValueHolderCollection[_], helpLabel: String = null, isDescriptionVisible: Boolean=true, forceRequired: Boolean=false)
+@import framework_views.parts
+@import commons._
+<div class="form-group @if(field.hasErrors) {has-error}">
+	<label class="control-label" for="@field.id">
+	   @if(fieldLabel != null && !fieldLabel.equals("")) {
+	       @fieldLabel@if(isRequired(field) || forceRequired){&nbsp;<i style="color: red;" class="glyphicons glyphicons-asterisk"></i>}
+	   }
+	</label>
+	<select
+      class="form-control"
+      id="@field.id"
+      name="@field.name">
+      @if(!isRequired(field) && !forceRequired){
+        <option value=""></option>
+      }
+      
+@for((item, index) <- selectableValues.getSortedValues().zipWithIndex) {
+		<option value="@item.getValue()" @if(field.value!=null && !field.value.isEmpty && field.value.get.equals(item.getValue().toString)){selected="selected"}>@item.getName()</option>
+}
+    </select>
+    <span class="help-block">@helpLabel<strong>@{field.error.map { error => parts.Msg(error.message) }}</strong></span>
+    @if(isDescriptionVisible){
+    <div id="@(field.id)_description"></div>
+	<script type="text/javascript">
+	    var @(field.id)_descriptions={};
+	    @for(item <- selectableValues.getSortedValues()) {
+	    	@(field.id)_descriptions['@item.getValue()']='@item.getDescription()';
+	    }
+	    function displayDescriptionFor@(field.id)(key){
+	    	if(@(field.id)_descriptions[key]){
+	    		$('#@(field.id)_description').html('<small>'+@(field.id)_descriptions[key]+'</small>');
+	    	}
+	    }
+	    $(document).ready(function() {
+		    $('#@(field.id)').change(function(){
+		    	displayDescriptionFor@(field.id)($(this).val());
+		    });
+		    displayDescriptionFor@(field.id)($('#@field.id').val());
+	    });
+	</script>
+	}
+</div>
+@*********************************************************
+ * A template which generates a dropdown list with
+ * a twitter bootstrap 3 compatible style
+ *********************************************************@

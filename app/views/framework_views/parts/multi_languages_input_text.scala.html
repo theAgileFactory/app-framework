@@ -1,0 +1,43 @@
+@* LICENSE
+ *
+ * Copyright (c) 2015, The Agile Factory SA and/or its affiliates. All rights
+ * reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ *@
+@(field: Field, fieldLabel: String, helpLabel: String = null)
+@import commons._
+@import framework_views.parts
+@import java.math.BigInteger; var count=0
+
+<div class="form-group @if(field.hasErrors) {has-error}">
+
+    @if(!field("key").value.isEmpty) {
+        <input type="hidden" name="@field("key").name" name="@field("key").id" value="@field("key").value"/>
+    }
+
+    <label class="control-label" for="@field.id">
+        @(fieldLabel) @if(isRequired(field)){&nbsp;<i style="color: red;" class="glyphicons glyphicons-asterisk"></i> <small><span style="color: red;">@parts.Msg("form.input.multi_languages_string.required")</span></small>}</label>
+
+        @helper.repeat(field("values"), min = framework.utils.LanguageUtil.VALID_LANGUAGES_LIST.size) { vField =>
+
+            <div class="input-group">
+                <div class="input-group-addon">@framework.utils.LanguageUtil.VALID_LANGUAGES_LIST.get(count).getCode.toUpperCase</div>
+                <input class="form-control" type="text" id="@vField.id" name="@vField.name" value="@vField.value"/>
+            </div>
+            
+            @(count+=1)
+        }
+
+        <span class="help-block">@helpLabel<strong>@{field.error.map { error => parts.Msg(error.message) }}</strong></span>
+</div>

@@ -1,0 +1,31 @@
+<project>
+
+ <poweredBy>
+    <logo name="The Agile Factory" href="http://www.the-agile-factory.com/"
+          img="http://www.the-agile-factory.com/static/images/logo_40.png"/>
+  </poweredBy>
+  
+    <skin>
+        <groupId>org.apache.maven.skins</groupId>
+        <artifactId>maven-fluido-skin</artifactId>
+        <version>1.3.0</version>
+    </skin>
+    <custom>
+        <fluidoSkin>
+            <topBarEnabled>true</topBarEnabled>
+            <sideBarEnabled>true</sideBarEnabled>
+            <sourceLineNumbersEnabled>true</sourceLineNumbersEnabled>
+	    <topBarIcon>
+		<name>The Agile Factory</name>
+		<alt>The Agile Factory</alt>
+		<src>/images/topbar-logo.png</src>
+		<href>/index.html</href>
+	    </topBarIcon>
+        </fluidoSkin>
+    </custom>
+
+  <body>
+    <menu ref="reports" />
+  </body>
+  
+</project>

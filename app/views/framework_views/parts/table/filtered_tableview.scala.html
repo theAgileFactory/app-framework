@@ -1,0 +1,248 @@
+@* LICENSE
+ *
+ * Copyright (c) 2015, The Agile Factory SA and/or its affiliates. All rights
+ * reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ *@
+
+@(table: framework.utils.Table[_],
+    pagination: framework.utils.Pagination[_],
+    filterConfig: framework.utils.FilterConfig[_],
+    filterUrl: String,
+    exportAsExcelUrl: String=null)
+@import framework_views.parts
+
+@if(table.getValues()!=null){
+<div class="row">
+  <div class="col-md-9">
+      <a id="_@table.getId()_filterContainerCollapse" data-toggle="button" href="#"><i class="glyphicons glyphicons-circle-minus"></i>&nbsp;<small>@parts.Msg("filter.togglebutton.label")</small></a>
+    <ul id="_@table.getId()_filterContainer" class="list-inline">
+    </ul>
+  </div>
+  <div class="col-md-2">
+    <p class="text-right">
+        <span id="_@table.getId()_ajax_wait"></span>
+        <a href="#" class="btn btn-primary" id="_@table.getId()_columnsSelector"><i class="glyphicons glyphicons-cogwheel"></i></a>
+        <a href="#" class="btn btn-primary" id="_@table.getId()_filterSelector"><i class="glyphicons glyphicons-filter"></i></a>
+    </p>
+  </div>
+  <div class="col-md-1">
+      <p class="text-right">
+          @if(exportAsExcelUrl!=null){
+              <a href="#" class="btn btn-primary" id="_@table.getId()_exportAsExcel"><i class="glyphicons glyphicons-disk-save"></i></a>
+          }
+      </p>
+  </div>
+</div>
+}
+<div class="row">
+    <div id="_@table.getId()_ajax_content" class="col-md-12">
+    @dynamic_tableview(table,pagination)
+    </div>
+</div>
+<script type="text/javascript">
+var _@table.getId()_filterConfig=@Html(filterConfig.marshall());
+
+$(document).ready(function(){
+    $('#_@table.getId()_filterContainerCollapse').click(function(){
+        $('#_@table.getId()_filterContainerCollapse i').toggleClass('glyphicons-circle-minus').toggleClass('glyphicons-circle-plus');
+        if($('#_@table.getId()_filterContainerCollapse i').hasClass('glyphicons-circle-minus')){
+            $('#_@table.getId()_filterContainer').show();
+        }else{
+            $('#_@table.getId()_filterContainer').hide();
+        }
+    });
+    
+    maf_filter_prepareSortableColumns('_@table.getId()_ajax_content', '@table.getId()', _@table.getId()_filterConfig, _@table.getId()_refreshTable);
+    maf_filter_prepareColumnsSelector('_@table.getId()_filterContainer','_@table.getId()_columnsSelector','_@table.getId()_filterSelector', _@table.getId()_filterConfig, _@table.getId()_refreshTable);
+    maf_filter_prepareFiltersSelector('_@table.getId()_filterContainer','_@table.getId()_filterSelector', _@table.getId()_filterConfig, _@table.getId()_refreshTable);
+    maf_filter_updateFilterContainer('_@table.getId()_filterContainer', '_@table.getId()_filterSelector', _@table.getId()_filterConfig, _@table.getId()_refreshTable);
+    _@table.getId()_indexPaginationLinks();
+    @if(exportAsExcelUrl!=null){
+        $('#_@table.getId()_exportAsExcel').click(function(){
+            $('#_@table.getId()_exportAsExcel').attr('disabled','disabled');
+            $('#_@table.getId()_exportAsExcel').toggleClass("btn-primary").toggleClass("btn-default");
+            maf_performPostJsonReceiveJson(
+                    '@exportAsExcelUrl', 
+                    JSON.stringify(_@table.getId()_filterConfig), 
+                    function(){
+                        alert('@parts.Msg("filter.table.excel.success")');
+                        $('#_@table.getId()_exportAsExcel').removeAttr('disabled');
+                        $('#_@table.getId()_exportAsExcel').toggleClass("btn-primary").toggleClass("btn-default");
+                    }, 
+                    function(){
+                        alert('@parts.Msg("filter.table.excel.failure")');
+                        $('#_@table.getId()_exportAsExcel').removeAttr('disabled');
+                        $('#_@table.getId()_exportAsExcel').toggleClass("btn-primary").toggleClass("btn-default");
+                    })
+        });
+    }
+});
+
+function _@table.getId()_refreshTable(){
+
+    $('#_@table.getId()_ajax_wait').html('<img src="@framework.utils.Utilities.getAjaxWaitImageUrl()"/>');
+
+    maf_performPostJsonReceiveHtml(
+    '@filterUrl', 
+    JSON.stringify(_@table.getId()_getData()), 
+    function(responseData){
+        $('#_@table.getId()_ajax_wait').html('');
+        $('#_@table.getId()_ajax_content').html(responseData);
+        _@table.getId()_indexPaginationLinks();
+        maf_filter_prepareSortableColumns('_@table.getId()_ajax_content', '@table.getId()', _@table.getId()_filterConfig, _@table.getId()_refreshTable);
+        
+        /* @* if the table has row actions then we set the "all" checkbox to false *@ */
+        @if(table.hasRowActions) {
+            $("#_@(table.getId)_row_actions_checkbox_all").prop('checked', false);
+            _@table.getId()_isAllChecked = false;
+        }
+        
+    }, 
+    function(responseData){
+        $('#_@table.getId()_ajax_wait').html('');
+        $('#_@table.getId()_ajax_content').html('<div class="alert alert-danger">@parts.Msg("filter.table.ajax.error.message")</div>');
+    });
+}
+
+function _@table.getId()_indexPaginationLinks(){
+    var pagePrefix="_@table.getId()_page_";
+    $("[id^='"+pagePrefix+"']").click(function(event){
+        event.preventDefault();
+        var pageIndex=$(this).attr('id');
+        _@table.getId()_filterConfig.currentPage=parseInt(pageIndex.substring(pagePrefix.length));
+        _@table.getId()_refreshTable();
+    });
+}
+
+function _@table.getId()_getData(){
+    return {
+        "userColumnConfiguration" : _@table.getId()_filterConfig.userColumnConfiguration,
+        "currentPage"  : _@table.getId()_filterConfig.currentPage,
+        "selectedRows" : _@table.getId()_filterConfig.selectedRows
+    };
+}
+
+/* @********ROW ACTIONS********@ */
+
+@if(table.hasRowActions) {
+
+    if (_@table.getId()_filterConfig.selectedRows == null) {
+        _@table.getId()_filterConfig.selectedRows = new Array();
+    }
+    
+    var _@table.getId()_isAllChecked = false;
+    
+    /* @* if necessary remove the ids from the current selectedRows table that are not compatible with the current filters *@ */
+    function _@table.getId()_correctCheckedRowsForAction(initiate, callback) {
+    
+        if (_@table.getId()_filterConfig.selectedRows.length > 0) {
+    
+            initiate();
+        
+            $.ajax({
+                url: '@table.getAllIdsUrl',
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify(_@table.getId()_filterConfig),
+                dataType: "json",
+                success: function (data) {
+                    for(var i = 0; i < _@table.getId()_filterConfig.selectedRows.length; i++) {
+                        //if the value is not in data then we remove it
+                        if (data.indexOf(_@table.getId()_filterConfig.selectedRows[i]) == -1) {
+                            _@table.getId()_filterConfig.selectedRows.splice(i, 1);
+                            i--;
+                        }
+                    }
+                    callback();
+                }
+            });
+            
+        } else {
+            alert("@parts.Msg("table.row_action.select_a_value")");
+        }
+        
+        $('._@table.getId()_rowActionsSelector').each(function(){
+            $(this).val("");
+        });
+    
+    }
+    
+    function _@table.getId()_triggerAjaxRowAction(url, domContainerId) {
+    
+        _@table.getId()_correctCheckedRowsForAction(
+            function() {
+                $("#" + domContainerId).html('<img src="@framework.utils.Utilities.getAjaxWaitImageUrl()"/>');
+            },
+            function() {
+    
+                $.ajax({
+                    url: url,
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8",
+                    data: JSON.stringify({"selectedRows" : _@table.getId()_filterConfig.selectedRows}),
+                    success: function (data) {
+                        $("#" + domContainerId).html(data);
+                        _@table.getId()_refreshTable.apply();
+                    }
+                });
+                
+            }
+        );
+        
+    }
+    
+    function _@table.getId()_triggerLinkRowAction(url) {
+    
+        _@table.getId()_correctCheckedRowsForAction(
+            function() {
+                $('#_@table.getId()_ajax_wait').html('<img src="@framework.utils.Utilities.getAjaxWaitImageUrl()"/>');
+            },
+            function() {
+
+                /* @* refresh the filter table in order to store the current selected rows seclection  *@ */
+                maf_performPostJsonReceiveHtml(
+                    '@filterUrl', 
+                    JSON.stringify(_@table.getId()_getData()), 
+                    function(responseData){
+
+                        $('#_@table.getId()_ajax_wait').html('');
+
+                        /* @* process the url as a form (to post the selected rows as a JSON content)  *@ */
+                        var form = $('<form/>', {"action" : url, "method" : "post", "enctype" : "application/json"});
+                        var input = $('<input/>', {"type" : "hidden", "name" : "selectedRows", "value" : JSON.stringify(_@table.getId()_filterConfig.selectedRows)});
+                        form.append(input);
+                        form.appendTo($(document.body)).submit();
+                        
+                    }, 
+                    function(responseData){}
+                );
+    
+            }
+        );
+    
+    }
+
+}
+
+</script>
+
+@****************************************************** 
+Component to be
+used with the framework.utils.Table class to display a list of objects.
+This one is adding a filter field on top of the table. This one is
+connected to a REST service which can be user to refresh the table.
+IMPORTANT : a javascript method named _@table.getId()_refreshTable() is created
+for each table. This function can be used to refresh the table.
+******************************************************@ 

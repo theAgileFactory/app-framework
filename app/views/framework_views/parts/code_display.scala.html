@@ -1,0 +1,46 @@
+@* LICENSE
+ *
+ * Copyright (c) 2015, The Agile Factory SA and/or its affiliates. All rights
+ * reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ *@
+@(code: String, syntax: framework.commons.IFrameworkConstants.Syntax)
+
+@defining("__code__" + java.util.UUID.randomUUID().toString()) { id =>
+    <style>
+        .CodeMirror {
+            border: 1px solid #eee;
+            height: auto;
+        }
+        .CodeMirror-scroll {
+          overflow-y: hidden;
+          overflow-x: auto;
+        }
+    </style>
+    
+    <div id="@id">@code</div>
+    
+    <script>
+        var elem = document.getElementById("@id");
+        var $this = $(elem);
+        var $code = $("<div/>").html($this.html()).text();
+        $this.empty();
+        var myCodeMirror = CodeMirror(elem, {
+            value: $code,
+            mode: "@syntax.name().toLowerCase",
+            lineNumbers: !$this.is('.inline'),
+            readOnly: true
+        });
+    </script>
+}

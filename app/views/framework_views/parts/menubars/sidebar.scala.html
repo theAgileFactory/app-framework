@@ -1,0 +1,49 @@
+@* LICENSE
+ *
+ * Copyright (c) 2015, The Agile Factory SA and/or its affiliates. All rights
+ * reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ *@
+@(sidebarInstance: framework.utils.SideBar)
+@import framework_views.parts
+@import be.objectify.deadbolt.java.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
+<div class="well">
+    <ul class="list-unstyled">
+        @for((menuItem, menuItemIndex) <- sidebarInstance.getMenuItems().zipWithIndex) {
+            @if(menuItem.restrict()){
+                @if(menuItem.hasSubMenuItems()){
+                    <li><br/><p><strong>@parts.Msg(menuItem.getLabel())</strong></p>
+                    <ul class="list-unstyled">
+                    @for(subMenuItem <- menuItem.getSubMenuItems()){
+                        @if(!subMenuItem.isSeparator()){
+                             @if(subMenuItem.restrict()){
+                                 <li><a href="@subMenuItem.getActionUrl()">@parts.Msg(subMenuItem.getLabel())</a></li>
+                             }
+                         }
+                    }
+                    </ul>
+                    </li>
+                }else{
+                    <li><a href="@menuItem.getActionUrl()">@parts.Msg(menuItem.getLabel())</a></li>
+                }
+            }
+        }
+    </ul>
+</div>
+@******************************************************
+ Component to be used with the utils.SideBar class
+ to manage a side menu.
+ The side bar only mange two levels of menus.
+ ******************************************************@ 

@@ -1,0 +1,77 @@
+@* LICENSE
+ *
+ * Copyright (c) 2015, The Agile Factory SA and/or its affiliates. All rights
+ * reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ *@
+@(field: Field, fieldLabel: String, objectType: Class[_]=null, objectId: Long=null)
+
+@import commons._
+@import framework.utils.FileAttachmentHelper
+
+@fileAttachments=@{
+    if(objectType!=null && objectId!=null){
+        FileAttachmentHelper.getFileAttachmentsForUpdate(objectType, objectId);
+    }else{
+        null;
+    }
+}
+<div class="form-group @if(field.hasErrors) {has-error}">
+    <label class="control-label" for="@field.id">@(fieldLabel)@if(isRequired(field)){&nbsp;<i style="color: red;" class="glyphicons glyphicons-asterisk"></i>}</label>
+    @if(fileAttachments!=null && fileAttachments.size()!=0){
+        <ul>
+        @for(fileAttachment <- fileAttachments){
+            <li id="_fileUpdateBlock_@fileAttachment.id">
+                <a href="@framework.utils.Utilities.getAttachmentDownloadUrl(fileAttachment.id)"><i class="glyphicons glyphicons-floppy-open"></i></a>&nbsp;@Msg(fileAttachment.name)&nbsp;
+                <a id="_fileDelete_@fileAttachment.id" href="@framework.utils.Utilities.getAttachmentDeleteUrl(fileAttachment.id)"><i class="glyphicons glyphicons-bin"></i></a>
+            </li>
+        }
+        </ul>
+    }
+    
+    <input type="hidden" id="@field.id" name="@field.name" value="@field.value"/>
+    
+    <input type="hidden" id="@(FileAttachmentHelper.FILE_ATTRIBUTE_PREFIX)@(field.id)_type" name="@(FileAttachmentHelper.getFileTypeInputName(field.name))" value="@(FileAttachmentHelper.FileType.UPLOAD.name)"/>
+    <input type="hidden" id="@(FileAttachmentHelper.FILE_ATTRIBUTE_PREFIX)@(field.id)_name" name="@(FileAttachmentHelper.getFileNameInputName(field.name))" value=""/>
+    
+    <input type="file" id="@(FileAttachmentHelper.FILE_ATTRIBUTE_PREFIX)@(field.id)_@(FileAttachmentHelper.FileType.UPLOAD.name)" name="@(FileAttachmentHelper.getFileInputName(field.name, FileAttachmentHelper.FileType.UPLOAD))"/>
+    <span class="help-block"><strong>@{field.error.map { error => Messages(error.message) }}</strong></span>
+</div>
+<script type="text/javascript">
+$(document).ready(function(){
+    $('#@(field.id)').val('');
+    $('#@(FileAttachmentHelper.FILE_ATTRIBUTE_PREFIX)@(field.id)_@(FileAttachmentHelper.FileType.UPLOAD.name)').change(function(){
+        $('#@(field.id)').val($('#@(FileAttachmentHelper.FILE_ATTRIBUTE_PREFIX)@(field.id)_@(FileAttachmentHelper.FileType.UPLOAD.name)').val());
+    });
+    $('a[id^="_fileDelete_"]').click(function(event){
+        event.preventDefault();
+        if(confirm("@Msg("default.delete.confirmation.message")")){
+        var attachmentId=$(this).attr('id').substring("_fileDelete_".length);
+        var url=$(this).attr('href');
+        var jqxhr = $.get(url, function(attachmentId) {
+            $('#_fileUpdateBlock_'+attachmentId).remove();
+            }(attachmentId))
+            .fail(function() {
+            alert("@Msg("default.delete.file.error.message")");
+            });
+        }
+    });
+});
+</script>
+
+@*********************************************************
+ * A template which displays a file upload input
+ * WARNING: this component is to be used in with the fileuploader
+ * scala template which will handle the file upload
+ *********************************************************@

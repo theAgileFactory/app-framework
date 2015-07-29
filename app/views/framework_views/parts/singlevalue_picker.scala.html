@@ -1,0 +1,236 @@
+@* LICENSE
+ *
+ * Copyright (c) 2015, The Agile Factory SA and/or its affiliates. All rights
+ * reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ *@
+@(field: Field, fieldLabel: String, pickerAjaxUrl: String, contextAttributes: Seq[(String, String)]= Seq())
+@import framework_views.parts.commons._
+@import framework_views.parts.Msg
+@import framework_views.parts
+<div id="_@(field.id)_div" class="form-group @if(field.hasErrors) {has-error}">
+    <label class="control-label" for="@field.id">@fieldLabel@if(isRequired(field)){&nbsp;<i style="color: red;" class="glyphicons glyphicons-asterisk"></i>}</label>
+    <div class="input-group">
+      <span class="input-group-btn">
+        <button id="_@(field.id)_selection_button" class="btn btn-default" type="button" disabled="disabled"><i class="glyphicons glyphicons-pencil"></i></button>
+      </span>
+      <input type="text" id="_@(field.id)_name" class="form-control" readonly="readonly"/>
+      <span class="input-group-btn">
+            <button class="btn btn-default" type="button" id="empty-@(field.id)-field"><span class="glyphicons glyphicons-bin"></span></button>
+        </span>
+    </div>
+    <input type="hidden" id="@field.id" name="@field.name" value="@field.value"/>
+    <span id="_@(field.id)_error" class="help-block"><strong>@{field.error.map { error => parts.Msg(error.message) }}</strong></span>
+</div>
+<div id="_@(field.id)_picker_modal" 
+    class="modal fade" 
+    tabindex="-1" 
+    role="dialog" 
+    aria-hidden="true"
+    aria-labelledby="_@(field.id)_picker_title">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">X</button>
+                <h4 class="modal-title" id="_@(field.id)_picker_title"></h4>
+            </div>
+            <div class="modal-body">
+                <div id="_@(field.id)_picker_modal_content">
+                    <div id="_@(field.id)_picker_modal_searchbox" class="row">
+                        <div class="col-md-12">
+                            <div class="input-group">
+                                <input id="_@(field.id)_picker_modal_searchstring" type="text" class="form-control" value="*"/>
+                                <span class="input-group-btn">
+                                    <button id="_@(field.id)_picker_modal_searchbutton" class="btn btn-default" type="button">
+                                        <span class="glyphicons glyphicons-search"></span>
+                                    </button>
+                                </span>
+                            </div>
+                            <br/>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <select id="_@(field.id)_picker_modal_select" class="form-control" size="10"></select>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div id="_@(field.id)_picker_modal_option_description" class="col-md-12"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div id="_@(field.id)_picker_modal_loading_message"></div>
+                <button id="_@(field.id)_picker_modal_ok_button" class="btn btn-primary" data-dismiss="modal" aria-hidden="true" ></button>
+                <button id="_@(field.id)_picker_modal_cancel_button" class="btn btn-default" data-dismiss="modal" aria-hidden="true"></button>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+var _@(field.id)_parameters={};
+var _@(field.id)_selectableValues={};
+
+$("#empty-@(field.id)-field").click(function(event) {
+    $("#_@(field.id)_name").val("");
+    $("#@(field.id)").val("").trigger('change');
+});
+
+$(document).ready(function(){
+    var configRequest={"requestType": "CONFIG"};
+    _@(field.id)_ajax_call_ongoing();
+    maf_performPostJsonReceiveJson(
+        '@pickerAjaxUrl',
+        JSON.stringify(configRequest),
+        function(result){
+            _@(field.id)_parameters=result;
+            $('#_@(field.id)_picker_modal_searchbox').hide();
+            $('#_@(field.id)_picker_title').html(_@(field.id)_parameters['MODAL_TITLE_I18N']);
+            $('#_@(field.id)_picker_modal_ok_button').html(_@(field.id)_parameters['MODAL_OK_BUTTON_LABEL_I18N']);
+            $('#_@(field.id)_picker_modal_cancel_button').html(_@(field.id)_parameters['MODAL_CANCEL_BUTTON_LABEL_I18N']);
+            if(_@(field.id)_parameters['SEARCH_ENABLED']=='true'){
+                $('#_@(field.id)_picker_modal_searchbox').show();
+            }
+            $('#_@(field.id)_picker_modal_ok_button').click(function(event){
+                event.preventDefault();
+                _@(field.id)_save();
+            });
+            $('#_@(field.id)_picker_modal_searchbutton').click(function(event){
+                event.preventDefault();
+                _@(field.id)_pickerSearch();
+            });
+            $("#_@(field.id)_picker_modal_select" ).change(function() {
+                var selectedValueHolder=_@(field.id)_selectableValues[$(this).val()];
+                if(selectedValueHolder && selectedValueHolder.description){
+                    $("#_@(field.id)_picker_modal_option_description").html('<div class="alert alert-info"><p>'+selectedValueHolder.description+'</p></div>');
+                }else{
+                    $("#_@(field.id)_picker_modal_option_description").html('');
+                }
+            });
+            _@(field.id)_ajax_call_finished();
+            _@(field.id)_pickerFormIsReady();
+        },
+        function(){
+            $('#_@(field.id)_div').addClass("has-error");
+            $('#_@(field.id)_error').html("Unexpected error: please reload the page");
+        });
+});
+
+function _@(field.id)_pickerFormIsReady(){
+    var ctxParameters={};
+    @for((key, value) <- contextAttributes) {
+        ctxParameters['@key']='@value';
+    }
+    var initRequest={
+            "requestType": "INIT",
+            "values": [$('#@field.id').val()],
+            "context": ctxParameters};
+    _@(field.id)_ajax_call_ongoing();
+    maf_performPostJsonReceiveJson(
+        '@pickerAjaxUrl',
+        JSON.stringify(initRequest),
+        function(result){
+            _@(field.id)_selectableValues=result['valueHolders'];
+            var valueHolder=_@(field.id)_selectableValues[$('#@field.id').val()];
+            if(valueHolder){
+                $('#_@(field.id)_name').val(valueHolder['name']);
+            } else {
+                $("#@(field.id)").val("").trigger('change');
+            }
+            _@(field.id)_displaySelectableValues(result['message']);
+            _@(field.id)_ajax_call_finished();
+        },
+        function(){
+            $('#_@(field.id)_div').addClass("has-error");
+            $('#_@(field.id)_error').html(_@(field.id)_parameters['AJAX_COMMUNICATION_FAILED_I18N']);
+        });
+    $('#_@(field.id)_selection_button').attr('disabled', false);
+    $('#_@(field.id)_selection_button').click(function(event){
+        event.preventDefault();
+        _@(field.id)_displayPicker();
+    });
+}
+
+function _@(field.id)_pickerSearch(){
+    var ctxParameters={};
+    @for((key, value) <- contextAttributes) {
+        ctxParameters['@key']='@value';
+    }
+    var searchRequest={
+            "requestType": "SEARCH",
+            "searchString": $('#_@(field.id)_picker_modal_searchstring').val(),
+            "context": ctxParameters};
+    _@(field.id)_ajax_call_ongoing();
+    maf_performPostJsonReceiveJson(
+        '@pickerAjaxUrl',
+        JSON.stringify(searchRequest),
+        function(result){
+            _@(field.id)_selectableValues=result['valueHolders'];
+            _@(field.id)_displaySelectableValues(result['message']);
+            _@(field.id)_ajax_call_finished();
+        },
+        function(){
+            $('#_@(field.id)_div').addClass("has-error");
+            $('#_@(field.id)_error').html(_@(field.id)_parameters['AJAX_COMMUNICATION_FAILED_I18N']);
+        });
+}
+
+function _@(field.id)_displayPicker(){
+    $('#_@(field.id)_picker_modal').modal('show');
+}
+
+function _@(field.id)_displaySelectableValues(message){
+    maf_load_value_holders_in_select("_@(field.id)_picker_modal_select", _@(field.id)_selectableValues);
+    if(message){
+        $('#_@(field.id)_picker_modal_loading_message').html('<div class="alert alert-warning"><p>'+message+'</p></div>');
+    }
+    _@(field.id)_ajax_call_finished();
+}
+
+function _@(field.id)_ajax_call_ongoing(){
+    $("#_@(field.id)_picker_modal_option_description").html('');
+    if ((typeof _@(field.id)_parameters['AJAX_WAIT_IMAGE_URL'] !== 'undefined') && (typeof _@(field.id)_parameters['AJAX_WAIT_MESSAGE_I18N'] !== 'undefined')) {
+        $('#_@(field.id)_picker_modal_loading_message').html('<div class="alert alert-warning"><img src="'+_@(field.id)_parameters['AJAX_WAIT_IMAGE_URL']+'"/>&nbsp;&nbsp;'+_@(field.id)_parameters['AJAX_WAIT_MESSAGE_I18N']+'</div>');
+    }
+    $('#_@(field.id)_picker_modal_ok_button').attr('disabled', true);
+    $('#_@(field.id)_picker_modal_searchbutton').attr('disabled', true);
+}
+
+function _@(field.id)_ajax_call_finished(){
+    $('#_@(field.id)_picker_modal_loading_message').html('');
+    $('#_@(field.id)_picker_modal_ok_button').attr('disabled', false);
+    $('#_@(field.id)_picker_modal_searchbutton').attr('disabled', false);
+}
+
+function _@(field.id)_save(){
+    var selectedValue=$("#_@(field.id)_picker_modal_select").val();
+    if(selectedValue){
+        var valueHolder=_@(field.id)_selectableValues[selectedValue];
+        if(valueHolder){
+            $('#_@(field.id)_name').val(valueHolder['name']);
+            $('#@(field.id)').val(valueHolder['value']).trigger('change');
+        }
+    }
+}
+
+</script>
+
+@******************************************************
+ Component to be used to retreive an AJAX picker 
+ component for a single value.
+ ******************************************************@ 

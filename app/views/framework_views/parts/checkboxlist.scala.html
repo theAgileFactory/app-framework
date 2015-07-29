@@ -1,0 +1,72 @@
+@* LICENSE
+ *
+ * Copyright (c) 2015, The Agile Factory SA and/or its affiliates. All rights
+ * reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ *@
+@(field: Field, fieldLabel: String, selectableValues: framework.utils.ISelectableValueHolderCollection[_], isDescriptionVisible: Boolean=true, isDynamicField: Boolean=false, forceRequired: Boolean=false)
+
+@import commons._
+@import framework_views.parts
+
+@isValueIn=@{
+    val MAX_NUMBER_OF_ITEMS_IF_DYNAMIC=100;
+    val isValueIn = (afield : Field, value: Any) => {
+        var isIn=false;
+        var indexes=afield.indexes;
+        if(indexes.length==0 && isDynamicField){
+            var count=0;
+            while(!afield.apply("["+count+"]").value.isEmpty && count<MAX_NUMBER_OF_ITEMS_IF_DYNAMIC){
+                count=count+1;
+            }
+            if(count!=MAX_NUMBER_OF_ITEMS_IF_DYNAMIC){
+                indexes=Seq.range(0, count);
+            }
+        }
+        for(index <- indexes) {
+            if(!afield.apply("["+index.toString()+"]").value.isEmpty && afield.apply("["+index.toString()+"]").value.get.equals(value.toString)){
+                isIn=true;
+            }
+        }
+        isIn;
+    }
+    isValueIn;
+}
+
+<div class="form-group @if(field.hasErrors) {has-error}">
+    @if(!fieldLabel.equals("")) {
+        <label class="control-label">@fieldLabel@if(isRequired(field) || forceRequired){&nbsp;<i style="color: red;" class="glyphicons glyphicons-asterisk"></i>}</label>
+        <span class="help-block"><strong>@{field.error.map { error => parts.Msg(error.message) }}</strong></span>
+    }
+    @for((item, index) <- selectableValues.getSortedValues().zipWithIndex) {
+        <div class="checkbox">
+            <label for="@(field.id)_@(index)">
+                <input type="checkbox" id="@(field.id)_@(index)" name="@(field.name)[@index]" value="@item.getValue()" @if(isValueIn(field,item.getValue())){checked="checked"}/>
+                @item.getName()
+                @if(item.getDescription()!=null && isDescriptionVisible){
+                    <br/><small>@item.getDescription()</small>
+                }
+            </label>
+        </div>
+    }
+</div>
+@*********************************************************
+ * A template which generates a list of checkboxes with
+ * a twitter bootstrap 3 compatible style
+ * Here are the supported attributes:
+ * - selectableValues : the values which can be selected (one checkbox is created per value)
+ * - isDescriptionVisible : if true if the description associated with the value holder will be visible
+ * - isDynamicField : this one is a HACK. If true, the system will try to find array fields created "manually" using the "data" collection of the Form object
+ * WARNING: We assume that the number of checkboxes cannot exceed 100 in dynamic mode.
+ *********************************************************@

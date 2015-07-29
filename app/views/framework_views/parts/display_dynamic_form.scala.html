@@ -1,0 +1,101 @@
+@* LICENSE
+ *
+ * Copyright (c) 2015, The Agile Factory SA and/or its affiliates. All rights
+ * reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ *@
+@(dynamicFormDescriptor: framework.utils.DynamicFormDescriptor)
+
+@import framework_views.parts
+
+<a class="btn btn-primary" id="@dynamicFormDescriptor.getName()" name="@dynamicFormDescriptor.getName()" href="@dynamicFormDescriptor.getUrl()">@parts.Msg(dynamicFormDescriptor.getLabel())</a>
+<script type="text/javascript">
+$(document).ready(function(){
+	$("#@dynamicFormDescriptor.getName()").click(function(event){
+		event.preventDefault();
+		$('#@dynamicFormDescriptor.getModalId()').modal('show');
+		$('#@dynamicFormDescriptor.getSaveFormButtonId()').removeAttr('disabled');
+	});
+	$("#@dynamicFormDescriptor.getSaveFormButtonId()").click(function(event){
+		event.preventDefault();
+        var options = {
+                success: _success_@(dynamicFormDescriptor.getModalId())
+        };
+   	 	$('#@dynamicFormDescriptor.getSaveFormButtonId()').attr('disabled','disabled');
+   	 	var form=$('#@dynamicFormDescriptor.getFormId()').get(0);
+     	$(form).ajaxSubmit(options);
+	});
+});
+function _success_@(dynamicFormDescriptor.getModalId())(){
+	$('#@dynamicFormDescriptor.getModalId()').modal('hide');
+	alert("@dynamicFormDescriptor.getSuccessMessage()");
+}
+</script>
+<div class="modal fade" id="@dynamicFormDescriptor.getModalId()" tabindex="-1" role="dialog" aria-labelledby="@dynamicFormDescriptor.getFormTitleId()" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">@parts.Msg("button.close")</span></button>
+        <h4 class="modal-title" id="@dynamicFormDescriptor.getFormTitleId()">@dynamicFormDescriptor.getTitle()</h4>
+      </div>
+      <div class="modal-body">
+      	<div class="maf-form">
+	    	<form 
+	    		method="post"
+	    		id="@dynamicFormDescriptor.getFormId()" 
+	    		action="@dynamicFormDescriptor.getUrl()"
+	    		jsSuccessFunction="@dynamicFormDescriptor.getFormSubmitJavascriptFunctionName()">
+	    	@for(field <- dynamicFormDescriptor.getFields()){
+	    		@if(field.getType().name().equals("BOOLEAN")){
+    			  <div class="checkbox">
+				    <label>
+				      <input 
+				      	name="@dynamicFormDescriptor.getFieldId(field.getName())" 
+				      	type="checkbox"
+				      	value="true"
+				      	@if(field.getDefaultValueAsBoolean()){checked}/>@field.getLabel()
+				    </label>
+				  </div>
+	    		}
+	    		@if(field.getType().name().equals("STRING")){
+	    		<div class="form-group">
+   				  <label for="@dynamicFormDescriptor.getFieldId(field.getName())">@dynamicFormDescriptor.getLabel()</label>
+	    		  <input 
+	    				type="text" 
+	    				class="form-control" 
+	    				name="@dynamicFormDescriptor.getFieldId(field.getName())"
+	    				value="@field.getDefaultValueAsString()"/>
+  				</div>
+	    		}
+	    		@if(field.getType().name().equals("LIST_OF_VALUES")){
+	    		<div class="form-group">
+      				<label for="@dynamicFormDescriptor.getFieldId(field.getName())">@dynamicFormDescriptor.getLabel()</label>
+	    			<select name="@dynamicFormDescriptor.getFieldId(field.getName())" class="form-control">
+	    				@for(value <- field.getParametersAsList()){
+	    				<option @if(value.equals(field.getDefaultValueAsString())){selected}>@value</option>
+	    				}
+	    			</select>
+	    		</div>
+	    		}  	
+	    }
+	   </form>	  
+	    </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">@parts.Msg("button.close")</button>
+        <button id="@dynamicFormDescriptor.getSaveFormButtonId()" type="button" class="btn btn-primary">@parts.Msg("button.save")</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,77 @@
+@* LICENSE
+ *
+ * Copyright (c) 2015, The Agile Factory SA and/or its affiliates. All rights
+ * reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ *@
+@(uid: String, objectId: Long)
+
+@import framework_views.parts
+@import framework.services.ServiceManager
+@import framework.services.kpi.IKpiService
+
+@defining(ServiceManager.getService(IKpiService.NAME, classOf[IKpiService]).getKpiRender(uid, objectId)) { kpiRender =>
+
+    @if(kpiRender != null && kpiRender.getKpi.hasBoxDisplay) {
+    
+        <div class="col-lg-3 col-sm-4">
+            @if(kpiRender.getLink != null) {<a href="@kpiRender.getLink">}
+                <div class="panel cockpit-box cockpit-box-@kpiRender.getCssColor">
+                    <div class="row header">
+                        <div class="col-xs-offset-1 col-xs-3 icon">
+                            <span class="@kpiRender.getKpi.getCssGlyphicon"></span>
+                        </div>
+                        <div class="col-xs-8 value">
+                            <span class="small">@parts.Msg(kpiRender.getKpi.getValueName(framework.services.kpi.Kpi.DataType.MAIN))</span>
+                            <p>@kpiRender.getMainValueRender</p>
+                        </div>
+                    </div>
+                    <div class="row content">
+                        <div class="col-xs-offset-1 col-xs-5 value">
+                            <span class="small">@parts.Msg(kpiRender.getKpi.getValueName(framework.services.kpi.Kpi.DataType.ADDITIONAL1))</span>
+                            <p>@kpiRender.getAdditional1ValueRender</p>
+                        </div>
+                        <div class="col-xs-6 value">
+                            <span class="small">@parts.Msg(kpiRender.getKpi.getValueName(framework.services.kpi.Kpi.DataType.ADDITIONAL2))</span>
+                            <p>@kpiRender.getAdditional2ValueRender</p>
+                        </div>
+                    </div>
+                    <div class="row no-padding no-margin">
+                        <div class="col-xs-2 text-left small tooltip-wide">
+                            @if(kpiRender.getKpi.isValueFromKpiData()) {
+                                <span id="kpi-@uid-last-update" class="glyphicons glyphicons-clock" data-html="true" title="@parts.Msg("kpi.label.last_update"):<br/> @parts.formats.display_date(kpiRender.getValueTimestamp, framework.utils.Utilities.getDefaultDatePattern() + " kk:mm")"></span>
+                                <script>
+                                    $('#kpi-@uid-last-update').tooltip();
+                                </script>
+                            } else {
+                                &nbsp;
+                            }
+                        </div>
+                        <div class="col-xs-10 text-right small">
+                            @if(kpiRender.getKpi.hasTrend()) {
+                                <span style="cursor: pointer;" id="@(kpiRender.getKpi.getUid)-b-trend-@(objectId)"><span class="glyphicons glyphicons-stats"></span> @parts.Msg("kpi.label.trend")</span>
+                            } else {
+                                &nbsp;
+                            }
+                        </div>
+                    </div>
+                </div>
+            @if(kpiRender.getLink != null) {</a>}
+        </div>
+
+        @if(kpiRender.getKpi.hasTrend()) {
+            @display_kpi_trend_modal(kpiRender.getKpi.getUid + "-b-trend-" + objectId, uid, objectId, kpiRender.getValueTimestamp, kpiRender.getKpi.getValueName(framework.services.kpi.Kpi.DataType.MAIN))
+        }
+    }
+}

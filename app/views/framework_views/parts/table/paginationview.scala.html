@@ -1,0 +1,57 @@
+@* LICENSE
+ *
+ * Copyright (c) 2015, The Agile Factory SA and/or its affiliates. All rights
+ * reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ *@
+@(pagination: framework.utils.Pagination[_],
+    filterText: String = null, 
+    filterColumn: String = null,
+    queryParams: String = null)
+    
+@import framework_views.parts
+    
+@otherParameters=@{
+    var html=""
+    if(filterText!=null){html=html+"&filterText="+filterText}
+    if(filterColumn!=null){html=html+"&filterColumn="+filterColumn}
+    if(queryParams!=null){html=html+"&"+queryParams}
+    html;
+}
+
+@if(pagination!=null && pagination.getNumberOfPages()>1){
+    <div class="row">
+    <div class="col-md-12 text-center">
+    <ul class="pagination no-margin">
+    @if(pagination.hasLess()){
+        <li><a href="?@pagination.getPageQueryName=@{pagination.getLowerBound()-1}@otherParameters">&lt;&lt;</a></li>
+    }
+    @for(pageIndex <- pagination.getLowerBound() to pagination.getUpperBound()){
+        <li @if(pageIndex==pagination.getCurrentPage()){class="active"}><a href="?@pagination.getPageQueryName=@pageIndex@otherParameters">@{pageIndex+1}</a></li>
+    }
+    @if(pagination.hasMore()){
+        <li><a href="?@pagination.getPageQueryName=@{pagination.getUpperBound()+1}@otherParameters">&gt;&gt;</a></li>
+    }
+    </ul>
+    </div>
+    <div class="text-center">
+        <small>@pagination.getRowCount() @parts.Msg("table.pagination.records")</small>
+    </div>
+    </div>
+}
+@******************************************************
+ Components to be used with the Table class (see utils)
+ and the Pagination class (see utils) to manage the 
+ pagination of a set of records
+ ******************************************************@ 

@@ -1,0 +1,125 @@
+@* LICENSE
+ *
+ * Copyright (c) 2015, The Agile Factory SA and/or its affiliates. All rights
+ * reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ *@
+@(field: Field, fieldLabel: String)
+
+@import framework_views.parts._
+@import framework_views.parts.commons._
+@import framework.utils.FileAttachmentHelper
+
+<label class="control-label">@(fieldLabel)@if(isRequired(field)){&nbsp;<i style="color: red;" class="glyphicons glyphicons-asterisk"></i>}</label>
+
+<div class="panel panel-default">
+    <div class="panel-body">
+
+        <input type="hidden" name="@field("value").name" id="@field("value").id" value="@field("value").value"/>
+        <input type="hidden" name="@field("fileName").name" id="@field("fileName").id" value="@field("fileName").value"/>
+        <input type="hidden" name="@field("fileType").name" id="@field("fileType").id" value="@field("fileType").value"/>
+
+        <div class="form-group ">
+            <label class="control-label" for="@(FileAttachmentHelper.FILE_ATTRIBUTE_PREFIX)@(field.id)_name" style="font-weight: normal;">@Msg("form.input.file_field.name.label")</label>
+            <div class="">
+                <input id="@(FileAttachmentHelper.FILE_ATTRIBUTE_PREFIX)@(field.id)_name" name="@(FileAttachmentHelper.getFileNameInputName(field.name))" class="form-control" type="text" value="@field("fileName").value">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label" style="font-weight: normal;">@Msg("form.input.file_field.type.label")</label>
+            <div id="@(FileAttachmentHelper.FILE_ATTRIBUTE_PREFIX)@(field.id)_type_container">
+                @for(fileType <- FileAttachmentHelper.FileType.values()) {
+                    <label class="radio-inline">
+                        <input type="radio" name="@(FileAttachmentHelper.getFileTypeInputName(field.name))" 
+                            value="@(fileType.name)" @if(field("fileType").value.get.equals(fileType.name)) { checked }> @Html(fileType.getLabel)
+                    </label>
+                }
+            </div>
+        </div>
+
+        <div class="form-group @if(field.hasErrors) {has-error}">
+            <label class="control-label" style="font-weight: normal;">@Msg("form.input.file_field.file.label")</label>
+            
+            <input type="file" id="@(FileAttachmentHelper.FILE_ATTRIBUTE_PREFIX)@(field.id)_@(FileAttachmentHelper.FileType.UPLOAD.name)" name="@(FileAttachmentHelper.getFileInputName(field.name, FileAttachmentHelper.FileType.UPLOAD))"/>
+            
+            <div>
+                <div class="input-group">
+                    <span class="input-group-addon"><span class="glyphicons glyphicons-link"></span></span>
+                    <input class="form-control" type="text" id="@(FileAttachmentHelper.FILE_ATTRIBUTE_PREFIX)@(field.id)_@(FileAttachmentHelper.FileType.URL.name)" name="@(FileAttachmentHelper.getFileInputName(field.name, FileAttachmentHelper.FileType.URL))" value="@field("value").value"/>
+                </div>
+                <span class="help-block">@Msg("form.input.url.help")</span>
+            </div>
+            
+            <span class="help-block"><strong>@{field.error.map { error => Messages(error.message) }}</strong></span>
+        </div>
+
+    </div>
+</div>
+
+<script type="text/javascript">
+$(document).ready(function(){
+    
+    var uploadField = $("#@(FileAttachmentHelper.FILE_ATTRIBUTE_PREFIX)@(field.id)_@(FileAttachmentHelper.FileType.UPLOAD.name)");
+    var urlField = $("#@(FileAttachmentHelper.FILE_ATTRIBUTE_PREFIX)@(field.id)_@(FileAttachmentHelper.FileType.URL.name)");
+    var fileNameField = $('#@(FileAttachmentHelper.FILE_ATTRIBUTE_PREFIX)@(field.id)_name');
+    
+    urlField.parent().parent().hide();
+    uploadField.hide();
+    
+    @if(field("fileType").value.get.equals(FileAttachmentHelper.FileType.UPLOAD.name)) {
+        uploadField.show();
+        uploadField.val('');
+        $('#@(field("value").id)').val('');
+    }
+    
+    @if(field("fileType").value.get.equals(FileAttachmentHelper.FileType.URL.name)) {
+        urlField.parent().parent().show();
+    }
+
+    uploadField.change(function(){
+        $('#@(field("value").id)').val(uploadField.val());
+    });
+    
+    urlField.change(function(){
+        $('#@(field("value").id)').val(urlField.val());
+    });
+    
+    fileNameField.change(function(){
+        $('#@(field("fileName").id)').val(fileNameField.val());
+    });
+
+    $('#@(FileAttachmentHelper.FILE_ATTRIBUTE_PREFIX)@(field.id)_type_container input:radio').change(function(){
+
+        $('#@(field("fileType").id)').val($(this).val());
+        $('#@(field("value").id)').val('');
+        
+        uploadField.val('');
+        uploadField.hide();
+        
+        urlField.val('');
+        urlField.parent().parent().hide();
+        
+        if ($(this).val() == "@(FileAttachmentHelper.FileType.UPLOAD.name)") {
+            uploadField.show();
+        }
+        
+        if ($(this).val() == "@(FileAttachmentHelper.FileType.URL.name)") {
+            urlField.parent().parent().show();
+        }
+
+    });
+
+});
+</script>

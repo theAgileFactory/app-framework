@@ -1,0 +1,45 @@
+@* LICENSE
+ *
+ * Copyright (c) 2015, The Agile Factory SA and/or its affiliates. All rights
+ * reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ *@
+@(tableId: String, rowActions: List[framework.utils.Table.RowAction])
+
+@import framework_views.parts
+
+@if(rowActions.size == 1) {
+    @if(rowActions.get(0).isAjax) {
+        @if(rowActions.get(0).isWithConfirmation) {
+            <a class="_@(tableId)_ajaxActionSingle btn btn-default btn-sm" href="javascript:void(0);" style="margin-bottom: 5px;">@(rowActions.get(0).getLabel)</a>
+        } else {
+            <a class="btn btn-default btn-sm" href="javascript: _@(tableId)_triggerAjaxRowAction('@(rowActions.get(0).getUrl)', '@(rowActions.get(0).getDomContainerId)')">@(rowActions.get(0).getLabel)</a>
+        }
+    } else {
+        @if(rowActions.get(0).isWithConfirmation) {
+            <a class="_@(tableId)_linkActionSingle btn btn-default btn-sm" href="javascript:void(0);" style="margin-bottom: 5px;">@(rowActions.get(0).getLabel)</a>
+        } else {
+            <a class="btn btn-default btn-sm" href="javascript: _@(tableId)_triggerLinkRowAction('@(rowActions.get(0).getUrl)')">@(rowActions.get(0).getLabel)</a>
+        }
+    }
+}
+
+@if(rowActions.size > 1) {
+    <select class="_@(tableId)_rowActionsSelector" style="margin-bottom: 5px;">
+        <option value="">@parts.Msg("table.row_action.actions")</option>
+        @for(rowAction <- rowActions) {
+            <option value="@rowAction.toJson">@(rowAction.getLabel)</option>
+        }
+    </select>
+}

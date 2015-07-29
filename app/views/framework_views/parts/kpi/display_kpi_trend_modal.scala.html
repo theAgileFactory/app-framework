@@ -1,0 +1,52 @@
+@* LICENSE
+ *
+ * Copyright (c) 2015, The Agile Factory SA and/or its affiliates. All rights
+ * reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ *@
+@(divId: String, uid: String, objectId: Long, lastUpdate: Date, name: String)
+
+@import framework_views.parts
+
+<div id="@(divId)-modal" class="modal fade" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">X</button>
+                <h4 class="modal-title">
+                    <span class="glyphicons glyphicons-stats"></span> @parts.Msg(name)
+                    <div class="pull-right small"><i>@parts.Msg("kpi.label.last_update"): @parts.formats.display_date(lastUpdate, framework.utils.Utilities.getDefaultDatePattern() + " kk:mm") &nbsp;&nbsp;</i></div>
+                </h4>
+            </div>
+            <div class="modal-body"></div>
+        </div>
+    </div>
+</div>
+<script>
+    $("#@(divId)").click(function(e) {
+        e.preventDefault();
+        $('#@(divId)-modal').modal('show');
+        $.ajax({
+            type: 'GET',
+            url: "@play.Play.application().configuration().getString("maf.kpi.trend.url")",
+            data: {'kpiUid' : '@uid', 'objectId' : '@objectId'},
+            cache : false,
+            error: function() {
+                $('#@(divId)-modal .modal-body').html("@parts.Msg("kpi.trend.error")");
+            }
+        }).done(function(result) {
+            $('#@(divId)-modal .modal-body').html(result);
+        });
+    });
+</script>

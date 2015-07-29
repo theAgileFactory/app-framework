@@ -1,0 +1,56 @@
+@* LICENSE
+ *
+ * Copyright (c) 2015, The Agile Factory SA and/or its affiliates. All rights
+ * reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ *@
+@(formName: String, jsSuccessFunction: String, action: play.api.mvc.Call, args: (Symbol,String)*)(body: => Html)
+@import framework_views.parts
+<script>   
+    $(document).ready(function() {
+        $("#@{formName}_errors").css("display","none");
+        var options = { 
+             dataType: "json",
+             success: maf_processJson_@{formName}
+        };
+        $('#@{formName}').submit(function() { 
+            $(this).ajaxSubmit(options);
+            return false;
+        }); 
+    });
+    function maf_processJson_@{formName}(jsonData){
+        maf_displayErrors("@{formName}", jsonData.error, "@parts.Msg("standard.form.error.title")");
+        if(!$.isEmptyObject(jsonData.success)){
+            @{jsSuccessFunction}(jsonData.success);
+        }else{
+        	//Something unexpected happens, display a global error message
+        	if(!$.isEmptyObject(jsonData.unexpected)){
+        		flashErrorMessage(jsonData.unexpected);
+        	}
+        }
+    }
+</script>
+<div id="personForm_errors">
+    <div class="alert alert-danger">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <strong></strong><br/>
+    </div>
+</div>
+@helper.form(action, args:_*) {
+    @body
+}
+@**************************************************
+ This view is to be used for creating "ajax forms"
+ Please see the sample controller for Ajax forms
+ *************************************************@ 

@@ -1,0 +1,56 @@
+@* LICENSE
+ *
+ * Copyright (c) 2015, The Agile Factory SA and/or its affiliates. All rights
+ * reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ *@
+@(field: Field, fieldLabel: String, pattern: String=null, forceRequired: Boolean=false)
+@import framework_views.parts.commons._
+@import framework_views.parts.Msg
+@import framework_views.parts
+
+<div class="form-group @if(field.hasErrors) {has-error}">
+    @if(fieldLabel != null && !fieldLabel.equals("")) {
+       <label class="control-label" for="@field.id">@(fieldLabel)@if(isRequired(field) || forceRequired){&nbsp;<i style="color: red;" class="glyphicons glyphicons-asterisk"></i>}</label>
+    }
+    <div class="input-group">
+        <input class="form-control" type="text" id="@field.id" name="@field.name" readonly="readonly" value="@field.value" placeholder="@Msg("form.input.date.placeholder")"/>
+        <span class="input-group-btn">
+            <button id="empty-@(field.id)-field" class="btn btn-default" type="button"><span class="glyphicons glyphicons-bin"></span></button>
+        </span>
+    </div>
+
+    @if(field.hasErrors) {
+        <span class="help-block"><strong>@{field.error.map { error => parts.Msg(error.message) }}</strong></span>
+    }
+    <script type="text/javascript">
+    $("#empty-@(field.id)-field").click(function(event) {
+        $("#@(field.id)").val("").datepicker('update');
+    });
+    
+    @if(pattern==null){
+        $('#@field.id').datepicker({format : '@framework.utils.Utilities.getDefaultDatePattern().toLowerCase()', autoclose: true, language: "@Http.Context.current().lang().code()"});
+    }else{
+        $('#@field.id').datepicker({format : '@pattern', autoclose: true, language: "@Http.Context.current().lang().code()"});
+    }
+    </script>
+</div>
+@*********************************************************
+ * A template which generate a date field using a date picker.
+ * Dateformat : example 'dd/mm/yyyy'
+ * If the date format is not provided then the template
+ * attempts to extrapolate it from the field format
+ * The parameter "forceRequired" set a required constraint for the input even if
+ * the field has no required constraints
+ *********************************************************@

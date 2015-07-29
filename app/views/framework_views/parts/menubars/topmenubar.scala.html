@@ -1,0 +1,109 @@
+@* LICENSE
+ *
+ * Copyright (c) 2015, The Agile Factory SA and/or its affiliates. All rights
+ * reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ *@
+ 
+@(applicationIndex: String)
+@import framework_views.parts
+@import framework.utils.TopMenuBar
+@import be.objectify.deadbolt.java.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
+
+@******************************************************
+ Component to be used with the utils.TopMenuBar class
+ to display the main application menu bar.
+ The top menu bar manage only 3 levels of menus/sub-menus
+ ******************************************************@ 
+
+<div class="navbar navbar-default navbar-static-top" role="navigation" style="position: inherit;">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            
+                @if(TopMenuBar.getInstance().hasUser && TopMenuBar.getInstance().hasSecondaryPerspectives) {
+                    <div class="navbar-brand">
+                        <a style="margin-top: -9px; padding-top: 10px" class="pull-left btn btn-light" href="@applicationIndex"><span class="glyphicons glyphicons-home glyphicons-panel"></span></a>
+                        <div class="pull-left">&nbsp;&nbsp;&nbsp;</div>
+                        <div class="dropdown pull-left">
+                            <div style="cursor:pointer" aria-expanded="false" aria-haspopup="true" role="button" data-toggle="dropdown" class="dropdown-toggle">
+                                @TopMenuBar.getInstance().getCurrent().getLabel
+                                <span class="caret" style="margin-top: -4px;"></span>
+                            </div>
+                            <ul class="dropdown-menu">
+                                @for((key, value) <- TopMenuBar.getInstance().get()){
+                                    @if(!key.equals(TopMenuBar.getInstance().getPerspectiveFromPreference)) {
+                                        <li><a href="@TopMenuBar.getInstance().getSwitchingRoute(key)">@value.getLabel</a></li>
+                                    }
+                                }
+                            </ul>
+                        </div>
+                    </div>
+                } else {
+                    <a class="navbar-brand" href="@applicationIndex">
+                        @TopMenuBar.getInstance().getCurrent().getLabel &nbsp; <i>@parts.Msg("main.application.title")</i>
+                    </a>
+                }
+        </div>
+          <div class="collapse navbar-collapse">
+              <ul id="topmenubar-navbar-left" class="nav navbar-nav navbar-left"></ul>
+            <ul class="nav navbar-nav navbar-right">
+                    @for((menuItem, index) <- TopMenuBar.getInstance().getCurrent().getMenuItems().zipWithIndex) {
+                            @if(menuItem.restrict()){
+                                @if(menuItem.hasSubMenuItems()){
+                                    <li class="dropdown" id="topmenubar-item-@index">
+                                      <a href="#" class="dropdown-toggle"
+                                           data-toggle="dropdown">@parts.Msg(menuItem.getLabel())<b class="caret"></b></a>
+                                           <ul class="dropdown-menu">
+                                               @for(subMenuItem <- menuItem.getSubMenuItems()){
+                                                  @if(subMenuItem.restrict()){
+                                                  @if(subMenuItem.hasSubMenuItems()){
+                                                      <li class="disabled"><a style="cursor: text;">@parts.Msg(subMenuItem.getLabel())</a></li>
+                                                      @for(subSubMenuItem <- subMenuItem.getSubMenuItems()){
+                                                          @if(subSubMenuItem.restrict()){
+                                                              @if(!subSubMenuItem.isSeparator()){
+                                                              <li class="small"><a id="topmenubar-@subSubMenuItem.getUuid()" href="@subSubMenuItem.getActionUrl()">@parts.Msg(subSubMenuItem.getLabel())</a></li>
+                                                              }
+                                                          }
+                                                      }
+                                                  }else{
+                                                        @if(!subMenuItem.isSeparator()){
+                                                          <li><a id="topmenubar-@subMenuItem.getUuid()" href="@subMenuItem.getActionUrl()">@parts.Msg(subMenuItem.getLabel())</a></li>
+                                                      }else{
+                                                          <li class="divider"></li>
+                                                      }
+                                                  }
+                                              }
+                                            }
+                                           </ul>
+                                       </li>
+                                }else{
+                                    @if(!menuItem.isSeparator()){
+                                        <li id="topmenubar-item-@index"><a id="topmenubar-@menuItem.getUuid()" href="@menuItem.getActionUrl()">@parts.Msg(menuItem.getLabel())</a></li>
+                                    }else{
+                                        <li class="divider-vertical"></li>
+                                    }
+                                }
+                            }
+                        }            
+            </ul>
+          </div>
+      </div>
+</div>

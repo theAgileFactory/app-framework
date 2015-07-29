@@ -1,0 +1,121 @@
+@* LICENSE
+ *
+ * Copyright (c) 2015, The Agile Factory SA and/or its affiliates. All rights
+ * reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ *@
+@(table: framework.utils.Table[_])
+
+@import framework_views.parts
+
+@columns = @{
+    if(table.hasRowActions) {
+        table.getHeaders().size + 1
+    } else {
+        table.getHeaders().size
+    }
+}
+
+@if(table.hasRowActions) { @row_actions_selector(table.getId(), table.getRowActions) }
+
+<div class="table-responsive">
+<table id="@table.getId()" class="table table-condensed table-hover" @if(table.hasRowActions) { style="margin-bottom:5px; margin-top: 5px;" }>
+<colgroup>
+@if(table.hasRowActions) { <col> }
+@for(header <- table.getHeaders()){
+    <col class="@header.getCssClass">
+}
+</colgroup>
+<thead>
+<tr>
+@if(table.hasRowActions) { <th><input type="checkbox" id="_@(table.getId)_row_actions_checkbox_all" name="_@(table.getId)_row_actions_checkbox" value="all" /></th> }
+@for(header <- table.getHeaders()){
+    @if(header.getSorterJsFunction()==null){
+        <th id="_@table.getId()_@header.getName()">@parts.Msg(header.getLabel())</th>
+    }else{
+        <th><a href="#" onclick="maf_sort('@header.getSorterJsFunction()',this.parentNode,'@table.getId()');return false;"><i class="glyphicons glyphicons-chevron-down"></i>&nbsp;@parts.Msg(header.getLabel())</a></th>
+    }
+}
+</tr>
+</thead>
+<tbody @if(table.hasValues && table.getLineAction != null) {data-link="row" class="rowlink"}>
+    @if(!table.hasValues) {
+        <tr class="warning"><td colspan="@columns" class="text-center">@parts.Msg(table.getEmptyMessageKey)</td></tr>
+    } else {
+        @for(row <- table.getFormattedRows()){
+            @tableview_row(table.getId(),row,table.hasRowActions)
+        }
+   }
+</tbody>
+</table>
+</div>
+
+@if(table.hasRowActions) { @row_actions_selector(table.getId(), table.getRowActions) }
+
+@if(table.hasValues && table.getLineAction != null) {
+    <script>$('#@table.getId() tbody').rowlink()</script>
+}
+
+@if(table.hasRowActions) {
+    <script>
+        $(document).ready(function() {
+            
+            $("._@(table.getId())_ajaxActionSingle").each(function (){
+                $(this).click(function() {
+                    if(window.confirm("@table.getRowActions.get(0).getConfirmationMessage")) {
+                        _@(table.getId())_triggerAjaxRowAction('@(table.getRowActions.get(0).getUrl)', '@(table.getRowActions.get(0).getDomContainerId)');
+                    }
+                });
+            });
+            
+            $("._@(table.getId())_linkActionSingle").each(function(){
+                $(this).click(function() {
+                    if(window.confirm("@table.getRowActions.get(0).getConfirmationMessage")) {
+                        _@(table.getId())_triggerLinkRowAction('@(table.getRowActions.get(0).getUrl)');
+                    }
+                });
+            });
+            
+            $('._@(table.getId())_rowActionsSelector').each(function(){
+                $(this).change(function() {
+                    if ($(this).val() != "") {
+                        var rowAction = JSON.parse($(this).val());
+                        if(rowAction.ajax) {
+                            if(rowAction.withConfirmation) {
+                                if(window.confirm(rowAction.confirmationMessage)) {
+                                    _@(table.getId())_triggerAjaxRowAction(rowAction.url, rowAction.domContainerId);
+                                }
+                            } else {
+                                _@(table.getId())_triggerAjaxRowAction(rowAction.url, rowAction.domContainerId);
+                            }
+                        } else {
+                            if(rowAction.withConfirmation) {
+                                if(window.confirm(rowAction.confirmationMessage)) {
+                                    _@(table.getId())_triggerLinkRowAction(rowAction.url);
+                                }
+                            } else {
+                                _@(table.getId())_triggerLinkRowAction(rowAction.url);
+                            }
+                        }
+                    }
+                });
+            })
+            
+        });
+    </script>
+}
+@******************************************************
+ Component to be used with the framework.utils.Table class
+ to display a list of objects
+ ******************************************************@ 

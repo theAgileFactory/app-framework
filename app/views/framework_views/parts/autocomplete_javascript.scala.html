@@ -1,0 +1,49 @@
+@* LICENSE
+ *
+ * Copyright (c) 2015, The Agile Factory SA and/or its affiliates. All rights
+ * reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ *@
+@(field_value: Option[String], field_id: String, fieldLabel: String, url: String, contextQueryString: String="")
+<script type="text/javascript">
+var _@{field_id}_editable_cache={};
+if('@field_value'!=''){
+    $.get("@{url}?value=@field_value@Html(contextQueryString)", function( data ) {
+        _@{field_id}_editable_cache[data.value]=data;
+        maf_activateEditable_for_autocomplete(_@{field_id}_editable_cache,"@{field_id}", "@{field_value}", "@fieldLabel", "@url","@Html(contextQueryString)");
+    });
+}else{
+    maf_activateEditable_for_autocomplete(_@{field_id}_editable_cache,"@{field_id}", "@{field_value}", "@fieldLabel", "@url","@Html(contextQueryString)");
+}
+</script>
+@*********************************************************
+ * The javascript section to be used with autocomplete fields
+ * - field_value : the value of a field
+ * - field_id : the id of a field
+ * - fieldLabel: the label of a field
+ * - contextQueryString : the javascript query string to be added to the URL
+ * - The "url" parameter must point to a "GET" URL which expects a querystring with:
+ *      - "query" parameter to be used to find value holders based on the name
+ * With such parameter it returns a JSON structure like:
+ * {
+ *   "value1" : {"value" : "aValue1", "name" : "a name1"},
+ *   "value2" : {"value" : "aValue2", "name" : "a name2"}
+ * }
+ *      - "value" parameter to retreive the value holder associated with the specified value
+ * With such parameter it returns a JSON structure like:
+ * {"value" : "aValue1", "name" : "a name1"}
+ * The value is to be used as the field value.
+ * The name is what is displayed to the end user.
+ * The template also accept some context parameters which are added to the url query string.
+ *********************************************************@

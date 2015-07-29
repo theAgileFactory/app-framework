@@ -1,0 +1,84 @@
+@* LICENSE
+ *
+ * Copyright (c) 2015, The Agile Factory SA and/or its affiliates. All rights
+ * reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ *@
+@(assetsRootLocation: String)
+
+@import framework_views.parts.Msg
+
+<link href="@(assetsRootLocation)framework/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+<link href="@(assetsRootLocation)framework/lib/bootstrap-jasny/css/jasny-bootstrap.min.css" rel="stylesheet">
+<script src="@(assetsRootLocation)framework/lib/jquery/jquery-1.11.1.min.js"></script>
+<script src="@(assetsRootLocation)framework/lib/bootstrap/js/bootstrap.min.js"></script>
+<script src="@(assetsRootLocation)framework/lib/bootstrap-jasny/js/jasny-bootstrap.min.js"></script>
+<script src="@(assetsRootLocation)framework/lib/datepicker/js/bootstrap-datepicker.js"></script>
+<link href="@(assetsRootLocation)framework/lib/x-editable/bootstrap3-editable/css/bootstrap-editable.css" rel="stylesheet">
+<script src="@(assetsRootLocation)framework/lib/x-editable/bootstrap3-editable/js/bootstrap-editable.min.js"></script>
+<script src="@(assetsRootLocation)framework/lib/datepicker/js/locales/bootstrap-datepicker.de.js"></script>
+<script src="@(assetsRootLocation)framework/lib/datepicker/js/locales/bootstrap-datepicker.fr.js"></script>
+<link href="@(assetsRootLocation)framework/lib/x-editable/inputs-ext/typeaheadjs/lib/typeahead.js-bootstrap.css" rel="stylesheet">
+<script src="@(assetsRootLocation)framework/lib/x-editable/inputs-ext/typeaheadjs/lib/typeahead.js"></script>
+<script src="@(assetsRootLocation)framework/lib/x-editable/inputs-ext/typeaheadjs/typeaheadjs.js"></script>
+<link href="@(assetsRootLocation)framework/lib/jquery-gantt/css/style.css" type="text/css" rel="stylesheet">
+<script src="@(assetsRootLocation)framework/lib/jquery-gantt/js/jquery.fn.gantt.min.js"></script>
+<script src="@(assetsRootLocation)framework/lib/jquery-gantt/js/jquery.fn.gantt.transl.js"></script>
+<link rel="stylesheet" media="screen" href="@(assetsRootLocation)framework/lib/jquery-taf-tree/css/taf-tree.css">
+<script src="@(assetsRootLocation)framework/lib/jquery-taf-tree/js/taf-tree.js"></script>
+
+<link rel="stylesheet" href="@(assetsRootLocation)framework/lib/bootstrap-calendar/css/calendar.min.css">
+<script type="text/javascript" src="@(assetsRootLocation)framework/lib/bootstrap-calendar/components/underscore/underscore-min.js"></script>
+<script type="text/javascript" src="@(assetsRootLocation)framework/lib/bootstrap-calendar/components/jstimezonedetect/jstz.min.js"></script>
+<script type="text/javascript" src="@(assetsRootLocation)framework/lib/bootstrap-calendar/js/language/fr.js"></script>
+<script type="text/javascript" src="@(assetsRootLocation)framework/lib/bootstrap-calendar/js/language/de.js"></script>
+<script type="text/javascript" src="@(assetsRootLocation)framework/lib/bootstrap-calendar/js/calendar.js"></script>
+
+<script type="text/javascript" src="@(assetsRootLocation)framework/lib/highcharts/highcharts.js"></script>
+
+<link href='//fonts.googleapis.com/css?family=Open+Sans:400italic,600italic,700italic,400,600,700' rel='stylesheet' type='text/css'>
+
+<script type="text/javascript" src="@(assetsRootLocation)framework/lib/bootstrap-tour/js/bootstrap-tour.min.js"></script>
+<link href="@(assetsRootLocation)framework/lib/bootstrap-tour/css/bootstrap-tour.min.css" rel="stylesheet">
+
+<script src="@framework.utils.AssetsProvider.local(assetsRootLocation + "framework/javascripts/main.min.js")"></script>
+<link href="@framework.utils.AssetsProvider.local(assetsRootLocation + "framework/stylesheets/main.css")" type="text/css" rel="stylesheet">
+
+<script>
+    var _maf_translations = {
+        unchecked : "@Msg("js.unchecked")",
+        checked : "@Msg("js.checked")", 
+        filtersSelectorTitle : "@Msg("js.filtersselectortitle")", 
+        columnsSelectorTitle : "@Msg("js.columnsselectortitle")",
+        from : "@Msg("js.from")",
+        to : "@Msg("js.to")",
+        empty : "@Msg("js.empty")",
+        kpi : "@Msg("js.kpi")"
+    };
+    var _maf_language = "@Http.Context.current().lang().code()";
+</script>
+
+<!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+<!--[if lt IE 9]>
+  		<script src="@(assetsRootLocation)framework/lib/html5shiv.js"></script>
+  		<script src="@(assetsRootLocation)framework/lib/respond.min.js"></script>
+<![endif]-->
+@*******************************************************
+ Sub view to include all needed ressources for playplots
+ This must be included in the header of all page that
+ are containing plots.
+ WARNING: the framework requires bootstrap to be installed.
+ Bootstrap is not incuded in the framework since the
+ main colors can be modified.
+ ******************************************************@ 

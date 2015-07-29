@@ -1,0 +1,39 @@
+@* LICENSE
+ *
+ * Copyright (c) 2015, The Agile Factory SA and/or its affiliates. All rights
+ * reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ *@
+@(field: Field, fieldLabel: String, selectableValues: framework.utils.ISelectableValueHolderCollection[_], isDescriptionVisible: Boolean=true)
+@import framework_views.parts
+<div class="form-group @if(field.hasErrors) {has-error}">
+<label class="control-label" for="@field.id">@fieldLabel</label>
+@for((item, index) <- selectableValues.getSortedValues().zipWithIndex) {
+	<div class="radio">
+		<label>
+		    <input type="radio" id="@(field.id)" name="@(field.name)" value="@item.getValue()" @if(field.value!=null && !field.value.isEmpty && field.value.get.equals(item.getValue().toString)){checked="checked"}>
+		    @Html(item.getName().toString)
+		    @if(item.getDescription()!=null && isDescriptionVisible){
+		    <br/><small>@item.getDescription()</small>
+		    }
+	    </label>
+        <span class="help-block"><strong>@{field.error.map { error => parts.Msg(error.message) }}</strong></span>
+    </div>
+}
+</div>
+
+@*********************************************************
+ * A template which generates a radiobutton list with
+ * a twitter bootstrap 3 compatible style
+ *********************************************************@

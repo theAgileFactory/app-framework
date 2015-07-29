@@ -1,0 +1,166 @@
+.no-margin{margin: 0px;}
+.no-padding{padding: 0px;}
+
+
+.fn-gantt *,
+.fn-gantt *:after,
+.fn-gantt *:before {
+  -webkit-box-sizing: content-box;
+     -moz-box-sizing: content-box;
+          box-sizing: content-box;
+}
+.fn-gantt .default {
+  background-color: #999999 !important;
+}
+.fn-gantt .primary {
+  background-color: #428BCA !important;
+}
+.fn-gantt .success {
+  background-color: #5CB85C !important;
+}
+.fn-gantt .info {
+  background-color: #5BC0DE !important;
+}
+.fn-gantt .warning {
+  background-color: #F0AD4E !important;
+}
+.fn-gantt .danger {
+  background-color: #D9534F !important;
+}
+
+.fn-gantt .diamond-default {
+    border-bottom: 10px solid #999999;
+}
+.fn-gantt .diamond-default:before {
+    border: 1px solid #999999;
+    border-top: 10px solid #999999;
+}
+
+.fn-gantt .diamond-primary {
+    border-bottom: 10px solid #428BCA;
+}
+.fn-gantt .diamond-primary:before {
+    border: 1px solid #428BCA;
+    border-top: 10px solid #428BCA;
+}
+
+.fn-gantt .diamond-success {
+    border-bottom: 10px solid #5CB85C;
+}
+.fn-gantt .diamond-success:before {
+    border: 1px solid #5CB85C;
+    border-top: 10px solid #5CB85C;
+}
+
+.fn-gantt .diamond-info {
+    border-bottom: 10px solid #5BC0DE;
+}
+.fn-gantt .diamond-info:before {
+    border: 1px solid #5BC0DE;
+    border-top: 10px solid #5BC0DE;
+}
+
+.fn-gantt .diamond-warning {
+    border-bottom: 10px solid #F0AD4E;
+}
+.fn-gantt .diamond-warning:before {
+    border: 1px solid #F0AD4E;
+    border-top: 10px solid #F0AD4E;
+}
+
+.fn-gantt .diamond-danger {
+    border-bottom: 10px solid #D9534F;
+}
+.fn-gantt .diamond-danger:before {
+    border: 1px solid #D9534F;
+    border-top: 10px solid #D9534F;
+}
+
+.fn-gantt .diamond {
+    width: 0 !important;
+    height: 0 !important;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-radius: 0px !important;
+    background-color: #FFFFFF !important;
+    left: 1px;
+}
+
+.fn-gantt .diamond:before{
+    content:'';
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    position: absolute;
+    top:10px;
+    left:-10px;
+    border-width: 10px 10px 0;
+}
+
+.cockpit-box-default { background-color: #777 !important; color: #fff !important; }
+.cockpit-box-primary { background-color: #428bca !important; color: #fff !important; }
+.cockpit-box-success { background-color: #5cb85c !important; color: #fff !important; }
+.cockpit-box-info { background-color: #5bc0de !important; color: #fff !important; }
+.cockpit-box-warning { background-color: #f0ad4e !important; color: #fff !important; }
+.cockpit-box-danger { background-color: #d9534f !important; color: #fff !important; }
+
+.cockpit-box .header { padding-top: 3px; }
+.cockpit-box .header .icon { font-size: 2.5em; padding-bottom:-10px; }
+.cockpit-box .header .value p { font-size: 1.5em; margin-bottom: 5px; }
+.cockpit-box .content .value p { margin-bottom: 3px; }
+.cockpit-box .value span { text-transform:uppercase; }
+
+@media (min-width: 992px) {
+    .caret.right-caret {
+        border-bottom: 4px solid transparent;
+        border-top: 4px solid transparent;
+        border-left: 4px solid;
+    }
+    .dropdown-menu.right-dropdown-menu {
+        left: 100%;
+        top: 0%;
+    }
+}
+
+.btn-light {
+  color: #666666;
+  background-color: #F5F5F5;
+  border-color: #CCCCCC !important;
+}
+.btn-light:hover,
+.btn-light:focus,
+.btn-light:active,
+.btn-light.active,
+.open .dropdown-toggle.btn-light {
+  color: #666666;
+  background-color: #D5D5D5;
+  border-color: #AAAAAA !important;
+}
+.btn-light:active,
+.btn-light.active,
+.open .dropdown-toggle.btn-light {
+  background-image: none;
+}
+.btn-light.disabled,
+.btn-light[disabled],
+fieldset[disabled] .btn-light,
+.btn-light.disabled:hover,
+.btn-light[disabled]:hover,
+fieldset[disabled] .btn-light:hover,
+.btn-light.disabled:focus,
+.btn-light[disabled]:focus,
+fieldset[disabled] .btn-light:focus,
+.btn-light.disabled:active,
+.btn-light[disabled]:active,
+fieldset[disabled] .btn-light:active,
+.btn-light.disabled.active,
+.btn-light[disabled].active,
+fieldset[disabled] .btn-light.active {
+  background-color: #F5F5F5;
+  border-color: #CCCCCC;
+}
+.btn-light .badge {
+  color: #F5F5F5;
+  background-color: #666666;
+}
+
+.tooltip-wide .tooltip {min-width:150px;}

@@ -1,0 +1,129 @@
+@* LICENSE
+ *
+ * Copyright (c) 2015, The Agile Factory SA and/or its affiliates. All rights
+ * reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ *@
+@(table: framework.utils.Table[_], pagination: framework.utils.Pagination[_])
+
+@import framework_views.parts
+
+@tableview(table)
+
+<div class="row">
+    @if(pagination!=null && pagination.getNumberOfPages()>1){
+        <div class="col-md-12 text-center">
+            <ul class="pagination no-margin">
+            @if(pagination.hasLess()){
+                <li><a id="_@{table.getId()}_page_@{pagination.getLowerBound()-1}" href="#">&lt;&lt;</a></li>
+            }
+            @for(pageIndex <- pagination.getLowerBound() to pagination.getUpperBound()){
+                <li @if(pageIndex==pagination.getCurrentPage()){class="active"}><a id="_@{table.getId()}_page_@{pageIndex}" href="#">@{pageIndex+1}</a></li>
+            }
+            @if(pagination.hasMore()){
+                <li><a id="_@{table.getId()}_page_@{pagination.getUpperBound()+1}" href="#">&gt;&gt;</a></li>
+            }
+            </ul>
+        </div>
+    }
+    <div class="text-center">
+        <small>@pagination.getRowCount() @parts.Msg("table.pagination.records")</small>
+    </div>
+</div>
+
+@if(table.hasRowActions) {
+
+    <script>
+        $( document ).ready(function() {
+
+            /* @* check/uncheck the all box *@ */
+            $("#_@(table.getId)_row_actions_checkbox_all").prop('checked', _@table.getId()_isAllChecked);
+        
+            /* @* for each checkbox (including the "all" one)  *@ */
+            $("input[name=_@(table.getId)_row_actions_checkbox]").each( function () {
+            
+                var val = $(this).val();
+                var index = _@table.getId()_filterConfig.selectedRows.indexOf(val);
+                
+                /* @* check it if selected *@ */
+                if (index > -1) {
+                    $(this).prop('checked', true);
+                }
+            
+                /* @* add an onChange event *@ */
+                $(this).change( function() {
+                    
+                    /* @* if the checkbox is the "all" *@ */
+                    if (val == "all") {
+                    
+                        _@table.getId()_isAllChecked = $(this).prop('checked');
+                        
+                        /* @* if the checkbox has been checked *@ */
+                        if($(this).prop('checked')) {
+                            
+                            /* @* we check all boxes *@ */
+                            $("input[name=_@(table.getId)_row_actions_checkbox]").each( function () {
+                                $(this).prop('checked', true);
+                            });
+                            
+                            /* @* we set the selectedRows table with all id according to the current filer *@ */
+                            _@table.getId()_filterConfig.selectedRows = new Array();
+                            $.ajax({
+                                url: '@table.getAllIdsUrl',
+                                type: "POST",
+                                contentType: "application/json; charset=utf-8",
+                                data: JSON.stringify(_@table.getId()_filterConfig),
+                                dataType: "json",
+                                success: function (data) {
+                                    for(var i = 0; i < data.length; i++) {
+                                        _@table.getId()_filterConfig.selectedRows.push(data[i]);
+                                    }
+                                }
+                            });
+                            
+                        /* @* if the checkbox has been unchecked *@ */
+                        } else {
+                            
+                            /* @* we uncheck all boxes and reset the selectedRows table *@ */
+                            $("input[name=_@(table.getId)_row_actions_checkbox]").each( function () {
+                                $(this).prop('checked', false);
+                            });
+                            _@table.getId()_filterConfig.selectedRows = new Array();
+                        }
+                        
+                    /* @* if the checkbox is an entry *@ */
+                    } else {
+                        if($(this).prop('checked')) {
+                            _@table.getId()_filterConfig.selectedRows.push(val);
+                        } else {
+                            $("#_@(table.getId)_row_actions_checkbox_all").prop('checked', false);
+                            _@table.getId()_isAllChecked = false;
+                            var index2 = _@table.getId()_filterConfig.selectedRows.indexOf(val);
+                            if (index2 > -1) {
+                                _@table.getId()_filterConfig.selectedRows.splice(index2, 1);
+                            }
+                        }
+                    }
+                    
+                });
+            });
+        
+        });
+    </script>
+
+}
+
+@******************************************************
+ Combine the tableview with a paginationview
+ ******************************************************@ 

@@ -1,0 +1,99 @@
+@* LICENSE
+ *
+ * Copyright (c) 2015, The Agile Factory SA and/or its affiliates. All rights
+ * reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ *@
+
+@(table: framework.utils.Table[_],
+	pagination: framework.utils.Pagination[_],
+	filterUrl: String,
+	filterText: String = null,
+	filterColumn: String = null, 
+	filterColumns: framework.utils.ISelectableValueHolderCollection[String]=null)
+@import framework_views.parts
+@timeBetweenKeyPress=@{500}
+
+@if(table.getValues()!=null && table.getValues().size()>10){
+<div class="row">
+	<div class="col-md-6"></div>
+	<div class="col-md-6">
+		<div class="row">
+		@if(filterColumns!=null){
+			<div class="col-md-6">
+			<select class="form-control" id="_@table.getId()_filter_column">
+			@for((item, index) <- filterColumns.getValues().zipWithIndex) {
+				<option value="@item.getValue()" @if(filterColumn!=null && filterColumn.equals(item.getValue())){selected="selected"}>@item.getName()</option>
+			}
+			</select>
+			</div>
+		}else{
+			<div class="col-md-6"></div>
+		}
+		<div class="col-md-6">
+		<input id="_@table.getId()_filter_text" type="text" class="form-control"  value="@filterText" placeholder="Filter"/>
+		</div>
+		</div>
+	</div>
+</div>
+}
+<br />
+<div class="row">
+	<div id="_@table.getId()_ajax_content" class="col-md-12">
+	@tableview_with_pagination(table,pagination, filterText, filterColumn)
+	</div>
+</div>
+<script type="text/javascript">
+var _@table.getId()_lastKeypressTime;
+$(document).ready(function(){
+	$('#_@table.getId()_filter_column').change(function(){
+		$('#_@table.getId()_filter_text').val('');
+		_@table.getId()_refreshTable();
+	});
+	$('#_@table.getId()_filter_text').keypress(
+			function(){
+				_@table.getId()_lastKeypressTime=new Date();
+				setTimeout(_@table.getId()_refreshTable, @timeBetweenKeyPress);
+			}
+	);
+});
+function _@table.getId()_refreshTable(){
+	var diff=(new Date()).getTime()-_@table.getId()_lastKeypressTime.getTime();
+	if(diff>=@timeBetweenKeyPress){
+		$('#_@table.getId()_ajax_content').prepend('<div style="z-index: 100; width: 100%;height: 100%;position: absolute;top: 0;left: 0;text-align: center;margin-top: 20%;"><h1><span class="label label-warning">@parts.Msg("filter.table.ajax.wait.message")</span></h1></div>');
+		var data={
+				"filterText" : $('#_@table.getId()_filter_text').val()
+				@if(filterColumns!=null){
+					,"filterColumn" : $('#_@table.getId()_filter_column').val()
+				}
+				};
+		maf_performPostJsonReceiveHtml(
+				'@filterUrl', 
+				JSON.stringify(data), 
+				function(responseData){
+					$('#_@table.getId()_ajax_content').html(responseData);
+				}, 
+				function(responseData){
+					$('#_@table.getId()_ajax_content').html('<div class="alert alert-danger">@parts.Msg("filter.table.ajax.error.message")</div>');
+				});
+	}
+}
+</script>
+
+
+@****************************************************** Component to be
+used with the framework.utils.Table class to display a list of objects.
+This one is adding a filter field on top of the table. This one is
+connected to a REST service which can be user to refresh the table
+******************************************************@ 
