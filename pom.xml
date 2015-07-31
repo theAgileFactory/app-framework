@@ -79,7 +79,7 @@
 		<httpclient.version>4.2.6</httpclient.version>
 		<jasperreports.version>6.1.0</jasperreports.version>
 		<deadbolt.version>2.3.1</deadbolt.version>
-		<commons-eclipse-jdt.version>3.3.0-v_771</commons-eclipse-jdt.version>
+		<commons-eclipse-jdt.version>3.10.0</commons-eclipse-jdt.version>
 
 		<!-- Plugin properties -->
 		<maven-resources-plugin.version>2.6</maven-resources-plugin.version>
@@ -352,7 +352,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.eclipse.jdt</groupId>
-			<artifactId>core</artifactId>
+			<artifactId>org.eclipse.jdt.core</artifactId>
 			<version>${commons-eclipse-jdt.version}</version>
 		</dependency>
 
