@@ -17,18 +17,17 @@
  */
 package framework.utils;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.security.MessageDigest;
 import java.util.UUID;
 
+import framework.commons.IFrameworkConstants;
 import play.Logger;
 import play.Play;
 import play.cache.Cache;
 import play.libs.ws.WS;
 import play.libs.ws.WSResponse;
-import play.mvc.Call;
-import play.mvc.Http.Context;
-import framework.commons.IFrameworkConstants;
 
 /**
  * Provider for assets with version management.
@@ -56,7 +55,7 @@ public class AssetsProvider {
 
         if (fileChecksum == null) {
             try {
-                fileChecksum = getFileChecksumByPath("public/" + path);
+                fileChecksum = getFileChecksumByPath(path);
             } catch (Exception e) {
                 Logger.error("AssetsVersion/local: error when getting the checksum for the path " + path, e);
                 fileChecksum = UUID.randomUUID().toString();
@@ -70,53 +69,27 @@ public class AssetsProvider {
     /**
      * Get a local asset by url.
      * 
-     * @param file
-     *            the relative file url of the asset
+     * @param url
+     *            the relative url of the asset
      */
-    public static String local(String file) {
+    public static String local(String url) {
 
-        String cacheKey = CACHE_PREFIX + file;
+        String cacheKey = CACHE_PREFIX + url;
 
         String fileChecksum = (String) Cache.get(cacheKey);
 
         if (fileChecksum == null) {
 
             try {
-                fileChecksum = getFileChecksumByUrl(Play.application().configuration().getString("maf.private.url") + file);
+                fileChecksum = getFileChecksumByUrl(Play.application().configuration().getString("maf.private.url") + url);
             } catch (Exception e) {
-                Logger.error("AssetsVersion/local: error when getting the checksum for the url " + file, e);
+                Logger.error("AssetsVersion/local: error when getting the checksum for the url " + url, e);
                 fileChecksum = UUID.randomUUID().toString();
             }
             Cache.set(cacheKey, fileChecksum);
         }
 
-        return file + "?" + fileChecksum;
-    }
-
-    /**
-     * Get a local asset by call object.
-     * 
-     * @param call
-     *            the call object of the asset
-     */
-    public static String local(Call call) {
-
-        String cacheKey = CACHE_PREFIX + call.url();
-
-        String fileChecksum = (String) Cache.get(cacheKey);
-
-        if (fileChecksum == null) {
-
-            try {
-                fileChecksum = getFileChecksumByUrl(call.absoluteURL(Context.current().request()));
-            } catch (Exception e) {
-                Logger.error("AssetsVersion/local: error when getting the checksum for the url " + call.url(), e);
-                fileChecksum = UUID.randomUUID().toString();
-            }
-            Cache.set(cacheKey, fileChecksum);
-        }
-
-        return call.url() + "?" + fileChecksum;
+        return url + "?" + fileChecksum;
     }
 
     private static String getFileChecksumByUrl(String url) throws Exception {
@@ -133,7 +106,9 @@ public class AssetsProvider {
     private static String getFileChecksumByPath(String path) throws Exception {
 
         MessageDigest md = MessageDigest.getInstance("SHA1");
-        FileInputStream fis = new FileInputStream(path);
+
+        File file = Play.application().getFile("public/" + path);
+        FileInputStream fis = new FileInputStream(file);
         byte[] dataBytes = new byte[1024];
 
         int nread = 0;
