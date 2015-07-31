@@ -17,8 +17,7 @@
  */
 package framework.utils;
 
-import java.io.File;
-import java.io.FileInputStream;
+import java.io.InputStream;
 import java.security.MessageDigest;
 import java.util.UUID;
 
@@ -107,8 +106,7 @@ public class AssetsProvider {
 
         MessageDigest md = MessageDigest.getInstance("SHA1");
 
-        File file = Play.application().getFile("public/" + path);
-        FileInputStream fis = new FileInputStream(file);
+        InputStream fis = Play.application().resourceAsStream("public/" + path);
         byte[] dataBytes = new byte[1024];
 
         int nread = 0;
