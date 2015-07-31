@@ -77,8 +77,10 @@
 		<redmine-java-api.version>2.0.0</redmine-java-api.version>
 		<json.version>20090211</json.version>
 		<httpclient.version>4.2.6</httpclient.version>
-		<jasperreports.version>5.6.1</jasperreports.version>
+		<jasperreports.version>6.1.0</jasperreports.version>
 		<deadbolt.version>2.3.1</deadbolt.version>
+		<commons-eclipse-jdt.version>3.3.0-v_771</commons-eclipse-jdt.version>
+
 		<!-- Plugin properties -->
 		<maven-resources-plugin.version>2.6</maven-resources-plugin.version>
 		<ivy-maven-plugin.version>0.2.5</ivy-maven-plugin.version>
@@ -348,6 +350,12 @@
 			<artifactId>commons-csv</artifactId>
 			<version>${commons-csv.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>org.eclipse.jdt</groupId>
+			<artifactId>core</artifactId>
+			<version>${commons-eclipse-jdt.version}</version>
+		</dependency>
+
 
 		<!-- Plugins dependencies -->
 		<dependency>
@@ -386,11 +394,11 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-		<dependency>
+		<!--<dependency>
 			<groupId>net.sf.jasperreports</groupId>
 			<artifactId>jasperreports-fonts</artifactId>
 			<version>${jasperreports.version}</version>
-		</dependency>
+		</dependency>-->
 		<dependency>
 			<groupId>net.sf.jasperreports</groupId>
 			<artifactId>jasperreports-functions</artifactId>
