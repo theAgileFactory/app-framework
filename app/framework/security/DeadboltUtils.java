@@ -28,9 +28,9 @@ import play.libs.F.Promise;
 import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Result;
-import be.objectify.deadbolt.core.DeadboltAnalyzer;
 import be.objectify.deadbolt.core.models.Role;
 import be.objectify.deadbolt.core.models.Subject;
+import be.objectify.deadbolt.java.JavaDeadboltAnalyzer;
 import be.objectify.deadbolt.java.utils.PluginUtils;
 import framework.services.ServiceManager;
 import framework.services.account.IAccountManagerPlugin;
@@ -47,6 +47,7 @@ import framework.services.account.IAccountManagerPlugin;
  */
 public abstract class DeadboltUtils {
     private static Logger.ALogger log = Logger.of(DeadboltUtils.class);
+    private static JavaDeadboltAnalyzer deadBoltAnalyzer = new JavaDeadboltAnalyzer();
 
     /**
      * Check if there is a subject in the current session.<br/>
@@ -155,7 +156,7 @@ public abstract class DeadboltUtils {
                 return false;
             }
             for (String[] rolesArray : deadBoltRoles) {
-                if (DeadboltAnalyzer.hasAllRoles(subject, rolesArray)) {
+                if (deadBoltAnalyzer.hasAllRoles(subject, rolesArray)) {
                     return true;
                 }
             }
@@ -164,6 +165,32 @@ public abstract class DeadboltUtils {
             log.error("Error while checking restriction for " + deadBoltRoles, e);
             return false;
         }
+    }
+
+    /**
+     * Check if the subject has the given role.
+     *
+     * @param subject
+     *            an option for the subject
+     * @param roleName
+     *            the name of the role
+     * @return true iff the subject has the role represented by the role name
+     */
+    public static boolean hasRole(final Subject subject, final String roleName) {
+        return deadBoltAnalyzer.hasRole(subject, roleName);
+    }
+
+    /**
+     * Check if the specified subject has all the roles
+     * 
+     * @param subject
+     *            a subject
+     * @param roleNames
+     *            an array of role names
+     * @return true if the user has all the specified roles
+     */
+    public static boolean hasAllRoles(final Subject subject, final String[] roleNames) {
+        return deadBoltAnalyzer.hasAllRoles(subject, roleNames);
     }
 
     /**

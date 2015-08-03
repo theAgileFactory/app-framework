@@ -46,9 +46,9 @@
 	<properties>
 	   <!-- Global properties -->
 		<project.build.sourceEncoding>latin1</project.build.sourceEncoding>
-		<play.version>2.3.4</play.version>
-		<java.source>1.7</java.source>
-        <java.target>1.7</java.target>
+		<play.version>2.3.9</play.version>
+		<java.source>1.8</java.source>
+        <java.target>1.8</java.target>
         <scala.version>2.10</scala.version>
         <!-- Dependencies properties -->
         <play-plugins-mailer.version>2.4.1</play-plugins-mailer.version>
@@ -78,7 +78,7 @@
 		<json.version>20090211</json.version>
 		<httpclient.version>4.2.6</httpclient.version>
 		<jasperreports.version>6.1.0</jasperreports.version>
-		<deadbolt.version>2.3.1</deadbolt.version>
+		<deadbolt.version>2.3.3</deadbolt.version>
 		<commons-eclipse-jdt.version>3.10.0</commons-eclipse-jdt.version>
 
 		<!-- Plugin properties -->
@@ -239,6 +239,62 @@
 			<groupId>org.mozilla</groupId>
 			<artifactId>rhino</artifactId>
 			<version>${rhino.version}</version>
+		</dependency>
+		
+		<!-- Deadbolt -->
+		<dependency>
+		    <groupId>be.objectify</groupId>
+		    <artifactId>deadbolt-java_${scala.version}</artifactId>
+		    <version>${deadbolt.version}</version>
+		    <exclusions>
+				<exclusion>
+					<groupId>com.typesafe.play</groupId>
+					<artifactId>play_${scala.version}</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.typesafe.play</groupId>
+					<artifactId>play-java_${scala.version}</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.typesafe.play</groupId>
+					<artifactId>play-cache_${scala.version}</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.typesafe.play</groupId>
+					<artifactId>twirl-api_${scala.version}</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.scala-lang</groupId>
+					<artifactId>scala-library</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+		    <groupId>be.objectify</groupId>
+		    <artifactId>deadbolt-core_${scala.version}</artifactId>
+		    <version>${deadbolt.version}</version>
+		    <exclusions>
+				<exclusion>
+					<groupId>com.typesafe.play</groupId>
+					<artifactId>play_${scala.version}</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.typesafe.play</groupId>
+					<artifactId>play-java_${scala.version}</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.typesafe.play</groupId>
+					<artifactId>play-cache_${scala.version}</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.typesafe.play</groupId>
+					<artifactId>twirl-api_${scala.version}</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.scala-lang</groupId>
+					<artifactId>scala-library</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		
 		<!-- Swagger -->
@@ -432,38 +488,6 @@
 									<filtering>false</filtering>
 								</resource>
 							</resources>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-
-			<plugin>
-				<groupId>com.github.goldin</groupId>
-				<artifactId>ivy-maven-plugin</artifactId>
-				<version>${ivy-maven-plugin.version}</version>
-				<executions>
-					<execution>
-						<id>get-ivy-dependencies</id>
-						<goals>
-							<goal>ivy</goal>
-						</goals>
-						<phase>generate-resources</phase>
-						<configuration>
-							<ivyconf>${project.basedir}/project/ivyconfig.xml</ivyconf>
-							<dir>${project.basedir}/lib</dir>
-							<dependencies>
-                                <!-- Deadbolt -->
-								<dependency>
-									<groupId>ivy.be.objectify</groupId>
-									<artifactId>deadbolt-java_${scala.version}</artifactId>
-									<version>${deadbolt.version}</version>
-								</dependency>
-								<dependency>
-									<groupId>ivy.be.objectify</groupId>
-									<artifactId>deadbolt-core_${scala.version}</artifactId>
-									<version>${deadbolt.version}</version>
-								</dependency>
-							</dependencies>
 						</configuration>
 					</execution>
 				</executions>
