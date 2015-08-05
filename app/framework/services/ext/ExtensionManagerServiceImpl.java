@@ -556,7 +556,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         }
 
         @Override
-        public IPluginRunner createPluginInstance(String pluginIdentifier) throws ExtensionManagerException {
+        public synchronized IPluginRunner createPluginInstance(String pluginIdentifier) throws ExtensionManagerException {
             try {
                 String pluginRunnerClassName = getDescriptorInternal().getPluginClassNameFromIdentifier(pluginIdentifier);
                 JclObjectFactory factory = JclObjectFactory.getInstance();
@@ -567,7 +567,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         }
 
         @Override
-        public InputStream getResourceAsStream(String name) {
+        public synchronized InputStream getResourceAsStream(String name) {
             try {
                 InputStream inStream = getJarClassLoader().getResourceAsStream(name);
                 if (inStream == null) {
@@ -581,7 +581,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         }
 
         @Override
-        public Date loadingTime() {
+        public synchronized Date loadingTime() {
             return loadingTime;
         }
 
@@ -629,7 +629,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
          * 
          * @return
          */
-        public List<Class<?>> getControllerClasses() {
+        public synchronized List<Class<?>> getControllerClasses() {
             List<Class<?>> controllerClasses = new ArrayList<Class<?>>();
             for (Object controllerInstance : getControllers()) {
                 controllerClasses.add(controllerInstance.getClass());
@@ -642,12 +642,12 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
          * 
          * @return
          */
-        public List<Object> getControllerInstances() {
+        public synchronized List<Object> getControllerInstances() {
             return controllers;
         }
 
         @Override
-        public IExtensionDescriptor getDescriptor() {
+        public synchronized IExtensionDescriptor getDescriptor() {
             return descriptor;
         }
 
@@ -655,11 +655,11 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             return descriptor;
         }
 
-        public File getJarFile() {
+        public synchronized File getJarFile() {
             return jarFile;
         }
 
-        public void setJarFile(File jarFile) {
+        public synchronized void setJarFile(File jarFile) {
             this.jarFile = jarFile;
         }
 
