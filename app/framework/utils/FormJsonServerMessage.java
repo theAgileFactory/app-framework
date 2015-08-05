@@ -59,7 +59,7 @@ public class FormJsonServerMessage {
      */
     public static ObjectNode getErrorStructure(JsonNode errorsAsJson) {
         ObjectNode result = Json.newObject();
-        result.put("error", errorsAsJson);
+        result.set("error", errorsAsJson);
         return result;
     }
 
@@ -91,7 +91,7 @@ public class FormJsonServerMessage {
     public static ObjectNode getSuccessStructure(String action, String message, String url) {
         ObjectNode result = Json.newObject();
         ObjectNode successStructure = Json.newObject();
-        result.put("success", successStructure);
+        result.set("success", successStructure);
         successStructure.put("action", action);
         successStructure.put("message", message);
         if (url != null) {

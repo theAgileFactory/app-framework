@@ -28,9 +28,9 @@ import javax.persistence.Version;
 
 import models.framework_models.parent.IModel;
 import models.framework_models.parent.IModelConstants;
-import play.db.ebean.Model;
 
 import com.avaje.ebean.ExpressionList;
+import com.avaje.ebean.Model;
 
 /**
  * An attachment is a file or a {@link StructuredDocument} attached to another
@@ -54,7 +54,7 @@ public class Attachment extends Model implements IModel {
     /**
      * Default finder for the entity class
      */
-    public static Finder<Long, Attachment> find = new Finder<Long, Attachment>(Long.class, Attachment.class);
+    public static Finder<Long, Attachment> find = new Finder<Long, Attachment>(Attachment.class);
 
     public boolean deleted = false;
     @Version

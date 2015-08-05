@@ -29,11 +29,11 @@ import javax.persistence.OneToMany;
 import javax.persistence.Version;
 
 import models.framework_models.parent.IModelConstants;
-import play.db.ebean.Model;
 
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.Expr;
 import com.avaje.ebean.ExpressionList;
+import com.avaje.ebean.Model;
 import com.avaje.ebean.SqlUpdate;
 
 /**
@@ -49,7 +49,7 @@ public class PluginIdentificationLink extends Model {
     /**
      * Default finder for the entity class
      */
-    public static Finder<Long, PluginIdentificationLink> find = new Finder<Long, PluginIdentificationLink>(Long.class, PluginIdentificationLink.class);
+    public static Finder<Long, PluginIdentificationLink> find = new Finder<Long, PluginIdentificationLink>(PluginIdentificationLink.class);
 
     @Id
     public Long id;
@@ -99,8 +99,8 @@ public class PluginIdentificationLink extends Model {
      * @return a plugin identification link instance
      */
     public static PluginIdentificationLink getUniqueOneToOneLink(Long pluginConfigurationId, Long internalId, String externalId, String linkType) {
-        ExpressionList<PluginIdentificationLink> expr =
-                find.where().eq("pluginConfiguration.id", pluginConfigurationId).or(Expr.eq("externalId", externalId), Expr.eq("internalId", internalId));
+        ExpressionList<PluginIdentificationLink> expr = find.where().eq("pluginConfiguration.id", pluginConfigurationId)
+                .or(Expr.eq("externalId", externalId), Expr.eq("internalId", internalId));
         if (linkType != null) {
             expr = expr.eq("linkType", linkType);
         }
@@ -119,8 +119,8 @@ public class PluginIdentificationLink extends Model {
      * @return a plugin identification link instance
      */
     public static PluginIdentificationLink getUniqueLink(Long pluginConfigurationId, Long internalId, String externalId, String linkType) {
-        ExpressionList<PluginIdentificationLink> expr =
-                find.where().eq("pluginConfiguration.id", pluginConfigurationId).eq("externalId", externalId).eq("internalId", internalId);
+        ExpressionList<PluginIdentificationLink> expr = find.where().eq("pluginConfiguration.id", pluginConfigurationId).eq("externalId", externalId)
+                .eq("internalId", internalId);
         if (linkType != null) {
             expr = expr.eq("linkType", linkType);
         }
@@ -200,8 +200,8 @@ public class PluginIdentificationLink extends Model {
      */
     public static List<PluginIdentificationLink> getLinksForPluginAndExternalIdAndParentId(Long pluginConfigurationId, String externalId, Long parentId,
             String linkType) {
-        ExpressionList<PluginIdentificationLink> expr =
-                find.where().eq("pluginConfiguration.id", pluginConfigurationId).eq("externalId", externalId).eq("parent.id", parentId);
+        ExpressionList<PluginIdentificationLink> expr = find.where().eq("pluginConfiguration.id", pluginConfigurationId).eq("externalId", externalId)
+                .eq("parent.id", parentId);
         if (linkType != null) {
             expr = expr.eq("linkType", linkType);
         }
@@ -235,9 +235,8 @@ public class PluginIdentificationLink extends Model {
      * @return 1 of the creation was successfull
      */
     public static int createLink(Long pluginConfigurationId, Long internalId, String externalId, String linkType) {
-        String sql =
-                "insert into plugin_identification_link (plugin_configuration_id, internal_id, external_id, link_type, last_update)"
-                        + " values (:pluginConfigurationId,:internalId,:externalId,:linkType, NOW())";
+        String sql = "insert into plugin_identification_link (plugin_configuration_id, internal_id, external_id, link_type, last_update)"
+                + " values (:pluginConfigurationId,:internalId,:externalId,:linkType, NOW())";
         SqlUpdate update = Ebean.createSqlUpdate(sql);
         update.setParameter("pluginConfigurationId", pluginConfigurationId);
         update.setParameter("internalId", internalId);

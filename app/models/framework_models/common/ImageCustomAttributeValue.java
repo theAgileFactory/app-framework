@@ -38,9 +38,11 @@ import models.framework_models.parent.IModel;
 import models.framework_models.parent.IModelConstants;
 import play.Logger;
 import play.api.data.Field;
-import play.db.ebean.Model;
 import play.mvc.Http.MultipartFormData.FilePart;
 import play.twirl.api.Html;
+
+import com.avaje.ebean.Model;
+
 import framework.utils.CustomAttributeFormAndDisplayHandler;
 import framework.utils.FileAttachmentHelper;
 import framework.utils.Msg;
@@ -57,7 +59,7 @@ public class ImageCustomAttributeValue extends Model implements IModel, ICustomA
 
     private static final long serialVersionUID = -676104249555662234L;
 
-    public static Finder<Long, ImageCustomAttributeValue> find = new Finder<Long, ImageCustomAttributeValue>(Long.class, ImageCustomAttributeValue.class);
+    public static Finder<Long, ImageCustomAttributeValue> find = new Finder<Long, ImageCustomAttributeValue>(ImageCustomAttributeValue.class);
 
     public static ArrayList<String> authorizedContentType = new ArrayList<String>() {
         private static final long serialVersionUID = 1L;
@@ -141,9 +143,8 @@ public class ImageCustomAttributeValue extends Model implements IModel, ICustomA
             key += ":" + filter;
         }
 
-        ImageCustomAttributeValue customAttributeValue =
-                find.where().eq("deleted", false).eq("objectType", key).eq("objectId", objectId)
-                        .eq("customAttributeDefinition.id", customAttributeDefinition.id).findUnique();
+        ImageCustomAttributeValue customAttributeValue = find.where().eq("deleted", false).eq("objectType", key).eq("objectId", objectId)
+                .eq("customAttributeDefinition.id", customAttributeDefinition.id).findUnique();
         if (customAttributeValue == null) {
             customAttributeValue = new ImageCustomAttributeValue();
             customAttributeValue.objectType = key;

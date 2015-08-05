@@ -34,11 +34,13 @@ import models.framework_models.parent.IModelConstants;
 import org.apache.commons.lang3.StringUtils;
 
 import play.api.data.Field;
-import play.db.ebean.Model;
 import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Result;
 import play.twirl.api.Html;
+
+import com.avaje.ebean.Model;
+
 import framework.services.ServiceManager;
 import framework.services.configuration.IImplementationDefinedObjectService;
 import framework.services.configuration.ImplementationDefineObjectServiceFactory;
@@ -93,7 +95,7 @@ import framework.utils.Utilities;
 public class DynamicSingleItemCustomAttributeValue extends Model implements IModel, ICustomAttributeValue {
     private static final long serialVersionUID = -676104249012732234L;
 
-    public static Finder<Long, DynamicSingleItemCustomAttributeValue> find = new Finder<Long, DynamicSingleItemCustomAttributeValue>(Long.class,
+    public static Finder<Long, DynamicSingleItemCustomAttributeValue> find = new Finder<Long, DynamicSingleItemCustomAttributeValue>(
             DynamicSingleItemCustomAttributeValue.class);
 
     @Id
@@ -168,9 +170,8 @@ public class DynamicSingleItemCustomAttributeValue extends Model implements IMod
             key += ":" + filter;
         }
 
-        DynamicSingleItemCustomAttributeValue customAttributeValue =
-                find.where().eq("deleted", false).eq("objectType", key).eq("objectId", objectId)
-                        .eq("customAttributeDefinition.id", customAttributeDefinition.id).findUnique();
+        DynamicSingleItemCustomAttributeValue customAttributeValue = find.where().eq("deleted", false).eq("objectType", key).eq("objectId", objectId)
+                .eq("customAttributeDefinition.id", customAttributeDefinition.id).findUnique();
         if (customAttributeValue == null) {
             customAttributeValue = new DynamicSingleItemCustomAttributeValue();
             customAttributeValue.objectType = key;
@@ -298,10 +299,9 @@ public class DynamicSingleItemCustomAttributeValue extends Model implements IMod
      */
     public static Result jsonQueryApi() {
         // Retrieve the right custom attribute definition
-        String customAttributeDefinitionIdAsString =
-                Controller.request().queryString().get(CustomAttributeDefinition.DYNAMIC_SINGLE_CUSTOM_ATTRIBUTE_DEFINITION_ID_CTX_PARAMETER) != null ? Controller
-                        .request().queryString().get(CustomAttributeDefinition.DYNAMIC_SINGLE_CUSTOM_ATTRIBUTE_DEFINITION_ID_CTX_PARAMETER)[0]
-                        : null;
+        String customAttributeDefinitionIdAsString = Controller.request().queryString()
+                .get(CustomAttributeDefinition.DYNAMIC_SINGLE_CUSTOM_ATTRIBUTE_DEFINITION_ID_CTX_PARAMETER) != null ? Controller.request().queryString()
+                .get(CustomAttributeDefinition.DYNAMIC_SINGLE_CUSTOM_ATTRIBUTE_DEFINITION_ID_CTX_PARAMETER)[0] : null;
         CustomAttributeDefinition customAttributeDefinition = null;
         try {
             if (customAttributeDefinitionIdAsString == null) {
@@ -322,8 +322,8 @@ public class DynamicSingleItemCustomAttributeValue extends Model implements IMod
             // Perform a search according to the specified query
             IUserSessionManagerPlugin userSessionManager = ServiceManager.getService(IUserSessionManagerPlugin.NAME, IUserSessionManagerPlugin.class);
             String uid = userSessionManager.getUserSessionId(Controller.ctx());
-            ISelectableValueHolderCollection<Long> valueHolders =
-                    customAttributeDefinition.getValueHoldersCollectionFromNameForDynamicSingleItemCustomAttribute(query, uid);
+            ISelectableValueHolderCollection<Long> valueHolders = customAttributeDefinition
+                    .getValueHoldersCollectionFromNameForDynamicSingleItemCustomAttribute(query, uid);
             return Controller.ok(Utilities.marshallAsJson(valueHolders.getValues()));
         }
         if (value != null) {

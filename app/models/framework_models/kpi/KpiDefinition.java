@@ -28,10 +28,10 @@ import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
 import javax.persistence.Version;
 
-import com.avaje.ebean.annotation.Where;
-
 import models.framework_models.parent.IModelConstants;
-import play.db.ebean.Model;
+
+import com.avaje.ebean.Model;
+import com.avaje.ebean.annotation.Where;
 
 /**
  * A KPI definition represents all elements that describes a KPI.<br/>
@@ -66,13 +66,11 @@ import play.db.ebean.Model;
  * -internal and custom: the computation is done thanks a JS code (stored in the
  * DB, so the custom KPIs could be created/modified at any time).
  * 
- * For the internal KPIs, there is one more dimension that could have 3 states:
- * <br/>
+ * For the internal KPIs, there is one more dimension that could have 3 states: <br/>
  * -without scheduler: the values are note stored in the kpi_data table and so
  * the computation is always done one the fly, no trend is also available.<br/>
  * -with scheduler and not real time: the values are stored in the kpi_data
- * table (so a trend is available), and are displayed thanks the last stored.
- * <br/>
+ * table (so a trend is available), and are displayed thanks the last stored. <br/>
  * -with scheduler and real time: the values are stored in the kpi_data table
  * (so a trend is available), and are displayed (in cell/box displays) on real
  * time (the computation is done on the fly).
@@ -89,7 +87,7 @@ public class KpiDefinition extends Model {
 
     private static final long serialVersionUID = 1445645678989L;
 
-    public static Finder<Long, KpiDefinition> find = new Finder<Long, KpiDefinition>(Long.class, KpiDefinition.class);
+    public static Finder<Long, KpiDefinition> find = new Finder<Long, KpiDefinition>(KpiDefinition.class);
 
     @Id
     public Long id;

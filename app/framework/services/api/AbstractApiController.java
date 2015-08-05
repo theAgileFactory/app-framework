@@ -46,7 +46,7 @@ import framework.services.api.commons.IApiObject;
 import framework.services.api.commons.JsonPropertyLink;
 import framework.services.api.server.ApiLog;
 import framework.utils.Utilities;
-import play.db.ebean.Model;
+import com.avaje.ebean.Model;
 import play.mvc.Controller;
 import play.mvc.Http.RawBuffer;
 import play.mvc.Http.Request;

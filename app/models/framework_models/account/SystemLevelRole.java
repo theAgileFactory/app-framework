@@ -21,7 +21,7 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 
-import play.db.ebean.Model;
+import com.avaje.ebean.Model;
 
 /**
  * This entity represents a system level role.<br/>
@@ -50,5 +50,5 @@ public class SystemLevelRole extends Model {
     /**
      * Default finder for the entity class
      */
-    public static Finder<Long, SystemLevelRole> find = new Finder<Long, SystemLevelRole>(Long.class, SystemLevelRole.class);
+    public static Finder<Long, SystemLevelRole> find = new Finder<Long, SystemLevelRole>(SystemLevelRole.class);
 }

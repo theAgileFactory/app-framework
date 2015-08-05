@@ -21,7 +21,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.pac4j.core.profile.CommonProfile;
-import org.pac4j.play.Constants;
+import org.pac4j.core.context.Pac4jConstants;
 import org.pac4j.play.StorageHelper;
 
 import play.Logger;
@@ -49,7 +49,7 @@ public class CookieUserSessionManagerPlugin implements IUserSessionManagerPlugin
     @Override
     public String getUserSessionId(Context ctx) {
         // get the session id
-        final String sessionId = ctx.session().get(Constants.SESSION_ID);
+        final String sessionId = ctx.session().get(Pac4jConstants.SESSION_ID);
         if (log.isDebugEnabled()) {
             log.debug("Session id found : " + sessionId);
         }
@@ -82,7 +82,7 @@ public class CookieUserSessionManagerPlugin implements IUserSessionManagerPlugin
             } else {
                 // User session is not null but profile is null
                 // Clear the session
-                ctx.session().remove(Constants.SESSION_ID);
+                ctx.session().remove(Pac4jConstants.SESSION_ID);
             }
         }
         return null;

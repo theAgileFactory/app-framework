@@ -34,8 +34,10 @@ import models.framework_models.parent.IModelConstants;
 import org.apache.commons.lang3.StringUtils;
 
 import play.api.data.Field;
-import play.db.ebean.Model;
 import play.twirl.api.Html;
+
+import com.avaje.ebean.Model;
+
 import framework.utils.Msg;
 
 /**
@@ -61,8 +63,7 @@ import framework.utils.Msg;
 public class IntegerCustomAttributeValue extends Model implements IModel, ICustomAttributeValue {
     private static final long serialVersionUID = -676104249012732234L;
 
-    public static Finder<Long, IntegerCustomAttributeValue> find = new Finder<Long, IntegerCustomAttributeValue>(Long.class,
-            IntegerCustomAttributeValue.class);
+    public static Finder<Long, IntegerCustomAttributeValue> find = new Finder<Long, IntegerCustomAttributeValue>(IntegerCustomAttributeValue.class);
 
     @Id
     public Long id;
@@ -140,9 +141,8 @@ public class IntegerCustomAttributeValue extends Model implements IModel, ICusto
             key += ":" + filter;
         }
 
-        IntegerCustomAttributeValue customAttributeValue =
-                find.where().eq("deleted", false).eq("objectType", key).eq("objectId", objectId)
-                        .eq("customAttributeDefinition.id", customAttributeDefinition.id).findUnique();
+        IntegerCustomAttributeValue customAttributeValue = find.where().eq("deleted", false).eq("objectType", key).eq("objectId", objectId)
+                .eq("customAttributeDefinition.id", customAttributeDefinition.id).findUnique();
         if (customAttributeValue == null) {
             customAttributeValue = new IntegerCustomAttributeValue();
             customAttributeValue.objectType = key;
@@ -244,8 +244,7 @@ public class IntegerCustomAttributeValue extends Model implements IModel, ICusto
 
     @Override
     public Html renderFormField(Field field) {
-        return views.html.framework_views.parts.basic_input_text.render(field, Msg.get(customAttributeDefinition.name),
-                customAttributeDefinition.isRequired());
+        return views.html.framework_views.parts.basic_input_text.render(field, Msg.get(customAttributeDefinition.name), customAttributeDefinition.isRequired());
     }
 
     @Override

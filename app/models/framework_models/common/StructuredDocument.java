@@ -26,7 +26,8 @@ import javax.persistence.OneToOne;
 import javax.persistence.Version;
 
 import models.framework_models.parent.IModel;
-import play.db.ebean.Model;
+
+import com.avaje.ebean.Model;
 
 /**
  * A structured document is a document stored into the MAF DB.<br/>
@@ -45,7 +46,7 @@ public class StructuredDocument extends Model implements IModel {
     /**
      * Default finder for the entity class
      */
-    public static Finder<Long, StructuredDocument> find = new Finder<Long, StructuredDocument>(Long.class, StructuredDocument.class);
+    public static Finder<Long, StructuredDocument> find = new Finder<Long, StructuredDocument>(StructuredDocument.class);
 
     public boolean deleted = false;
     @Version

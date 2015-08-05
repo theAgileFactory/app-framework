@@ -54,7 +54,7 @@ import play.mvc.Http.Context;
 import play.mvc.Result;
 import scala.concurrent.duration.Duration;
 import akka.actor.Cancellable;
-import framework.security.DeadboltUtils;
+import framework.security.SecurityUtils;
 import framework.services.ServiceManager;
 import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.configuration.ImplementationDefineObjectServiceFactory;
@@ -201,7 +201,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
     @Override
     public Promise<Result> notifyRequest(final Context ctx) {
         final String path = StringUtils.removeStart(ctx.request().path(), PATH_PREFIX);
-        return DeadboltUtils.checkHasSubject(ctx, new Function0<Result>() {
+        return SecurityUtils.checkHasSubject(ctx, new Function0<Result>() {
             @Override
             public Result apply() throws Throwable {
                 IExtensionManagerService extensionManagerService = ServiceManager.getService(IExtensionManagerService.NAME, IExtensionManagerService.class);
@@ -325,7 +325,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                     menuItem = new HeaderMenuItem(menuItemDescriptor.getUuid(), menuItemDescriptor.getLabel());
                 }
                 if (menuItemDescriptor.getPermissions() != null) {
-                    menuItem.setAuthorizedPermissions(DeadboltUtils.getListOfArray(menuItemDescriptor.getPermissions().toArray(
+                    menuItem.setAuthorizedPermissions(SecurityUtils.getListOfArray(menuItemDescriptor.getPermissions().toArray(
                             new String[menuItemDescriptor.getPermissions().size()])));
                 }
                 if (menuItemDescriptor.getAddAfterUuid() != null) {
@@ -794,7 +794,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                 // Check the permissions
                 ArrayList<String[]> perms = new ArrayList<String[]>();
                 perms.add(getPermissions());
-                if (DeadboltUtils.restrict(perms, ctx)) {
+                if (SecurityUtils.restrict(perms, ctx)) {
                     if (log.isDebugEnabled()) {
                         log.debug("Call to path " + path + " but permissions are not sufficient");
                     }

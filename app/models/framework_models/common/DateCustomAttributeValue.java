@@ -34,8 +34,10 @@ import javax.persistence.Version;
 import models.framework_models.parent.IModel;
 import models.framework_models.parent.IModelConstants;
 import play.api.data.Field;
-import play.db.ebean.Model;
 import play.twirl.api.Html;
+
+import com.avaje.ebean.Model;
+
 import framework.utils.Msg;
 import framework.utils.Utilities;
 import framework.utils.formats.DateType;
@@ -69,7 +71,7 @@ import framework.utils.formats.DateType;
 public class DateCustomAttributeValue extends Model implements IModel, ICustomAttributeValue {
     private static final long serialVersionUID = -676104249012732234L;
 
-    public static Finder<Long, DateCustomAttributeValue> find = new Finder<Long, DateCustomAttributeValue>(Long.class, DateCustomAttributeValue.class);
+    public static Finder<Long, DateCustomAttributeValue> find = new Finder<Long, DateCustomAttributeValue>(DateCustomAttributeValue.class);
 
     @Id
     public Long id;
@@ -147,9 +149,8 @@ public class DateCustomAttributeValue extends Model implements IModel, ICustomAt
             key += ":" + filter;
         }
 
-        DateCustomAttributeValue customAttributeValue =
-                find.where().eq("deleted", false).eq("objectType", key).eq("objectId", objectId)
-                        .eq("customAttributeDefinition.id", customAttributeDefinition.id).findUnique();
+        DateCustomAttributeValue customAttributeValue = find.where().eq("deleted", false).eq("objectType", key).eq("objectId", objectId)
+                .eq("customAttributeDefinition.id", customAttributeDefinition.id).findUnique();
         if (customAttributeValue == null) {
             customAttributeValue = new DateCustomAttributeValue();
             customAttributeValue.objectType = key;
@@ -193,16 +194,14 @@ public class DateCustomAttributeValue extends Model implements IModel, ICustomAt
             }
             if (!customAttributeDefinition.isDateAfter(this.value)) {
                 this.hasError = true;
-                this.errorMessage =
-                        Msg.get(customAttributeDefinition.getDateAfterMessage(),
-                                Utilities.getDateFormat(null).format(customAttributeDefinition.getDateAfterBoundary()));
+                this.errorMessage = Msg.get(customAttributeDefinition.getDateAfterMessage(),
+                        Utilities.getDateFormat(null).format(customAttributeDefinition.getDateAfterBoundary()));
                 return false;
             }
             if (!customAttributeDefinition.isDateBefore(this.value)) {
                 this.hasError = true;
-                this.errorMessage =
-                        Msg.get(customAttributeDefinition.getDateBeforeMessage(),
-                                Utilities.getDateFormat(null).format(customAttributeDefinition.getDateBeforeBoundary()));
+                this.errorMessage = Msg.get(customAttributeDefinition.getDateBeforeMessage(),
+                        Utilities.getDateFormat(null).format(customAttributeDefinition.getDateBeforeBoundary()));
                 return false;
             }
         }
@@ -262,8 +261,7 @@ public class DateCustomAttributeValue extends Model implements IModel, ICustomAt
 
     @Override
     public Html renderFormField(Field field) {
-        return views.html.framework_views.parts.dateinput
-                .render(field, Msg.get(customAttributeDefinition.name), null, customAttributeDefinition.isRequired());
+        return views.html.framework_views.parts.dateinput.render(field, Msg.get(customAttributeDefinition.name), null, customAttributeDefinition.isRequired());
     }
 
     @Override

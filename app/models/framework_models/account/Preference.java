@@ -37,8 +37,10 @@ import models.framework_models.parent.IModel;
 import models.framework_models.parent.IModelConstants;
 import play.Logger;
 import play.cache.Cache;
-import play.db.ebean.Model;
 import play.mvc.Controller;
+
+import com.avaje.ebean.Model;
+
 import framework.commons.IFrameworkConstants;
 import framework.services.ServiceManager;
 import framework.services.account.AccountManagementException;
@@ -83,7 +85,7 @@ public class Preference extends Model implements IModel {
     /**
      * Default finder for the entity class
      */
-    public static Finder<Long, Preference> find = new Finder<Long, Preference>(Long.class, Preference.class);
+    public static Finder<Long, Preference> find = new Finder<Long, Preference>(Preference.class);
 
     public boolean deleted = false;
     @Version
@@ -262,8 +264,8 @@ public class Preference extends Model implements IModel {
                 String userSessionUid = userSessionManager.getUserSessionId(Controller.ctx());
                 IAccountManagerPlugin accountManagerPlugin = ServiceManager.getService(IAccountManagerPlugin.NAME, IAccountManagerPlugin.class);
                 IUserAccount userAccount = accountManagerPlugin.getUserAccountFromUid(userSessionUid);
-                ICustomAttributeValue attributeValue =
-                        CustomAttributeDefinition.getCustomAttributeValue(preference.uuid, Principal.class, userAccount.getMafUid());
+                ICustomAttributeValue attributeValue = CustomAttributeDefinition.getCustomAttributeValue(preference.uuid, Principal.class,
+                        userAccount.getMafUid());
                 if (log.isDebugEnabled()) {
                     log.debug("Preference with uuid " + uuid + " looking for value for user " + userAccount.getMafUid());
                 }

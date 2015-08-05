@@ -32,9 +32,9 @@ import javax.persistence.OneToMany;
 
 import models.framework_models.parent.IModel;
 import models.framework_models.parent.IModelConstants;
-import play.db.ebean.Model;
 
 import com.avaje.ebean.ExpressionList;
+import com.avaje.ebean.Model;
 
 import framework.commons.IFrameworkConstants;
 import framework.services.account.AccountManagementException;
@@ -58,7 +58,7 @@ public class Principal extends Model implements IModel {
     /**
      * Default finder for the entity class
      */
-    public static Finder<Long, Principal> find = new Finder<Long, Principal>(Long.class, Principal.class);
+    public static Finder<Long, Principal> find = new Finder<Long, Principal>(Principal.class);
 
     /**
      * Return the number of active principals
@@ -291,9 +291,8 @@ public class Principal extends Model implements IModel {
      * @return a list of permissions (only with "name" attribute)
      */
     private static List<SystemPermission> getSystemPermissionsList(String uid) {
-        List<SystemPermission> systemPermissions =
-                SystemPermission.find.select("name").setDistinct(true).where().eq("deleted", false).eq("systemLevelRoleTypes.deleted", false)
-                        .eq("systemLevelRoleTypes.systemLevelRoles.principal.uid", uid).findList();
+        List<SystemPermission> systemPermissions = SystemPermission.find.select("name").setDistinct(true).where().eq("deleted", false)
+                .eq("systemLevelRoleTypes.deleted", false).eq("systemLevelRoleTypes.systemLevelRoles.principal.uid", uid).findList();
         return systemPermissions;
     }
 
@@ -419,8 +418,7 @@ public class Principal extends Model implements IModel {
      * @return list of {@link Notification}
      */
     public List<Notification> getMessages() {
-        return Notification.find.where().eq("deleted", false).eq("isMessage", true).eq("principal.id", this.id).orderBy("isRead, creationDate desc")
-                .findList();
+        return Notification.find.where().eq("deleted", false).eq("isMessage", true).eq("principal.id", this.id).orderBy("isRead, creationDate desc").findList();
     }
 
     /**

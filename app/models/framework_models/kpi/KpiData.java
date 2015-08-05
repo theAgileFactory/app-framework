@@ -30,7 +30,7 @@ import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.Version;
 
-import play.db.ebean.Model;
+import com.avaje.ebean.Model;
 
 /**
  * A KPI data is a computed KPI value for a given date.
@@ -42,7 +42,7 @@ public class KpiData extends Model {
 
     private static final long serialVersionUID = 4564562397296L;
 
-    public static Finder<Long, KpiData> find = new Finder<Long, KpiData>(Long.class, KpiData.class);
+    public static Finder<Long, KpiData> find = new Finder<Long, KpiData>(KpiData.class);
 
     @Id
     public Long id;

@@ -26,8 +26,8 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 
 import models.framework_models.parent.IModelConstants;
-import play.db.ebean.Model;
 
+import com.avaje.ebean.Model;
 import com.avaje.ebean.annotation.Where;
 
 import framework.utils.DefaultSelectableValueHolderCollection;
@@ -47,7 +47,7 @@ public class Country extends Model implements ISelectableValueHolder<String> {
     /**
      * Default finder for the entity class
      */
-    public static Finder<Long, Country> find = new Finder<Long, Country>(Long.class, Country.class);
+    public static Finder<Long, Country> find = new Finder<Long, Country>(Country.class);
 
     @Id
     public Long id;

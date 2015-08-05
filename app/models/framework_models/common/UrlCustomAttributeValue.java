@@ -37,8 +37,10 @@ import models.framework_models.parent.IModelConstants;
 import org.apache.commons.lang3.StringUtils;
 
 import play.api.data.Field;
-import play.db.ebean.Model;
 import play.twirl.api.Html;
+
+import com.avaje.ebean.Model;
+
 import framework.utils.Msg;
 
 /**
@@ -65,7 +67,7 @@ public class UrlCustomAttributeValue extends Model implements IModel, ICustomAtt
 
     private static final long serialVersionUID = -4457221547L;
 
-    public static Finder<Long, UrlCustomAttributeValue> find = new Finder<Long, UrlCustomAttributeValue>(Long.class, UrlCustomAttributeValue.class);
+    public static Finder<Long, UrlCustomAttributeValue> find = new Finder<Long, UrlCustomAttributeValue>(UrlCustomAttributeValue.class);
 
     @Id
     public Long id;
@@ -140,9 +142,8 @@ public class UrlCustomAttributeValue extends Model implements IModel, ICustomAtt
             key += ":" + filter;
         }
 
-        UrlCustomAttributeValue customAttributeValue =
-                find.where().eq("deleted", false).eq("objectType", key).eq("objectId", objectId)
-                        .eq("customAttributeDefinition.id", customAttributeDefinition.id).findUnique();
+        UrlCustomAttributeValue customAttributeValue = find.where().eq("deleted", false).eq("objectType", key).eq("objectId", objectId)
+                .eq("customAttributeDefinition.id", customAttributeDefinition.id).findUnique();
         if (customAttributeValue == null) {
             customAttributeValue = new UrlCustomAttributeValue();
             customAttributeValue.objectType = key;

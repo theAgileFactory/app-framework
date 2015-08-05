@@ -30,6 +30,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import models.framework_models.common.CustomAttributeDefinition;
+import models.framework_models.common.ICustomAttributeValue.AttributeType;
+import play.Logger;
+import play.libs.Json;
+import play.mvc.Http.Request;
+
 import com.avaje.ebean.Expr;
 import com.avaje.ebean.Expression;
 import com.avaje.ebean.ExpressionList;
@@ -44,11 +50,6 @@ import framework.services.ServiceManager;
 import framework.services.kpi.IKpiService;
 import framework.services.kpi.Kpi;
 import framework.services.kpi.Kpi.DataType;
-import models.framework_models.common.CustomAttributeDefinition;
-import models.framework_models.common.ICustomAttributeValue.AttributeType;
-import play.Logger;
-import play.libs.Json;
-import play.mvc.Http.Request;
 
 /**
  * A data structure which contains the configuration for managing advanced table
@@ -248,8 +249,8 @@ public class FilterConfig<T> {
             boolean isDisplayed, boolean isFiltered, SortStatusType sortStatusType) {
         SelectableColumn selectableColumn = new SelectableColumn(columnId, fieldName, columnLabel, filterComponent);
         getSelectableColumns().put(columnId, selectableColumn);
-        UserColumnConfiguration userColumnConfiguration = new UserColumnConfiguration(columnId, sortStatusType, isDisplayed, isFiltered,
-                selectableColumn.getFilterComponent().getDefaultFilterValueAsObject());
+        UserColumnConfiguration userColumnConfiguration = new UserColumnConfiguration(columnId, sortStatusType, isDisplayed, isFiltered, selectableColumn
+                .getFilterComponent().getDefaultFilterValueAsObject());
         getUserColumnConfigurations().put(columnId, userColumnConfiguration);
     }
 
@@ -543,16 +544,16 @@ public class FilterConfig<T> {
         // Add static configuration
         ObjectNode selectableColumnsAsJson = Json.newObject();
         for (String columnId : getSelectableColumns().keySet()) {
-            selectableColumnsAsJson.put(columnId, getSelectableColumns().get(columnId).marshall());
+            selectableColumnsAsJson.set(columnId, getSelectableColumns().get(columnId).marshall());
         }
-        asJson.put(JSON_SELECTABLE_COLUMNS_FIELD, selectableColumnsAsJson);
+        asJson.set(JSON_SELECTABLE_COLUMNS_FIELD, selectableColumnsAsJson);
 
         // Add the dynamic configuration
         ObjectNode userColumnConfigurationAsJson = Json.newObject();
         for (String columnId : getUserColumnConfigurations().keySet()) {
-            userColumnConfigurationAsJson.put(columnId, getUserColumnConfigurations().get(columnId).marshall(getSelectableColumns().get(columnId)));
+            userColumnConfigurationAsJson.set(columnId, getUserColumnConfigurations().get(columnId).marshall(getSelectableColumns().get(columnId)));
         }
-        asJson.put(JSON_USER_CONFIG_FIELD, userColumnConfigurationAsJson);
+        asJson.set(JSON_USER_CONFIG_FIELD, userColumnConfigurationAsJson);
 
         // Add the current page
         asJson.put("currentPage", getCurrentPage());
@@ -1176,14 +1177,14 @@ public class FilterConfig<T> {
                 ObjectNode numeric = Json.newObject();
                 numeric.put("value", getDefaultValue());
                 numeric.put("comparator", getDefaultComparator());
-                userColumnConfiguration.put(UserColumnConfiguration.JSON_FILTERVALUE_FIELD, numeric);
+                userColumnConfiguration.set(UserColumnConfiguration.JSON_FILTERVALUE_FIELD, numeric);
                 log.error("The value " + filterValue + " returned for this filter component " + this + " is invalid, use default one instead");
             } else {
                 String[] numericAsObject = (String[]) filterValue;
                 ObjectNode numeric = Json.newObject();
                 numeric.put("value", numericAsObject[0]);
                 numeric.put("comparator", numericAsObject[1]);
-                userColumnConfiguration.put(UserColumnConfiguration.JSON_FILTERVALUE_FIELD, numeric);
+                userColumnConfiguration.set(UserColumnConfiguration.JSON_FILTERVALUE_FIELD, numeric);
             }
         }
 
@@ -1300,7 +1301,7 @@ public class FilterConfig<T> {
                 DateFormat dateFormat = Utilities.getDateFormat(Utilities.JSON_DATE_FORMAT);
                 dateRange.put("from", dateFormat.format(getFrom()));
                 dateRange.put("to", dateFormat.format(getTo()));
-                userColumnConfiguration.put(UserColumnConfiguration.JSON_FILTERVALUE_FIELD, dateRange);
+                userColumnConfiguration.set(UserColumnConfiguration.JSON_FILTERVALUE_FIELD, dateRange);
                 log.error("The value " + filterValue + " returned for this filter component " + this + " is invalid, use default one instead");
             } else {
                 Date[] dateRangeAsObject = (Date[]) filterValue;
@@ -1308,7 +1309,7 @@ public class FilterConfig<T> {
                 DateFormat dateFormat = Utilities.getDateFormat(Utilities.JSON_DATE_FORMAT);
                 dateRange.put("from", dateFormat.format(dateRangeAsObject[0]));
                 dateRange.put("to", dateFormat.format(dateRangeAsObject[1]));
-                userColumnConfiguration.put(UserColumnConfiguration.JSON_FILTERVALUE_FIELD, dateRange);
+                userColumnConfiguration.set(UserColumnConfiguration.JSON_FILTERVALUE_FIELD, dateRange);
             }
         }
 
@@ -1433,7 +1434,7 @@ public class FilterConfig<T> {
         public void marshallMetaData(ObjectNode selectableColumnFilterComponentMetaData) {
             selectableColumnFilterComponentMetaData.put(SelectableColumn.JSON_TYPE_FIELD, FilterComponentType.SELECT.name());
             selectableColumnFilterComponentMetaData.put("defaultValue", getDefaultValue());
-            selectableColumnFilterComponentMetaData.put("values", Utilities.marshallAsJson(getValues().getSortedValues()));
+            selectableColumnFilterComponentMetaData.set("values", Utilities.marshallAsJson(getValues().getSortedValues()));
         }
 
         @Override
@@ -1531,14 +1532,14 @@ public class FilterConfig<T> {
                 ObjectNode jsonValue = Json.newObject();
                 jsonValue.put("value", (Long) defalutValues[0]);
                 jsonValue.put("content", (String) defalutValues[1]);
-                userColumnConfiguration.put(UserColumnConfiguration.JSON_FILTERVALUE_FIELD, jsonValue);
+                userColumnConfiguration.set(UserColumnConfiguration.JSON_FILTERVALUE_FIELD, jsonValue);
                 log.error("The value " + filterValue + " returned for this filter component " + this + " is invalid, use default one instead");
             } else {
                 Object[] value = (Object[]) filterValue;
                 ObjectNode jsonValue = Json.newObject();
                 jsonValue.put("value", (Long) value[0]);
                 jsonValue.put("content", (String) value[1]);
-                userColumnConfiguration.put(UserColumnConfiguration.JSON_FILTERVALUE_FIELD, jsonValue);
+                userColumnConfiguration.set(UserColumnConfiguration.JSON_FILTERVALUE_FIELD, jsonValue);
             }
         }
 
@@ -1668,8 +1669,8 @@ public class FilterConfig<T> {
                             " like '" + value + "'");
                     return Expr.raw(sql);
                 } else {
-                    String sql = String.format(SEARCH_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id,
-                            "='" + value + "'");
+                    String sql = String.format(SEARCH_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id, "='"
+                            + value + "'");
                     return Expr.raw(sql);
                 }
             }
@@ -1723,8 +1724,8 @@ public class FilterConfig<T> {
                             " like '" + value + "'");
                     return Expr.raw(sql);
                 } else {
-                    String sql = String.format(SEARCH_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id,
-                            "='" + value + "'");
+                    String sql = String.format(SEARCH_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id, "='"
+                            + value + "'");
                     return Expr.raw(sql);
                 }
             }
@@ -1825,8 +1826,8 @@ public class FilterConfig<T> {
             if (filterValue != null) {
                 Date from = ((Date[]) filterValue)[0];
                 Date to = ((Date[]) filterValue)[1];
-                String sql = String.format(SEARCH_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id,
-                        Utilities.getDateFormat(MYSQL_DATETIME_FROM).format(from), Utilities.getDateFormat(MYSQL_DATETIME_TO).format(to));
+                String sql = String.format(SEARCH_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id, Utilities
+                        .getDateFormat(MYSQL_DATETIME_FROM).format(from), Utilities.getDateFormat(MYSQL_DATETIME_TO).format(to));
                 return Expr.raw(sql);
             }
             return null;
@@ -2002,8 +2003,8 @@ public class FilterConfig<T> {
         @Override
         public <T> void addEBeanSortExpression(OrderBy<T> orderby, SortStatusType sortStatusType, String fieldName) {
             if (sortStatusType != SortStatusType.NONE && sortStatusType != SortStatusType.UNSORTED) {
-                String sql = String.format(SORT_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id,
-                        LanguageUtil.getCurrent().getCode());
+                String sql = String.format(SORT_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id, LanguageUtil
+                        .getCurrent().getCode());
                 if (sortStatusType == SortStatusType.DESC) {
                     orderby.desc(sql);
                 } else {

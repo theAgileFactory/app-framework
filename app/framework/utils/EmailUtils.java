@@ -17,12 +17,20 @@
  */
 package framework.utils;
 
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
+
+import javax.mail.Message;
+import javax.mail.PasswordAuthentication;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+
+import org.apache.commons.lang3.ArrayUtils;
 
 import play.Logger;
 import play.Play;
-import play.api.libs.mailer.MailerAPI;
-import play.libs.mailer.Email;
 import scala.concurrent.duration.Duration;
 
 /**
@@ -72,21 +80,41 @@ public class EmailUtils {
      */
     private static void sendEmailSynchronous(String subject, String from, String body, String... to) {
         if (!simulateEmailSending) {
-
-            MailerAPI mailerApi = Play.application().plugin(framework.utils.MafMailerPlugin.class).instance();
-
-            Email email = new Email();
-            email.setSubject(subject);
-            email.setFrom(from);
-            for (int i = 0; i < to.length; i++) {
-                email.addTo(to[i]);
-            }
-            email.setBodyHtml(body);
-
-            mailerApi.send(email);
-
-            if (log.isDebugEnabled()) {
-                log.debug(String.format("Email sent to %s with body %s", (to != null && to.length != 00) ? to[0] : "null", body));
+            try {
+                // Send a real e-mail
+                Properties props = new Properties();
+                props.put("mail.smtp.host",
+                        framework.utils.Utilities.getPreferenceElseConfigurationValue(framework.commons.IFrameworkConstants.SMTP_HOST_PREFERENCE, "smtp.host"));
+                props.put("mail.smtp.port", framework.utils.Utilities.getPreferenceElseConfigurationValueAsInteger(
+                        framework.commons.IFrameworkConstants.SMTP_PORT_PREFERENCE, "smtp.port"));
+                props.put("mail.smtp.starttls.enable", framework.utils.Utilities.getPreferenceElseConfigurationValueAsBoolean(
+                        framework.commons.IFrameworkConstants.SMTP_TLS_PREFERENCE, "smtp.tls"));
+                props.put("mail.smtp.auth", "true");
+                if (framework.utils.Utilities.getPreferenceElseConfigurationValueAsBoolean(framework.commons.IFrameworkConstants.SMTP_SSL_PREFERENCE,
+                        "play.mailer.ssl")) {
+                    props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+                    props.put("mail.smtp.socketFactory.fallback", "false");
+                }
+                Session session = Session.getInstance(props, new javax.mail.Authenticator() {
+                    protected PasswordAuthentication getPasswordAuthentication() {
+                        return new PasswordAuthentication(framework.utils.Utilities.getPreferenceElseConfigurationValue(
+                                framework.commons.IFrameworkConstants.SMTP_USER_PREFERENCE, "smtp.user"), framework.utils.Utilities
+                                .getPreferenceElseConfigurationValue(framework.commons.IFrameworkConstants.SMTP_PASSWORD_PREFERENCE, "smtp.password"));
+                    }
+                });
+                Message message = new MimeMessage(session);
+                message.setFrom(new InternetAddress(from));
+                for (String recipient : to) {
+                    message.addRecipient(Message.RecipientType.TO, InternetAddress.parse(recipient)[0]);
+                }
+                message.setSubject(subject);
+                message.setContent(body, "text/html");
+                Transport.send(message);
+                if (log.isDebugEnabled()) {
+                    log.debug(String.format("Email sent to %s with body %s", (to != null && to.length != 00) ? to[0] : "null", body));
+                }
+            } catch (Exception e) {
+                log.error("Unable to send an e-mail to " + ArrayUtils.toString(to), e);
             }
         } else {
             // Simulate sending an e-mail by dumping the mail content to the

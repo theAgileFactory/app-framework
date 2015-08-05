@@ -40,9 +40,9 @@ public class LanguageUtil {
     public static Map<String, Language> VALID_LANGUAGES_MAP = Collections.unmodifiableMap(Collections.synchronizedMap(new LinkedHashMap<String, Language>() {
         private static final long serialVersionUID = 1L;
         {
-            String languagesString = Play.application().configuration().getString("application.langs");
             Integer c = 1;
-            for (String l : languagesString.trim().split(",")) {
+            List<String> languageCodes = Play.application().configuration().getStringList("play.i18n.langs");
+            for (String l : languageCodes) {
                 String code = l.trim().toLowerCase();
                 this.put(code, new Language(code, c));
                 c++;

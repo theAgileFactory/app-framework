@@ -26,9 +26,9 @@ import javax.persistence.Version;
 
 import models.framework_models.parent.IModelConstants;
 import play.Play;
-import play.db.ebean.Model;
 
 import com.avaje.ebean.Ebean;
+import com.avaje.ebean.Model;
 import com.avaje.ebean.SqlUpdate;
 
 /**
@@ -45,7 +45,7 @@ public class SchedulerState extends Model {
     /**
      * Default finder for the entity class
      */
-    public static Finder<Long, SchedulerState> find = new Finder<Long, SchedulerState>(Long.class, SchedulerState.class);
+    public static Finder<Long, SchedulerState> find = new Finder<Long, SchedulerState>(SchedulerState.class);
 
     @Id
     public Long id;

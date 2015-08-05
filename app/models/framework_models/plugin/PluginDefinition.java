@@ -25,7 +25,9 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 
 import models.framework_models.parent.IModelConstants;
-import play.db.ebean.Model;
+
+import com.avaje.ebean.Model;
+
 import framework.services.plugins.api.IPluginRunner;
 
 /**
@@ -49,7 +51,7 @@ public class PluginDefinition extends Model {
     /**
      * Default finder for the entity class
      */
-    public static Finder<Long, PluginDefinition> find = new Finder<Long, PluginDefinition>(Long.class, PluginDefinition.class);
+    public static Finder<Long, PluginDefinition> find = new Finder<Long, PluginDefinition>(PluginDefinition.class);
 
     @Id
     public Long id;

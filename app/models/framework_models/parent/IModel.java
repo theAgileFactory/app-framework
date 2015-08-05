@@ -17,7 +17,7 @@
  */
 package models.framework_models.parent;
 
-import play.db.ebean.Model;
+import com.avaje.ebean.Model;
 
 /**
  * The interface to be implemented by the data objects from the framework. It

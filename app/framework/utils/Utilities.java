@@ -53,6 +53,9 @@ import play.mvc.Controller;
 import play.mvc.Http.Context;
 import play.twirl.api.Html;
 
+import com.avaje.ebean.ExpressionList;
+import com.avaje.ebean.OrderBy;
+import com.avaje.ebean.OrderBy.Property;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import framework.commons.IFrameworkConstants;
@@ -384,7 +387,7 @@ public abstract class Utilities {
         if (valueHoldersList != null) {
             int order = 0;
             for (ISelectableValueHolder<T> valueHolder : valueHoldersList) {
-                valueHoldersAsJson.put(String.valueOf(valueHolder.getValue()), marshallAsJson(valueHolder, order));
+                valueHoldersAsJson.set(String.valueOf(valueHolder.getValue()), marshallAsJson(valueHolder, order));
                 order++;
             }
         }
@@ -582,8 +585,8 @@ public abstract class Utilities {
      */
     public static String getPreferenceElseConfigurationValue(String preferenceName, String configurationName) {
 
-        String preferenceValue =
-                ServiceManager.getService(IPreferenceManagerPlugin.NAME, IPreferenceManagerPlugin.class).getPreferenceValueAsString(preferenceName);
+        String preferenceValue = ServiceManager.getService(IPreferenceManagerPlugin.NAME, IPreferenceManagerPlugin.class).getPreferenceValueAsString(
+                preferenceName);
 
         if (preferenceValue != null && !preferenceValue.equals("")) {
             return preferenceValue;
@@ -607,8 +610,8 @@ public abstract class Utilities {
      */
     public static Integer getPreferenceElseConfigurationValueAsInteger(String preferenceName, String configurationName) {
 
-        Integer preferenceValue =
-                ServiceManager.getService(IPreferenceManagerPlugin.NAME, IPreferenceManagerPlugin.class).getPreferenceValueAsInteger(preferenceName);
+        Integer preferenceValue = ServiceManager.getService(IPreferenceManagerPlugin.NAME, IPreferenceManagerPlugin.class).getPreferenceValueAsInteger(
+                preferenceName);
 
         if (preferenceValue != null) {
             return preferenceValue;
@@ -632,8 +635,8 @@ public abstract class Utilities {
      */
     public static Boolean getPreferenceElseConfigurationValueAsBoolean(String preferenceName, String configurationName) {
 
-        Boolean preferenceValue =
-                ServiceManager.getService(IPreferenceManagerPlugin.NAME, IPreferenceManagerPlugin.class).getPreferenceValueAsBoolean(preferenceName);
+        Boolean preferenceValue = ServiceManager.getService(IPreferenceManagerPlugin.NAME, IPreferenceManagerPlugin.class).getPreferenceValueAsBoolean(
+                preferenceName);
 
         if (preferenceValue != null) {
             return preferenceValue;
@@ -658,5 +661,23 @@ public abstract class Utilities {
                 length += folderSize(file);
         }
         return length;
+    }
+
+    /**
+     * Update the specified expression list with the specified order by
+     * structure
+     * 
+     * @param orderBy
+     *            an order by structure
+     * @param expressionList
+     *            an expression list
+     */
+    public static <T> void updateExpressionListWithOrderBy(OrderBy<T> orderBy, ExpressionList<T> expressionList) {
+        OrderBy<T> currentOrderBy = expressionList.orderBy();
+        if (orderBy.getProperties() != null) {
+            for (Property property : orderBy.getProperties()) {
+                currentOrderBy.add(property);
+            }
+        }
     }
 }

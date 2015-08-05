@@ -29,7 +29,8 @@ import javax.persistence.Version;
 
 import models.framework_models.parent.IModel;
 import models.framework_models.parent.IModelConstants;
-import play.db.ebean.Model;
+
+import com.avaje.ebean.Model;
 
 /**
  * An entity which stores the API authorizations.<br/>
@@ -58,7 +59,7 @@ import play.db.ebean.Model;
 public class ApiRegistration extends Model implements IModel {
     private static final long serialVersionUID = 4564562397296L;
 
-    public static Finder<Long, ApiRegistration> find = new Finder<Long, ApiRegistration>(Long.class, ApiRegistration.class);
+    public static Finder<Long, ApiRegistration> find = new Finder<Long, ApiRegistration>(ApiRegistration.class);
 
     public ApiRegistration() {
     }

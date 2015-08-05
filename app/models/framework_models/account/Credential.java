@@ -35,7 +35,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import play.db.ebean.Model;
+import com.avaje.ebean.Model;
 
 /**
  * A class to be used for the light version of BizDock.<br/>
@@ -54,7 +54,7 @@ public class Credential extends Model {
     /**
      * Default finder for the entity class
      */
-    public static Finder<Long, Credential> find = new Finder<Long, Credential>(Long.class, Credential.class);
+    public static Finder<Long, Credential> find = new Finder<Long, Credential>(Credential.class);
 
     @Id
     public Long id;

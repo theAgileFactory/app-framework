@@ -28,10 +28,10 @@ import javax.persistence.Version;
 
 import models.framework_models.parent.IModelConstants;
 import play.Logger;
-import play.db.ebean.Model;
 
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.ExpressionList;
+import com.avaje.ebean.Model;
 import com.avaje.ebean.SqlUpdate;
 
 import framework.commons.DataType;
@@ -58,7 +58,7 @@ public class PluginLog extends Model {
     /**
      * Default finder for the entity class
      */
-    public static Finder<Long, PluginLog> find = new Finder<Long, PluginLog>(Long.class, PluginLog.class);
+    public static Finder<Long, PluginLog> find = new Finder<Long, PluginLog>(PluginLog.class);
 
     @Id
     public Long id;

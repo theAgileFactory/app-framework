@@ -25,7 +25,8 @@ import javax.persistence.Id;
 import javax.persistence.Version;
 
 import models.framework_models.parent.IModelConstants;
-import play.db.ebean.Model;
+
+import com.avaje.ebean.Model;
 
 /**
  * An help target is a mapping between a BizDock route and an external target.
@@ -37,7 +38,7 @@ public class HelpTarget extends Model {
 
     private static final long serialVersionUID = -8381580722836654720L;
 
-    public static Finder<Long, HelpTarget> find = new Finder<Long, HelpTarget>(Long.class, HelpTarget.class);
+    public static Finder<Long, HelpTarget> find = new Finder<Long, HelpTarget>(HelpTarget.class);
 
     @Id
     public Long id;

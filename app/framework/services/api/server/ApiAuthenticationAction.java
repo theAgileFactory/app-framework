@@ -32,7 +32,7 @@ import play.mvc.Http.RawBuffer;
 import play.mvc.Result;
 import framework.commons.IFrameworkConstants;
 import framework.commons.IFrameworkConstants.ApiAuthzMode;
-import framework.security.DeadboltUtils;
+import framework.security.SecurityUtils;
 import framework.services.ServiceManager;
 import framework.services.account.AccountManagementException;
 import framework.services.account.IAccountManagerPlugin;
@@ -337,7 +337,7 @@ public class ApiAuthenticationAction extends Action<ApiAuthentication> {
                 ApiLog.log.debug("Adding permissions to default : " + Arrays.toString(roles));
             }
         }
-        if (userAccount == null || !(DeadboltUtils.hasAllRoles(userAccount, roles))) {
+        if (userAccount == null || !(SecurityUtils.hasAllRoles(userAccount, roles))) {
             ApiLog.log.error("Unauthorized API call : permissions of user " + userAccount.getUid() + " are not sufficient expecting " + Arrays.toString(roles));
             return Pair.of(false, "Unauthorized API call for API browser access : insufficient permissions for the currently logged user");
         }

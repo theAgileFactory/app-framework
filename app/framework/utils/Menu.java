@@ -29,7 +29,7 @@ import org.apache.commons.lang3.StringUtils;
 import play.mvc.Call;
 import play.mvc.Http.Context;
 import framework.commons.IFrameworkConstants;
-import framework.security.DeadboltUtils;
+import framework.security.SecurityUtils;
 
 /**
  * Root class for the various navigation structures.<br/>
@@ -267,7 +267,7 @@ public abstract class Menu {
 
         public boolean restrict() {
             try {
-                return this.isAlwaysDisplayed || DeadboltUtils.restrict(this.getAuthorizedPermissions(), Context.current());
+                return this.isAlwaysDisplayed || SecurityUtils.restrict(this.getAuthorizedPermissions(), Context.current());
             } catch (Exception e) {
                 return false;
             }

@@ -28,7 +28,9 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Version;
 
 import models.framework_models.parent.IModelConstants;
-import play.db.ebean.Model;
+
+import com.avaje.ebean.Model;
+
 import framework.utils.DefaultSelectableValueHolderCollection;
 import framework.utils.ISelectableValueHolder;
 import framework.utils.ISelectableValueHolderCollection;
@@ -46,7 +48,7 @@ public class Shortcut extends Model implements ISelectableValueHolder<Long> {
     /**
      * Default finder for the entity class
      */
-    public static Finder<Long, Shortcut> find = new Finder<Long, Shortcut>(Long.class, Shortcut.class);
+    public static Finder<Long, Shortcut> find = new Finder<Long, Shortcut>(Shortcut.class);
 
     @Id
     public Long id;

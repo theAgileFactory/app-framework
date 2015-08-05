@@ -34,8 +34,10 @@ import models.framework_models.parent.IModelConstants;
 import org.apache.commons.lang3.StringUtils;
 
 import play.api.data.Field;
-import play.db.ebean.Model;
 import play.twirl.api.Html;
+
+import com.avaje.ebean.Model;
+
 import framework.utils.Msg;
 
 /**
@@ -54,8 +56,7 @@ import framework.utils.Msg;
 public class SingleItemCustomAttributeValue extends Model implements IModel, ICustomAttributeValue {
     private static final long serialVersionUID = -676104249012732234L;
 
-    public static Finder<Long, SingleItemCustomAttributeValue> find = new Finder<Long, SingleItemCustomAttributeValue>(Long.class,
-            SingleItemCustomAttributeValue.class);
+    public static Finder<Long, SingleItemCustomAttributeValue> find = new Finder<Long, SingleItemCustomAttributeValue>(SingleItemCustomAttributeValue.class);
 
     @Id
     public Long id;
@@ -97,8 +98,8 @@ public class SingleItemCustomAttributeValue extends Model implements IModel, ICu
     @Override
     public void defaults() {
         if (customAttributeDefinition != null && customAttributeDefinition.getDefaultValueAsString() != null) {
-            CustomAttributeItemOption customAttributeItemOption =
-                    CustomAttributeItemOption.getCustomAttributeItemOptionByName(customAttributeDefinition.getDefaultValueAsString());
+            CustomAttributeItemOption customAttributeItemOption = CustomAttributeItemOption.getCustomAttributeItemOptionByName(customAttributeDefinition
+                    .getDefaultValueAsString());
             this.value = customAttributeItemOption;
         }
     }
@@ -132,9 +133,8 @@ public class SingleItemCustomAttributeValue extends Model implements IModel, ICu
             key += ":" + filter;
         }
 
-        SingleItemCustomAttributeValue customAttributeValue =
-                find.where().eq("deleted", false).eq("objectType", key).eq("objectId", objectId)
-                        .eq("customAttributeDefinition.id", customAttributeDefinition.id).findUnique();
+        SingleItemCustomAttributeValue customAttributeValue = find.where().eq("deleted", false).eq("objectType", key).eq("objectId", objectId)
+                .eq("customAttributeDefinition.id", customAttributeDefinition.id).findUnique();
         if (customAttributeValue == null) {
             customAttributeValue = new SingleItemCustomAttributeValue();
             customAttributeValue.objectType = key;
@@ -224,9 +224,10 @@ public class SingleItemCustomAttributeValue extends Model implements IModel, ICu
 
     @Override
     public Html renderFormField(Field field) {
-        return views.html.framework_views.parts.dropdownlist.render(field, Msg.get(customAttributeDefinition.name),
-                CustomAttributeItemOption.getSelectableValuesForDefinitionId(customAttributeDefinition.id), null, false,
-                customAttributeDefinition.isRequired());
+        return views.html.framework_views.parts.dropdownlist
+                .render(field, Msg.get(customAttributeDefinition.name),
+                        CustomAttributeItemOption.getSelectableValuesForDefinitionId(customAttributeDefinition.id), null, false,
+                        customAttributeDefinition.isRequired());
     }
 
     @Override

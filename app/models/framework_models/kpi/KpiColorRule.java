@@ -30,8 +30,8 @@ import javax.persistence.Version;
 
 import models.framework_models.parent.IModel;
 import models.framework_models.parent.IModelConstants;
-import play.db.ebean.Model;
 
+import com.avaje.ebean.Model;
 import com.avaje.ebean.annotation.Where;
 
 /**
@@ -51,7 +51,7 @@ public class KpiColorRule extends Model implements IModel {
 
     private static final long serialVersionUID = 45221693586L;
 
-    public static Finder<Long, KpiColorRule> find = new Finder<Long, KpiColorRule>(Long.class, KpiColorRule.class);
+    public static Finder<Long, KpiColorRule> find = new Finder<Long, KpiColorRule>(KpiColorRule.class);
 
     @Id
     public Long id;
@@ -175,8 +175,8 @@ public class KpiColorRule extends Model implements IModel {
      * @return
      */
     public static Integer getLastOrder(Long kpiDefinitionId) {
-        KpiColorRule lastKpiColorRule =
-                find.orderBy("order DESC").where().eq("deleted", false).eq("kpiDefinition.id", kpiDefinitionId).setMaxRows(1).findUnique();
+        KpiColorRule lastKpiColorRule = find.orderBy("order DESC").where().eq("deleted", false).eq("kpiDefinition.id", kpiDefinitionId).setMaxRows(1)
+                .findUnique();
         if (lastKpiColorRule == null) {
             return -1;
         } else {

@@ -38,8 +38,10 @@ import org.apache.commons.lang3.StringUtils;
 
 import play.Logger;
 import play.api.data.Field;
-import play.db.ebean.Model;
 import play.twirl.api.Html;
+
+import com.avaje.ebean.Model;
+
 import framework.utils.DefaultSelectableValueHolderCollection;
 import framework.utils.Msg;
 
@@ -54,8 +56,7 @@ import framework.utils.Msg;
 public class MultiItemCustomAttributeValue extends Model implements IModel, ICustomAttributeValue {
     private static final long serialVersionUID = 5022807192623653146L;
 
-    public static Finder<Long, MultiItemCustomAttributeValue> find = new Finder<Long, MultiItemCustomAttributeValue>(Long.class,
-            MultiItemCustomAttributeValue.class);
+    public static Finder<Long, MultiItemCustomAttributeValue> find = new Finder<Long, MultiItemCustomAttributeValue>(MultiItemCustomAttributeValue.class);
 
     @Id
     public Long id;
@@ -93,8 +94,8 @@ public class MultiItemCustomAttributeValue extends Model implements IModel, ICus
 
     @Override
     public String audit() {
-        return "MultiItemCustomAttributeValue [id=" + id + ", deleted=" + deleted + ", lastUpdate=" + lastUpdate + ", objectType=" + objectType
-                + ", objectId=" + objectId + "]";
+        return "MultiItemCustomAttributeValue [id=" + id + ", deleted=" + deleted + ", lastUpdate=" + lastUpdate + ", objectType=" + objectType + ", objectId="
+                + objectId + "]";
     }
 
     @Override
@@ -103,8 +104,8 @@ public class MultiItemCustomAttributeValue extends Model implements IModel, ICus
             String[] defaultValuesAsString = customAttributeDefinition.getDefaultValueAsArrayOfString();
             this.values = new ArrayList<CustomAttributeMultiItemOption>();
             for (String defaultValue : defaultValuesAsString) {
-                CustomAttributeMultiItemOption customAttributeMultiItemOption =
-                        CustomAttributeMultiItemOption.getCustomAttributeMultiItemOptionByName(defaultValue);
+                CustomAttributeMultiItemOption customAttributeMultiItemOption = CustomAttributeMultiItemOption
+                        .getCustomAttributeMultiItemOptionByName(defaultValue);
                 this.values.add(customAttributeMultiItemOption);
             }
         }
@@ -145,9 +146,8 @@ public class MultiItemCustomAttributeValue extends Model implements IModel, ICus
             key += ":" + filter;
         }
 
-        MultiItemCustomAttributeValue customAttributeValue =
-                find.where().eq("deleted", false).eq("objectType", key).eq("objectId", objectId)
-                        .eq("customAttributeDefinition.id", customAttributeDefinition.id).findUnique();
+        MultiItemCustomAttributeValue customAttributeValue = find.where().eq("deleted", false).eq("objectType", key).eq("objectId", objectId)
+                .eq("customAttributeDefinition.id", customAttributeDefinition.id).findUnique();
         if (customAttributeValue == null) {
             customAttributeValue = new MultiItemCustomAttributeValue();
             customAttributeValue.objectType = key;
@@ -228,8 +228,8 @@ public class MultiItemCustomAttributeValue extends Model implements IModel, ICus
             List<Long> ids = (List<Long>) newValue;
             this.temporaryValues = new ArrayList<CustomAttributeMultiItemOption>();
             for (Long customAttributeMultiItemOptionId : ids) {
-                CustomAttributeMultiItemOption itemOption =
-                        CustomAttributeMultiItemOption.getCustomAttributeMultiItemOptionById(customAttributeMultiItemOptionId);
+                CustomAttributeMultiItemOption itemOption = CustomAttributeMultiItemOption
+                        .getCustomAttributeMultiItemOptionById(customAttributeMultiItemOptionId);
                 if (itemOption != null) {
                     this.temporaryValues.add(itemOption);
                 }

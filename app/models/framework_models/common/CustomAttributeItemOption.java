@@ -31,7 +31,9 @@ import javax.persistence.Version;
 
 import models.framework_models.parent.IModel;
 import models.framework_models.parent.IModelConstants;
-import play.db.ebean.Model;
+
+import com.avaje.ebean.Model;
+
 import framework.utils.DefaultSelectableValueHolderCollection;
 import framework.utils.ISelectableValueHolder;
 import framework.utils.ISelectableValueHolderCollection;
@@ -46,7 +48,7 @@ import framework.utils.Msg;
 public class CustomAttributeItemOption extends Model implements IModel, ISelectableValueHolder<Long> {
     private static final long serialVersionUID = -1005716640854077585L;
 
-    public static Finder<Long, CustomAttributeItemOption> find = new Finder<Long, CustomAttributeItemOption>(Long.class, CustomAttributeItemOption.class);
+    public static Finder<Long, CustomAttributeItemOption> find = new Finder<Long, CustomAttributeItemOption>(CustomAttributeItemOption.class);
 
     @Id
     public Long id;
@@ -191,9 +193,8 @@ public class CustomAttributeItemOption extends Model implements IModel, ISelecta
      * @return
      */
     public static Integer getLastOrder(Long customAttributeDefinitionId) {
-        CustomAttributeItemOption last =
-                find.orderBy("order DESC").where().eq("deleted", false).eq("customAttributeDefinition.id", customAttributeDefinitionId).setMaxRows(1)
-                        .findUnique();
+        CustomAttributeItemOption last = find.orderBy("order DESC").where().eq("deleted", false)
+                .eq("customAttributeDefinition.id", customAttributeDefinitionId).setMaxRows(1).findUnique();
         if (last == null) {
             return -1;
         } else {

@@ -28,7 +28,9 @@ import javax.persistence.Version;
 
 import models.framework_models.parent.IModel;
 import models.framework_models.parent.IModelConstants;
-import play.db.ebean.Model;
+
+import com.avaje.ebean.Model;
+
 import framework.utils.formats.DateType;
 
 /**
@@ -45,7 +47,7 @@ public class Notification extends Model implements IModel {
     /**
      * Default finder for the entity class
      */
-    public static Finder<Long, Notification> find = new Finder<Long, Notification>(Long.class, Notification.class);
+    public static Finder<Long, Notification> find = new Finder<Long, Notification>(Notification.class);
 
     @Id
     public Long id;

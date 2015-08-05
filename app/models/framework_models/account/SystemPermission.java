@@ -34,7 +34,8 @@ import models.framework_models.parent.IModelConstants;
 
 import org.apache.poi.ss.formula.functions.T;
 
-import play.db.ebean.Model;
+import com.avaje.ebean.Model;
+
 import framework.utils.DefaultSelectableValueHolderCollection;
 import framework.utils.ISelectableValueHolder;
 import framework.utils.ISelectableValueHolderCollection;
@@ -54,7 +55,7 @@ public class SystemPermission extends Model implements ISelectableValueHolder<Lo
     /**
      * Default finder for the entity class
      */
-    public static Finder<Long, SystemPermission> find = new Finder<Long, SystemPermission>(Long.class, SystemPermission.class);
+    public static Finder<Long, SystemPermission> find = new Finder<Long, SystemPermission>(SystemPermission.class);
 
     /**
      * Return the system permission by name.

@@ -34,8 +34,10 @@ import models.framework_models.parent.IModelConstants;
 import org.apache.commons.lang3.StringUtils;
 
 import play.api.data.Field;
-import play.db.ebean.Model;
 import play.twirl.api.Html;
+
+import com.avaje.ebean.Model;
+
 import framework.utils.Msg;
 
 /**
@@ -59,7 +61,7 @@ import framework.utils.Msg;
 public class StringCustomAttributeValue extends Model implements IModel, ICustomAttributeValue {
     private static final long serialVersionUID = -676104249012732234L;
 
-    public static Finder<Long, StringCustomAttributeValue> find = new Finder<Long, StringCustomAttributeValue>(Long.class, StringCustomAttributeValue.class);
+    public static Finder<Long, StringCustomAttributeValue> find = new Finder<Long, StringCustomAttributeValue>(StringCustomAttributeValue.class);
 
     @Id
     public Long id;
@@ -134,9 +136,8 @@ public class StringCustomAttributeValue extends Model implements IModel, ICustom
             key += ":" + filter;
         }
 
-        StringCustomAttributeValue customAttributeValue =
-                find.where().eq("deleted", false).eq("objectType", key).eq("objectId", objectId)
-                        .eq("customAttributeDefinition.id", customAttributeDefinition.id).findUnique();
+        StringCustomAttributeValue customAttributeValue = find.where().eq("deleted", false).eq("objectType", key).eq("objectId", objectId)
+                .eq("customAttributeDefinition.id", customAttributeDefinition.id).findUnique();
         if (customAttributeValue == null) {
             customAttributeValue = new StringCustomAttributeValue();
             customAttributeValue.objectType = key;
@@ -220,8 +221,7 @@ public class StringCustomAttributeValue extends Model implements IModel, ICustom
 
     @Override
     public Html renderFormField(Field field) {
-        return views.html.framework_views.parts.basic_input_text.render(field, Msg.get(customAttributeDefinition.name),
-                customAttributeDefinition.isRequired());
+        return views.html.framework_views.parts.basic_input_text.render(field, Msg.get(customAttributeDefinition.name), customAttributeDefinition.isRequired());
     }
 
     @Override

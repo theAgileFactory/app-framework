@@ -42,9 +42,9 @@ import models.framework_models.parent.IModelConstants;
 import org.apache.commons.lang3.StringUtils;
 
 import play.Logger;
-import play.db.ebean.Model;
 
 import com.avaje.ebean.Ebean;
+import com.avaje.ebean.Model;
 import com.avaje.ebean.SqlQuery;
 import com.avaje.ebean.SqlRow;
 
@@ -113,7 +113,7 @@ public class CustomAttributeDefinition extends Model implements IModel {
 
     private static Logger.ALogger log = Logger.of(CustomAttributeDefinition.class);
 
-    public static Finder<Long, CustomAttributeDefinition> find = new Finder<Long, CustomAttributeDefinition>(Long.class, CustomAttributeDefinition.class);
+    public static Finder<Long, CustomAttributeDefinition> find = new Finder<Long, CustomAttributeDefinition>(CustomAttributeDefinition.class);
 
     @Id
     public Long id;
@@ -640,8 +640,8 @@ public class CustomAttributeDefinition extends Model implements IModel {
      *            the object type
      */
     public static Integer getLastOrder(Class<?> objectType) {
-        CustomAttributeDefinition lastCustomAttributeDefinition =
-                find.orderBy("order DESC").where().eq("deleted", false).eq("objectType", objectType.getName()).setMaxRows(1).findUnique();
+        CustomAttributeDefinition lastCustomAttributeDefinition = find.orderBy("order DESC").where().eq("deleted", false)
+                .eq("objectType", objectType.getName()).setMaxRows(1).findUnique();
         if (lastCustomAttributeDefinition == null) {
             return -1;
         } else {
@@ -743,8 +743,8 @@ public class CustomAttributeDefinition extends Model implements IModel {
      * @return a value
      */
     public static ICustomAttributeValue getCustomAttributeValue(Long attributeDefinitionId, Class<?> objectType, Long objectId) {
-        CustomAttributeDefinition customAttributeDefinition =
-                find.where().eq("deleted", false).eq("objectType", objectType.getName()).eq("id", attributeDefinitionId).findUnique();
+        CustomAttributeDefinition customAttributeDefinition = find.where().eq("deleted", false).eq("objectType", objectType.getName())
+                .eq("id", attributeDefinitionId).findUnique();
         return getOrCreateCustomAttributeValue(objectType, objectId, customAttributeDefinition);
     }
 
@@ -765,8 +765,8 @@ public class CustomAttributeDefinition extends Model implements IModel {
      * @return a value
      */
     public static ICustomAttributeValue getCustomAttributeValue(Long attributeDefinitionId, Class<?> objectType, String filter, Long objectId) {
-        CustomAttributeDefinition customAttributeDefinition =
-                find.where().eq("deleted", false).eq("objectType", objectType.getName() + ":" + filter).eq("id", attributeDefinitionId).findUnique();
+        CustomAttributeDefinition customAttributeDefinition = find.where().eq("deleted", false).eq("objectType", objectType.getName() + ":" + filter)
+                .eq("id", attributeDefinitionId).findUnique();
         return getOrCreateCustomAttributeValue(objectType, filter, objectId, customAttributeDefinition);
     }
 
@@ -782,14 +782,14 @@ public class CustomAttributeDefinition extends Model implements IModel {
      * @return a value
      */
     public static ICustomAttributeValue getCustomAttributeValue(String attributeDefinitionUuid, Class<?> objectType, Long objectId) {
-        CustomAttributeDefinition customAttributeDefinition =
-                find.where().eq("deleted", false).eq("objectType", objectType.getName()).eq("uuid", attributeDefinitionUuid).findUnique();
+        CustomAttributeDefinition customAttributeDefinition = find.where().eq("deleted", false).eq("objectType", objectType.getName())
+                .eq("uuid", attributeDefinitionUuid).findUnique();
         return getOrCreateCustomAttributeValue(objectType, objectId, customAttributeDefinition);
     }
 
     public static ICustomAttributeValue getCustomAttributeValue(String attributeDefinitionUuid, Class<?> objectType, String filter, Long objectId) {
-        CustomAttributeDefinition customAttributeDefinition =
-                find.where().eq("deleted", false).eq("objectType", objectType.getName() + ":" + filter).eq("uuid", attributeDefinitionUuid).findUnique();
+        CustomAttributeDefinition customAttributeDefinition = find.where().eq("deleted", false).eq("objectType", objectType.getName() + ":" + filter)
+                .eq("uuid", attributeDefinitionUuid).findUnique();
         return getOrCreateCustomAttributeValue(objectType, filter, objectId, customAttributeDefinition);
     }
 
@@ -805,8 +805,7 @@ public class CustomAttributeDefinition extends Model implements IModel {
      *            the definition of a custom attribute
      * @return an custom attribute instance
      */
-    private static ICustomAttributeValue getOrCreateCustomAttributeValue(Class<?> objectType, Long objectId,
-            CustomAttributeDefinition customAttributeDefinition) {
+    private static ICustomAttributeValue getOrCreateCustomAttributeValue(Class<?> objectType, Long objectId, CustomAttributeDefinition customAttributeDefinition) {
         return getOrCreateCustomAttributeValue(objectType, null, objectId, customAttributeDefinition);
     }
 

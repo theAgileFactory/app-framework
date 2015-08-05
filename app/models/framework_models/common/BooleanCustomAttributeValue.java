@@ -34,8 +34,10 @@ import models.framework_models.parent.IModelConstants;
 import org.apache.commons.lang3.StringUtils;
 
 import play.api.data.Field;
-import play.db.ebean.Model;
 import play.twirl.api.Html;
+
+import com.avaje.ebean.Model;
+
 import framework.utils.Msg;
 
 /**
@@ -52,8 +54,7 @@ import framework.utils.Msg;
 public class BooleanCustomAttributeValue extends Model implements IModel, ICustomAttributeValue {
     private static final long serialVersionUID = -676104249012732234L;
 
-    public static Finder<Long, BooleanCustomAttributeValue> find = new Finder<Long, BooleanCustomAttributeValue>(Long.class,
-            BooleanCustomAttributeValue.class);
+    public static Finder<Long, BooleanCustomAttributeValue> find = new Finder<Long, BooleanCustomAttributeValue>(BooleanCustomAttributeValue.class);
 
     @Id
     public Long id;
@@ -121,9 +122,8 @@ public class BooleanCustomAttributeValue extends Model implements IModel, ICusto
             key += ":" + filter;
         }
 
-        BooleanCustomAttributeValue customAttributeValue =
-                find.where().eq("deleted", false).eq("objectType", key).eq("objectId", objectId)
-                        .eq("customAttributeDefinition.id", customAttributeDefinition.id).findUnique();
+        BooleanCustomAttributeValue customAttributeValue = find.where().eq("deleted", false).eq("objectType", key).eq("objectId", objectId)
+                .eq("customAttributeDefinition.id", customAttributeDefinition.id).findUnique();
         if (customAttributeValue == null) {
             customAttributeValue = new BooleanCustomAttributeValue();
             customAttributeValue.objectType = key;

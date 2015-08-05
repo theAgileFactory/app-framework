@@ -2,9 +2,9 @@ name := "app-framework"
 
 version := "dist"
 
-lazy val root = (project in file(".")).enablePlugins(PlayJava)
+lazy val root = (project in file(".")).enablePlugins(PlayJava, PlayEbean)
 
-scalaVersion := "2.10.4"
+scalaVersion := "2.11.6"
 
 //Uncomment to add parameters to javac in SBT
 //javacOptions ++= Seq("-Xlint:deprecation")
@@ -18,7 +18,10 @@ sources in (Compile,doc) := Seq.empty
 
 libraryDependencies ++= Seq(
   javaJdbc,
-  javaEbean,
   cache,
   javaWs
 )
+
+// Play provides two styles of routers, one expects its actions to be injected, the
+// other, legacy style, accesses its actions statically.
+//routesGenerator := InjectedRoutesGenerator

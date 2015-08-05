@@ -29,7 +29,9 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
 import models.framework_models.parent.IModelConstants;
-import play.db.ebean.Model;
+
+import com.avaje.ebean.Model;
+
 import framework.utils.Utilities;
 
 /**
@@ -53,7 +55,7 @@ public class PluginConfiguration extends Model {
     /**
      * Default finder for the entity class
      */
-    public static Finder<Long, PluginConfiguration> find = new Finder<Long, PluginConfiguration>(Long.class, PluginConfiguration.class);
+    public static Finder<Long, PluginConfiguration> find = new Finder<Long, PluginConfiguration>(PluginConfiguration.class);
 
     @Id
     public Long id;

@@ -17,6 +17,8 @@
  */
 package framework.security;
 
+import java.util.Optional;
+
 import play.Logger;
 import play.libs.F.Function0;
 import play.libs.F.Promise;
@@ -47,33 +49,30 @@ public abstract class CommonDeadboltHandler extends AbstractDeadboltHandler {
     }
 
     @Override
-    public Promise<Result> beforeAuthCheck(final Http.Context ctx) {
-
-        Logger.debug("beforeAuthCheck");
-
+    public Promise<Optional<Result>> beforeAuthCheck(final Http.Context ctx) {
         String uid = ServiceManager.getService(IUserSessionManagerPlugin.NAME, IUserSessionManagerPlugin.class).getUserSessionId(ctx);
-
+        if (log.isDebugEnabled()) {
+            log.debug("Calling beforeAuthCheck, user in session is " + uid);
+        }
         if (uid == null) {
-
-            return Promise.promise(new Function0<Result>() {
-
-                public Result apply() throws Throwable {
-                    return redirectToLoginPage(ctx.request().uri());
+            return Promise.promise(new Function0<Optional<Result>>() {
+                public Optional<Result> apply() throws Throwable {
+                    return Optional.of(redirectToLoginPage(ctx.request().uri()));
                 }
 
             });
 
         }
-
-        return Promise.pure(null);
+        Optional<Result> emptyResult = Optional.empty();
+        return Promise.promise(() -> emptyResult);
     }
 
     @Override
-    public Subject getSubject(Http.Context ctx) {
-
+    public Promise<Optional<Subject>> getSubject(Http.Context ctx) {
+        Optional<Subject> emptySubject = Optional.empty();
         String uid = ServiceManager.getService(IUserSessionManagerPlugin.NAME, IUserSessionManagerPlugin.class).getUserSessionId(ctx);
         if (log.isDebugEnabled()) {
-            log.debug("Found session for " + uid);
+            log.debug("Looking for a subject (getSubject), user in session is " + uid);
         }
         if (uid != null) {
             IUserAccount userAccount;
@@ -84,20 +83,31 @@ public abstract class CommonDeadboltHandler extends AbstractDeadboltHandler {
                 }
             } catch (AccountManagementException e) {
                 log.error("Authorization failed: Unable to get the user profile for " + uid, e);
-                return null;
+                return Promise.promise(() -> emptySubject);
             }
             if (userAccount == null) {
                 log.info("User account for " + uid + " NOT FOUND");
-                return null;
+                return Promise.promise(() -> emptySubject);
             }
             if (userAccount.isActive()) {
                 // if the user is active, we return the profile
-                return userAccount;
+                return Promise.promise(new Function0<Optional<Subject>>() {
+                    @Override
+                    public Optional<Subject> apply() throws Throwable {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Returning an optional of userAccount for " + userAccount.getUid());
+                        }
+                        return Optional.of(userAccount);
+                    }
+                });
             } else if (log.isDebugEnabled()) {
                 log.warn("A locked user (" + uid + ") try to access desktop. isActive : " + userAccount.isActive());
             }
         }
-        return null;
+        if (log.isDebugEnabled()) {
+            log.debug("Nothing worked for authenticating the current user, returning an option of null");
+        }
+        return Promise.promise(() -> emptySubject);
     }
 
     @Override
@@ -113,6 +123,9 @@ public abstract class CommonDeadboltHandler extends AbstractDeadboltHandler {
             return Promise.promise(new Function0<Result>() {
                 @Override
                 public Result apply() throws Throwable {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Redirecting to login page");
+                    }
                     return redirectToLoginPage(redirectUrl);
                 }
             });
@@ -122,6 +135,9 @@ public abstract class CommonDeadboltHandler extends AbstractDeadboltHandler {
         return Promise.promise(new Function0<Result>() {
             @Override
             public Result apply() throws Throwable {
+                if (log.isDebugEnabled()) {
+                    log.debug("Redirecting to access forbidden");
+                }
                 return displayAccessForbidden();
             }
         });

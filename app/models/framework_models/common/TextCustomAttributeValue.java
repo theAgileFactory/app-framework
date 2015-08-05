@@ -35,8 +35,10 @@ import models.framework_models.parent.IModelConstants;
 import org.apache.commons.lang3.StringUtils;
 
 import play.api.data.Field;
-import play.db.ebean.Model;
 import play.twirl.api.Html;
+
+import com.avaje.ebean.Model;
+
 import framework.utils.Msg;
 
 /**
@@ -58,7 +60,7 @@ public class TextCustomAttributeValue extends Model implements IModel, ICustomAt
 
     private static final long serialVersionUID = -676104249055882234L;
 
-    public static Finder<Long, TextCustomAttributeValue> find = new Finder<Long, TextCustomAttributeValue>(Long.class, TextCustomAttributeValue.class);
+    public static Finder<Long, TextCustomAttributeValue> find = new Finder<Long, TextCustomAttributeValue>(TextCustomAttributeValue.class);
 
     @Id
     public Long id;
@@ -145,9 +147,8 @@ public class TextCustomAttributeValue extends Model implements IModel, ICustomAt
             key += ":" + filter;
         }
 
-        TextCustomAttributeValue customAttributeValue =
-                find.where().eq("deleted", false).eq("objectType", key).eq("objectId", objectId)
-                        .eq("customAttributeDefinition.id", customAttributeDefinition.id).findUnique();
+        TextCustomAttributeValue customAttributeValue = find.where().eq("deleted", false).eq("objectType", key).eq("objectId", objectId)
+                .eq("customAttributeDefinition.id", customAttributeDefinition.id).findUnique();
         if (customAttributeValue == null) {
             customAttributeValue = new TextCustomAttributeValue();
             customAttributeValue.objectType = key;

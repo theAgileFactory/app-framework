@@ -274,7 +274,7 @@ public class PickerHandler<T> {
     private void valueHolderCollectionToJson(ObjectNode result, ISelectableValueHolderCollection<T> valueHolders) {
         Collection<ISelectableValueHolder<T>> valueHoldersList = valueHolders.getValues();
         ObjectNode valueHoldersAsJson = Utilities.marshallAsJson(valueHoldersList);
-        result.put("valueHolders", valueHoldersAsJson);
+        result.set("valueHolders", valueHoldersAsJson);
         if (valueHoldersList.size() == 0) {
             result.put("message", Msg.get(getParameters().get(Parameters.NO_VALUE_FOUND_I18N)));
         }

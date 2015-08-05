@@ -28,7 +28,9 @@ import javax.persistence.Version;
 
 import models.framework_models.parent.IModel;
 import models.framework_models.parent.IModelConstants;
-import play.db.ebean.Model;
+
+import com.avaje.ebean.Model;
+
 import framework.services.api.commons.IApiObject;
 
 /**
@@ -43,7 +45,7 @@ public class Address extends Model implements IModel, IApiObject {
     /**
      * Default finder for the entity class
      */
-    public static Finder<Long, Address> find = new Finder<Long, Address>(Long.class, Address.class);
+    public static Finder<Long, Address> find = new Finder<Long, Address>(Address.class);
 
     @Id
     public Long id;
@@ -76,8 +78,8 @@ public class Address extends Model implements IModel, IApiObject {
 
     @Override
     public String audit() {
-        return "Address [id=" + id + ", lane1=" + lane1 + ", lane2=" + lane2 + ", zip=" + zip + ", city=" + city + ", state=" + state + ", country="
-                + country + "]";
+        return "Address [id=" + id + ", lane1=" + lane1 + ", lane2=" + lane2 + ", zip=" + zip + ", city=" + city + ", state=" + state + ", country=" + country
+                + "]";
     }
 
     @Override

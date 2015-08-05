@@ -24,7 +24,8 @@ import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 
 import models.framework_models.parent.IModelConstants;
-import play.db.ebean.Model;
+
+import com.avaje.ebean.Model;
 
 /**
  * This represents a configuration element of a plugin.<br/>
@@ -38,7 +39,7 @@ public class PluginConfigurationBlock extends Model {
     /**
      * Default finder for the entity class
      */
-    public static Finder<Long, PluginConfigurationBlock> find = new Finder<Long, PluginConfigurationBlock>(Long.class, PluginConfigurationBlock.class);
+    public static Finder<Long, PluginConfigurationBlock> find = new Finder<Long, PluginConfigurationBlock>(PluginConfigurationBlock.class);
 
     @Id
     public Long id;

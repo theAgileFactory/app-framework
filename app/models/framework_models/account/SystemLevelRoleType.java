@@ -34,7 +34,8 @@ import models.framework_models.parent.IModelConstants;
 
 import org.apache.poi.ss.formula.functions.T;
 
-import play.db.ebean.Model;
+import com.avaje.ebean.Model;
+
 import framework.services.account.IUserAccount;
 import framework.services.account.IUserAccount.AccountType;
 import framework.utils.DefaultSelectableValueHolder;
@@ -85,7 +86,7 @@ public class SystemLevelRoleType extends Model implements IModel, ISelectableVal
     /**
      * Default finder for the entity class
      */
-    public static Finder<Long, SystemLevelRoleType> find = new Finder<Long, SystemLevelRoleType>(Long.class, SystemLevelRoleType.class);
+    public static Finder<Long, SystemLevelRoleType> find = new Finder<Long, SystemLevelRoleType>(SystemLevelRoleType.class);
 
     /**
      * Retrieve all the roles (selectable or not) which are associated (by
