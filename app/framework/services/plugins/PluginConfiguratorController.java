@@ -48,7 +48,7 @@ public class PluginConfiguratorController extends Controller {
      *            controller)
      * @return
      */
-    public static Result doGetForCustomConfiguratorController(Long pluginConfigurationId, String actionId) {
+    public Result doGetForCustomConfiguratorController(Long pluginConfigurationId, String actionId) {
         IPluginManagerService pluginManagerService = ServiceManager.getService(IPluginManagerService.NAME, IPluginManagerService.class);
         IPluginInfo pluginInfo = pluginManagerService.getRegisteredPluginDescriptors().get(pluginConfigurationId);
         return pluginInfo.getConfigurator().getCustomConfigurator().doGet(actionId);
@@ -64,7 +64,7 @@ public class PluginConfiguratorController extends Controller {
      *            controller)
      * @return
      */
-    public static Result doPostForCustomConfiguratorController(Long pluginConfigurationId, String actionId) {
+    public Result doPostForCustomConfiguratorController(Long pluginConfigurationId, String actionId) {
         IPluginManagerService pluginManagerService = ServiceManager.getService(IPluginManagerService.NAME, IPluginManagerService.class);
         IPluginInfo pluginInfo = pluginManagerService.getRegisteredPluginDescriptors().get(pluginConfigurationId);
         return pluginInfo.getConfigurator().getCustomConfigurator().doPost(actionId);
@@ -84,7 +84,7 @@ public class PluginConfiguratorController extends Controller {
      *            controller)
      * @return
      */
-    public static Result doGetForRegistrationConfiguratorController(Long pluginConfigurationId, String dataTypeName, Long objectId, String actionId) {
+    public Result doGetForRegistrationConfiguratorController(Long pluginConfigurationId, String dataTypeName, Long objectId, String actionId) {
         IPluginManagerService pluginManagerService = ServiceManager.getService(IPluginManagerService.NAME, IPluginManagerService.class);
         IPluginInfo pluginInfo = pluginManagerService.getRegisteredPluginDescriptors().get(pluginConfigurationId);
         return pluginInfo.getConfigurator().getDataTypesWithRegistration().get(DataType.getDataType(dataTypeName)).doGet(objectId, actionId);
@@ -104,7 +104,7 @@ public class PluginConfiguratorController extends Controller {
      *            controller)
      * @return
      */
-    public static Result doPostForRegistrationConfiguratorController(Long pluginConfigurationId, String dataTypeName, Long objectId, String actionId) {
+    public Result doPostForRegistrationConfiguratorController(Long pluginConfigurationId, String dataTypeName, Long objectId, String actionId) {
         IPluginManagerService pluginManagerService = ServiceManager.getService(IPluginManagerService.NAME, IPluginManagerService.class);
         IPluginInfo pluginInfo = pluginManagerService.getRegisteredPluginDescriptors().get(pluginConfigurationId);
         return pluginInfo.getConfigurator().getDataTypesWithRegistration().get(DataType.getDataType(dataTypeName)).doPost(objectId, actionId);
