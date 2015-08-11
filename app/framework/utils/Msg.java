@@ -17,9 +17,11 @@
  */
 package framework.utils;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import play.i18n.Lang;
 import play.i18n.Messages;
-import framework.services.ServiceManager;
 import framework.services.configuration.II18nMessagesPlugin;
 
 /**
@@ -27,15 +29,10 @@ import framework.services.configuration.II18nMessagesPlugin;
  * 
  * @author Pierre-Yves Cloux
  */
+@Singleton
 public class Msg {
+    @Inject
     private static II18nMessagesPlugin messagesPlugin;
-
-    private static II18nMessagesPlugin getMessagesPlugin() {
-        if (messagesPlugin == null) {
-            messagesPlugin = ServiceManager.getService(II18nMessagesPlugin.NAME, II18nMessagesPlugin.class);
-        }
-        return messagesPlugin;
-    }
 
     /**
      * Return the content associated with the specified key.<br/>
@@ -104,5 +101,9 @@ public class Msg {
      */
     public static boolean isDefinedForAtLeastOneLanguage(String key) {
         return getMessagesPlugin().isDefinedForAtLeastOneLanguage(key);
+    }
+
+    private static II18nMessagesPlugin getMessagesPlugin() {
+        return messagesPlugin;
     }
 }

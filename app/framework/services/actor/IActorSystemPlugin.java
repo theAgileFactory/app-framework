@@ -26,7 +26,6 @@ import akka.actor.ActorSystem;
  * @author Pierre-Yves Cloux
  */
 public interface IActorSystemPlugin {
-    public static final String NAME = "actorSystemPlugin";
 
     /**
      * A dispatcher configured with a durable queue (file system)

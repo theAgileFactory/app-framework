@@ -19,8 +19,8 @@ package framework.services.account;
 
 import java.util.List;
 
-import framework.services.account.IUserAccount.AccountType;
 import models.framework_models.account.Principal;
+import framework.services.account.IUserAccount.AccountType;
 
 /**
  * The interface to be implemented by the module which manages the user
@@ -41,7 +41,6 @@ import models.framework_models.account.Principal;
  * @author Pierre-Yves Cloux
  */
 public interface IAccountManagerPlugin {
-    public static final String NAME = "accountManagerPlugin";
 
     /**
      * Return true if the plugin is configured in "master mode"
@@ -179,8 +178,8 @@ public interface IAccountManagerPlugin {
      * 
      * @throws AccountManagementException
      */
-    public void createNewUserAccount(String uid, AccountType accountType, String firstName, String lastName, String mail,
-            List<String> systemLevelRoleTypeNames) throws AccountManagementException;
+    public void createNewUserAccount(String uid, AccountType accountType, String firstName, String lastName, String mail, List<String> systemLevelRoleTypeNames)
+            throws AccountManagementException;
 
     /**
      * If a user account exists in the authentication back-end as well as the

@@ -26,7 +26,6 @@ import play.mvc.Http;
  * @author Pierre-Yves Cloux
  */
 public interface IUserSessionManagerPlugin {
-    public static final String NAME = "userSessionManagerPlugin";
 
     /**
      * Get the unique user Id from the current session.

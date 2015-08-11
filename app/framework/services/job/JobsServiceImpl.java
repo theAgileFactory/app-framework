@@ -21,38 +21,81 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
+
+import org.apache.commons.lang3.tuple.Pair;
+
+import play.Configuration;
 import play.Logger;
+import play.inject.ApplicationLifecycle;
+import play.libs.F.Promise;
 import scala.concurrent.duration.Duration;
 import scala.concurrent.duration.FiniteDuration;
 import akka.actor.Cancellable;
-import framework.utils.SysAdminUtils;
+import framework.services.database.IDatabaseDependencyService;
+import framework.services.system.ISysAdminUtils;
 
 /**
  * The jobs service.
  * 
  * @author Johann Kohler
  */
+@Singleton
 public class JobsServiceImpl implements IJobsService {
+    private static Logger.ALogger log = Logger.of(JobsServiceImpl.class);
 
-    private List<IJobDescriptor> jobs = null;
+    private Map<String, IJobDescriptor> jobDescriptorMap = Collections.synchronizedMap(new HashMap<String, IJobDescriptor>());
 
     private List<Cancellable> schedulers = null;
+    private ISysAdminUtils sysAdminUtils;
 
-    @Override
-    public void start(List<IJobDescriptor> jobs) {
-        Logger.info("***** START start JobsServiceImpl ****");
+    /**
+     * Create a new JobsServiceImpl
+     * 
+     * @param lifecycle
+     *            the play application lifecycle listener
+     * @param configuration
+     *            the play application configuration
+     * @param sysAdminUtils
+     *            the sysadmin utils
+     * @param jobInitialConfig
+     *            the list of jobs to be managed by the service. If the right
+     *            element of the Pair is "true" then the job is triggered once
+     *            the job service is started.
+     * @param databaseDependencyService
+     */
+    @Inject
+    public JobsServiceImpl(ApplicationLifecycle lifecycle, Configuration configuration, ISysAdminUtils sysAdminUtils,
+            @Named("JobConfig") JobInitialConfig jobInitialConfig, IDatabaseDependencyService databaseDependencyService) {
+        log.info("SERVICE>>> JobsServiceImpl starting...");
+        this.sysAdminUtils = sysAdminUtils;
+        start(jobInitialConfig.getJobs());
+        lifecycle.addStopHook(() -> {
+            log.info("SERVICE>>> JobsServiceImpl stopping...");
+            cancel();
+            log.info("SERVICE>>> JobsServiceImpl stopped");
+            return Promise.pure(null);
+        });
+        log.info("SERVICE>>> JobsServiceImpl started");
+    }
 
-        this.jobs = jobs;
-
+    public void start(List<Pair<IJobDescriptor, Boolean>> jobs) {
+        log.info("***** START start JobsServiceImpl ****");
         this.schedulers = Collections.synchronizedList(new ArrayList<Cancellable>());
 
         // initialize the schedulers
-        for (final IJobDescriptor job : this.jobs) {
+        for (Pair<IJobDescriptor, Boolean> jobConfig : jobs) {
+            final IJobDescriptor job = jobConfig.getLeft();
+            getJobDescriptorMap().put(job.getId(), job);
 
-            Logger.info("***** START initialization JobsServiceImpl:" + job.getId() + " ****");
+            log.info("***** START initialization JobsServiceImpl:" + job.getId() + " ****");
 
             Date now = new Date();
 
@@ -82,7 +125,7 @@ public class JobsServiceImpl implements IJobsService {
                 break;
             }
 
-            this.schedulers.add(SysAdminUtils.scheduleRecurring(true, "JobsServiceImpl:" + job.getId(),
+            this.schedulers.add(getSysAdminUtils().scheduleRecurring(true, "JobsServiceImpl:" + job.getId(),
                     Duration.create(howMuchMinutesUntilStartTime, TimeUnit.MINUTES), frequency, new Runnable() {
                         @Override
                         public void run() {
@@ -90,38 +133,50 @@ public class JobsServiceImpl implements IJobsService {
                         }
                     }));
 
-            Logger.info("***** END initialization JobsServiceImpl:" + job.getId() + " ****");
-
+            log.info("***** END initialization JobsServiceImpl:" + job.getId() + " ****");
+        }
+        // Check for jobs to be executed at startup
+        for (Pair<IJobDescriptor, Boolean> jobConfig : jobs) {
+            if (jobConfig.getRight()) {
+                trigger(jobConfig.getLeft().getId());
+            }
         }
 
-        Logger.info("***** END start JobsServiceImpl ****");
+        log.info("***** END start JobsServiceImpl ****");
     }
 
-    @Override
     public void cancel() {
-        Logger.info("***** START cancel JobsServiceImpl ****");
+        log.info("***** START cancel JobsServiceImpl ****");
         for (Cancellable scheduler : schedulers) {
             if (scheduler != null) {
                 scheduler.cancel();
             }
         }
-        Logger.info("***** END cancel JobsServiceImpl ****");
+        log.info("***** END cancel JobsServiceImpl ****");
     }
 
     @Override
     public List<IJobDescriptor> getJobs() {
-        return this.jobs;
+        return Collections.unmodifiableList(new ArrayList<IJobDescriptor>(getJobDescriptorMap().values()));
     }
 
     @Override
     public void trigger(String id) {
-        for (IJobDescriptor job : jobs) {
-            if (job.getId().equals(id)) {
-                Logger.info("***** START execution JobsServiceImpl:" + job.getId() + " ****");
-                job.trigger();
-                Logger.info("***** END execution JobsServiceImpl:" + job.getId() + " ****");
-                break;
-            }
+        if (getJobDescriptorMap().containsKey(id)) {
+            IJobDescriptor job = getJobDescriptorMap().get(id);
+            log.info("***** START execution JobsServiceImpl:" + job.getId() + " ****");
+            job.trigger();
+            log.info("***** END execution JobsServiceImpl:" + job.getId() + " ****");
+        } else {
+            log.error("Attempt to start a non existing job " + id);
         }
+    }
+
+    private Map<String, IJobDescriptor> getJobDescriptorMap() {
+        return jobDescriptorMap;
+    }
+
+    private ISysAdminUtils getSysAdminUtils() {
+        return sysAdminUtils;
     }
 }

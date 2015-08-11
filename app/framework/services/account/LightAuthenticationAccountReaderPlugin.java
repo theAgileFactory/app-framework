@@ -20,7 +20,15 @@ package framework.services.account;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import models.framework_models.account.Credential;
+import play.Configuration;
+import play.Logger;
+import play.inject.ApplicationLifecycle;
+import play.libs.F.Promise;
+import framework.services.database.IDatabaseDependencyService;
 
 /**
  * An authentication account reader plugin based on the {@link Credential}
@@ -29,9 +37,29 @@ import models.framework_models.account.Credential;
  * 
  * @author Pierre-Yves Cloux
  */
+@Singleton
 public class LightAuthenticationAccountReaderPlugin implements IAuthenticationAccountReaderPlugin {
+    private static Logger.ALogger log = Logger.of(LightAuthenticationAccountReaderPlugin.class);
 
-    public LightAuthenticationAccountReaderPlugin() {
+    /**
+     * Create a new LightAuthenticationAccountReaderPlugin
+     * 
+     * @param lifecycle
+     *            the play application lifecycle listener
+     * @param configuration
+     *            the play application configuration
+     * @param databaseDependencyService
+     */
+    @Inject
+    public LightAuthenticationAccountReaderPlugin(ApplicationLifecycle lifecycle, Configuration configuration,
+            IDatabaseDependencyService databaseDependencyService) {
+        log.info("SERVICE>>> LightAuthenticationAccountReaderPlugin starting...");
+        lifecycle.addStopHook(() -> {
+            log.info("SERVICE>>> LightAuthenticationAccountReaderPlugin stopping...");
+            log.info("SERVICE>>> LightAuthenticationAccountReaderPlugin stopped");
+            return Promise.pure(null);
+        });
+        log.info("SERVICE>>> LightAuthenticationAccountReaderPlugin started");
     }
 
     @Override

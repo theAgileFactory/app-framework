@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -30,7 +32,11 @@ import javax.naming.directory.InitialDirContext;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 
+import play.Configuration;
 import play.Logger;
+import play.inject.ApplicationLifecycle;
+import play.libs.F.Promise;
+import framework.services.database.IDatabaseDependencyService;
 
 /**
  * The default implementation for the class which performs the queries on the
@@ -40,6 +46,7 @@ import play.Logger;
  * @author Pierre-Yves Cloux
  * 
  */
+@Singleton
 public class DefaultAuthenticationAccountReaderPlugin implements IAuthenticationAccountReaderPlugin {
     private static Logger.ALogger log = Logger.of(DefaultAuthenticationAccountReaderPlugin.class);
     private String userSearchBase;
@@ -51,28 +58,57 @@ public class DefaultAuthenticationAccountReaderPlugin implements IAuthentication
     private String activationLdapAttr;
     private String activationLdapActiveValue;
 
-    public DefaultAuthenticationAccountReaderPlugin(String ldapUrl, String user, String password, String userSearchBase, String userSearchFilter,
-            String userEmailSearchFilter, String userFullNameSearchFilter, String userUniqueIdAttribute, String activationLdapAttr,
-            String activationLdapActiveValue) {
+    public enum Config {
+        LDAP_URL("maf.ldap_url"), LDAP_USER("maf.user"), LDAP_PASSWORD("maf.password"), SEARCH_BASE("maf.user_searchbase"), SEARCH_FILTER(
+                "maf.user_searchfilter"), SEARCH_MAIL_FILTER("maf.user_searchmailfilter"), SEARCH_CN_FILTER("maf.user_searchcnfilter"), UNIQUE_ID_ATTRIBUTE_NAME(
+                "maf.user_unique_id_attribute"), ACTIVATION_ATTRIBUTE_NAME("maf.activation_ldap_attribute"), ACTIVATION_ATTRIBUTE_VALUE(
+                "maf.activation_ldap_attribute_activated");
+        private String configurationKey;
+
+        private Config(String configurationKey) {
+            this.configurationKey = configurationKey;
+        }
+
+        public String getConfigurationKey() {
+            return configurationKey;
+        }
+    }
+
+    /**
+     * Creates a new DefaultAuthenticationAccountReaderPlugin
+     * 
+     * @param lifecycle
+     *            the play application lifecycle listener
+     * @param configuration
+     *            the play application configuration
+     * @param databaseDependencyService
+     */
+    @Inject
+    public DefaultAuthenticationAccountReaderPlugin(ApplicationLifecycle lifecycle, Configuration configuration,
+            IDatabaseDependencyService databaseDependencyService) {
+        log.info("SERVICE>>> DefaultAuthenticationAccountReaderPlugin starting...");
         environment = new Hashtable<String, String>();
         environment.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
-        environment.put(Context.PROVIDER_URL, ldapUrl);
-        environment.put(Context.SECURITY_PRINCIPAL, user);
-        environment.put(Context.SECURITY_CREDENTIALS, password);
+        environment.put(Context.PROVIDER_URL, configuration.getString(Config.LDAP_URL.getConfigurationKey()));
+        environment.put(Context.SECURITY_PRINCIPAL, configuration.getString(Config.LDAP_USER.getConfigurationKey()));
+        environment.put(Context.SECURITY_CREDENTIALS, configuration.getString(Config.LDAP_PASSWORD.getConfigurationKey()));
         environment.put("com.sun.jndi.ldap.connect.pool", "true");
-        this.userSearchBase = userSearchBase;
-        this.userSearchFilter = userSearchFilter;
-        this.userUniqueIdAttribute = userUniqueIdAttribute;
-        this.userEmailSearchFilter = userEmailSearchFilter;
-        this.userFullNameSearchFilter = userFullNameSearchFilter;
-
-        this.activationLdapAttr = activationLdapAttr;
-        this.activationLdapActiveValue = activationLdapActiveValue;
-
+        this.userSearchBase = configuration.getString(Config.SEARCH_BASE.getConfigurationKey());
+        this.userSearchFilter = configuration.getString(Config.SEARCH_FILTER.getConfigurationKey());
+        this.userUniqueIdAttribute = configuration.getString(Config.UNIQUE_ID_ATTRIBUTE_NAME.getConfigurationKey());
+        this.userEmailSearchFilter = configuration.getString(Config.SEARCH_MAIL_FILTER.getConfigurationKey());
+        this.userFullNameSearchFilter = configuration.getString(Config.SEARCH_CN_FILTER.getConfigurationKey());
+        this.activationLdapAttr = configuration.getString(Config.ACTIVATION_ATTRIBUTE_NAME.getConfigurationKey());
+        this.activationLdapActiveValue = configuration.getString(Config.ACTIVATION_ATTRIBUTE_VALUE.getConfigurationKey());
         if (log.isDebugEnabled()) {
             log.debug("Initialized with " + environment.toString());
         }
-
+        lifecycle.addStopHook(() -> {
+            log.info("SERVICE>>> DefaultAuthenticationAccountReaderPlugin stopping...");
+            log.info("SERVICE>>> DefaultAuthenticationAccountReaderPlugin stopped");
+            return Promise.pure(null);
+        });
+        log.info("SERVICE>>> DefaultAuthenticationAccountReaderPlugin started");
     }
 
     @Override

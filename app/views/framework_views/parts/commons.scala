@@ -1,8 +1,6 @@
 package views.html.framework_views.parts
 
 import play.api.data.Field
-import framework.services.ServiceManager
-import framework.services.configuration.IImplementationDefinedObjectService
 
 /**
  * This class provides a few scala utilities to be reused in various

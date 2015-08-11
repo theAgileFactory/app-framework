@@ -17,15 +17,21 @@
  */
 package framework.services.ext;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import play.Logger;
-import framework.services.ServiceManager;
 
 /**
  * An utility class to be used by extensions for logging and generating links.
  * 
  * @author Pierre-Yves Cloux
  */
-public abstract class ExtensionUtils {
+@Singleton
+public class ExtensionUtils {
+    @Inject
+    private static IExtensionManagerService extensionManagerService;
+
     private static Log log = new Log();
 
     /**
@@ -42,8 +48,7 @@ public abstract class ExtensionUtils {
      * @throws ExtensionManagerException
      */
     public static String link(Class<?> controller, String commandId, Object... parameters) throws ExtensionManagerException {
-        IExtensionManagerService extensionManagerService = ServiceManager.getService(IExtensionManagerService.NAME, IExtensionManagerService.class);
-        return extensionManagerService.link(controller, commandId, parameters);
+        return getExtensionManagerService().link(controller, commandId, parameters);
     }
 
     /**
@@ -105,5 +110,9 @@ public abstract class ExtensionUtils {
         public void error(String extensionName, String message, Exception e) {
             log.error(String.format("[EXT - %s] %s", extensionName, message), e);
         }
+    }
+
+    private static IExtensionManagerService getExtensionManagerService() {
+        return extensionManagerService;
     }
 }

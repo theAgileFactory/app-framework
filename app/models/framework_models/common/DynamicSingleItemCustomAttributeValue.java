@@ -41,10 +41,8 @@ import play.twirl.api.Html;
 
 import com.avaje.ebean.Model;
 
-import framework.services.ServiceManager;
+import framework.services.ServiceStaticAccessor;
 import framework.services.configuration.IImplementationDefinedObjectService;
-import framework.services.configuration.ImplementationDefineObjectServiceFactory;
-import framework.services.session.IUserSessionManagerPlugin;
 import framework.utils.DefaultSelectableValueHolder;
 import framework.utils.ISelectableValueHolder;
 import framework.utils.ISelectableValueHolderCollection;
@@ -260,13 +258,12 @@ public class DynamicSingleItemCustomAttributeValue extends Model implements IMod
     @Override
     public Html renderFormField(Field field) {
         if (!customAttributeDefinition.isAutoComplete()) {
-            IUserSessionManagerPlugin userSessionManager = ServiceManager.getService(IUserSessionManagerPlugin.NAME, IUserSessionManagerPlugin.class);
-            String uid = userSessionManager.getUserSessionId(Controller.ctx());
+            String uid = ServiceStaticAccessor.getUserSessionManagerPlugin().getUserSessionId(Controller.ctx());
             return views.html.framework_views.parts.dropdownlist.render(field, Msg.get(customAttributeDefinition.name),
                     customAttributeDefinition.getValueHoldersCollectionFromNameForDynamicSingleItemCustomAttribute("%", uid), null, false,
                     customAttributeDefinition.isRequired());
         }
-        IImplementationDefinedObjectService implementationDefinedObjects = ImplementationDefineObjectServiceFactory.getInstance();
+        IImplementationDefinedObjectService implementationDefinedObjects = ServiceStaticAccessor.getImplementationDefinedObjectService();
         return views.html.framework_views.parts.autocomplete.render(field, Msg.get(customAttributeDefinition.name), implementationDefinedObjects
                 .getRouteForDynamicSingleCustomAttributeApi().url(), customAttributeDefinition.getContextParametersForDynamicApi());
     }
@@ -320,8 +317,7 @@ public class DynamicSingleItemCustomAttributeValue extends Model implements IMod
 
         if (query != null) {
             // Perform a search according to the specified query
-            IUserSessionManagerPlugin userSessionManager = ServiceManager.getService(IUserSessionManagerPlugin.NAME, IUserSessionManagerPlugin.class);
-            String uid = userSessionManager.getUserSessionId(Controller.ctx());
+            String uid = ServiceStaticAccessor.getUserSessionManagerPlugin().getUserSessionId(Controller.ctx());
             ISelectableValueHolderCollection<Long> valueHolders = customAttributeDefinition
                     .getValueHoldersCollectionFromNameForDynamicSingleItemCustomAttribute(query, uid);
             return Controller.ok(Utilities.marshallAsJson(valueHolders.getValues()));

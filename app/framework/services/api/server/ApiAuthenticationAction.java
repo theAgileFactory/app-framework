@@ -20,6 +20,8 @@ package framework.services.api.server;
 import java.net.HttpURLConnection;
 import java.util.Arrays;
 
+import javax.inject.Inject;
+
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -33,7 +35,6 @@ import play.mvc.Result;
 import framework.commons.IFrameworkConstants;
 import framework.commons.IFrameworkConstants.ApiAuthzMode;
 import framework.security.SecurityUtils;
-import framework.services.ServiceManager;
 import framework.services.account.AccountManagementException;
 import framework.services.account.IAccountManagerPlugin;
 import framework.services.account.IPreferenceManagerPlugin;
@@ -80,13 +81,19 @@ import framework.services.session.IUserSessionManagerPlugin;
  * @author Pierre-Yves Cloux
  */
 public class ApiAuthenticationAction extends Action<ApiAuthentication> {
-
+    @Inject
     private IPreferenceManagerPlugin preferenceManagerPlugin;
+    @Inject
+    private IUserSessionManagerPlugin userSessionManagerPlugin;
+    @Inject
+    private IAccountManagerPlugin accountManagerPlugin;
+    @Inject
+    private IApiSignatureService apiSignatureService;
+
     private String defaultPermission;
 
     public ApiAuthenticationAction() {
         this.defaultPermission = play.Configuration.root().getString("maf.api.default.permission");
-        this.preferenceManagerPlugin = ServiceManager.getService(IPreferenceManagerPlugin.NAME, IPreferenceManagerPlugin.class);
     }
 
     @Override
@@ -200,8 +207,7 @@ public class ApiAuthenticationAction extends Action<ApiAuthentication> {
             if (isAllAuthenticationHeaderPresent(signatureHeader, timeStampHeader, applicationKeyHeader)
                     || isOnlyApplicationKeyHeaderPresent(signatureHeader, applicationKeyHeader)) {
 
-                IApiSignatureService signatureService = ServiceManager.getService(IApiSignatureService.NAME, IApiSignatureService.class);
-                IApiApplicationConfiguration sourceKey = signatureService.getApplicationConfigurationFromApplicationKey(applicationKeyHeader);
+                IApiApplicationConfiguration sourceKey = getApiSignatureService().getApplicationConfigurationFromApplicationKey(applicationKeyHeader);
 
                 if (!sourceKey.getApplicationName().equals(IApiSignatureService.ROOT_APPLICATION)) {
                     return returnUnauthorized("the root key should be used for a root action");
@@ -289,9 +295,8 @@ public class ApiAuthenticationAction extends Action<ApiAuthentication> {
                 }
                 body = rawBuffer.asBytes();
             }
-            IApiSignatureService signatureService = ServiceManager.getService(IApiSignatureService.NAME, IApiSignatureService.class);
-            signatureService.checkApiSignature(applicationKeyHeader, signatureHeader.getBytes(), method, context.request().uri(), body, timeStampAsLong,
-                    configuration.allowTimeDifference());
+            getApiSignatureService().checkApiSignature(applicationKeyHeader, signatureHeader.getBytes(), method, context.request().uri(), body,
+                    timeStampAsLong, configuration.allowTimeDifference());
         } catch (Exception e) {
             String message = "Unauthorized API call : invalid signature or not enough rights";
             ApiLog.log.error(message, e);
@@ -315,13 +320,11 @@ public class ApiAuthenticationAction extends Action<ApiAuthentication> {
      * @throws AccountManagementException
      */
     private Pair<Boolean, String> authenticateByAuthorizations(Context context, boolean addApiRequiredAuthorizations) throws AccountManagementException {
-        IUserSessionManagerPlugin userSessionManagerPlugin = ServiceManager.getService(IUserSessionManagerPlugin.NAME, IUserSessionManagerPlugin.class);
-        String userSessionId = userSessionManagerPlugin.getUserSessionId(context);
+        String userSessionId = getUserSessionManagerPlugin().getUserSessionId(context);
         if (userSessionId == null) {
             return Pair.of(false, "No valid user session");
         }
-        IAccountManagerPlugin accountManagerPlugin = ServiceManager.getService(IAccountManagerPlugin.NAME, IAccountManagerPlugin.class);
-        IUserAccount userAccount = accountManagerPlugin.getUserAccountFromUid(userSessionId);
+        IUserAccount userAccount = getAccountManagerPlugin().getUserAccountFromUid(userSessionId);
 
         // If the default permission is null this is not normal
         if (StringUtils.isBlank(getDefaultPermission())) {
@@ -356,9 +359,8 @@ public class ApiAuthenticationAction extends Action<ApiAuthentication> {
      */
     private Pair<Boolean, String> authenticationByKey(Context context, String applicationKeyHeader) {
         try {
-            IApiSignatureService signatureService = ServiceManager.getService(IApiSignatureService.NAME, IApiSignatureService.class);
             ApiMethod method = ApiMethod.valueOf(context.request().method().toUpperCase());
-            signatureService.checkApiAuthorizations(applicationKeyHeader, method, context.request().path());
+            getApiSignatureService().checkApiAuthorizations(applicationKeyHeader, method, context.request().path());
         } catch (Exception e) {
             String message = "Unauthorized API call : invalid signature or not enough rights";
             ApiLog.log.error(message, e);
@@ -379,8 +381,7 @@ public class ApiAuthenticationAction extends Action<ApiAuthentication> {
      */
     private boolean isTestable(String applicationKeyHeader) {
         try {
-            IApiSignatureService signatureService = ServiceManager.getService(IApiSignatureService.NAME, IApiSignatureService.class);
-            return signatureService.getApplicationConfigurationFromApplicationKey(applicationKeyHeader).isTestable();
+            return getApiSignatureService().getApplicationConfigurationFromApplicationKey(applicationKeyHeader).isTestable();
         } catch (Exception e) {
             ApiLog.log.error("Unauthorized API call", e);
             return false;
@@ -416,5 +417,17 @@ public class ApiAuthenticationAction extends Action<ApiAuthentication> {
 
     private IPreferenceManagerPlugin getPreferenceManagerPlugin() {
         return preferenceManagerPlugin;
+    }
+
+    private IUserSessionManagerPlugin getUserSessionManagerPlugin() {
+        return userSessionManagerPlugin;
+    }
+
+    private IAccountManagerPlugin getAccountManagerPlugin() {
+        return accountManagerPlugin;
+    }
+
+    private IApiSignatureService getApiSignatureService() {
+        return apiSignatureService;
     }
 }

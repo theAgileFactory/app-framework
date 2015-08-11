@@ -17,11 +17,12 @@
  */
 package framework.services.plugins;
 
+import javax.inject.Inject;
+
 import play.mvc.Controller;
 import play.mvc.Result;
 import be.objectify.deadbolt.java.actions.SubjectPresent;
 import framework.commons.DataType;
-import framework.services.ServiceManager;
 import framework.services.plugins.IPluginManagerService.IPluginInfo;
 import framework.services.plugins.api.AbstractCustomConfiguratorController;
 import framework.services.plugins.api.AbstractRegistrationConfiguratorController;
@@ -35,6 +36,9 @@ import framework.services.plugins.api.AbstractRegistrationConfiguratorController
  */
 @SubjectPresent(forceBeforeAuthCheck = true)
 public class PluginConfiguratorController extends Controller {
+    @Inject
+    private IPluginManagerService pluginManagerService;
+
     public PluginConfiguratorController() {
     }
 
@@ -49,8 +53,7 @@ public class PluginConfiguratorController extends Controller {
      * @return
      */
     public Result doGetForCustomConfiguratorController(Long pluginConfigurationId, String actionId) {
-        IPluginManagerService pluginManagerService = ServiceManager.getService(IPluginManagerService.NAME, IPluginManagerService.class);
-        IPluginInfo pluginInfo = pluginManagerService.getRegisteredPluginDescriptors().get(pluginConfigurationId);
+        IPluginInfo pluginInfo = getPluginManagerService().getRegisteredPluginDescriptors().get(pluginConfigurationId);
         return pluginInfo.getConfigurator().getCustomConfigurator().doGet(actionId);
     }
 
@@ -65,8 +68,7 @@ public class PluginConfiguratorController extends Controller {
      * @return
      */
     public Result doPostForCustomConfiguratorController(Long pluginConfigurationId, String actionId) {
-        IPluginManagerService pluginManagerService = ServiceManager.getService(IPluginManagerService.NAME, IPluginManagerService.class);
-        IPluginInfo pluginInfo = pluginManagerService.getRegisteredPluginDescriptors().get(pluginConfigurationId);
+        IPluginInfo pluginInfo = getPluginManagerService().getRegisteredPluginDescriptors().get(pluginConfigurationId);
         return pluginInfo.getConfigurator().getCustomConfigurator().doPost(actionId);
     }
 
@@ -85,8 +87,7 @@ public class PluginConfiguratorController extends Controller {
      * @return
      */
     public Result doGetForRegistrationConfiguratorController(Long pluginConfigurationId, String dataTypeName, Long objectId, String actionId) {
-        IPluginManagerService pluginManagerService = ServiceManager.getService(IPluginManagerService.NAME, IPluginManagerService.class);
-        IPluginInfo pluginInfo = pluginManagerService.getRegisteredPluginDescriptors().get(pluginConfigurationId);
+        IPluginInfo pluginInfo = getPluginManagerService().getRegisteredPluginDescriptors().get(pluginConfigurationId);
         return pluginInfo.getConfigurator().getDataTypesWithRegistration().get(DataType.getDataType(dataTypeName)).doGet(objectId, actionId);
     }
 
@@ -105,8 +106,11 @@ public class PluginConfiguratorController extends Controller {
      * @return
      */
     public Result doPostForRegistrationConfiguratorController(Long pluginConfigurationId, String dataTypeName, Long objectId, String actionId) {
-        IPluginManagerService pluginManagerService = ServiceManager.getService(IPluginManagerService.NAME, IPluginManagerService.class);
-        IPluginInfo pluginInfo = pluginManagerService.getRegisteredPluginDescriptors().get(pluginConfigurationId);
+        IPluginInfo pluginInfo = getPluginManagerService().getRegisteredPluginDescriptors().get(pluginConfigurationId);
         return pluginInfo.getConfigurator().getDataTypesWithRegistration().get(DataType.getDataType(dataTypeName)).doPost(objectId, actionId);
+    }
+
+    private IPluginManagerService getPluginManagerService() {
+        return pluginManagerService;
     }
 }

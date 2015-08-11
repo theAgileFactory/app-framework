@@ -28,14 +28,21 @@ import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import org.apache.commons.io.FileUtils;
 
+import play.Configuration;
 import play.Logger;
+import play.inject.ApplicationLifecycle;
+import play.libs.F.Promise;
 import scala.concurrent.duration.Duration;
 import akka.actor.Cancellable;
 import framework.services.account.AccountManagementException;
 import framework.services.account.IAccountManagerPlugin;
-import framework.utils.SysAdminUtils;
+import framework.services.database.IDatabaseDependencyService;
+import framework.services.system.ISysAdminUtils;
 import framework.utils.Utilities;
 
 /**
@@ -45,44 +52,72 @@ import framework.utils.Utilities;
  * 
  * @author Pierre-Yves Cloux
  */
+@Singleton
 public class PersonalStoragePluginImpl implements IPersonalStoragePlugin {
     private static Logger.ALogger log = Logger.of(PersonalStoragePluginImpl.class);
     private IAccountManagerPlugin accountManagerPlugin;
     private Cancellable scheduler;
-    private static final String PLAY_PERSONAL_STORAGE_ROOT_CONFIG_PARAMETER = "maf.personal.space.root";
-    private static final String PLAY_PERSONAL_STORAGE_CLEANUP_FREQUENCY_PARAMETER = "maf.personal.space.cleanup.frequency";
+    private File personalStorageRootFolder;
+    private int personalStorageCleanupFrequency;
+
+    public enum Config {
+        PLAY_PERSONAL_STORAGE_ROOT_CONFIG_PARAMETER("maf.personal.space.root"), PLAY_PERSONAL_STORAGE_CLEANUP_FREQUENCY_PARAMETER(
+                "maf.personal.space.cleanup.frequency");
+
+        private String configurationKey;
+
+        private Config(String configurationKey) {
+            this.configurationKey = configurationKey;
+        }
+
+        public String getConfigurationKey() {
+            return configurationKey;
+        }
+    }
 
     /**
      * Create a new PersonalStoragePluginImpl
      * 
+     * @param lifecycle
+     *            the play application lifecycle listener
+     * @param configuration
+     *            the play application configuration
      * @param accountManagerPlugin
+     *            the account manager plugin service
+     * @param sysAdminUtils
+     * @param databaseDependencyService
      */
-    public PersonalStoragePluginImpl(IAccountManagerPlugin accountManagerPlugin) {
+    @Inject
+    public PersonalStoragePluginImpl(ApplicationLifecycle lifecycle, Configuration configuration, IAccountManagerPlugin accountManagerPlugin,
+            ISysAdminUtils sysAdminUtils, IDatabaseDependencyService databaseDependencyService) {
+        log.info("SERVICE>>> PersonalStoragePluginImpl starting...");
+        this.personalStorageRootFolder = new File(configuration.getString(Config.PLAY_PERSONAL_STORAGE_ROOT_CONFIG_PARAMETER.getConfigurationKey()));
+        this.personalStorageCleanupFrequency = configuration.getInt(Config.PLAY_PERSONAL_STORAGE_CLEANUP_FREQUENCY_PARAMETER.getConfigurationKey());
         this.accountManagerPlugin = accountManagerPlugin;
-    }
-
-    /**
-     * Initialize the scheduler
-     */
-    public void init() {
-        this.scheduler =
-                SysAdminUtils.scheduleRecurring(true, "PersonalStorage", Duration.create(0, TimeUnit.MILLISECONDS),
-                        Duration.create(getPersonalStorageCleanupFrequency(), TimeUnit.HOURS), new Runnable() {
-                            @Override
-                            public void run() {
-                                String uuid = UUID.randomUUID().toString();
-                                log.info(String.format("Cleanup of the personal storage started with %s", uuid));
-                                cleanup();
-                                log.info(String.format("Cleanup of the personal storage completed with %s", uuid));
-                            }
-                        });
+        this.scheduler = sysAdminUtils.scheduleRecurring(true, "PersonalStorage", Duration.create(0, TimeUnit.MILLISECONDS),
+                Duration.create(getPersonalStorageCleanupFrequency(), TimeUnit.HOURS), new Runnable() {
+                    @Override
+                    public void run() {
+                        String uuid = UUID.randomUUID().toString();
+                        log.info(String.format("Cleanup of the personal storage started with %s", uuid));
+                        cleanup();
+                        log.info(String.format("Cleanup of the personal storage completed with %s", uuid));
+                    }
+                });
+        lifecycle.addStopHook(() -> {
+            log.info("SERVICE>>> PersonalStoragePluginImpl stopping...");
+            destroy();
+            log.info("SERVICE>>> PersonalStoragePluginImpl stopped");
+            return Promise.pure(null);
+        });
+        log.info("SERVICE>>> PersonalStoragePluginImpl started");
     }
 
     /**
      * Method to be registered at bean context to destroy the bean when the
      * context is closed
      */
-    public void destroy() {
+    private void destroy() {
         if (getScheduler() != null) {
             getScheduler().cancel();
         }
@@ -147,9 +182,8 @@ public class PersonalStoragePluginImpl implements IPersonalStoragePlugin {
         File newFileToCreate = new File(personalFolder, name);
         if (newFileToCreate.exists()) {
             if (!newFileToCreate.canWrite()) {
-                String errorMessage =
-                        String.format("Unable to write a file (named %s) to the personal storage for %s (file already exists and cannot be overwritten)",
-                                name, uid);
+                String errorMessage = String.format(
+                        "Unable to write a file (named %s) to the personal storage for %s (file already exists and cannot be overwritten)", name, uid);
                 log.error(errorMessage);
                 throw new IOException(errorMessage);
             }
@@ -182,9 +216,8 @@ public class PersonalStoragePluginImpl implements IPersonalStoragePlugin {
         File targetFile = new File(personalFolder, name);
         if (targetFile.exists()) {
             if (!targetFile.canWrite()) {
-                String errorMessage =
-                        String.format("Unable to move a file (named %s) to the personal storage for %s (file already exists and cannot be overwritten)",
-                                name, uid);
+                String errorMessage = String.format(
+                        "Unable to move a file (named %s) to the personal storage for %s (file already exists and cannot be overwritten)", name, uid);
                 log.error(errorMessage);
                 throw new IOException(errorMessage);
             }
@@ -242,11 +275,11 @@ public class PersonalStoragePluginImpl implements IPersonalStoragePlugin {
     }
 
     private File getPersonalStorageRootFolder() {
-        return new File(play.Configuration.root().getString(PLAY_PERSONAL_STORAGE_ROOT_CONFIG_PARAMETER));
+        return personalStorageRootFolder;
     }
 
     private int getPersonalStorageCleanupFrequency() {
-        return play.Play.application().configuration().getInt(PLAY_PERSONAL_STORAGE_CLEANUP_FREQUENCY_PARAMETER);
+        return personalStorageCleanupFrequency;
     }
 
     private IAccountManagerPlugin getAccountManagerPlugin() {

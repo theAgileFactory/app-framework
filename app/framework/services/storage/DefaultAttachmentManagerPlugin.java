@@ -26,13 +26,20 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.UUID;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import models.framework_models.common.Attachment;
 import models.framework_models.common.StructuredDocument;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
+import play.Configuration;
 import play.Logger;
+import play.inject.ApplicationLifecycle;
+import play.libs.F.Promise;
+import framework.services.database.IDatabaseDependencyService;
 import framework.utils.FileAttachmentHelper;
 import framework.utils.Utilities;
 
@@ -41,22 +48,51 @@ import framework.utils.Utilities;
  * 
  * @author Pierre-Yves Cloux
  */
+@Singleton
 public class DefaultAttachmentManagerPlugin implements IAttachmentManagerPlugin {
     private static Logger.ALogger log = Logger.of(DefaultAttachmentManagerPlugin.class);
+    /**
+     * The directory in which the attachments are stored
+     */
     private String attachmentRootDirectoryPath;
+
+    public enum Config {
+        ATTACHMENT_ROOT("maf.attachments.root");
+
+        private String configurationKey;
+
+        private Config(String configurationKey) {
+            this.configurationKey = configurationKey;
+        }
+
+        public String getConfigurationKey() {
+            return configurationKey;
+        }
+    }
 
     /**
      * Creates a new attachment manager.
      * 
-     * @param attachmentRootDirectoryPath
-     *            the directory in which the attachments are stored
+     * @param lifecycle
+     *            the play application lifecycle listener
+     * @param configuration
+     *            the play application configuration
+     * @param databaseDependencyService
      */
-    public DefaultAttachmentManagerPlugin(String attachmentRootDirectoryPath) {
-        this.attachmentRootDirectoryPath = attachmentRootDirectoryPath;
+    @Inject
+    public DefaultAttachmentManagerPlugin(ApplicationLifecycle lifecycle, Configuration configuration, IDatabaseDependencyService databaseDependencyService) {
+        log.info("SERVICE>>> DefaultAttachmentManagerPlugin starting...");
+        this.attachmentRootDirectoryPath = configuration.getString(Config.ATTACHMENT_ROOT.getConfigurationKey());
         File attachmentDirectory = new File(attachmentRootDirectoryPath);
         if (!attachmentDirectory.exists() || !attachmentDirectory.isDirectory()) {
             throw new IllegalArgumentException("Invalid attachments directory: " + attachmentRootDirectoryPath);
         }
+        lifecycle.addStopHook(() -> {
+            log.info("SERVICE>>> DefaultAttachmentManagerPlugin stopping...");
+            log.info("SERVICE>>> DefaultAttachmentManagerPlugin stopped");
+            return Promise.pure(null);
+        });
+        log.info("SERVICE>>> DefaultAttachmentManagerPlugin started");
     }
 
     @Override
@@ -108,9 +144,8 @@ public class DefaultAttachmentManagerPlugin implements IAttachmentManagerPlugin 
 
             return attachment.id;
         } catch (Exception e) {
-            String errorMessage =
-                    String.format("Exception while writing the file %s [objectId=%s, objectType=%s]", fileAttachment.getAbsolutePath(),
-                            String.valueOf(objectId), objectType);
+            String errorMessage = String.format("Exception while writing the file %s [objectId=%s, objectType=%s]", fileAttachment.getAbsolutePath(),
+                    String.valueOf(objectId), objectType);
             log.error(errorMessage, e);
             throw new IOException(errorMessage, e);
         } finally {
@@ -151,8 +186,8 @@ public class DefaultAttachmentManagerPlugin implements IAttachmentManagerPlugin 
 
             return attachment.id;
         } catch (Exception e) {
-            String errorMessage =
-                    String.format("Exception while storing a structured document %s [objectId=%s, objectType=%s]", name, String.valueOf(objectId), objectType);
+            String errorMessage = String.format("Exception while storing a structured document %s [objectId=%s, objectType=%s]", name,
+                    String.valueOf(objectId), objectType);
             log.error(errorMessage, e);
             throw new IOException(errorMessage, e);
         }
@@ -239,8 +274,7 @@ public class DefaultAttachmentManagerPlugin implements IAttachmentManagerPlugin 
                 }
             } else {
                 if (existingAttachment.structuredDocument == null || existingAttachment.structuredDocument.content == null) {
-                    throw new IOException(String.format("Attachment object %s is not linked to a file nor a structured document",
-                            String.valueOf(attachmentId)));
+                    throw new IOException(String.format("Attachment object %s is not linked to a file nor a structured document", String.valueOf(attachmentId)));
                 }
                 int structuredAttachmentCount = Attachment.getNumberOfAttachments(existingAttachment.structuredDocument.id);
                 if (structuredAttachmentCount == 1) {
@@ -309,9 +343,8 @@ public class DefaultAttachmentManagerPlugin implements IAttachmentManagerPlugin 
 
             return linkedAttachment.id;
         } catch (Exception e) {
-            String errorMessage =
-                    String.format("Exception while linking or moving an existing attachment %s to a new one [objectId=%s, objectType=%s]",
-                            String.valueOf(existingAttachmentId), String.valueOf(objectId), objectType);
+            String errorMessage = String.format("Exception while linking or moving an existing attachment %s to a new one [objectId=%s, objectType=%s]",
+                    String.valueOf(existingAttachmentId), String.valueOf(objectId), objectType);
             log.error(errorMessage, e);
             throw new IOException(errorMessage, e);
         }

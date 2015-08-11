@@ -23,11 +23,16 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import models.framework_models.account.Notification;
 import models.framework_models.account.NotificationCategory;
 import models.framework_models.account.Principal;
+import play.Configuration;
 import play.Logger;
-import play.Play;
+import play.inject.ApplicationLifecycle;
+import play.libs.F.Promise;
 import scala.concurrent.duration.Duration;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
@@ -41,7 +46,7 @@ import akka.routing.RoundRobinPool;
 
 import com.avaje.ebean.ExpressionList;
 
-import framework.services.actor.IActorServiceLifecycleHook;
+import framework.services.database.IDatabaseDependencyService;
 
 /**
  * Implementation of the {@link INotificationManagerPlugin} interface.<br/>
@@ -50,40 +55,83 @@ import framework.services.actor.IActorServiceLifecycleHook;
  * 
  * @author Pierre-Yves Cloux
  */
-public class DefaultNotificationManagerPlugin implements INotificationManagerPlugin, IActorServiceLifecycleHook {
-
+@Singleton
+public class DefaultNotificationManagerPlugin implements INotificationManagerPlugin {
     private static final String SUPERVISOR_ACTOR_NAME = "notification-router";
-    public static final String DURATION = Play.application().configuration().getString("maf.actor.notification.retry.duration");
-    public static final int MAX_RETRY_BEFORE_FAILURE = Play.application().configuration().getInt("maf.actor.notification.retry.number");
-    private static SupervisorStrategy strategy = new OneForOneStrategy(MAX_RETRY_BEFORE_FAILURE, Duration.create(DURATION),
-            new Function<Throwable, Directive>() {
-                @Override
-                public Directive apply(Throwable t) {
-                    log.error("An notification processor reported an exception, retry", t);
-                    return resume();
-                }
-            });
     private static Logger.ALogger log = Logger.of(DefaultNotificationManagerPlugin.class);
+
+    private static SupervisorStrategy getSupervisorStrategy(int notificationRetryNumber, String notificationRetryDuration) {
+        return new OneForOneStrategy(notificationRetryNumber, Duration.create(notificationRetryDuration), new Function<Throwable, Directive>() {
+            @Override
+            public Directive apply(Throwable t) {
+                log.error("An notification processor reported an exception, retry", t);
+                return resume();
+            }
+        });
+    }
+
+    /**
+     * The size of the actor pool which is managing the notifications
+     */
     private int poolSize;
+
+    /**
+     * How long to wait before attempting to distribute the message again
+     */
+    private String notificationRetryDuration;
+
+    /**
+     * Number of retry when a delivery failed
+     */
+    private int notificationRetryNumber;
+
     private ActorRef supervisorActor;
 
-    public DefaultNotificationManagerPlugin(int poolSize) {
-        this.poolSize = poolSize;
+    public enum Config {
+        NOTIFICATION_POOL_SIZE("maf.actor.notification.pool"), RETRY_DURATION("maf.actor.notification.retry.duration"), RETRY_NUMBER(
+                "maf.actor.notification.retry.number");
+
+        private String configurationKey;
+
+        private Config(String configurationKey) {
+            this.configurationKey = configurationKey;
+        }
+
+        public String getConfigurationKey() {
+            return configurationKey;
+        }
+    }
+
+    /**
+     * Create a new DefaultNotificationManagerPlugin
+     * 
+     * @param lifecycle
+     *            the play application lifecycle listener
+     * @param configuration
+     *            the play application configuration
+     * @param databaseDependencyService
+     *            the service which ensures that the database is available
+     */
+    @Inject
+    public DefaultNotificationManagerPlugin(ApplicationLifecycle lifecycle, Configuration configuration, IDatabaseDependencyService databaseDependencyService) {
+        log.info("SERVICE>>> DefaultNotificationManagerPlugin starting...");
+        this.poolSize = configuration.getInt(Config.NOTIFICATION_POOL_SIZE.getConfigurationKey());
+        this.notificationRetryDuration = configuration.getString(Config.RETRY_DURATION.getConfigurationKey());
+        this.notificationRetryNumber = configuration.getInt(Config.RETRY_NUMBER.getConfigurationKey());
+        lifecycle.addStopHook(() -> {
+            log.info("SERVICE>>> DefaultNotificationManagerPlugin stopping...");
+            log.info("SERVICE>>> DefaultNotificationManagerPlugin stopped");
+            return Promise.pure(null);
+        });
+        log.info("SERVICE>>> DefaultNotificationManagerPlugin started");
     }
 
     @Override
     public void createActors(ActorSystem actorSystem) {
-        /*
-         * this.supervisorActor = actorSystem.actorOf(
-         * Props.create(NotificationMessageProcessingActor.class).withRouter(
-         * new
-         * SmallestMailboxRouter(getPoolSize()).withSupervisorStrategy(strategy
-         * )), SUPERVISOR_ACTOR_NAME);
-         */
-        this.supervisorActor =
-                actorSystem.actorOf(
-                        (new RoundRobinPool(getPoolSize())).withSupervisorStrategy(strategy).props(Props.create(NotificationMessageProcessingActor.class)),
-                        SUPERVISOR_ACTOR_NAME);
+        SupervisorStrategy strategy = getSupervisorStrategy(getNotificationRetryNumber(), getNotificationRetryDuration());
+        this.supervisorActor = actorSystem.actorOf(
+                (new RoundRobinPool(getPoolSize())).withSupervisorStrategy(strategy).props(Props.create(NotificationMessageProcessingActor.class)),
+                SUPERVISOR_ACTOR_NAME);
         log.info("Actor based notification system is started");
     }
 
@@ -247,6 +295,14 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
 
     private ActorRef getSupervisorActor() {
         return supervisorActor;
+    }
+
+    private String getNotificationRetryDuration() {
+        return notificationRetryDuration;
+    }
+
+    private int getNotificationRetryNumber() {
+        return notificationRetryNumber;
     }
 
     /**

@@ -29,6 +29,13 @@ import java.util.Map;
 
 import org.apache.commons.lang3.reflect.FieldUtils;
 
+import play.Play;
+import play.mvc.Controller;
+import play.mvc.Http.RawBuffer;
+import play.mvc.Http.Request;
+import play.mvc.Result;
+
+import com.avaje.ebean.Model;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.Version;
@@ -46,11 +53,6 @@ import framework.services.api.commons.IApiObject;
 import framework.services.api.commons.JsonPropertyLink;
 import framework.services.api.server.ApiLog;
 import framework.utils.Utilities;
-import com.avaje.ebean.Model;
-import play.mvc.Controller;
-import play.mvc.Http.RawBuffer;
-import play.mvc.Http.Request;
-import play.mvc.Result;
 
 /**
  * The base class for any AbstractApiController
@@ -149,8 +151,7 @@ public class AbstractApiController extends Controller {
     }
 
     /**
-     * Convert the specified Json node into an object of the specified class.
-     * <br/>
+     * Convert the specified Json node into an object of the specified class. <br/>
      * An exception is thrown if the unmarshalling fails
      * 
      * @param json
@@ -245,8 +246,7 @@ public class AbstractApiController extends Controller {
 
     /**
      * Return the URL pattern to be applied to the specified class.<br/>
-     * By default a standard pattern is applied based on the name of the class.
-     * <br/>
+     * By default a standard pattern is applied based on the name of the class. <br/>
      * The method checks if an exception to the standard pattern is not declared
      * before returning the URL pattern.
      * 
@@ -254,8 +254,12 @@ public class AbstractApiController extends Controller {
      */
     private static String getUrlPatternFromObjectClass(Class<?> objectClass) {
         if (!urlFormatsExceptions.containsKey(objectClass)) {
-            return Utilities.getPreferenceElseConfigurationValue(IFrameworkConstants.SWAGGER_API_BASEPATH_PREFERENCE, "swagger.api.basepath")
-                    + STANDARD_API_ROOT_URI + "/" + objectClass.getSimpleName().replaceAll("(.)(\\p{Upper})", "$1_$2").toLowerCase() + "/%s";
+            return Utilities.getPreferenceElseConfigurationValue(Play.application().configuration(), IFrameworkConstants.SWAGGER_API_BASEPATH_PREFERENCE,
+                    "swagger.api.basepath")
+                    + STANDARD_API_ROOT_URI
+                    + "/"
+                    + objectClass.getSimpleName().replaceAll("(.)(\\p{Upper})", "$1_$2").toLowerCase()
+                    + "/%s";
         }
         return urlFormatsExceptions.get(objectClass);
     }
@@ -288,8 +292,8 @@ public class AbstractApiController extends Controller {
                         try {
                             apiLink.id = FieldUtils.readField(o, idFieldName);
                         } catch (Exception e) {
-                            throw new IllegalArgumentException(
-                                    "No field " + idFieldName + " on an element of a List of of type " + (o != null ? o.getClass() : o), e);
+                            throw new IllegalArgumentException("No field " + idFieldName + " on an element of a List of of type "
+                                    + (o != null ? o.getClass() : o), e);
                         }
                         // Get the API name from bean
                         apiLink.name = model.getApiName();

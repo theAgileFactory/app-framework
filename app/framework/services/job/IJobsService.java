@@ -26,23 +26,8 @@ import java.util.List;
  */
 public interface IJobsService {
 
-    public static final String NAME = "jobsService";
-
     /**
-     * Start the jobs, including the schedulers.
-     * 
-     * @param the
-     *            list of jobs
-     */
-    public void start(List<IJobDescriptor> jobs);
-
-    /**
-     * Cancell all schedulers.
-     */
-    public void cancel();
-
-    /**
-     * Get the jobs.
+     * Get the jobs registered with the service. This is a non modifiable list.
      */
     public List<IJobDescriptor> getJobs();
 

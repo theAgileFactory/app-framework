@@ -20,15 +20,12 @@ package framework.utils;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import framework.commons.IFrameworkConstants;
-import framework.services.ServiceManager;
-import framework.services.account.IPreferenceManagerPlugin;
-import framework.services.configuration.IImplementationDefinedObjectService;
-import framework.services.configuration.ImplementationDefineObjectServiceFactory;
-import framework.services.session.IUserSessionManagerPlugin;
-import framework.utils.Menu.MenuItem;
 import play.mvc.Http.Context;
 import play.twirl.api.Html;
+import framework.commons.IFrameworkConstants;
+import framework.services.ServiceStaticAccessor;
+import framework.services.configuration.IImplementationDefinedObjectService;
+import framework.utils.Menu.MenuItem;
 
 /**
  * The top menu bar is a set of perspectives. Each perspective represents a top
@@ -71,7 +68,7 @@ public class TopMenuBar {
      *            the perspective key
      */
     public String getSwitchingRoute(String key) {
-        IImplementationDefinedObjectService implementationDefinedObjectService = ImplementationDefineObjectServiceFactory.getInstance();
+        IImplementationDefinedObjectService implementationDefinedObjectService = ServiceStaticAccessor.getImplementationDefinedObjectService();
         return implementationDefinedObjectService.getRouteForSwitchingTopMenuBarPerspective(key).url();
     }
 
@@ -82,16 +79,14 @@ public class TopMenuBar {
      *            the perspective key
      */
     public void setPerspectiveFromPreference(String key) {
-        IPreferenceManagerPlugin preferenceManagerPlugin = ServiceManager.getService(IPreferenceManagerPlugin.NAME, IPreferenceManagerPlugin.class);
-        preferenceManagerPlugin.updatePreferenceValue(IFrameworkConstants.CURRENT_PERSPECTIVE_PREFERENCE, key);
+        ServiceStaticAccessor.getPreferenceManagerPlugin().updatePreferenceValue(IFrameworkConstants.CURRENT_PERSPECTIVE_PREFERENCE, key);
     }
 
     /**
      * Get the perspective key from the user preference.
      */
     public String getPerspectiveFromPreference() {
-        IPreferenceManagerPlugin preferenceManagerPlugin = ServiceManager.getService(IPreferenceManagerPlugin.NAME, IPreferenceManagerPlugin.class);
-        String key = preferenceManagerPlugin.getPreferenceValueAsString(IFrameworkConstants.CURRENT_PERSPECTIVE_PREFERENCE);
+        String key = ServiceStaticAccessor.getPreferenceManagerPlugin().getPreferenceValueAsString(IFrameworkConstants.CURRENT_PERSPECTIVE_PREFERENCE);
         if (key == null || key.equals("")) {
             return MAIN_KEY;
         } else {
@@ -154,9 +149,7 @@ public class TopMenuBar {
      * Return true if there is a login user.
      */
     public boolean hasUser() {
-        IUserSessionManagerPlugin userSessionManagerPlugin = framework.services.ServiceManager.getService(IUserSessionManagerPlugin.NAME,
-                IUserSessionManagerPlugin.class);
-        return userSessionManagerPlugin.getUserSessionId(Context.current()) != null;
+        return ServiceStaticAccessor.getUserSessionManagerPlugin().getUserSessionId(Context.current()) != null;
     }
 
     /**

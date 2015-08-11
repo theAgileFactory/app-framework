@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -32,7 +34,11 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.directory.ModificationItem;
 
+import play.Configuration;
 import play.Logger;
+import play.inject.ApplicationLifecycle;
+import play.libs.F.Promise;
+import framework.services.database.IDatabaseDependencyService;
 
 /**
  * Default implementation for the interface
@@ -40,11 +46,31 @@ import play.Logger;
  * LDAP server.<br/>
  * Obviously such features are only accessible if the master mode is activated.
  * In Slave mode (read-only authentication back-end), it is not possible to
- * update the LDAP back-end.
+ * update the LDAP back-end.<br/>
+ * Here are the properties:
+ * <ul>
+ * <li>ldapUrl : the LDAP url for the bind (example:
+ * ldap://localhost/dc=company, dc=com)</li>
+ * <li>user : the user to be used to connect to the server (example:
+ * cn=Directory Manager)</li>
+ * <li>password : the password for the previous user</li>
+ * <li>userDnTemplate : a template to generate the DN for the newly created
+ * users (example: uid=%s,ou=People) the DN is relative to the initial context
+ * defined in ldapUrl</li>
+ * <li>groupDnTemplate : a template to generate the DN for a group (example:
+ * cn=%s,ou=Group) the DN is relative to the initial context defined in ldapUrl</li>
+ * <li>objectClasses : an array of objectclasses to be used to create the LDAP
+ * entry (defined as a constant in the class implementation)</li>
+ * <li>activationLdapAttr : the name of the attribute which contains the
+ * activation status</li>
+ * <li>activationLdapActivValue : the value which indicates that the user is
+ * "active"</li>
+ * </ul>
  * 
  * @author Pierre-Yves Cloux
  * 
  */
+@Singleton
 public class DefaultAuthenticationAccountWriterPlugin implements IAuthenticationAccountWriterPlugin {
     private Hashtable<String, String> environment;
 
@@ -53,53 +79,59 @@ public class DefaultAuthenticationAccountWriterPlugin implements IAuthentication
     private String activationLdapAttr;
     private String activationLdapActiveValue;
     private String activationLdapLockedValue;
-    private String[] objectClasses;
+    private String[] objectClasses = { "top", "person", "organizationalPerson", "inetOrgPerson" };
 
     private static Logger.ALogger log = Logger.of(DefaultAuthenticationAccountWriterPlugin.class);
 
+    public enum Config {
+        LDAP_URL("maf.ldap_url"), LDAP_USER("maf.user"), LDAP_PASSWORD("maf.password"), USER_DN_TEMPLATE("maf.user_dn_template"), GROUP_DN_TEMPLATE(
+                "maf.group_dn_template"), ACTIVATION_ATTRIBUTE_NAME("maf.activation_ldap_attribute"), ACTIVATION_ATTRIBUTE_VALUE(
+                "maf.activation_ldap_attribute_activated"), ACTIVATION_ATTRIBUTE_VALUE_LOCKED("maf.activation_ldap_attribute_locked");
+
+        private String configurationKey;
+
+        private Config(String configurationKey) {
+            this.configurationKey = configurationKey;
+        }
+
+        public String getConfigurationKey() {
+            return configurationKey;
+        }
+    }
+
     /**
-     * Creates a new instance
+     * Creates a new DefaultAuthenticationAccountWriterPlugin
      * 
-     * @param ldapUrl
-     *            the LDAP url for the bind (example:
-     *            ldap://localhost/dc=company, dc=com)
-     * @param user
-     *            the user to be used to connect to the server (example:
-     *            cn=Directory Manager)
-     * @param password
-     * @param userDnTemplate
-     *            a template to generate the DN for the newly created users
-     *            (example: uid=%s,ou=People) the DN is relative to the initial
-     *            context defined in ldapUrl
-     * @param groupDnTemplate
-     *            a template to generate the DN for a group (example:
-     *            cn=%s,ou=Group) the DN is relative to the initial context
-     *            defined in ldapUrl
-     * @param objectClasses
-     *            an array of objectclasses to be used to create the LDAP entry
-     * @param activationLdapAttr
-     *            the name of the attribute which contains the activation status
-     * @param activationLdapActivValue
-     *            the value which indicates that the user is "active"
+     * @param lifecycle
+     *            the play application lifecycle listener
+     * @param configuration
+     *            the play application configuration
+     * @param databaseDependencyService
      */
-    public DefaultAuthenticationAccountWriterPlugin(String ldapUrl, String user, String password, String userDnTemplate, String groupDnTemplate,
-            String[] objectClasses, String activationLdapAttr, String activationLdapActivValue, String activationLdapLockedValue) {
+    @Inject
+    public DefaultAuthenticationAccountWriterPlugin(ApplicationLifecycle lifecycle, Configuration configuration,
+            IDatabaseDependencyService databaseDependencyService) {
+        log.info("SERVICE>>> DefaultAuthenticationAccountWriterPlugin starting...");
         environment = new Hashtable<String, String>();
         environment.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
-        environment.put(Context.PROVIDER_URL, ldapUrl);
-        environment.put(Context.SECURITY_PRINCIPAL, user);
-        environment.put(Context.SECURITY_CREDENTIALS, password);
+        environment.put(Context.PROVIDER_URL, configuration.getString(Config.LDAP_URL.getConfigurationKey()));
+        environment.put(Context.SECURITY_PRINCIPAL, configuration.getString(Config.LDAP_USER.getConfigurationKey()));
+        environment.put(Context.SECURITY_CREDENTIALS, configuration.getString(Config.LDAP_PASSWORD.getConfigurationKey()));
         environment.put("com.sun.jndi.ldap.connect.pool", "true");
-        this.userDnTemplate = userDnTemplate;
-        this.groupDnTemplate = groupDnTemplate;
-        this.activationLdapAttr = activationLdapAttr;
-        this.activationLdapActiveValue = activationLdapActivValue;
-        this.activationLdapLockedValue = activationLdapLockedValue;
-        this.objectClasses = objectClasses;
-
+        this.userDnTemplate = configuration.getString(Config.USER_DN_TEMPLATE.getConfigurationKey());
+        this.groupDnTemplate = configuration.getString(Config.GROUP_DN_TEMPLATE.getConfigurationKey());
+        this.activationLdapAttr = configuration.getString(Config.ACTIVATION_ATTRIBUTE_NAME.getConfigurationKey());
+        this.activationLdapActiveValue = configuration.getString(Config.ACTIVATION_ATTRIBUTE_VALUE.getConfigurationKey());
+        this.activationLdapLockedValue = configuration.getString(Config.ACTIVATION_ATTRIBUTE_VALUE_LOCKED.getConfigurationKey());
         if (log.isDebugEnabled()) {
             log.debug("Initialized with " + environment.toString());
         }
+        lifecycle.addStopHook(() -> {
+            log.info("SERVICE>>> DefaultAuthenticationAccountWriterPlugin stopping...");
+            log.info("SERVICE>>> DefaultAuthenticationAccountWriterPlugin stopped");
+            return Promise.pure(null);
+        });
+        log.info("SERVICE>>> DefaultAuthenticationAccountWriterPlugin started");
     }
 
     private Hashtable<String, String> getEnvironment() {

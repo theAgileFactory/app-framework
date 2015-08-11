@@ -27,7 +27,6 @@ import javax.naming.NamingException;
  * 
  */
 public interface IAuthenticationAccountWriterPlugin {
-    public static final String NAME = "authenticationAccountWriterPlugin";
 
     /**
      * Create a blank user profile

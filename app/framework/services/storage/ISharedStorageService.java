@@ -32,7 +32,6 @@ import java.io.OutputStream;
  * 
  */
 public interface ISharedStorageService {
-    public static final String NAME = "sharedStorageService";
 
     /**
      * Return a file reference to a file from the shared storage.<br/>

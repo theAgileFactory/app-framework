@@ -17,7 +17,15 @@
  */
 package framework.services.account;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import models.framework_models.account.Credential;
+import play.Configuration;
+import play.Logger;
+import play.inject.ApplicationLifecycle;
+import play.libs.F.Promise;
+import framework.services.database.IDatabaseDependencyService;
 
 /**
  * An implementation of the {@link IAuthenticationAccountWriterPlugin} based on
@@ -25,9 +33,29 @@ import models.framework_models.account.Credential;
  * 
  * @author Pierre-Yves Cloux
  */
+@Singleton
 public class LightAuthenticationAccountWriterPlugin implements IAuthenticationAccountWriterPlugin {
+    private static Logger.ALogger log = Logger.of(LightAuthenticationAccountWriterPlugin.class);
 
-    public LightAuthenticationAccountWriterPlugin() {
+    /**
+     * Create a new LightAuthenticationAccountWriterPlugin
+     * 
+     * @param lifecycle
+     *            the play application lifecycle listener
+     * @param configuration
+     *            the play application configuration
+     * @param databaseDependencyService
+     */
+    @Inject
+    public LightAuthenticationAccountWriterPlugin(ApplicationLifecycle lifecycle, Configuration configuration,
+            IDatabaseDependencyService databaseDependencyService) {
+        log.info("SERVICE>>> LightAuthenticationAccountWriterPlugin starting...");
+        lifecycle.addStopHook(() -> {
+            log.info("SERVICE>>> LightAuthenticationAccountWriterPlugin stopping...");
+            log.info("SERVICE>>> LightAuthenticationAccountWriterPlugin stopped");
+            return Promise.pure(null);
+        });
+        log.info("SERVICE>>> LightAuthenticationAccountWriterPlugin started");
     }
 
     @Override

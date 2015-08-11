@@ -19,12 +19,17 @@ package framework.services.session;
 
 import java.util.List;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import org.apache.commons.lang3.StringUtils;
-import org.pac4j.core.profile.CommonProfile;
 import org.pac4j.core.context.Pac4jConstants;
+import org.pac4j.core.profile.CommonProfile;
 import org.pac4j.play.StorageHelper;
 
 import play.Logger;
+import play.inject.ApplicationLifecycle;
+import play.libs.F.Promise;
 import play.mvc.Http.Context;
 import play.mvc.Http.Session;
 
@@ -35,6 +40,7 @@ import play.mvc.Http.Session;
  * 
  * @author Pierre-Yves Cloux
  */
+@Singleton
 public class CookieUserSessionManagerPlugin implements IUserSessionManagerPlugin {
     private static Logger.ALogger log = Logger.of(CookieUserSessionManagerPlugin.class);
     private String profileAttributeName;
@@ -42,8 +48,15 @@ public class CookieUserSessionManagerPlugin implements IUserSessionManagerPlugin
     /**
      * @param profileAttribute
      */
-    private CookieUserSessionManagerPlugin() {
-        super();
+    @Inject
+    private CookieUserSessionManagerPlugin(ApplicationLifecycle lifecycle) {
+        log.info("SERVICE>>> CookieUserSessionManagerPlugin starting...");
+        lifecycle.addStopHook(() -> {
+            log.info("SERVICE>>> CookieUserSessionManagerPlugin stopping...");
+            log.info("SERVICE>>> CookieUserSessionManagerPlugin stopped");
+            return Promise.pure(null);
+        });
+        log.info("SERVICE>>> CookieUserSessionManagerPlugin started");
     }
 
     @Override

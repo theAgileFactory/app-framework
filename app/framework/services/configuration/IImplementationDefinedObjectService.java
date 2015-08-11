@@ -33,6 +33,12 @@ import framework.services.plugins.PluginConfiguratorController;
  * @author Pierre-Yves Cloux
  */
 public interface IImplementationDefinedObjectService {
+    /**
+     * Return the default currency for the system
+     * 
+     * @return
+     */
+    public String getDefaultCurrencyCode();
 
     /**
      * Return the route to the wait ajax image (the animated gif for wait)

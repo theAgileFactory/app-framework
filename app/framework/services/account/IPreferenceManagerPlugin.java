@@ -36,7 +36,6 @@ import java.util.Date;
  * @author Pierre-Yves Cloux
  */
 public interface IPreferenceManagerPlugin {
-    public static final String NAME = "preferenceManagerPlugin";
 
     /**
      * Get a String preference for the specified user

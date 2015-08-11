@@ -22,12 +22,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import models.framework_models.plugin.PluginConfigurationBlock;
 
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 
-import framework.services.ServiceManager;
 import framework.services.storage.ISharedStorageService;
 
 /**
@@ -35,7 +37,10 @@ import framework.services.storage.ISharedStorageService;
  * 
  * @author Pierre-Yves Cloux
  */
+@Singleton
 public class PluginUtils {
+    @Inject
+    private static ISharedStorageService sharedStorageService;
 
     public PluginUtils() {
     }
@@ -71,8 +76,7 @@ public class PluginUtils {
      * @return an input stream
      */
     public static InputStream getFile(String filePath) throws IOException {
-        ISharedStorageService sharedStorageService = ServiceManager.getService(ISharedStorageService.NAME, ISharedStorageService.class);
-        return sharedStorageService.getFileAsStream(filePath);
+        return getSharedStorageService().getFileAsStream(filePath);
     }
 
     /**
@@ -87,8 +91,7 @@ public class PluginUtils {
      * @return an outputstream
      */
     public static OutputStream writeFile(String filePath, boolean overwrite) throws IOException {
-        ISharedStorageService sharedStorageService = ServiceManager.getService(ISharedStorageService.NAME, ISharedStorageService.class);
-        return sharedStorageService.writeFile(filePath, overwrite);
+        return getSharedStorageService().writeFile(filePath, overwrite);
     }
 
     /**
@@ -98,8 +101,7 @@ public class PluginUtils {
      *            the path of the file in the local storage
      */
     public static void deleteFile(String filePath) throws IOException {
-        ISharedStorageService sharedStorageService = ServiceManager.getService(ISharedStorageService.NAME, ISharedStorageService.class);
-        sharedStorageService.deleteFile(filePath);
+        getSharedStorageService().deleteFile(filePath);
     }
 
     /**
@@ -111,8 +113,7 @@ public class PluginUtils {
      * @throws IOException
      */
     public static String[] getFileList(String directoryPath) throws IOException {
-        ISharedStorageService sharedStorageService = ServiceManager.getService(ISharedStorageService.NAME, ISharedStorageService.class);
-        return sharedStorageService.getFileList(directoryPath);
+        return getSharedStorageService().getFileList(directoryPath);
     }
 
     /**
@@ -126,8 +127,7 @@ public class PluginUtils {
      * @throws IOException
      */
     public static void rename(String sourceFilePath, String targetFilePath) throws IOException {
-        ISharedStorageService sharedStorageService = ServiceManager.getService(ISharedStorageService.NAME, ISharedStorageService.class);
-        sharedStorageService.rename(sourceFilePath, targetFilePath);
+        getSharedStorageService().rename(sourceFilePath, targetFilePath);
     }
 
     /**
@@ -139,7 +139,10 @@ public class PluginUtils {
      *            the path to the target folder
      */
     public static void move(String sourceFilePath, String targetFolderPath) throws IOException {
-        ISharedStorageService sharedStorageService = ServiceManager.getService(ISharedStorageService.NAME, ISharedStorageService.class);
-        sharedStorageService.move(sourceFilePath, targetFolderPath);
+        getSharedStorageService().move(sourceFilePath, targetFolderPath);
+    }
+
+    private static ISharedStorageService getSharedStorageService() {
+        return sharedStorageService;
     }
 }

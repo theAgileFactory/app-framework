@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import framework.services.ServiceManager;
+import framework.services.ServiceStaticAccessor;
 import framework.services.configuration.II18nMessagesPlugin;
 
 /**
@@ -109,9 +109,7 @@ public class MultiLanguagesString {
      * of an entry => one call for each field with MultiLanguagesString type).
      */
     public void persist() {
-
-        II18nMessagesPlugin messagesPlugin = ServiceManager.getService(II18nMessagesPlugin.NAME, II18nMessagesPlugin.class);
-
+        II18nMessagesPlugin messagesPlugin = ServiceStaticAccessor.getMessagesPlugin();
         for (int i = 0; i < LanguageUtil.VALID_LANGUAGES_LIST.size(); i++) {
             Language language = LanguageUtil.VALID_LANGUAGES_LIST.get(i);
             String value = this.values.get(i);

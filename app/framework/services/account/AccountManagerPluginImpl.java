@@ -24,6 +24,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
+
 import models.framework_models.account.Principal;
 import models.framework_models.account.SystemLevelRole;
 import models.framework_models.account.SystemLevelRoleType;
@@ -31,8 +35,11 @@ import models.framework_models.account.SystemPermission;
 
 import org.apache.commons.lang3.RandomStringUtils;
 
+import play.Configuration;
 import play.Logger;
 import play.cache.Cache;
+import play.inject.ApplicationLifecycle;
+import play.libs.F.Promise;
 
 import com.avaje.ebean.Ebean;
 
@@ -41,18 +48,37 @@ import framework.commons.IFrameworkConstants;
 import framework.commons.message.EventMessage;
 import framework.commons.message.UserEventMessage;
 import framework.services.account.IUserAccount.AccountType;
+import framework.services.database.IDatabaseDependencyService;
 import framework.services.plugins.IPluginManagerService;
 
 /**
  * The plugin managing the user accounts.<br/>
  * The plugin is based on a cache.<br/>
  * <b>WARNING</b>: remember to call invalidateUserAccountCache(uid) each time a
- * user account is modified.
+ * user account is modified.<br/>
+ * <ul>
+ * <li>authenticationRepositoryMasterMode : true if the system is configured in
+ * "master mode".</li>
+ * <li>selfMailUpdateAllowed : true if the user can update his e-mail himself</li>
+ * <li>authenticationAccountWriterPlugin : the plugin to be used to update the
+ * authentication back-end (if master mode)</li>
+ * <li>authenticationAccountReaderPlugin : the plugin to be used to read the
+ * authentication back-end</li>
+ * <li>pluginManagerService : the service that manages the notification of the
+ * third party</li>
+ * plugins
+ * <li>validationKeyValidity : how much time a validation key is valid in
+ * minutes (validation for password change, account creation of e-mail update)</li>
+ * <li>commonUserAccountClass : the class which implements the
+ * {@link ICommonUserAccount} interface and which is to be used as the basis of
+ * the {@link IUserAccount}</li>
+ * </ul>
  * 
  * 
  * @author Pierre-Yves Cloux
  * 
  */
+@Singleton
 public class AccountManagerPluginImpl implements IAccountManagerPlugin {
     private static Logger.ALogger log = Logger.of(AccountManagerPluginImpl.class);
     private boolean authenticationRepositoryMasterMode;
@@ -64,44 +90,66 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
     private int userAccountCacheDurationInSeconds;
     private Class<?> commonUserAccountClass;
 
+    public enum Config {
+        SELF_MAIL_UPDATE_ALLOWED("maf.ic_self_mail_update_allowed"), ACCOUNT_CACHE_DURATION("maf.user_account_cache_duration"), VALIDATION_KEY_VALIDITY(
+                "maf.validation.key.validity");
+
+        private String configurationKey;
+
+        private Config(String configurationKey) {
+            this.configurationKey = configurationKey;
+        }
+
+        public String getConfigurationKey() {
+            return configurationKey;
+        }
+    }
+
     /**
-     * Creates an instance of plugin.
+     * Creates a new AccountManagerPluginImpl
      * 
+     * @param lifecycle
+     *            the play application lifecycle listener
+     * @param configuration
+     *            the play application configuration
+     * @param commonUserAccountClassName
+     *            the class to be used for user accounts
      * @param authenticationRepositoryMasterMode
-     *            true if the system is configured in "master mode".
-     * @param selfMailUpdateAllowed
-     *            true if the user can update his e-mail himself
+     *            if true the system is in LDAP master mode (LDAP is writable)
      * @param authenticationAccountWriterPlugin
-     *            the plugin to be used to update the authentication back-end
-     *            (if master mode)
      * @param authenticationAccountReaderPlugin
-     *            the plugin to be used to read the authentication back-end
      * @param pluginManagerService
-     *            the service that manages the notification of the third party
-     *            plugins
-     * @param validationKeyValidity
-     *            how much time a validation key is valid in minutes (validation
-     *            for password change, account creation of e-mail update)
-     * @param commonUserAccountClass
-     *            the class which implements the {@link ICommonUserAccount}
-     *            interface and which is to be used as the basis of the
-     *            {@link IUserAccount}
+     * @param databaseDependencyService
+     * @throws ClassNotFoundException
      */
-    public AccountManagerPluginImpl(boolean authenticationRepositoryMasterMode, boolean selfMailUpdateAllowed, int userAccountCacheDurationInSeconds,
+    @Inject
+    public AccountManagerPluginImpl(ApplicationLifecycle lifecycle, Configuration configuration,
+            @Named("UserAccountClassName") String commonUserAccountClassName,
+            @Named("AuthenticationRepositoryMasterMode") Boolean authenticationRepositoryMasterMode,
             IAuthenticationAccountWriterPlugin authenticationAccountWriterPlugin, IAuthenticationAccountReaderPlugin authenticationAccountReaderPlugin,
-            IPluginManagerService pluginManagerService, int validationKeyValidity, Class<?> commonUserAccountClass) {
-        this.userAccountCacheDurationInSeconds = userAccountCacheDurationInSeconds;
+            IPluginManagerService pluginManagerService, IDatabaseDependencyService databaseDependencyService) throws ClassNotFoundException {
+        log.info("SERVICE>>> AccountManagerPluginImpl starting...");
         this.authenticationRepositoryMasterMode = authenticationRepositoryMasterMode;
-        this.selfMailUpdateAllowed = selfMailUpdateAllowed;
-        this.authenticationAccountWriterPlugin = authenticationAccountWriterPlugin;
-        this.authenticationAccountReaderPlugin = authenticationAccountReaderPlugin;
-        this.pluginManagerService = pluginManagerService;
-        this.validationKeyValidity = validationKeyValidity;
+        this.userAccountCacheDurationInSeconds = configuration.getInt(Config.ACCOUNT_CACHE_DURATION.getConfigurationKey());
+        this.selfMailUpdateAllowed = configuration.getBoolean(Config.SELF_MAIL_UPDATE_ALLOWED.getConfigurationKey());
+        this.validationKeyValidity = configuration.getInt(Config.VALIDATION_KEY_VALIDITY.getConfigurationKey());
+
+        log.info("LDAP master mode is " + authenticationRepositoryMasterMode);
+        log.info("Loading the user account class " + commonUserAccountClassName);
+        this.commonUserAccountClass = Class.forName(commonUserAccountClassName);
         if (!ICommonUserAccount.class.isAssignableFrom(commonUserAccountClass) || !hasDefaultConstructor(commonUserAccountClass)) {
             throw new IllegalArgumentException("The class " + commonUserAccountClass
                     + " cannot implement the ICommonUserAccount interface or has no default constructor");
         }
-        this.commonUserAccountClass = commonUserAccountClass;
+        this.authenticationAccountWriterPlugin = authenticationAccountWriterPlugin;
+        this.authenticationAccountReaderPlugin = authenticationAccountReaderPlugin;
+        this.pluginManagerService = pluginManagerService;
+        lifecycle.addStopHook(() -> {
+            log.info("SERVICE>>> AccountManagerPluginImpl stopping...");
+            log.info("SERVICE>>> AccountManagerPluginImpl stopped");
+            return Promise.pure(null);
+        });
+        log.info("SERVICE>>> AccountManagerPluginImpl started");
     }
 
     private boolean hasDefaultConstructor(Class<?> aClass) {

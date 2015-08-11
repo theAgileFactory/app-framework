@@ -46,7 +46,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import framework.services.ServiceManager;
+import framework.services.ServiceStaticAccessor;
 import framework.services.kpi.IKpiService;
 import framework.services.kpi.Kpi;
 import framework.services.kpi.Kpi.DataType;
@@ -386,7 +386,7 @@ public class FilterConfig<T> {
      *            the object type
      */
     public synchronized void addKpis(String tableIdFieldName, Class<?> objectType) {
-        IKpiService kpiService = ServiceManager.getService(IKpiService.NAME, IKpiService.class);
+        IKpiService kpiService = ServiceStaticAccessor.getKpiService();
         List<Kpi> kpis = kpiService.getActiveKpisOfObjectType(objectType);
         if (kpis != null) {
             for (Kpi kpi : kpis) {
@@ -406,7 +406,7 @@ public class FilterConfig<T> {
      *            the KPI definition uid
      */
     public synchronized void addKpi(String tableIdFieldName, String kpiUid) {
-        Kpi kpi = ServiceManager.getService(IKpiService.NAME, IKpiService.class).getKpi(kpiUid);
+        Kpi kpi = ServiceStaticAccessor.getKpiService().getKpi(kpiUid);
         if (kpi != null) {
             if (kpi.isValueFromKpiData()) {
                 if (kpi.isLabelRenderType() && kpi.getKpiColorRuleLabels() != null) {

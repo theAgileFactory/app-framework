@@ -6,6 +6,8 @@ lazy val root = (project in file(".")).enablePlugins(PlayJava, PlayEbean)
 
 scalaVersion := "2.11.6"
 
+resolvers += "central" at "http://repo1.maven.org/maven2/"
+
 //Uncomment to add parameters to javac in SBT
 //javacOptions ++= Seq("-Xlint:deprecation")
 

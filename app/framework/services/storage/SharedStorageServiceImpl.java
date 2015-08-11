@@ -24,9 +24,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import play.Configuration;
+import play.Logger;
+import play.inject.ApplicationLifecycle;
+import play.libs.F.Promise;
+import framework.services.database.IDatabaseDependencyService;
 import framework.utils.Utilities;
 
 /**
@@ -35,11 +43,44 @@ import framework.utils.Utilities;
  * @author Pierre-Yves Cloux
  * 
  */
+@Singleton
 public class SharedStorageServiceImpl implements ISharedStorageService {
+    private static Logger.ALogger log = Logger.of(SharedStorageServiceImpl.class);
     private String sharedStorageRootPath;
 
-    public SharedStorageServiceImpl(String sharedStorageRootPath) {
-        this.sharedStorageRootPath = sharedStorageRootPath;
+    public enum Config {
+        SFTP_STORE_ROOT("maf.sftp.store.root");
+
+        private String configurationKey;
+
+        private Config(String configurationKey) {
+            this.configurationKey = configurationKey;
+        }
+
+        public String getConfigurationKey() {
+            return configurationKey;
+        }
+    }
+
+    /**
+     * Creates a new SharedStorageServiceImpl
+     * 
+     * @param lifecycle
+     *            the play application lifecycle listener
+     * @param configuration
+     *            the play application configuration
+     * @param databaseDependencyService
+     */
+    @Inject
+    public SharedStorageServiceImpl(ApplicationLifecycle lifecycle, Configuration configuration, IDatabaseDependencyService databaseDependencyService) {
+        log.info("SERVICE>>> SharedStorageServiceImpl starting...");
+        this.sharedStorageRootPath = configuration.getString(Config.SFTP_STORE_ROOT.getConfigurationKey());
+        lifecycle.addStopHook(() -> {
+            log.info("SERVICE>>> SharedStorageServiceImpl stopping...");
+            log.info("SERVICE>>> SharedStorageServiceImpl stopped");
+            return Promise.pure(null);
+        });
+        log.info("SERVICE>>> SharedStorageServiceImpl started");
     }
 
     @Override

@@ -21,12 +21,17 @@ import java.text.MessageFormat;
 import java.util.Hashtable;
 import java.util.List;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import org.apache.commons.lang3.StringUtils;
 
 import play.Logger;
 import play.Play;
 import play.i18n.Lang;
 import play.i18n.Messages;
+import play.inject.ApplicationLifecycle;
+import play.libs.F.Promise;
 import play.twirl.api.Html;
 
 import com.avaje.ebean.Ebean;
@@ -34,6 +39,7 @@ import com.avaje.ebean.SqlQuery;
 import com.avaje.ebean.SqlRow;
 import com.avaje.ebean.SqlUpdate;
 
+import framework.services.database.IDatabaseDependencyService;
 import framework.utils.Language;
 import framework.utils.LanguageUtil;
 
@@ -48,16 +54,29 @@ import framework.utils.LanguageUtil;
  * 
  * @author Pierre-Yves Cloux
  */
+@Singleton
 public class I18nMessagesPluginImpl implements II18nMessagesPlugin {
     private static Logger.ALogger log = Logger.of(I18nMessagesPluginImpl.class);
     private Hashtable<String, Hashtable<Object, Object>> i18nMessagesStore;
 
-    public I18nMessagesPluginImpl() {
-    }
-
-    @Override
-    public void init() {
+    /**
+     * Creates a new I18nMessagesPluginImpl
+     * 
+     * @param lifecycle
+     *            the play application lifecycle listener
+     * @param databaseDependencyService
+     *            the service which secure the availability of the database
+     */
+    @Inject
+    public I18nMessagesPluginImpl(ApplicationLifecycle lifecycle, IDatabaseDependencyService databaseDependencyService) {
+        log.info("SERVICE>>> I18nMessagesPluginImpl starting...");
         reload(true);
+        lifecycle.addStopHook(() -> {
+            log.info("SERVICE>>> I18nMessagesPluginImpl stopping...");
+            log.info("SERVICE>>> I18nMessagesPluginImpl stopped");
+            return Promise.pure(null);
+        });
+        log.info("SERVICE>>> I18nMessagesPluginImpl started");
     }
 
     @Override

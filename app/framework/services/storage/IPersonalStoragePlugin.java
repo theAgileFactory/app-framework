@@ -35,7 +35,6 @@ import java.io.OutputStream;
  * @author Pierre-Yves Cloux
  */
 public interface IPersonalStoragePlugin {
-    public static final String NAME = "personalStoragePlugin";
     public static final String IGNORE_FILE_PREFIX = "_";
 
 /**

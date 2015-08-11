@@ -4,10 +4,16 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+import play.Configuration;
 import play.Logger;
+import play.inject.ApplicationLifecycle;
 import play.libs.F.Promise;
 import play.mvc.Http.Context;
 import play.mvc.Result;
+import framework.services.database.IDatabaseDependencyService;
 
 /**
  * The implementation for the {@link ICustomRouterService} and
@@ -15,11 +21,29 @@ import play.mvc.Result;
  * 
  * @author Pierre-Yves Cloux
  */
+@Singleton
 public class CustomRouterServiceImpl implements ICustomRouterNotificationService, ICustomRouterService {
     private static Logger.ALogger log = Logger.of(CustomRouterServiceImpl.class);
     private Map<String, IRequestListener> registeredListeners = Collections.synchronizedMap(new HashMap<String, IRequestListener>());
 
-    public CustomRouterServiceImpl() {
+    /**
+     * Create a new KpiServiceImpl
+     * 
+     * @param lifecycle
+     *            the play application lifecycle listener
+     * @param configuration
+     *            the play application configuration
+     * @param databaseDependencyService
+     */
+    @Inject
+    public CustomRouterServiceImpl(ApplicationLifecycle lifecycle, Configuration configuration, IDatabaseDependencyService databaseDependencyService) {
+        log.info("SERVICE>>> CustomRouterServiceImpl starting...");
+        lifecycle.addStopHook(() -> {
+            log.info("SERVICE>>> CustomRouterServiceImpl stopping...");
+            log.info("SERVICE>>> CustomRouterServiceImpl stopped");
+            return Promise.pure(null);
+        });
+        log.info("SERVICE>>> CustomRouterServiceImpl started");
     }
 
     @Override

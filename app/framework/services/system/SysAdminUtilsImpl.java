@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package framework.utils;
+package framework.services.system;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
@@ -25,19 +25,30 @@ import java.lang.management.ThreadMXBean;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import models.framework_models.scheduler.SchedulerState;
 
 import org.apache.commons.lang3.ArrayUtils;
 
+import play.Configuration;
 import play.Logger;
 import play.Play;
-import play.libs.Akka;
+import play.inject.ApplicationLifecycle;
+import play.libs.F.Promise;
+import scala.concurrent.duration.Duration;
 import scala.concurrent.duration.FiniteDuration;
+import akka.actor.ActorSystem;
 import akka.actor.Cancellable;
 
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.TxIsolation;
+
+import framework.services.database.IDatabaseDependencyService;
+import framework.utils.Utilities;
 
 /**
  * Utility class which provides methods usefull system level features, namelly:
@@ -48,31 +59,56 @@ import com.avaje.ebean.TxIsolation;
  * 
  * @author Pierre-Yves Cloux
  */
-public abstract class SysAdminUtils {
-    private static Logger.ALogger log = Logger.of(SysAdminUtils.class);
+@Singleton
+public class SysAdminUtilsImpl implements ISysAdminUtils {
+    private static Logger.ALogger log = Logger.of(SysAdminUtilsImpl.class);
     private static final String PERMGEN_MEMORY_POOL_NAME = "PS Perm Gen";
-
-    public SysAdminUtils() {
-    }
+    private ActorSystem actorSystem;
+    private Cancellable automaticSystemStatus;
 
     /**
-     * Create a scheduler instance (executed only once = asynchronous action)
-     * with Akka.<br/>
-     * Schedules a Runnable to be run once with a delay, i.e. a time period that
-     * has to pass before the runnable is executed.<br/>
+     * Create a new SysAdminUtilsImpl
      * 
-     * If the "exclusive" flag is set, the system will check with the db if
-     * another action with the same uuid is already running. If yes, then the
-     * action is not run.<br/>
-     * 
-     * @param exclusive
-     * @param scheduledActionUuid
-     * @param initialDelay
-     * @param runnable
-     * @return
+     * @param lifecycle
+     *            the play application lifecycle listener
+     * @param configuration
+     *            the play application configuration
+     * @param databaseDependencyService
+     *            the service which secure the availability of the database
+     * @param actorSystem
+     *            the Akka actor system
      */
-    public static Cancellable scheduleOnce(final boolean exclusive, final String scheduledActionUuid, FiniteDuration initialDelay, final Runnable runnable) {
-        return Akka.system().scheduler().scheduleOnce(initialDelay, new Runnable() {
+    @Inject
+    public SysAdminUtilsImpl(ApplicationLifecycle lifecycle, Configuration configuration, IDatabaseDependencyService databaseDependencyService,
+            ActorSystem actorSystem) {
+        log.info("SERVICE>>> SysAdminUtilsImpl starting...");
+        this.actorSystem = actorSystem;
+        flushAllSchedulerStates();
+        lifecycle.addStopHook(() -> {
+            log.info("SERVICE>>> SysAdminUtilsImpl stopping...");
+            if (automaticSystemStatus != null) {
+                try {
+                    automaticSystemStatus.cancel();
+                } catch (Exception e) {
+                    log.error("Unable to stop the automatic system status", e);
+                }
+            }
+            log.info("SERVICE>>> SysAdminUtilsImpl stopped");
+            return Promise.pure(null);
+        });
+        log.info("SERVICE>>> SysAdminUtilsImpl started");
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see framework.services.system.ISysAdminUtils#scheduleOnce(boolean,
+     * java.lang.String, scala.concurrent.duration.FiniteDuration,
+     * java.lang.Runnable)
+     */
+    @Override
+    public Cancellable scheduleOnce(final boolean exclusive, final String scheduledActionUuid, FiniteDuration initialDelay, final Runnable runnable) {
+        return getActorSystem().scheduler().scheduleOnce(initialDelay, new Runnable() {
             @Override
             public void run() {
                 String transactionId = Utilities.getRandomID();
@@ -85,35 +121,20 @@ public abstract class SysAdminUtils {
                 }
                 dumpSystemStatus("ASYNC ACTION STOP for " + scheduledActionUuid + " and transaction " + transactionId);
             }
-        }, Akka.system().dispatcher());
+        }, getActorSystem().dispatcher());
     }
 
-    /**
-     * Create a scheduler instance (executed repeatedly until cancellation) with
-     * Akka.<br/>
-     * Schedules a function to be run repeatedly with an initial delay and a
-     * frequency. E.g. if you would like the function to be run after 2 seconds
-     * and thereafter every 100ms you would set delay = Duration(2,
-     * TimeUnit.SECONDS) and interval = Duration(100, TimeUnit.MILLISECONDS).<br/>
-     * <b>The start of the scheduled action and the stop is logged</b> <br/>
-     * If the "exclusive" flag is set, the system will check with the db if
-     * another action with the same uuid is already running. If yes, then the
-     * action is not run.
+    /*
+     * (non-Javadoc)
      * 
-     * @param exclusive
-     * @param scheduledActionUuid
-     * @param initialDelay
-     * @param interval
-     * @param runnable
-     * @param logInDebug
-     *            if true, the scheduler do not log any message in the INFO log
-     *            but rather in the DEBUG log (this is to avoid saturating the
-     *            logs with messages for highly frequent operations)
-     * @return
+     * @see framework.services.system.ISysAdminUtils#scheduleRecurring(boolean,
+     * java.lang.String, scala.concurrent.duration.FiniteDuration,
+     * scala.concurrent.duration.FiniteDuration, java.lang.Runnable, boolean)
      */
-    public static Cancellable scheduleRecurring(final boolean exclusive, final String scheduledActionUuid, FiniteDuration initialDelay,
-            FiniteDuration interval, final Runnable runnable, final boolean logInDebug) {
-        return Akka.system().scheduler().schedule(initialDelay, interval, new Runnable() {
+    @Override
+    public Cancellable scheduleRecurring(final boolean exclusive, final String scheduledActionUuid, FiniteDuration initialDelay, FiniteDuration interval,
+            final Runnable runnable, final boolean logInDebug) {
+        return getActorSystem().scheduler().schedule(initialDelay, interval, new Runnable() {
             @Override
             public void run() {
                 String transactionId = Utilities.getRandomID();
@@ -126,30 +147,29 @@ public abstract class SysAdminUtils {
                 }
                 dumpSystemStatus("SCHEDULER STOP for " + scheduledActionUuid + " and transaction " + transactionId, logInDebug);
             }
-        }, Akka.system().dispatcher());
+        }, getActorSystem().dispatcher());
     }
 
-    /**
-     * See the <b>scheduleRecurring</b> method.
+    /*
+     * (non-Javadoc)
      * 
-     * @param exclusive
-     * @param scheduledActionUuid
-     * @param initialDelay
-     * @param interval
-     * @param runnable
-     * @return
+     * @see framework.services.system.ISysAdminUtils#scheduleRecurring(boolean,
+     * java.lang.String, scala.concurrent.duration.FiniteDuration,
+     * scala.concurrent.duration.FiniteDuration, java.lang.Runnable)
      */
-    public static Cancellable scheduleRecurring(final boolean exclusive, final String scheduledActionUuid, FiniteDuration initialDelay,
-            FiniteDuration interval, final Runnable runnable) {
+    @Override
+    public Cancellable scheduleRecurring(final boolean exclusive, final String scheduledActionUuid, FiniteDuration initialDelay, FiniteDuration interval,
+            final Runnable runnable) {
         return scheduleRecurring(exclusive, scheduledActionUuid, initialDelay, interval, runnable, false);
     }
 
-    /**
-     * Flush all the scheduler status.<br/>
-     * This should be called in principle only at system startup.<br/>
-     * Use with care.
+    /*
+     * (non-Javadoc)
+     * 
+     * @see framework.services.system.ISysAdminUtils#flushAllSchedulerStates()
      */
-    public static void flushAllSchedulerStates() {
+    @Override
+    public void flushAllSchedulerStates() {
         try {
             Ebean.beginTransaction(TxIsolation.SERIALIZABLE);
             SchedulerState.flushAllStates();
@@ -172,7 +192,7 @@ public abstract class SysAdminUtils {
      *            the unique name of an action
      * @return
      */
-    private static boolean checkRunAuthorization(String transactionId, String scheduledActionUuid) {
+    private boolean checkRunAuthorization(String transactionId, String scheduledActionUuid) {
         try {
             Ebean.beginTransaction(TxIsolation.SERIALIZABLE);
             SchedulerState schedulerState = SchedulerState.getRunningSchedulerStateFromActionUuid(scheduledActionUuid);
@@ -214,7 +234,7 @@ public abstract class SysAdminUtils {
      * @param scheduledActionUuid
      *            the unique name of an action
      */
-    private static void markAsCompleted(String transactionId, String scheduledActionUuid) {
+    private void markAsCompleted(String transactionId, String scheduledActionUuid) {
         try {
             Ebean.beginTransaction(TxIsolation.SERIALIZABLE);
             SchedulerState schedulerState = SchedulerState.getRunningSchedulerStateFromActionUuid(scheduledActionUuid);
@@ -225,8 +245,7 @@ public abstract class SysAdminUtils {
             } else {
                 schedulerState.isRunning = false;
                 schedulerState.save();
-                log.info(String.format("Scheduled action for %s with transaction id %s completed, scheduler state flushed", scheduledActionUuid,
-                        transactionId));
+                log.info(String.format("Scheduled action for %s with transaction id %s completed, scheduler state flushed", scheduledActionUuid, transactionId));
             }
             SchedulerState.flushOldStates();
             Ebean.commitTransaction();
@@ -238,35 +257,37 @@ public abstract class SysAdminUtils {
         }
     }
 
-    /**
-     * Log the VM memory and thread configuration (max values).
+    /*
+     * (non-Javadoc)
      * 
-     * @param scheduledActionName
-     *            the name of an action to which this dump is attached
+     * @see framework.services.system.ISysAdminUtils#dumpSystemConfiguration()
      */
-    public static void dumpSystemConfiguration() {
+    @Override
+    public void dumpSystemConfiguration() {
         log.info("INITIAL CONFIGURATION " + ArrayUtils.toString(getMaxSystemParameters()));
     }
 
-    /**
-     * Log the VM memory and thread status.
+    /*
+     * (non-Javadoc)
      * 
-     * @param eventName
-     *            the name of the event attached to this log
+     * @see
+     * framework.services.system.ISysAdminUtils#dumpSystemStatus(java.lang.String
+     * )
      */
-    public static void dumpSystemStatus(String eventName) {
+    @Override
+    public void dumpSystemStatus(String eventName) {
         dumpSystemStatus(eventName, false);
     }
 
-    /**
-     * Log the VM memory and thread status.
+    /*
+     * (non-Javadoc)
      * 
-     * @param eventName
-     *            the name of the event attached to this log
-     * @param logAsDebug
-     *            if true, log in debug mode otherwise log in info mode
+     * @see
+     * framework.services.system.ISysAdminUtils#dumpSystemStatus(java.lang.String
+     * , boolean)
      */
-    public static void dumpSystemStatus(String eventName, boolean logAsDebug) {
+    @Override
+    public void dumpSystemStatus(String eventName, boolean logAsDebug) {
         if (logAsDebug) {
             log.debug(eventName + " " + ArrayUtils.toString(getSystemStatus()));
         } else {
@@ -274,18 +295,13 @@ public abstract class SysAdminUtils {
         }
     }
 
-    /**
-     * Return a structure which contains various numeric values related to the
-     * maximum boundaries of some system parameters, namely:
-     * <ol>
-     * <li>HeapMemory max</li>
-     * <li>NonHeapMemory max</li>
-     * <li>PermGen max</li>
-     * </ol>
+    /*
+     * (non-Javadoc)
      * 
-     * @return
+     * @see framework.services.system.ISysAdminUtils#getMaxSystemParameters()
      */
-    public static long[] getMaxSystemParameters() {
+    @Override
+    public long[] getMaxSystemParameters() {
         long[] systemData = new long[3];
         MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
         systemData[0] = memoryMXBean.getHeapMemoryUsage().getMax();
@@ -302,17 +318,13 @@ public abstract class SysAdminUtils {
         return systemData;
     }
 
-    /**
-     * Return a structure which contains various numeric measures, namely:
-     * <ol>
-     * <li>HeapMemory used</li>
-     * <li>NonHeapMemory used</li>
-     * <li>ThreadCount used</li>
-     * </ol>
+    /*
+     * (non-Javadoc)
      * 
-     * @return
+     * @see framework.services.system.ISysAdminUtils#getSystemStatus()
      */
-    public static long[] getSystemStatus() {
+    @Override
+    public long[] getSystemStatus() {
         long[] systemData = new long[4];
         MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
         systemData[0] = memoryMXBean.getHeapMemoryUsage().getUsed();
@@ -331,17 +343,45 @@ public abstract class SysAdminUtils {
         return systemData;
     }
 
-    private static void rollbackTransactionSilent() {
+    private void rollbackTransactionSilent() {
         try {
             Ebean.rollbackTransaction();
         } catch (Exception e) {
         }
     }
 
-    private static void endTransactionSilent() {
+    private void endTransactionSilent() {
         try {
             Ebean.endTransaction();
         } catch (Exception e) {
         }
+    }
+
+    /**
+     * Initialize the automated system status.
+     */
+    private void initAutomatedSystemStatus() {
+        if (play.Configuration.root().getBoolean("maf.sysadmin.dump.vmstatus.active")) {
+            int frequency = play.Configuration.root().getInt("maf.sysadmin.dump.vmstatus.frequency");
+            log.info(">>>>>>>>>>>>>>>> Activate automated system status, frequency " + frequency);
+            automaticSystemStatus = scheduleRecurring(true, "AUTOMATED STATUS", Duration.create(frequency, TimeUnit.SECONDS),
+                    Duration.create(frequency, TimeUnit.SECONDS), new Runnable() {
+                        @Override
+                        public void run() {
+                            // Do nothing, the system will anyway
+                            // display the
+                            // status
+                        }
+                    });
+            log.info(">>>>>>>>>>>>>>>> Activate automated system status (end)");
+        }
+    }
+
+    private Cancellable getAutomaticSystemStatus() {
+        return automaticSystemStatus;
+    }
+
+    private ActorSystem getActorSystem() {
+        return actorSystem;
     }
 }

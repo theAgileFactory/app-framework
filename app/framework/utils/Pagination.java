@@ -24,8 +24,7 @@ import play.Play;
 import com.avaje.ebean.ExpressionList;
 
 import framework.commons.IFrameworkConstants;
-import framework.services.ServiceManager;
-import framework.services.account.IPreferenceManagerPlugin;
+import framework.services.ServiceStaticAccessor;
 
 /**
  * Utility class which deals with pagination management.<br/>
@@ -71,7 +70,7 @@ public class Pagination<T> {
      *            an Expression list
      */
     public Pagination(ExpressionList<T> expressionList) {
-        this(expressionList, ServiceManager.getService(IPreferenceManagerPlugin.NAME, IPreferenceManagerPlugin.class).getPreferenceValueAsInteger(
+        this(expressionList, ServiceStaticAccessor.getPreferenceManagerPlugin().getPreferenceValueAsInteger(
                 IFrameworkConstants.DISPLAY_LIST_PAGE_SIZE_PREFERENCE), Play.application().configuration().getInt("maf.number_page_links"));
     }
 
@@ -85,8 +84,8 @@ public class Pagination<T> {
      *            an Expression list
      */
     public Pagination(int rowCount, ExpressionList<T> expressionList) {
-        this(rowCount, ServiceManager.getService(IPreferenceManagerPlugin.NAME, IPreferenceManagerPlugin.class).getPreferenceValueAsInteger(
-                IFrameworkConstants.DISPLAY_LIST_PAGE_SIZE_PREFERENCE), Play.application().configuration().getInt("maf.number_page_links"));
+        this(rowCount, ServiceStaticAccessor.getPreferenceManagerPlugin().getPreferenceValueAsInteger(IFrameworkConstants.DISPLAY_LIST_PAGE_SIZE_PREFERENCE),
+                Play.application().configuration().getInt("maf.number_page_links"));
         this.expressionList = expressionList;
     }
 
@@ -97,8 +96,8 @@ public class Pagination<T> {
      *            the total number of records
      */
     public Pagination(int rowCount) {
-        this(rowCount, ServiceManager.getService(IPreferenceManagerPlugin.NAME, IPreferenceManagerPlugin.class).getPreferenceValueAsInteger(
-                IFrameworkConstants.DISPLAY_LIST_PAGE_SIZE_PREFERENCE), Play.application().configuration().getInt("maf.number_page_links"));
+        this(rowCount, ServiceStaticAccessor.getPreferenceManagerPlugin().getPreferenceValueAsInteger(IFrameworkConstants.DISPLAY_LIST_PAGE_SIZE_PREFERENCE),
+                Play.application().configuration().getInt("maf.number_page_links"));
     }
 
     /**
@@ -268,9 +267,9 @@ public class Pagination<T> {
 
     @Override
     public String toString() {
-        return "Pagination [expressionList=" + expressionList + ", currentPage=" + currentPage + ", pageSize=" + pageSize + ", numberOfPages="
-                + numberOfPages + ", rowCount=" + rowCount + ", numberOfLinksInNavigationBar=" + numberOfLinksInNavigationBar + ", lowerBound=" + lowerBound
-                + ", upperBound=" + upperBound + ", hasLess=" + hasLess + ", hasMore=" + hasMore + "]";
+        return "Pagination [expressionList=" + expressionList + ", currentPage=" + currentPage + ", pageSize=" + pageSize + ", numberOfPages=" + numberOfPages
+                + ", rowCount=" + rowCount + ", numberOfLinksInNavigationBar=" + numberOfLinksInNavigationBar + ", lowerBound=" + lowerBound + ", upperBound="
+                + upperBound + ", hasLess=" + hasLess + ", hasMore=" + hasMore + "]";
     }
 
     /**

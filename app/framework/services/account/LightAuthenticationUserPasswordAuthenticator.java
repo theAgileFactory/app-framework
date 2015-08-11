@@ -22,7 +22,6 @@ import org.pac4j.http.credentials.UsernamePasswordAuthenticator;
 import org.pac4j.http.credentials.UsernamePasswordCredentials;
 
 import play.Logger;
-import framework.services.ServiceManager;
 
 /**
  * An authentication which is used for the standalone authentication.<br/>
@@ -33,18 +32,23 @@ import framework.services.ServiceManager;
 public class LightAuthenticationUserPasswordAuthenticator implements UsernamePasswordAuthenticator {
     private static Logger.ALogger log = Logger.of(LightAuthenticationUserPasswordAuthenticator.class);
 
+    private IAuthenticationAccountReaderPlugin authenticationAccountReader;
+
+    public LightAuthenticationUserPasswordAuthenticator(IAuthenticationAccountReaderPlugin authenticationAccountReader) {
+        super();
+        this.authenticationAccountReader = authenticationAccountReader;
+    }
+
     @Override
     public void validate(UsernamePasswordCredentials userNamePasswordCredentials) {
-        IAuthenticationAccountReaderPlugin authenticationAccountReader = ServiceManager.getService(IAuthenticationAccountReaderPlugin.NAME,
-                IAuthenticationAccountReaderPlugin.class);
         try {
-            IUserAuthenticationAccount authAccount = authenticationAccountReader.getAccountFromUid(userNamePasswordCredentials.getUsername());
+            IUserAuthenticationAccount authAccount = getAuthenticationAccountReader().getAccountFromUid(userNamePasswordCredentials.getUsername());
             if (authAccount != null) {
                 if (!authAccount.isActive()) {
                     log.warn("Failed login attempt for " + userNamePasswordCredentials.getUsername() + " : account locked");
                     throw new LightAuthenticationLockedAccountException("Account locked");
                 }
-                if (!authenticationAccountReader.checkPassword(userNamePasswordCredentials.getUsername(), userNamePasswordCredentials.getPassword())) {
+                if (!getAuthenticationAccountReader().checkPassword(userNamePasswordCredentials.getUsername(), userNamePasswordCredentials.getPassword())) {
                     log.warn("Failed login attempt for " + userNamePasswordCredentials.getUsername() + " : invalid login or password");
                     throw new CredentialsException("Invalid login or password");
                 }
@@ -55,5 +59,9 @@ public class LightAuthenticationUserPasswordAuthenticator implements UsernamePas
         } catch (AccountManagementException e) {
             throw new CredentialsException(e);
         }
+    }
+
+    private IAuthenticationAccountReaderPlugin getAuthenticationAccountReader() {
+        return authenticationAccountReader;
     }
 }

@@ -18,15 +18,26 @@
 package framework.services.actor;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+import play.Configuration;
 import play.Logger;
+import play.inject.ApplicationLifecycle;
+import play.libs.F.Promise;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.DeadLetter;
 import akka.actor.Props;
 
 import com.typesafe.config.ConfigFactory;
+
+import framework.services.database.IDatabaseDependencyService;
+import framework.services.notification.INotificationManagerPlugin;
+import framework.services.plugins.IPluginManagerService;
 
 /**
  * The default implementation for the {@link ActorSystem}.<br/>
@@ -35,33 +46,75 @@ import com.typesafe.config.ConfigFactory;
  * 
  * @author Pierre-Yves Cloux
  */
+@Singleton
 public class ActorSystemPluginImpl implements IActorSystemPlugin {
     private static Logger.ALogger log = Logger.of(ActorSystemPluginImpl.class);
     private ActorSystem actorSystem;
+
+    /**
+     * The name of the maf actor system
+     */
     private String actorSystemName;
+
+    /**
+     * The directory which is to be used to "store" the deadletters as XML
+     */
     private File deadLetterFileSystem;
+
+    /**
+     * The directory which is to contain the "re-processed" deadletters (just in
+     * case the re-processing failed)
+     */
     private File reprocessedDeadLetters;
     private List<IActorServiceLifecycleHook> actorLifeCycleHooks;
 
+    public enum Config {
+        ACTOR_SYSTEM_NAME("maf.actor.system"), DEAD_LETTERS_FOLDER("maf.actor.deadletters.folder"), DEAD_LETTERS_REPROCESSING_FOLDER(
+                "maf.actor.deadletters.reprocessing.folder");
+
+        private String configurationKey;
+
+        private Config(String configurationKey) {
+            this.configurationKey = configurationKey;
+        }
+
+        public String getConfigurationKey() {
+            return configurationKey;
+        }
+    }
+
     /**
-     * The name of the actor system
+     * Creates a new ActorSystemPluginImpl
      * 
-     * @param actorSystemName
-     *            a name
-     * @param deadLetterFileSystem
-     *            the directory which is to be used to "store" the deadletters
-     *            as XML
-     * @param reprocessedDeadLetters
-     *            the directory which is to contain the "re-processed"
-     *            deadletters (just in case the re-processing failed)
+     * @param lifecycle
+     *            the play application lifecycle listener
+     * @param configuration
+     *            the play application configuration
+     * @param notificationManager
+     *            the notification manager service
+     * @param pluginManager
+     *            the plugin manager service
+     * @param databaseDependencyService
+     * @param actorSystem
      * @throws ActorSystemPluginException
      */
-    public ActorSystemPluginImpl(String actorSystemName, File deadLetterFileSystem, File reprocessedDeadLetters,
-            List<IActorServiceLifecycleHook> actorLifeCycleHooks) throws ActorSystemPluginException {
-        this.actorSystemName = actorSystemName;
-        this.deadLetterFileSystem = deadLetterFileSystem;
-        this.reprocessedDeadLetters = reprocessedDeadLetters;
-        this.actorLifeCycleHooks = actorLifeCycleHooks;
+    @Inject
+    public ActorSystemPluginImpl(ApplicationLifecycle lifecycle, Configuration configuration, INotificationManagerPlugin notificationManager,
+            IPluginManagerService pluginManager, IDatabaseDependencyService databaseDependencyService, ActorSystem actorSystem)
+            throws ActorSystemPluginException {
+        log.info("SERVICE>>> ActorSystemPluginImpl starting...");
+        this.actorSystemName = configuration.getString(Config.ACTOR_SYSTEM_NAME.getConfigurationKey());
+        this.deadLetterFileSystem = new File(configuration.getString(Config.DEAD_LETTERS_FOLDER.getConfigurationKey()));
+        this.reprocessedDeadLetters = new File(configuration.getString(Config.DEAD_LETTERS_REPROCESSING_FOLDER.getConfigurationKey()));
+        this.actorLifeCycleHooks = Arrays.asList(new IActorServiceLifecycleHook[] { notificationManager, pluginManager });
+        lifecycle.addStopHook(() -> {
+            log.info("SERVICE>>> ActorSystemPluginImpl stopping...");
+            shutdown();
+            log.info("SERVICE>>> ActorSystemPluginImpl stopped");
+            return Promise.pure(null);
+        });
+        startup();
+        log.info("SERVICE>>> ActorSystemPluginImpl started");
     }
 
     /**

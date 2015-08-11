@@ -39,6 +39,7 @@ import akka.actor.Cancellable;
 import framework.commons.DataType;
 import framework.commons.message.EventMessage;
 import framework.commons.message.EventMessage.MessageType;
+import framework.services.ServiceStaticAccessor;
 import framework.services.plugins.api.AbstractCustomConfiguratorController;
 import framework.services.plugins.api.AbstractRegistrationConfiguratorController;
 import framework.services.plugins.api.EventInterfaceConfiguration;
@@ -50,7 +51,6 @@ import framework.services.plugins.api.PluginException;
 import framework.services.plugins.api.PluginUtils;
 import framework.services.plugins.loader.toolkit.GenericFileLoader.AllowedCharSet;
 import framework.utils.EmailUtils;
-import framework.utils.SysAdminUtils;
 
 /**
  * Abstract class for a plugin which loads some objects from a CSV file.<br/>
@@ -219,9 +219,9 @@ public abstract class LoadableObjectPluginRunner<K extends ILoadableObject> impl
             if (isAutomaticLoadByScheduler()) {
                 long howMuchMinutesUntilStartTime = howMuchMinutesUntilStartTime();
 
-                setCurrentScheduler(SysAdminUtils.scheduleRecurring(true, getStaticDescriptor().getName() + " plugin "
-                        + getPluginContext().getPluginConfigurationName(), Duration.create(howMuchMinutesUntilStartTime, TimeUnit.MINUTES), getLoadFrequency(),
-                        new Runnable() {
+                setCurrentScheduler(ServiceStaticAccessor.getSysAdminUtils().scheduleRecurring(true,
+                        getStaticDescriptor().getName() + " plugin " + getPluginContext().getPluginConfigurationName(),
+                        Duration.create(howMuchMinutesUntilStartTime, TimeUnit.MINUTES), getLoadFrequency(), new Runnable() {
                             @Override
                             public void run() {
                                 EventMessage eventMessage = new EventMessage();

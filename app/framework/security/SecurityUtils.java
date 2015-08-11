@@ -48,8 +48,9 @@ import be.objectify.deadbolt.java.actions.SubjectPresentAction;
 import be.objectify.deadbolt.java.actions.Unrestricted;
 import be.objectify.deadbolt.java.cache.HandlerCache;
 import be.objectify.deadbolt.java.cache.SubjectCache;
-import framework.services.ServiceManager;
 import framework.services.account.IAccountManagerPlugin;
+import framework.services.account.IUserAccount;
+import framework.services.session.IUserSessionManagerPlugin;
 
 /**
  * An utility class which performs a test to be used in java code (instead of
@@ -76,6 +77,10 @@ public class SecurityUtils {
     private static HandlerCache handlerCache;
     @Inject
     private static SubjectCache subjectCache;
+    @Inject
+    private static IAccountManagerPlugin accountManagerPlugin;
+    @Inject
+    private static IUserSessionManagerPlugin userSessionManagerPlugin;
 
     /**
      * Check if there is a subject in the current session.<br/>
@@ -191,6 +196,21 @@ public class SecurityUtils {
     }
 
     /**
+     * Return true if the sign-in user is allowed for the given permission.
+     * 
+     * @param permission
+     *            the permission
+     */
+    public static boolean isAllowed(String permission) {
+        try {
+            IUserAccount userAccount = getAccountManagerPlugin().getUserAccountFromUid(getUserSessionManagerPlugin().getUserSessionId(Http.Context.current()));
+            return userAccount.getSystemPermissionNames().contains(permission);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
      * Return true if the specified roles are part of the current user profile.
      * 
      * @param deadBoltRoles
@@ -242,8 +262,7 @@ public class SecurityUtils {
                 log.debug("RESTRICT for uid [" + uid + "] [" + getHandlerCache().get() + "] timeout [" + DEFAULT_TIMEOUT + "] for roles "
                         + toString(deadBoltRoles));
             }
-            IAccountManagerPlugin accountManagerPlugin = ServiceManager.getService(IAccountManagerPlugin.NAME, IAccountManagerPlugin.class);
-            Subject subject = accountManagerPlugin.getUserAccountFromUid(uid);
+            Subject subject = getAccountManagerPlugin().getUserAccountFromUid(uid);
             return restrict(deadBoltRoles, subject);
         } catch (Throwable e) {
             log.error("Error while checking restriction for " + toString(deadBoltRoles), e);
@@ -356,5 +375,13 @@ public class SecurityUtils {
 
     private static SubjectCache getSubjectCache() {
         return subjectCache;
+    }
+
+    private static IAccountManagerPlugin getAccountManagerPlugin() {
+        return accountManagerPlugin;
+    }
+
+    private static IUserSessionManagerPlugin getUserSessionManagerPlugin() {
+        return userSessionManagerPlugin;
     }
 }

@@ -39,7 +39,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
-import framework.services.ServiceManager;
+import framework.services.ServiceStaticAccessor;
 import framework.services.kpi.IKpiService;
 import framework.services.kpi.Kpi;
 import framework.services.kpi.Kpi.DataType;
@@ -263,7 +263,7 @@ public class Table<T> {
      *            the object type
      */
     public void addKpis(Class<?> objectType) {
-        IKpiService kpiService = ServiceManager.getService(IKpiService.NAME, IKpiService.class);
+        IKpiService kpiService = ServiceStaticAccessor.getKpiService();
         List<Kpi> kpis = kpiService.getActiveKpisOfObjectType(objectType);
         if (kpis != null) {
             for (Kpi kpi : kpis) {
@@ -285,7 +285,7 @@ public class Table<T> {
             throw new IllegalArgumentException("WARNING: this method requires the ID field name to be defined");
         }
 
-        Kpi kpi = ServiceManager.getService(IKpiService.NAME, IKpiService.class).getKpi(kpiUid);
+        Kpi kpi = ServiceStaticAccessor.getKpiService().getKpi(kpiUid);
         if (kpi != null) {
             addColumn(KPI_COLUMN_NAME_PREFIX + kpi.getUid(), getIdFieldName(), kpi.getValueName(DataType.MAIN), Table.ColumnDef.SorterType.NONE);
             setJavaColumnFormatter(KPI_COLUMN_NAME_PREFIX + kpi.getUid(), new KpiColumnFormatter<T>(kpi.getUid()));

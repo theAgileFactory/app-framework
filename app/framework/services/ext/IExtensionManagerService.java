@@ -19,9 +19,9 @@ package framework.services.ext;
 
 import java.util.List;
 
-import framework.services.router.IRequestListener;
 import play.mvc.Http.Context;
 import play.mvc.Result;
+import framework.services.router.IRequestListener;
 
 /**
  * The extension manager service is responsible for the management of the
@@ -31,7 +31,6 @@ import play.mvc.Result;
  */
 public interface IExtensionManagerService extends IRequestListener {
     public static final String PATH_PREFIX = "/extension";
-    public static final String NAME = "extensionManagerService";
 
     /**
      * Return the list of the loaded extensions

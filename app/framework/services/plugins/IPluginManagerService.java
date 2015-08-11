@@ -40,7 +40,6 @@ import framework.services.plugins.api.PluginException;
  * @author Pierre-Yves Cloux
  */
 public interface IPluginManagerService extends IActorServiceLifecycleHook {
-    public static final String NAME = "pluginManager";
 
     /**
      * The various status for plugin
@@ -70,11 +69,6 @@ public interface IPluginManagerService extends IActorServiceLifecycleHook {
 
         public String getPluginBigImage();
     }
-
-    /**
-     * Shutdown the plugin manager
-     */
-    public void shutdown();
 
     /**
      * Load plugin in the manager.<br/>

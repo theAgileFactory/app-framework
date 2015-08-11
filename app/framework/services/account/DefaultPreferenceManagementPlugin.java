@@ -20,18 +20,43 @@ package framework.services.account;
 import java.math.BigDecimal;
 import java.util.Date;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import models.framework_models.account.Preference;
 import models.framework_models.common.CustomAttributeItemOption;
 import models.framework_models.common.ICustomAttributeValue;
+import play.Logger;
+import play.cache.CacheApi;
+import play.inject.ApplicationLifecycle;
+import play.libs.F.Promise;
+import framework.services.database.IDatabaseDependencyService;
 
 /**
  * The default implementation for the {@link IPreferenceManagerPlugin}.
  * 
  * @author Pierre-Yves Cloux
  */
+@Singleton
 public class DefaultPreferenceManagementPlugin implements IPreferenceManagerPlugin {
+    private static Logger.ALogger log = Logger.of(DefaultPreferenceManagementPlugin.class);
 
-    public DefaultPreferenceManagementPlugin() {
+    /**
+     * Creates a new DefaultPreferenceManagementPlugin
+     * 
+     * @param lifecycle
+     *            the play application lifecyle listener
+     * @param databaseDependencyService
+     */
+    @Inject
+    public DefaultPreferenceManagementPlugin(ApplicationLifecycle lifecycle, CacheApi cache, IDatabaseDependencyService databaseDependencyService) {
+        log.info("SERVICE>>> DefaultPreferenceManagementPlugin starting...");
+        lifecycle.addStopHook(() -> {
+            log.info("SERVICE>>> DefaultPreferenceManagementPlugin stopping...");
+            log.info("SERVICE>>> DefaultPreferenceManagementPlugin stopped");
+            return Promise.pure(null);
+        });
+        log.info("SERVICE>>> DefaultPreferenceManagementPlugin started");
     }
 
     @Override

@@ -39,12 +39,6 @@ import play.i18n.Messages;
  * @author Pierre-Yves Cloux
  */
 public interface II18nMessagesPlugin {
-    public static final String NAME = "i18nPlugin";
-
-    /**
-     * Init the i18n plugin
-     */
-    public void init();
 
     /**
      * Invalidate the cache and reload the resources into memory

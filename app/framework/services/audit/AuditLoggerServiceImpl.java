@@ -24,12 +24,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import models.framework_models.parent.IModel;
 
 import org.apache.commons.io.FileUtils;
 
+import play.Configuration;
 import play.Logger;
 import play.Play;
+import play.inject.ApplicationLifecycle;
+import play.libs.F.Promise;
 import play.mvc.Http;
 import framework.services.session.IUserSessionManagerPlugin;
 import framework.utils.Utilities;
@@ -45,80 +51,90 @@ import framework.utils.Utilities;
  * 
  * @author Pierre-Yves Cloux
  */
-public class AuditLoggerUtilities {
+@Singleton
+public class AuditLoggerServiceImpl implements IAuditLoggerService {
     /**
      * User login to be used when no user is logged
      */
     private static final String SYSTEM = "_SYSTEM";
-
-    private static AuditLoggerUtilities instance;
+    private String auditableEntitiesFilePath;
     private IUserSessionManagerPlugin userSessionManager;
-    private static Logger.ALogger log = Logger.of(AuditLoggerUtilities.class);
+    private static Logger.ALogger log = Logger.of(AuditLoggerServiceImpl.class);
     private Map<String, Boolean> auditableEntities = Collections.synchronizedMap(new HashMap<String, Boolean>());
 
     public enum AuditedAction {
         CREATE, UPDATE, DELETE;
     }
 
-    /**
-     * Return the instance of the singleton
-     * 
-     * @return
-     */
-    public static AuditLoggerUtilities getInstance() {
-        if (instance == null) {
-            instance = new AuditLoggerUtilities();
-        }
-        return instance;
-    }
+    public enum Config {
+        AUDITABLE_ENTITIES_FILE("maf.auditable.entities.file");
 
-    /**
-     * Set the {@link IUserSessionManagerPlugin}.<br/>
-     * Before this is done, the audit logging is not activated.
-     * 
-     * @param userSessionManager
-     *            the user session manager.
-     */
-    public static void init(IUserSessionManagerPlugin userSessionManager) {
-        getInstance().userSessionManager = userSessionManager;
-        getInstance().reload();
+        private String configurationKey;
+
+        private Config(String configurationKey) {
+            this.configurationKey = configurationKey;
+        }
+
+        public String getConfigurationKey() {
+            return configurationKey;
+        }
     }
 
     /**
      * Creates a new instance.
      * 
+     * @param lifecycle
+     *            the play application lifecycle listener
+     * @param configuration
+     *            the play application configuration
      * @param userSessionManager
      *            the user session manager (will be used to enrich the log with
      *            the id of the user)
-     * @param auditableEntitiesFilePath
-     *            path to the file which contains the auditable entities
      */
-    private AuditLoggerUtilities() {
+    @Inject
+    public AuditLoggerServiceImpl(ApplicationLifecycle lifecycle, Configuration configuration, IUserSessionManagerPlugin userSessionManager) {
+        log.info("SERVICE>>> AuditLoggerServiceImpl starting...");
+        this.userSessionManager = userSessionManager;
+        this.auditableEntitiesFilePath = configuration.getString(Config.AUDITABLE_ENTITIES_FILE.getConfigurationKey());
+        log.info("Activating audit log with audit log file " + this.auditableEntitiesFilePath);
+        reload();
+        lifecycle.addStopHook(() -> {
+            log.info("SERVICE>>> AuditLoggerServiceImpl stopping...");
+            log.info("SERVICE>>> AuditLoggerServiceImpl stopped");
+            return Promise.pure(null);
+        });
+        log.info("SERVICE>>> AuditLoggerServiceImpl started");
     }
 
-    /**
-     * Log the creation of an entity
+    /*
+     * (non-Javadoc)
      * 
-     * @param entity
+     * @see
+     * framework.services.audit.IAuditLoggerService#logCreate(java.lang.Object)
      */
+    @Override
     public void logCreate(Object entity) {
         log(AuditedAction.CREATE, entity);
     }
 
-    /**
-     * Log the update of an entity
+    /*
+     * (non-Javadoc)
      * 
-     * @param entity
+     * @see
+     * framework.services.audit.IAuditLoggerService#logUpdate(java.lang.Object)
      */
+    @Override
     public void logUpdate(Object entity) {
         log(AuditedAction.UPDATE, entity);
     }
 
-    /**
-     * Log the deletion of an entity
+    /*
+     * (non-Javadoc)
      * 
-     * @param entity
+     * @see
+     * framework.services.audit.IAuditLoggerService#logDelete(java.lang.Object)
      */
+    @Override
     public void logDelete(Object entity) {
         log(AuditedAction.DELETE, entity);
     }
@@ -155,6 +171,12 @@ public class AuditLoggerUtilities {
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see framework.services.audit.IAuditLoggerService#reload()
+     */
+    @Override
     @SuppressWarnings("unchecked")
     /**
      * Reload the audit configuration
@@ -163,8 +185,7 @@ public class AuditLoggerUtilities {
         synchronized (this.auditableEntities) {
             this.auditableEntities.clear();
             try {
-                String auditableEntitiesFilePath = Play.application().configuration().getString("maf.auditable.entities.file");
-                File auditableEntitiesFile = new File(auditableEntitiesFilePath);
+                File auditableEntitiesFile = new File(getAuditableEntitiesFilePath());
                 if (!auditableEntitiesFile.exists() || !auditableEntitiesFile.isFile()) {
                     log.error("Auditable entities file " + auditableEntitiesFilePath + " not found, will be created next time an item is edited");
                     return;
@@ -178,22 +199,24 @@ public class AuditLoggerUtilities {
         }
     }
 
-    /**
-     * Return the Auditable associated with the specified objectClass
+    /*
+     * (non-Javadoc)
      * 
-     * @param objectClass
-     *            an Auditable objectClass
-     * @return a Auditable instance
+     * @see
+     * framework.services.audit.IAuditLoggerService#getAuditableFromObjectClass
+     * (java.lang.String)
      */
+    @Override
     public Auditable getAuditableFromObjectClass(String objectClass) {
         return new Auditable(objectClass, getAuditableEntities().get(objectClass));
     }
 
-    /**
-     * Return all the {@link Auditable} objects which are not deleted
+    /*
+     * (non-Javadoc)
      * 
-     * @return
+     * @see framework.services.audit.IAuditLoggerService#getAllActiveAuditable()
      */
+    @Override
     public List<Auditable> getAllActiveAuditable() {
         List<Auditable> auditables = new ArrayList<Auditable>();
         for (String objectClass : getAuditableEntities().keySet()) {
@@ -202,11 +225,14 @@ public class AuditLoggerUtilities {
         return auditables;
     }
 
-    /**
-     * Save an auditable object to the system (either update or new)
+    /*
+     * (non-Javadoc)
      * 
-     * @param auditable
+     * @see
+     * framework.services.audit.IAuditLoggerService#saveAuditable(framework.
+     * services.audit.Auditable)
      */
+    @Override
     public void saveAuditable(Auditable auditable) {
         synchronized (auditableEntities) {
             this.auditableEntities.put(auditable.objectClass, auditable.isAuditable);
@@ -220,12 +246,14 @@ public class AuditLoggerUtilities {
         }
     }
 
-    /**
-     * Delete an auditable object to the system
+    /*
+     * (non-Javadoc)
      * 
-     * @param objectClass
-     *            an Auditable objectClass
+     * @see
+     * framework.services.audit.IAuditLoggerService#deleteAuditable(java.lang
+     * .String)
      */
+    @Override
     public void deleteAuditable(String objectClass) {
         synchronized (auditableEntities) {
             this.auditableEntities.remove(objectClass);
@@ -245,5 +273,9 @@ public class AuditLoggerUtilities {
 
     private Map<String, Boolean> getAuditableEntities() {
         return auditableEntities;
+    }
+
+    private String getAuditableEntitiesFilePath() {
+        return auditableEntitiesFilePath;
     }
 }

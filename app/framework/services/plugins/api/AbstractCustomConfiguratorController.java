@@ -19,8 +19,8 @@ package framework.services.plugins.api;
 
 import play.mvc.Call;
 import play.mvc.Result;
+import framework.services.ServiceStaticAccessor;
 import framework.services.configuration.IImplementationDefinedObjectService;
-import framework.services.configuration.ImplementationDefineObjectServiceFactory;
 import framework.services.plugins.api.IPluginContext.HttpMethod;
 
 /**
@@ -44,7 +44,7 @@ public abstract class AbstractCustomConfiguratorController extends AbstractConfi
      * @return
      */
     public Call getRouteForCustomController(HttpMethod method, String actionId) {
-        IImplementationDefinedObjectService implementationDefinedObjectService = ImplementationDefineObjectServiceFactory.getInstance();
+        IImplementationDefinedObjectService implementationDefinedObjectService = ServiceStaticAccessor.getImplementationDefinedObjectService();
         if (method.equals(HttpMethod.GET)) {
             return implementationDefinedObjectService.getRouteForPluginConfiguratorControllerDoGetCustom(getPluginConfigurationId(), actionId);
         } else {

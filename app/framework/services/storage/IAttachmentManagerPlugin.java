@@ -34,7 +34,6 @@ import models.framework_models.common.Attachment;
  * @author Pierre-Yves Cloux
  */
 public interface IAttachmentManagerPlugin {
-    public static final String NAME = "attachmentPlugin";
 
     /**
      * Add an attachment which is an URL and return the created attachment id.

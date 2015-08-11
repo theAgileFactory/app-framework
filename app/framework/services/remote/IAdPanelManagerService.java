@@ -39,12 +39,6 @@ import play.twirl.api.Html;
  * @author Pierre-Yves Cloux
  */
 public interface IAdPanelManagerService {
-    public static final String NAME = "adPanelService";
-
-    /**
-     * Launch the automated retrieval of the ad panel
-     */
-    public void init();
 
     /**
      * Clear the content cache and force the retrieval of a new panelisable list
@@ -82,9 +76,4 @@ public interface IAdPanelManagerService {
      * @return
      */
     public Promise<Result> getRemotePanel(String route);
-
-    /**
-     * Stop the service
-     */
-    public void destroy();
 }

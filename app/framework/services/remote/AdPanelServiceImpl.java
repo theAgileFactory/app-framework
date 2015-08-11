@@ -23,8 +23,13 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+import play.Configuration;
 import play.Logger;
 import play.cache.Cache;
+import play.inject.ApplicationLifecycle;
 import play.libs.F.Function;
 import play.libs.F.Function0;
 import play.libs.F.Promise;
@@ -40,9 +45,10 @@ import akka.actor.Cancellable;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import framework.commons.IFrameworkConstants;
-import framework.services.configuration.ImplementationDefineObjectServiceFactory;
+import framework.services.configuration.IImplementationDefinedObjectService;
+import framework.services.database.IDatabaseDependencyService;
+import framework.services.system.ISysAdminUtils;
 import framework.utils.LanguageUtil;
-import framework.utils.SysAdminUtils;
 
 /**
  * Default implementation of the {@link IAdPanelManagerService}.<br/>
@@ -60,6 +66,7 @@ import framework.utils.SysAdminUtils;
  * @author Pierre-Yves Cloux
  * 
  */
+@Singleton
 public class AdPanelServiceImpl implements IAdPanelManagerService {
     private static Logger.ALogger log = Logger.of(AdPanelServiceImpl.class);
 
@@ -111,12 +118,12 @@ public class AdPanelServiceImpl implements IAdPanelManagerService {
     private Set<String> panelisablePages;
 
     /**
-     * The duration of the cache
+     * The duration of the cache (after this time the cache is cleared)
      */
     private int cacheDuration;
 
     /**
-     * Root URL of the panels container.
+     * Root URL of the panels container (to get the content)
      */
     private String rootUrl;
 
@@ -125,37 +132,77 @@ public class AdPanelServiceImpl implements IAdPanelManagerService {
      */
     private Cancellable currentScheduler;
 
+    private ISysAdminUtils sysAdminUtils;
+    private IImplementationDefinedObjectService implementationDefinedObjectService;
+
+    public enum Config {
+        PANEL_IS_ACTIVE("maf.ad_panel.is_active"), PANEL_URL("maf.ad_panel.url"), PANEL_CACHE_TTL("maf.ad_panel.cache_ttl");
+
+        private String configurationKey;
+
+        private Config(String configurationKey) {
+            this.configurationKey = configurationKey;
+        }
+
+        public String getConfigurationKey() {
+            return configurationKey;
+        }
+    }
+
     /**
      * Creates an new Ads service
      * 
-     * @param isActive
-     *            set to true if the ad panel service is active
-     * @param rootUrl
-     *            the root URL for the contents
-     * @param cacheDuration
-     *            the duration of the cache (after this time the cache is
-     *            cleared)
+     * @param lifecycle
+     *            the play application lifecycle listener
+     * @param configuration
+     *            the play application configuration
+     * @param sysAdminUtils
+     *            the sysadmin utilities
+     * @param implementationDefinedObjectService
+     * @param databaseDependencyService
      */
-    public AdPanelServiceImpl(boolean isActive, String rootUrl, int cacheDuration) {
-        this.isActive = isActive;
+    @Inject
+    public AdPanelServiceImpl(ApplicationLifecycle lifecycle, Configuration configuration, ISysAdminUtils sysAdminUtils,
+            IImplementationDefinedObjectService implementationDefinedObjectService, IDatabaseDependencyService databaseDependencyService) {
+        log.info("SERVICE>>> AdPanelServiceImpl starting...");
+        this.sysAdminUtils = sysAdminUtils;
+        this.implementationDefinedObjectService = implementationDefinedObjectService;
+        this.isActive = configuration.getBoolean(Config.PANEL_IS_ACTIVE.getConfigurationKey());
+        this.cacheDuration = configuration.getInt(Config.PANEL_CACHE_TTL.getConfigurationKey());
+        this.rootUrl = configuration.getString(Config.PANEL_URL.getConfigurationKey());
         this.panelisablePages = Collections.synchronizedSet(new HashSet<String>());
-        this.cacheDuration = cacheDuration;
-        this.rootUrl = rootUrl;
+        init();
+        lifecycle.addStopHook(() -> {
+            log.info("SERVICE>>> AdPanelServiceImpl stopping...");
+            destroy();
+            log.info("SERVICE>>> AdPanelServiceImpl stopped");
+            return Promise.pure(null);
+        });
+        log.info("SERVICE>>> AdPanelServiceImpl started");
     }
 
-    @Override
     public void init() {
         if (this.isActive) {
             // Initialize the scheduler which retrieves regularly the list of
             // panelisable pages
-            this.currentScheduler =
-                    SysAdminUtils.scheduleRecurring(true, "ADPANEL", Duration.create(WAIT_BEFORE_START, TimeUnit.SECONDS),
-                            Duration.create(getCacheDuration(), TimeUnit.SECONDS), new Runnable() {
-                                @Override
-                                public void run() {
-                                    updatePanelisablePages();
-                                }
-                            }, true);
+            this.currentScheduler = getSysAdminUtils().scheduleRecurring(true, "ADPANEL", Duration.create(WAIT_BEFORE_START, TimeUnit.SECONDS),
+                    Duration.create(getCacheDuration(), TimeUnit.SECONDS), new Runnable() {
+                        @Override
+                        public void run() {
+                            updatePanelisablePages();
+                        }
+                    }, true);
+        }
+    }
+
+    public void destroy() {
+        try {
+            clearCache();
+            if (getCurrentScheduler() != null) {
+                getCurrentScheduler().cancel();
+            }
+        } catch (Exception e) {
+            log.error("Error while stopping the adpanel service");
         }
     }
 
@@ -249,8 +296,8 @@ public class AdPanelServiceImpl implements IAdPanelManagerService {
             }
             // Display a javascript which will retrieve the missing content
             // element without blocking the page
-            return views.html.framework_views.parts.asynchronous_text.render("maf_adpanel", ImplementationDefineObjectServiceFactory.getInstance()
-                    .getRouteForAdPanelContent(page).url());
+            return views.html.framework_views.parts.asynchronous_text.render("maf_adpanel",
+                    getImplementationDefinedObjectService().getRouteForAdPanelContent(page).url());
         }
     }
 
@@ -283,18 +330,6 @@ public class AdPanelServiceImpl implements IAdPanelManagerService {
                 return Controller.ok();
             }
         });
-    }
-
-    @Override
-    public void destroy() {
-        try {
-            clearCache();
-            if (getCurrentScheduler() != null) {
-                getCurrentScheduler().cancel();
-            }
-        } catch (Exception e) {
-            log.error("Error while stopping the adpanel service");
-        }
     }
 
     /**
@@ -333,5 +368,13 @@ public class AdPanelServiceImpl implements IAdPanelManagerService {
 
     private Cancellable getCurrentScheduler() {
         return currentScheduler;
+    }
+
+    private ISysAdminUtils getSysAdminUtils() {
+        return sysAdminUtils;
+    }
+
+    private IImplementationDefinedObjectService getImplementationDefinedObjectService() {
+        return implementationDefinedObjectService;
     }
 }

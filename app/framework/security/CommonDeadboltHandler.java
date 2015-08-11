@@ -26,7 +26,6 @@ import play.mvc.Http;
 import play.mvc.Result;
 import be.objectify.deadbolt.core.models.Subject;
 import be.objectify.deadbolt.java.AbstractDeadboltHandler;
-import framework.services.ServiceManager;
 import framework.services.account.AccountManagementException;
 import framework.services.account.IAccountManagerPlugin;
 import framework.services.account.IUserAccount;
@@ -40,17 +39,20 @@ import framework.services.session.IUserSessionManagerPlugin;
  */
 public abstract class CommonDeadboltHandler extends AbstractDeadboltHandler {
     private static Logger.ALogger log = Logger.of(CommonDeadboltHandler.class);
+    private IUserSessionManagerPlugin userSessionManagerPlugin;
+    private IAccountManagerPlugin accountManagerPlugin;
 
     /**
      * Default constructor.
      */
-    public CommonDeadboltHandler() {
-        super();
+    public CommonDeadboltHandler(IUserSessionManagerPlugin userSessionManagerPlugin, IAccountManagerPlugin accountManagerPlugin) {
+        this.accountManagerPlugin = accountManagerPlugin;
+        this.userSessionManagerPlugin = userSessionManagerPlugin;
     }
 
     @Override
     public Promise<Optional<Result>> beforeAuthCheck(final Http.Context ctx) {
-        String uid = ServiceManager.getService(IUserSessionManagerPlugin.NAME, IUserSessionManagerPlugin.class).getUserSessionId(ctx);
+        String uid = getUserSessionManagerPlugin().getUserSessionId(ctx);
         if (log.isDebugEnabled()) {
             log.debug("Calling beforeAuthCheck, user in session is " + uid);
         }
@@ -70,14 +72,14 @@ public abstract class CommonDeadboltHandler extends AbstractDeadboltHandler {
     @Override
     public Promise<Optional<Subject>> getSubject(Http.Context ctx) {
         Optional<Subject> emptySubject = Optional.empty();
-        String uid = ServiceManager.getService(IUserSessionManagerPlugin.NAME, IUserSessionManagerPlugin.class).getUserSessionId(ctx);
+        String uid = getUserSessionManagerPlugin().getUserSessionId(ctx);
         if (log.isDebugEnabled()) {
             log.debug("Looking for a subject (getSubject), user in session is " + uid);
         }
         if (uid != null) {
             IUserAccount userAccount;
             try {
-                userAccount = ServiceManager.getService(IAccountManagerPlugin.NAME, IAccountManagerPlugin.class).getUserAccountFromUid(uid);
+                userAccount = getAccountManagerPlugin().getUserAccountFromUid(uid);
                 if (log.isDebugEnabled()) {
                     log.debug("User account for " + uid + " retreived " + userAccount);
                 }
@@ -112,7 +114,7 @@ public abstract class CommonDeadboltHandler extends AbstractDeadboltHandler {
 
     @Override
     public Promise<Result> onAuthFailure(Http.Context ctx, String content) {
-        if (ServiceManager.getService(IUserSessionManagerPlugin.NAME, IUserSessionManagerPlugin.class).getUserSessionId(ctx) == null) {
+        if (getUserSessionManagerPlugin().getUserSessionId(ctx) == null) {
             final String redirectUrl = ctx.request().uri();
 
             if (log.isDebugEnabled()) {
@@ -159,4 +161,12 @@ public abstract class CommonDeadboltHandler extends AbstractDeadboltHandler {
      * @return
      */
     public abstract Result displayAccessForbidden();
+
+    private IUserSessionManagerPlugin getUserSessionManagerPlugin() {
+        return userSessionManagerPlugin;
+    }
+
+    private IAccountManagerPlugin getAccountManagerPlugin() {
+        return accountManagerPlugin;
+    }
 }

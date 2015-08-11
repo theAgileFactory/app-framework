@@ -38,6 +38,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 
@@ -46,7 +48,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.xeustechnologies.jcl.JarClassLoader;
 import org.xeustechnologies.jcl.JclObjectFactory;
 
+import play.Configuration;
 import play.Logger;
+import play.inject.ApplicationLifecycle;
 import play.libs.F.Function0;
 import play.libs.F.Promise;
 import play.mvc.Controller;
@@ -55,9 +59,9 @@ import play.mvc.Result;
 import scala.concurrent.duration.Duration;
 import akka.actor.Cancellable;
 import framework.security.SecurityUtils;
-import framework.services.ServiceManager;
 import framework.services.configuration.II18nMessagesPlugin;
-import framework.services.configuration.ImplementationDefineObjectServiceFactory;
+import framework.services.configuration.IImplementationDefinedObjectService;
+import framework.services.database.IDatabaseDependencyService;
 import framework.services.ext.ExtensionDescriptor.I18nMessage;
 import framework.services.ext.ExtensionDescriptor.MenuCustomizationDescriptor;
 import framework.services.ext.ExtensionDescriptor.MenuItemDescriptor;
@@ -68,11 +72,12 @@ import framework.services.ext.api.WebParameter;
 import framework.services.plugins.IPluginManagerService;
 import framework.services.plugins.api.IPluginRunner;
 import framework.services.plugins.api.PluginException;
+import framework.services.router.ICustomRouterService;
+import framework.services.system.ISysAdminUtils;
 import framework.utils.LanguageUtil;
 import framework.utils.Menu.ClickableMenuItem;
 import framework.utils.Menu.HeaderMenuItem;
 import framework.utils.Menu.MenuItem;
-import framework.utils.SysAdminUtils;
 import framework.utils.TopMenuBar;
 import framework.utils.Utilities;
 
@@ -83,6 +88,8 @@ import framework.utils.Utilities;
  * <ul>
  * <li>autoRefreshMode : if true the system will regularly scan the file system
  * for extension changes and load them as they are available</li>
+ * <li>autoRefreshFrequency : the frequency of scanning of the extension folder
+ * if the autorefresh is configured</li>
  * <li>extensions : the loaded extensions (one JAR per extension)</li>
  * <li>extensionControllers : a map [a controller Class, Map[unique id of a
  * command, a WebCommand instance]]</li>
@@ -91,46 +98,97 @@ import framework.utils.Utilities;
  * 
  * @author Pierre-Yves Cloux
  */
+@Singleton
 public class ExtensionManagerServiceImpl implements IExtensionManagerService {
     private static Logger.ALogger log = Logger.of(ExtensionManagerServiceImpl.class);
 
+    /**
+     * True if the system is in "autorefresh" mode (should be used only for
+     * development)
+     */
     private boolean autoRefreshMode;
+
+    /**
+     * The frequency (in seconds) of scanning of the extension folder if the
+     * autorefresh is configured
+     */
     private int autoRefreshFrequency;
+
+    /**
+     * The path which contains the extension jars
+     */
     private File extensionDirectory;
+
     private Cancellable autoRefreshScheduler;
     private IPluginManagerService pluginManagerService;
     private II18nMessagesPlugin iI18nMessagesPlugin;
+    private ISysAdminUtils sysAdminUtils;
+    private IImplementationDefinedObjectService implementationDefinedObjectService;
     private List<IExtension> extensions = Collections.synchronizedList(new ArrayList<IExtension>());
     private Map<Class<?>, Map<String, WebCommand>> extensionControllers = Collections.synchronizedMap(new HashMap<Class<?>, Map<String, WebCommand>>());
     private List<WebCommand> webCommands = Collections.synchronizedList(new ArrayList<WebCommand>());
 
+    public enum Config {
+        DIRECTORY_PATH("maf.ext.directory"), AUTO_REFRESH_ACTIVE("maf.ext.auto.refresh.status"), AUTO_REFRESH_FREQUENCY("maf.ext.auto.refresh.frequency");
+
+        private String configurationKey;
+
+        private Config(String configurationKey) {
+            this.configurationKey = configurationKey;
+        }
+
+        public String getConfigurationKey() {
+            return configurationKey;
+        }
+    }
+
     /**
-     * Creates a new extension manager e
+     * Creates a new extension manager
      * 
-     * @param extensionDirectoryPath
-     *            the path which contains the extension jars
-     * @param autoRefreshMode
-     *            true if the system is in "autorefresh" mode (should be used
-     *            only for development)
-     * @param autoRefreshFrequency
-     *            the frequency of scanning of the extension folder if the
-     *            autorefresh is configured
+     * @param lifecycle
+     *            the play application lifecycle listener
+     * @param configuration
+     *            the play application configuration
      * @param pluginManagerService
      *            the plugin manager service to be populated with the plugins
      *            loaded by some extensions
      * @param iI18nMessagesPlugin
      *            the service in charge of the internationalization
+     * @param customRouterService
+     *            the custom router service to register the extension
+     * @param sysAdminUtils
+     * @param implementationDefinedObjectService
+     * @param databaseDependencyService
+     * @throws ExtensionManagerException
      */
-    public ExtensionManagerServiceImpl(String extensionDirectoryPath, boolean autoRefreshMode, int autoRefreshFrequency,
-            IPluginManagerService pluginManagerService, II18nMessagesPlugin iI18nMessagesPlugin) {
-        this.autoRefreshMode = autoRefreshMode;
-        this.autoRefreshFrequency = autoRefreshFrequency;
+    @Inject
+    public ExtensionManagerServiceImpl(ApplicationLifecycle lifecycle, Configuration configuration, IPluginManagerService pluginManagerService,
+            II18nMessagesPlugin iI18nMessagesPlugin, ICustomRouterService customRouterService, ISysAdminUtils sysAdminUtils,
+            IImplementationDefinedObjectService implementationDefinedObjectService, IDatabaseDependencyService databaseDependencyService)
+            throws ExtensionManagerException {
+        log.info("SERVICE>>> ExtensionManagerServiceImpl starting...");
+        this.autoRefreshMode = configuration.getBoolean(Config.AUTO_REFRESH_ACTIVE.getConfigurationKey());
+        this.autoRefreshFrequency = configuration.getInt(Config.AUTO_REFRESH_FREQUENCY.getConfigurationKey());
+        String extensionDirectoryPath = configuration.getString(Config.DIRECTORY_PATH.getConfigurationKey());
         this.extensionDirectory = new File(extensionDirectoryPath);
         if (!this.extensionDirectory.exists() || !this.extensionDirectory.isDirectory()) {
             throw new IllegalArgumentException("Invalid extension directory " + extensionDirectoryPath);
         }
         this.pluginManagerService = pluginManagerService;
         this.iI18nMessagesPlugin = iI18nMessagesPlugin;
+        this.sysAdminUtils = sysAdminUtils;
+        this.implementationDefinedObjectService = implementationDefinedObjectService;
+        init();
+        // Register to the custom router so that the extension web components
+        // could be supported
+        customRouterService.addListener(PATH_PREFIX, this);
+        lifecycle.addStopHook(() -> {
+            log.info("SERVICE>>> ExtensionManagerServiceImpl stopping...");
+            destroy();
+            log.info("SERVICE>>> ExtensionManagerServiceImpl stopped");
+            return Promise.pure(null);
+        });
+        log.info("SERVICE>>> ExtensionManagerServiceImpl started");
     }
 
     /**
@@ -163,7 +221,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
      * already loaded.
      */
     private void startAutoRefresh() {
-        this.autoRefreshScheduler = SysAdminUtils.scheduleRecurring(true, "AutoRefreshExtensionScheduler", Duration.create(0, TimeUnit.MILLISECONDS),
+        this.autoRefreshScheduler = getSysAdminUtils().scheduleRecurring(true, "AutoRefreshExtensionScheduler", Duration.create(0, TimeUnit.MILLISECONDS),
                 Duration.create(getAutoRefreshFrequency(), TimeUnit.SECONDS), new Runnable() {
                     @Override
                     public void run() {
@@ -204,8 +262,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         return SecurityUtils.checkHasSubject(ctx, new Function0<Result>() {
             @Override
             public Result apply() throws Throwable {
-                IExtensionManagerService extensionManagerService = ServiceManager.getService(IExtensionManagerService.NAME, IExtensionManagerService.class);
-                return extensionManagerService.execute(path, ctx);
+                return execute(path, ctx);
             }
         });
     }
@@ -291,7 +348,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
 
     @Override
     public synchronized boolean customizeMenu() {
-        ImplementationDefineObjectServiceFactory.getInstance().resetTopMenuBar();
+        getImplementationDefinedObjectService().resetTopMenuBar();
         for (IExtension extension : getExtensions()) {
             if (extension.getDescriptor().isMenuCustomized()) {
                 log.info("Loading menu customization for extension " + extension.getDescriptor().getName());
@@ -934,5 +991,13 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                 return "ParameterMeta [parameterName=" + parameterName + ", realIndex=" + realIndex + ", parameterType=" + parameterType + "]";
             }
         }
+    }
+
+    private ISysAdminUtils getSysAdminUtils() {
+        return sysAdminUtils;
+    }
+
+    private IImplementationDefinedObjectService getImplementationDefinedObjectService() {
+        return implementationDefinedObjectService;
     }
 }

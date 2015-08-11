@@ -21,7 +21,7 @@
     @for(value <- listOfValues){
         @if(value!=null){
             <li>
-                @Html(framework.services.configuration.ImplementationDefineObjectServiceFactory.getInstance().renderObject(value))
+                @Html(framework.services.ServiceStaticAccessor.getImplementationDefinedObjectService().renderObject(value))
             </li>
         }
     }

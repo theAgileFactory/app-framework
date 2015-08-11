@@ -18,10 +18,10 @@
 @(uid: String, objectId: Long)
 
 @import framework_views.parts
-@import framework.services.ServiceManager
+@import framework.services.ServiceStaticAccessor
 @import framework.services.kpi.IKpiService
 
-@defining(ServiceManager.getService(IKpiService.NAME, classOf[IKpiService]).getKpiRender(uid, objectId)) { kpiRender =>
+@defining(ServiceStaticAccessor.getKpiService().getKpiRender(uid, objectId)) { kpiRender =>
 
     @if(kpiRender != null && kpiRender.getKpi.hasBoxDisplay) {
     

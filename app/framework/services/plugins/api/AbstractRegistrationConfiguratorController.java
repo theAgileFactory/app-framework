@@ -20,8 +20,8 @@ package framework.services.plugins.api;
 import play.mvc.Call;
 import play.mvc.Result;
 import framework.commons.DataType;
+import framework.services.ServiceStaticAccessor;
 import framework.services.configuration.IImplementationDefinedObjectService;
-import framework.services.configuration.ImplementationDefineObjectServiceFactory;
 import framework.services.plugins.api.IPluginContext.HttpMethod;
 
 /**
@@ -51,7 +51,7 @@ public abstract class AbstractRegistrationConfiguratorController extends Abstrac
      * @return
      */
     public Call getRouteForRegistrationController(HttpMethod method, Long objectId, String actionId) {
-        IImplementationDefinedObjectService implementationDefinedObjectService = ImplementationDefineObjectServiceFactory.getInstance();
+        IImplementationDefinedObjectService implementationDefinedObjectService = ServiceStaticAccessor.getImplementationDefinedObjectService();
         if (method.equals(HttpMethod.GET)) {
             return implementationDefinedObjectService.getRouteForPluginConfiguratorControllerDoGetRegistration(getPluginConfigurationId(), getDataType(),
                     objectId, actionId);

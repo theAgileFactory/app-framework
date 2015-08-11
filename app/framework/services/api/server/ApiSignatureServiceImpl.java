@@ -24,16 +24,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import models.framework_models.api.ApiRegistration;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 
+import play.Configuration;
 import play.Logger;
+import play.inject.ApplicationLifecycle;
+import play.libs.F.Promise;
 import framework.services.api.client.SignatureGeneratorImpl;
 import framework.services.api.commons.ApiMethod;
 import framework.services.api.commons.ApiSignatureException;
+import framework.services.database.IDatabaseDependencyService;
 
 /**
  * A class which holds some methods useful for API signature and authentication
@@ -56,6 +63,7 @@ import framework.services.api.commons.ApiSignatureException;
  * 
  * @author Pierre-Yves Cloux
  */
+@Singleton
 public class ApiSignatureServiceImpl implements IApiSignatureService {
     static Logger.ALogger log = Logger.of(ApiSignatureServiceImpl.class);
     static final String AUTHORIZATION_PARSING_REGEXPR = "(" + ApiMethod.DELETE.name() + "|" + ApiMethod.POST.name() + "|" + ApiMethod.PUT.name() + "|"
@@ -69,15 +77,48 @@ public class ApiSignatureServiceImpl implements IApiSignatureService {
     private Map<String, ApiApplicationConfiguration> applicationConfigRegistry = Collections
             .synchronizedMap(new HashMap<String, ApiApplicationConfiguration>());
 
-    public ApiSignatureServiceImpl(int keyLength, long allowedTimeDifference, String hashAlgorithm, int protocolVersion, String publicUrl) {
-        this.keyLength = keyLength;
-        this.allowedTimeDifference = allowedTimeDifference;
-        this.hashAlgorithm = hashAlgorithm;
-        this.protocolVersion = protocolVersion;
-        this.publicUrl = publicUrl;
+    public enum Config {
+        KEYS_LENGTH("maf.api.keys.length"), ALLOWED_TIME_DIFF("maf.api.allowed.timediff"), HASH_ALGORITHM("maf.api.hash.algoritm"), PROTOCOL_VERSION(
+                "maf.api.protocol.version"), PUBLIC_URL("maf.public.url");
+        private String configurationKey;
+
+        private Config(String configurationKey) {
+            this.configurationKey = configurationKey;
+        }
+
+        public String getConfigurationKey() {
+            return configurationKey;
+        }
     }
 
-    @Override
+    /**
+     * Create a new ApiSignatureServiceImpl
+     * 
+     * @param lifecycle
+     *            the play application lifecycle listener
+     * @param configuration
+     *            the play application configuration
+     * @param databaseDependencyService
+     * @throws ApiSignatureException
+     */
+    @Inject
+    public ApiSignatureServiceImpl(ApplicationLifecycle lifecycle, Configuration configuration, IDatabaseDependencyService databaseDependencyService)
+            throws ApiSignatureException {
+        log.info("SERVICE>>> ApiSignatureServiceImpl starting...");
+        this.keyLength = configuration.getInt(Config.KEYS_LENGTH.getConfigurationKey());
+        this.allowedTimeDifference = configuration.getInt(Config.ALLOWED_TIME_DIFF.getConfigurationKey());
+        this.hashAlgorithm = configuration.getString(Config.HASH_ALGORITHM.getConfigurationKey());
+        this.protocolVersion = configuration.getInt(Config.PROTOCOL_VERSION.getConfigurationKey());
+        this.publicUrl = configuration.getString(Config.PUBLIC_URL.getConfigurationKey());
+        init();
+        lifecycle.addStopHook(() -> {
+            log.info("SERVICE>>> ApiSignatureServiceImpl stopping...");
+            log.info("SERVICE>>> ApiSignatureServiceImpl stopped");
+            return Promise.pure(null);
+        });
+        log.info("SERVICE>>> ApiSignatureServiceImpl started");
+    }
+
     public void init() throws ApiSignatureException {
         // load registrations
         loadApplicationConfigurations();

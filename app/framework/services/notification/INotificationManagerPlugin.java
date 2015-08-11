@@ -25,6 +25,8 @@ import models.framework_models.account.Principal;
 
 import com.avaje.ebean.ExpressionList;
 
+import framework.services.actor.IActorServiceLifecycleHook;
+
 /**
  * The interface to be implemented by the service which handles the notification
  * (see {@link Notification}).<br/>
@@ -38,8 +40,7 @@ import com.avaje.ebean.ExpressionList;
  * 
  * @author Pierre-Yves Cloux
  */
-public interface INotificationManagerPlugin {
-    public static final String NAME = "notificationManagerPlugin";
+public interface INotificationManagerPlugin extends IActorServiceLifecycleHook {
 
     /**
      * Return true if the specified Principal (identified by its uid) has some

@@ -28,7 +28,6 @@ import framework.services.api.commons.ApiSignatureException;
  * @author Pierre-Yves Cloux
  */
 public interface IApiSignatureService {
-    public static final String NAME = "apiSignatureService";
 
     /**
      * Application which is created for eChannel administration purpose.<br/>
@@ -46,14 +45,6 @@ public interface IApiSignatureService {
      * Default API authorization to be used when creation a new API registration
      */
     public static final String DEFAULT_AUTHORIZATION = "GET (.*)\n#POST (.*)\n#PUT (.*)\n#DELETE (.*)";
-
-    /**
-     * Initialize the API registration system by reading the stored
-     * configuration from the database.
-     * 
-     * @throws ApiSignatureException
-     */
-    public void init() throws ApiSignatureException;
 
     /**
      * Creates or overwrite an application configuration.<br/>

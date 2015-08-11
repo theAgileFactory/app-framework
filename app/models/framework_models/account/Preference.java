@@ -36,13 +36,13 @@ import models.framework_models.common.ICustomAttributeValue;
 import models.framework_models.parent.IModel;
 import models.framework_models.parent.IModelConstants;
 import play.Logger;
-import play.cache.Cache;
+import play.cache.CacheApi;
 import play.mvc.Controller;
 
 import com.avaje.ebean.Model;
 
 import framework.commons.IFrameworkConstants;
-import framework.services.ServiceManager;
+import framework.services.ServiceStaticAccessor;
 import framework.services.account.AccountManagementException;
 import framework.services.account.IAccountManagerPlugin;
 import framework.services.account.IUserAccount;
@@ -198,7 +198,7 @@ public class Preference extends Model implements IModel {
             if (log.isDebugEnabled()) {
                 log.debug("Preference with uuid " + uuid + " is a system preference, flushing the cache");
             }
-            Cache.remove(IFrameworkConstants.SYSTEM_PREFERENCE_CACHE_PREFIX + uuid);
+            ServiceStaticAccessor.getCacheApi().remove(IFrameworkConstants.SYSTEM_PREFERENCE_CACHE_PREFIX + uuid);
         }
         customAttributeValue.performSave();
     }
@@ -210,7 +210,7 @@ public class Preference extends Model implements IModel {
     /**
      * Return the custom attribute value associated with this preference.<br/>
      * If the preference is a system preference, its value is taken from the
-     * system {@link Cache}
+     * system {@link CacheApi}
      * 
      * @param uuid
      *            a preference uuid
@@ -231,7 +231,8 @@ public class Preference extends Model implements IModel {
             if (log.isDebugEnabled()) {
                 log.debug("Preference with uuid " + uuid + " is a system preference");
             }
-            ICustomAttributeValue attributeValue = (ICustomAttributeValue) Cache.get(IFrameworkConstants.SYSTEM_PREFERENCE_CACHE_PREFIX + uuid);
+            ICustomAttributeValue attributeValue = (ICustomAttributeValue) ServiceStaticAccessor.getCacheApi().get(
+                    IFrameworkConstants.SYSTEM_PREFERENCE_CACHE_PREFIX + uuid);
             if (attributeValue != null) {
                 if (log.isDebugEnabled()) {
                     CustomAttributeDefinition customAttributeDefinition = attributeValue.getDefinition();
@@ -249,7 +250,7 @@ public class Preference extends Model implements IModel {
                 }
                 attributeValue.defaults();
             }
-            Cache.set(IFrameworkConstants.SYSTEM_PREFERENCE_CACHE_PREFIX + uuid, attributeValue);
+            ServiceStaticAccessor.getCacheApi().set(IFrameworkConstants.SYSTEM_PREFERENCE_CACHE_PREFIX + uuid, attributeValue);
             if (log.isDebugEnabled()) {
                 log.debug("Preference with uuid " + uuid + " set in cache returning : " + attributeValue);
             }
@@ -260,9 +261,9 @@ public class Preference extends Model implements IModel {
             }
             try {
                 // The preference is attached to a user and specific
-                IUserSessionManagerPlugin userSessionManager = ServiceManager.getService(IUserSessionManagerPlugin.NAME, IUserSessionManagerPlugin.class);
+                IUserSessionManagerPlugin userSessionManager = ServiceStaticAccessor.getUserSessionManagerPlugin();
                 String userSessionUid = userSessionManager.getUserSessionId(Controller.ctx());
-                IAccountManagerPlugin accountManagerPlugin = ServiceManager.getService(IAccountManagerPlugin.NAME, IAccountManagerPlugin.class);
+                IAccountManagerPlugin accountManagerPlugin = ServiceStaticAccessor.getAccountManagerPlugin();
                 IUserAccount userAccount = accountManagerPlugin.getUserAccountFromUid(userSessionUid);
                 ICustomAttributeValue attributeValue = CustomAttributeDefinition.getCustomAttributeValue(preference.uuid, Principal.class,
                         userAccount.getMafUid());

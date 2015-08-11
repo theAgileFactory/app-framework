@@ -42,17 +42,14 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
 import play.Logger;
-import play.Play;
 import scala.concurrent.duration.Duration;
 import scala.concurrent.duration.FiniteDuration;
 import akka.actor.Cancellable;
 import framework.commons.IFrameworkConstants;
-import framework.services.ServiceManager;
 import framework.utils.DefaultSelectableValueHolder;
 import framework.utils.DefaultSelectableValueHolderCollection;
 import framework.utils.ISelectableValueHolderCollection;
 import framework.utils.Msg;
-import framework.utils.SysAdminUtils;
 
 /**
  * A KPI is a correctly defined KPI definition that is ready to use.
@@ -61,7 +58,7 @@ import framework.utils.SysAdminUtils;
  * 
  */
 public class Kpi {
-
+    private IKpiService kpiService;
     private KpiDefinition kpiDefinition;
     private IKpiRunner kpiRunner;
     private IKpiObjectsContainer kpiObjectsContainer;
@@ -75,8 +72,9 @@ public class Kpi {
      * @param kpiDefinition
      *            the KPI definition
      */
-    public Kpi(KpiDefinition kpiDefinition) {
+    public Kpi(KpiDefinition kpiDefinition, IKpiService kpiService) {
         this.kpiDefinition = kpiDefinition;
+        this.kpiService = kpiService;
     }
 
     /*
@@ -136,7 +134,7 @@ public class Kpi {
         // load the lpiObjectsContainer
         try {
 
-            Class<?> clazz = Play.application().classloader().loadClass(kpiDefinition.objectType);
+            Class<?> clazz = getKpiService().getEnvironment().classLoader().loadClass(kpiDefinition.objectType);
             kpiObjectsContainer = (IKpiObjectsContainer) clazz.newInstance();
 
         } catch (Exception e) {
@@ -151,7 +149,7 @@ public class Kpi {
 
                 Class<?> clazz = null;
                 if (kpiDefinition.isStandard) {
-                    clazz = Play.application().classloader().loadClass(kpiDefinition.clazz);
+                    clazz = getKpiService().getEnvironment().classLoader().loadClass(kpiDefinition.clazz);
                 } else {
                     clazz = CustomKpi.class;
                 }
@@ -205,8 +203,8 @@ public class Kpi {
 
         FiniteDuration frequency = FiniteDuration.create(kpiDefinition.schedulerFrequency, TimeUnit.MINUTES);
 
-        scheduler = SysAdminUtils.scheduleRecurring(true, "KPI " + getUid(), Duration.create(howMuchMinutesUntilStartTime, TimeUnit.MINUTES), frequency,
-                new Runnable() {
+        scheduler = getKpiService().getSysAdminUtils().scheduleRecurring(true, "KPI " + getUid(),
+                Duration.create(howMuchMinutesUntilStartTime, TimeUnit.MINUTES), frequency, new Runnable() {
                     @Override
                     public void run() {
                         storeValues();
@@ -637,8 +635,7 @@ public class Kpi {
             case PATTERN:
                 String pattern = kpiValueDefinition.renderPattern;
                 if (value != null && pattern != null) {
-                    pattern = pattern.replaceAll(":default_currency_code", ServiceManager.getService(IKpiService.NAME, IKpiService.class)
-                            .getDefaultCurrencyCode());
+                    pattern = pattern.replaceAll(":default_currency_code", getKpiService().getDefaultCurrencyCode());
                     pattern = pattern.replaceAll(":i", views.html.framework_views.parts.formats.display_number.render(value.intValue(), null, false).body());
                     pattern = pattern.replaceAll(":si", views.html.framework_views.parts.formats.display_number.render(value.intValue(), null, true).body());
                     pattern = pattern.replaceAll(":d", views.html.framework_views.parts.formats.display_number.render(value, null, false).body());
@@ -661,6 +658,10 @@ public class Kpi {
      */
     public static enum DataType {
         MAIN, ADDITIONAL1, ADDITIONAL2;
+    }
+
+    private IKpiService getKpiService() {
+        return kpiService;
     }
 
 }

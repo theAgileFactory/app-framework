@@ -17,11 +17,11 @@
  *@
 @(objectType: Class[_], objectId: Long)
 
-@import framework.services.ServiceManager
+@import framework.services.ServiceStaticAccessor
 @import framework.services.kpi.IKpiService
 
 @kpis=@{
-ServiceManager.getService(IKpiService.NAME, classOf[IKpiService]).getActiveAndToDisplayKpisOfObjectType(objectType);
+ServiceStaticAccessor.getKpiService().getActiveAndToDisplayKpisOfObjectType(objectType);
 }
 
 @if(kpis!=null && kpis.size()>0){

@@ -21,6 +21,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import play.Logger;
 import play.mvc.Http;
 import play.mvc.Http.Request;
@@ -28,7 +31,6 @@ import play.mvc.Http.Request;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import framework.services.ServiceManager;
 import framework.services.configuration.II18nMessagesPlugin;
 import framework.utils.Msg;
 
@@ -39,7 +41,10 @@ import framework.utils.Msg;
  * @author Johann Kohler
  * 
  */
+@Singleton
 public class TafTreeHelper {
+    @Inject
+    private static II18nMessagesPlugin messagesPlugin;
 
     /**
      * Get the id of node from the JSON request.
@@ -193,8 +198,7 @@ public class TafTreeHelper {
 
         String lang = Http.Context.current().lang().code();
 
-        II18nMessagesPlugin messagesPlugin = ServiceManager.getService(II18nMessagesPlugin.NAME, II18nMessagesPlugin.class);
-        messagesPlugin.add(key, name, lang);
+        getMessagesPlugin().add(key, name, lang);
 
         node.setName(key);
     }
@@ -207,5 +211,9 @@ public class TafTreeHelper {
      */
     public static String getName(ITafTreeNode node) {
         return Msg.get(node.getName());
+    }
+
+    private static II18nMessagesPlugin getMessagesPlugin() {
+        return messagesPlugin;
     }
 }

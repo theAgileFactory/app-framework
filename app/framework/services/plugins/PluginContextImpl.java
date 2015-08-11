@@ -40,7 +40,6 @@ import com.avaje.ebean.Ebean;
 
 import framework.commons.DataType;
 import framework.commons.message.EventMessage;
-import framework.services.ServiceManager;
 import framework.services.plugins.api.IPluginConfigurationBlockDescriptor;
 import framework.services.plugins.api.IPluginConfigurationBlockDescriptor.ConfigurationBlockEditionType;
 import framework.services.plugins.api.IPluginContext;
@@ -58,8 +57,10 @@ public class PluginContextImpl implements IPluginContext {
     private Long pluginConfigurationId;
     private String pluginConfigurationName;
     private String pluginPrefix;
+    private IPluginManagerService pluginManagerService;
 
-    public PluginContextImpl(PluginConfiguration pluginConfiguration) {
+    public PluginContextImpl(PluginConfiguration pluginConfiguration, IPluginManagerService pluginManagerService) {
+        this.pluginManagerService = pluginManagerService;
         this.pluginConfigurationId = pluginConfiguration.id;
         this.pluginConfigurationName = pluginConfiguration.name;
         this.pluginPrefix = String.format(LOG_PREFIX_TEMPLATE, pluginConfiguration.pluginDefinition.identifier, pluginConfigurationId);
@@ -404,8 +405,7 @@ public class PluginContextImpl implements IPluginContext {
 
     @Override
     public void killMe() {
-        IPluginManagerService pluginManagerService = ServiceManager.getService(IPluginManagerService.NAME, IPluginManagerService.class);
-        pluginManagerService.stopPlugin(getPluginConfigurationId());
+        getPluginManagerService().stopPlugin(getPluginConfigurationId());
         reportOnEventHandling("-9", true, null, "Plugin kill was requested");
     }
 
@@ -426,5 +426,9 @@ public class PluginContextImpl implements IPluginContext {
      */
     private static String logException(Exception e) {
         return Utilities.getExceptionAsString(e);
+    }
+
+    private IPluginManagerService getPluginManagerService() {
+        return pluginManagerService;
     }
 }

@@ -45,6 +45,7 @@ import models.framework_models.parent.IModelConstants;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 
+import play.Configuration;
 import play.Logger;
 import play.Play;
 import play.cache.Cache;
@@ -59,10 +60,8 @@ import com.avaje.ebean.OrderBy.Property;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import framework.commons.IFrameworkConstants;
-import framework.services.ServiceManager;
-import framework.services.account.IPreferenceManagerPlugin;
+import framework.services.ServiceStaticAccessor;
 import framework.services.configuration.IImplementationDefinedObjectService;
-import framework.services.configuration.ImplementationDefineObjectServiceFactory;
 
 /**
  * An abstract class which gathers useful features
@@ -272,7 +271,7 @@ public abstract class Utilities {
      * Get the URL to an ajax wait animated gif
      */
     public static String getAjaxWaitImageUrl() {
-        IImplementationDefinedObjectService implementationDefinedObjectService = ImplementationDefineObjectServiceFactory.getInstance();
+        IImplementationDefinedObjectService implementationDefinedObjectService = ServiceStaticAccessor.getImplementationDefinedObjectService();
         return implementationDefinedObjectService.getRouteForAjaxWaitImage().url();
     }
 
@@ -283,7 +282,7 @@ public abstract class Utilities {
      *            the attachment id
      */
     public static String getAttachmentDownloadUrl(Long attachmentId) {
-        IImplementationDefinedObjectService implementationDefinedObjectService = ImplementationDefineObjectServiceFactory.getInstance();
+        IImplementationDefinedObjectService implementationDefinedObjectService = ServiceStaticAccessor.getImplementationDefinedObjectService();
         return implementationDefinedObjectService.getRouteForDownloadAttachedFile(attachmentId).url();
     }
 
@@ -294,7 +293,7 @@ public abstract class Utilities {
      *            the attachment id
      */
     public static String getAttachmentDeleteUrl(Long attachmentId) {
-        IImplementationDefinedObjectService implementationDefinedObjectService = ImplementationDefineObjectServiceFactory.getInstance();
+        IImplementationDefinedObjectService implementationDefinedObjectService = ServiceStaticAccessor.getImplementationDefinedObjectService();
         return implementationDefinedObjectService.getRouteForDeleteAttachedFile(attachmentId).url();
     }
 
@@ -578,20 +577,21 @@ public abstract class Utilities {
      * Note: this method should be called after the preference manager service
      * has been started.
      * 
+     * @param configuration
+     *            the play configuration
      * @param preferenceName
      *            the preference name
      * @param configurationName
      *            the play configuration name
      */
-    public static String getPreferenceElseConfigurationValue(String preferenceName, String configurationName) {
+    public static String getPreferenceElseConfigurationValue(Configuration configuration, String preferenceName, String configurationName) {
 
-        String preferenceValue = ServiceManager.getService(IPreferenceManagerPlugin.NAME, IPreferenceManagerPlugin.class).getPreferenceValueAsString(
-                preferenceName);
+        String preferenceValue = ServiceStaticAccessor.getPreferenceManagerPlugin().getPreferenceValueAsString(preferenceName);
 
         if (preferenceValue != null && !preferenceValue.equals("")) {
             return preferenceValue;
         } else {
-            return Play.application().configuration().getString(configurationName);
+            return configuration.getString(configurationName);
         }
 
     }
@@ -603,20 +603,21 @@ public abstract class Utilities {
      * Note: this method should be called after the preference manager service
      * has been started.
      * 
+     * @param configuration
+     *            the play configuration
      * @param preferenceName
      *            the preference name
      * @param configurationName
      *            the play configuration name
      */
-    public static Integer getPreferenceElseConfigurationValueAsInteger(String preferenceName, String configurationName) {
+    public static Integer getPreferenceElseConfigurationValueAsInteger(Configuration configuration, String preferenceName, String configurationName) {
 
-        Integer preferenceValue = ServiceManager.getService(IPreferenceManagerPlugin.NAME, IPreferenceManagerPlugin.class).getPreferenceValueAsInteger(
-                preferenceName);
+        Integer preferenceValue = ServiceStaticAccessor.getPreferenceManagerPlugin().getPreferenceValueAsInteger(preferenceName);
 
         if (preferenceValue != null) {
             return preferenceValue;
         } else {
-            return Play.application().configuration().getInt(configurationName);
+            return configuration.getInt(configurationName);
         }
 
     }
@@ -628,20 +629,21 @@ public abstract class Utilities {
      * Note: this method should be called after the preference manager service
      * has been started.
      * 
+     * @param configuration
+     *            the play configuration
      * @param preferenceName
      *            the preference name
      * @param configurationName
      *            the play configuration name
      */
-    public static Boolean getPreferenceElseConfigurationValueAsBoolean(String preferenceName, String configurationName) {
+    public static Boolean getPreferenceElseConfigurationValueAsBoolean(Configuration configuration, String preferenceName, String configurationName) {
 
-        Boolean preferenceValue = ServiceManager.getService(IPreferenceManagerPlugin.NAME, IPreferenceManagerPlugin.class).getPreferenceValueAsBoolean(
-                preferenceName);
+        Boolean preferenceValue = ServiceStaticAccessor.getPreferenceManagerPlugin().getPreferenceValueAsBoolean(preferenceName);
 
         if (preferenceValue != null) {
             return preferenceValue;
         } else {
-            return Play.application().configuration().getBoolean(configurationName);
+            return configuration.getBoolean(configurationName);
         }
 
     }

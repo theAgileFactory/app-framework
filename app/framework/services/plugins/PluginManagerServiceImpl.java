@@ -30,6 +30,9 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import models.framework_models.plugin.PluginConfiguration;
 import models.framework_models.plugin.PluginDefinition;
 import models.framework_models.plugin.PluginLog;
@@ -38,6 +41,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
 import play.Logger;
+import play.inject.ApplicationLifecycle;
+import play.libs.F.Promise;
 import scala.concurrent.Await;
 import scala.concurrent.Future;
 import scala.concurrent.duration.Duration;
@@ -60,6 +65,7 @@ import framework.commons.DataType;
 import framework.commons.IFrameworkConstants;
 import framework.commons.message.EventMessage;
 import framework.commons.message.EventMessage.MessageType;
+import framework.services.database.IDatabaseDependencyService;
 import framework.services.ext.ExtensionManagerException;
 import framework.services.ext.IExtension;
 import framework.services.plugins.api.EventInterfaceConfiguration;
@@ -68,6 +74,7 @@ import framework.services.plugins.api.IPluginRunner;
 import framework.services.plugins.api.IPluginRunnerConfigurator;
 import framework.services.plugins.api.IStaticPluginRunnerDescriptor;
 import framework.services.plugins.api.PluginException;
+import framework.services.system.ISysAdminUtils;
 import framework.utils.Msg;
 import framework.utils.Utilities;
 
@@ -76,6 +83,7 @@ import framework.utils.Utilities;
  * 
  * @author Pierre-Yves Cloux
  */
+@Singleton
 public class PluginManagerServiceImpl implements IPluginManagerService {
     private static Logger.ALogger log = Logger.of(PluginManagerServiceImpl.class);
     private ActorSystem actorSystem;
@@ -114,10 +122,26 @@ public class PluginManagerServiceImpl implements IPluginManagerService {
 
     /**
      * Default constructor.
+     * 
+     * @param lifecycle
+     *            the play application lifecycle listener
+     * @param sysAdminUtils
+     *            scheduler which may be used by some plugins
+     * @param databaseDependencyService
+     *            the service which ensures that the database is available
      */
-    public PluginManagerServiceImpl() {
+    @Inject
+    public PluginManagerServiceImpl(ApplicationLifecycle lifecycle, ISysAdminUtils sysAdminUtils, IDatabaseDependencyService databaseDependencyService) {
+        log.info("SERVICE>>> PluginManagerServiceImpl starting...");
         pluginByIds = Collections.synchronizedMap(new HashMap<Long, PluginRegistrationEntry>());
         pluginExtensions = Collections.synchronizedMap(new HashMap<String, IExtension>());
+        lifecycle.addStopHook(() -> {
+            log.info("SERVICE>>> PluginManagerServiceImpl stopping...");
+            shutdown();
+            log.info("SERVICE>>> PluginManagerServiceImpl stopped");
+            return Promise.pure(null);
+        });
+        log.info("SERVICE>>> PluginManagerServiceImpl started");
     }
 
     @Override
@@ -282,7 +306,6 @@ public class PluginManagerServiceImpl implements IPluginManagerService {
         }
     }
 
-    @Override
     public void shutdown() {
         if (isActorSystemReady()) {
             try {
@@ -374,7 +397,7 @@ public class PluginManagerServiceImpl implements IPluginManagerService {
                         pluginRunner.getStaticDescriptor() != null ? pluginRunner.getStaticDescriptor().getPluginDefinitionIdentifier() : "null",
                         pluginConfiguration.pluginDefinition.identifier));
             }
-            pluginRunner.init(new PluginContextImpl(pluginConfiguration));
+            pluginRunner.init(new PluginContextImpl(pluginConfiguration, this));
             ActorRef pluginLifeCycleControllingActorRef = getActorSystem().actorOf(
                     Props.create(new PluginLifeCycleControllingActorCreator(pluginConfiguration.id, pluginRunner, getPluginStatusCallbackActorRef())));
             log.info(String.format("[END] the plugin %d has been initialized", pluginConfiguration.id));

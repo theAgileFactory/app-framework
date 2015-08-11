@@ -24,16 +24,26 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import models.framework_models.kpi.KpiData;
 import models.framework_models.kpi.KpiDefinition;
+import play.Configuration;
+import play.Environment;
 import play.Logger;
+import play.inject.ApplicationLifecycle;
+import play.libs.F.Promise;
 import play.mvc.Controller;
 import play.mvc.Http.Context;
 import play.mvc.Result;
 import framework.highcharts.HighchartsUtils;
 import framework.highcharts.data.SeriesContainer;
 import framework.highcharts.data.TimeValueItem;
+import framework.services.configuration.IImplementationDefinedObjectService;
+import framework.services.database.IDatabaseDependencyService;
 import framework.services.kpi.Kpi.DataType;
+import framework.services.system.ISysAdminUtils;
 import framework.utils.Msg;
 
 /**
@@ -42,46 +52,79 @@ import framework.utils.Msg;
  * @author Johann Kohler
  * 
  */
+@Singleton
 public class KpiServiceImpl implements IKpiService {
-
+    private static Logger.ALogger log = Logger.of(KpiServiceImpl.class);
     private Hashtable<String, Kpi> kpis;
     private String defaultCurrencyCode = "CHF";
+    private ISysAdminUtils sysAdminUtils;
+    private Environment environment;
 
     /**
-     * Default constructor.
+     * Create a new KpiServiceImpl
+     * 
+     * @param lifecycle
+     *            the play application lifecycle listener
+     * @param environment
+     *            the application environment
+     * @param configuration
+     *            the play application configuration
+     * @param implementationDefinedObjectService
+     *            the implementation time service (depends on the application in
+     *            which the framework is implemented)
+     * @param databaseDependencyService
      */
-    public KpiServiceImpl() {
+    @Inject
+    public KpiServiceImpl(ApplicationLifecycle lifecycle, Environment environment, Configuration configuration,
+            IImplementationDefinedObjectService implementationDefinedObjectService, IDatabaseDependencyService databaseDependencyService,
+            ISysAdminUtils sysAdminUtils) {
+        log.info("SERVICE>>> KpiServiceImpl starting...");
+        this.environment = environment;
+        this.sysAdminUtils = sysAdminUtils;
+        this.defaultCurrencyCode = implementationDefinedObjectService.getDefaultCurrencyCode();
+        init();
+        lifecycle.addStopHook(() -> {
+            log.info("SERVICE>>> KpiServiceImpl stopping...");
+            cancel();
+            log.info("SERVICE>>> KpiServiceImpl stopped");
+            return Promise.pure(null);
+        });
+        log.info("SERVICE>>> KpiServiceImpl started");
     }
 
-    @Override
     public void init() {
 
         kpis = new Hashtable<String, Kpi>();
 
-        Logger.info("********START init KPI********");
+        log.info("********START init KPI********");
 
         for (KpiDefinition kpiDefinition : KpiDefinition.getAllActive()) {
             initKpiDefinition(kpiDefinition);
         }
 
-        Logger.info("********END init KPI********");
+        log.info("********END init KPI********");
     }
 
-    @Override
     public void cancel() {
 
-        Logger.info("********START cancel KPI********");
+        log.info("********START cancel KPI********");
 
         for (Kpi kpi : kpis.values()) {
 
-            Logger.info("--------START cancel " + kpi.getUid() + "--------");
+            log.info("--------START cancel " + kpi.getUid() + "--------");
 
             kpi.cancel();
 
-            Logger.info("--------END cancel " + kpi.getUid() + "--------");
+            log.info("--------END cancel " + kpi.getUid() + "--------");
         }
 
-        Logger.info("********END cancel KPI********");
+        log.info("********END cancel KPI********");
+    }
+
+    @Override
+    public void reload() {
+        init();
+        cancel();
     }
 
     @Override
@@ -110,18 +153,18 @@ public class KpiServiceImpl implements IKpiService {
      */
     private void initKpiDefinition(KpiDefinition kpiDefinition) {
 
-        Logger.info("--------START init " + kpiDefinition.uid + "--------");
+        log.info("--------START init " + kpiDefinition.uid + "--------");
 
-        Kpi kpi = new Kpi(kpiDefinition);
+        Kpi kpi = new Kpi(kpiDefinition, this);
 
         if (kpi.init()) {
-            Logger.info("The KPI " + kpiDefinition.uid + " has been correclty loaded");
+            log.info("The KPI " + kpiDefinition.uid + " has been correclty loaded");
             kpis.put(kpiDefinition.uid, kpi);
         } else {
-            Logger.error("Impossible to load the KPI " + kpiDefinition.uid + ", the errors are reported above.");
+            log.error("Impossible to load the KPI " + kpiDefinition.uid + ", the errors are reported above.");
         }
 
-        Logger.info("--------END init " + kpiDefinition.uid + "--------");
+        log.info("--------END init " + kpiDefinition.uid + "--------");
 
     }
 
@@ -153,8 +196,8 @@ public class KpiServiceImpl implements IKpiService {
         if (datas != null && datas.size() > 0) {
 
             seriesContainer = new SeriesContainer<TimeValueItem>();
-            framework.highcharts.data.Serie<TimeValueItem> timeSerie =
-                    new framework.highcharts.data.Serie<TimeValueItem>(Msg.get(kpi.getValueName(DataType.MAIN)));
+            framework.highcharts.data.Serie<TimeValueItem> timeSerie = new framework.highcharts.data.Serie<TimeValueItem>(Msg.get(kpi
+                    .getValueName(DataType.MAIN)));
             seriesContainer.addSerie(timeSerie);
 
             // if a day contains many values, we get the last
@@ -218,5 +261,15 @@ public class KpiServiceImpl implements IKpiService {
         }
 
         return kpis;
+    }
+
+    @Override
+    public Environment getEnvironment() {
+        return environment;
+    }
+
+    @Override
+    public ISysAdminUtils getSysAdminUtils() {
+        return sysAdminUtils;
     }
 }

@@ -9,7 +9,6 @@ package framework.services.router;
  * @author Pierre-Yves Cloux
  */
 public interface ICustomRouterService {
-    public static final String NAME = "customRouterService";
 
     /**
      * Add a request listener for the specified request path prefix.<br/>

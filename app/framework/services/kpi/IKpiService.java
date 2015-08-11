@@ -20,8 +20,10 @@ package framework.services.kpi;
 import java.util.Hashtable;
 import java.util.List;
 
+import play.Environment;
 import play.mvc.Http.Context;
 import play.mvc.Result;
+import framework.services.system.ISysAdminUtils;
 
 /**
  * The interface for the KPI service.
@@ -30,25 +32,15 @@ import play.mvc.Result;
  * 
  */
 public interface IKpiService {
-
-    public static final String NAME = "kpiService";
+    /**
+     * Reload the KPIs
+     */
+    public void reload();
 
     /**
      * Get the KPIs.
      */
     public Hashtable<String, Kpi> getKpis();
-
-    /**
-     * Initialize the KPIs. This method should be called on starting the
-     * application.
-     */
-    public void init();
-
-    /**
-     * Cancel the KPIs. This method should be called on stopping the
-     * application.
-     */
-    public void cancel();
 
     /**
      * Reload a KPI definition.
@@ -112,4 +104,18 @@ public interface IKpiService {
      *            the object type
      */
     public List<Kpi> getActiveAndToDisplayKpisOfObjectType(Class<?> objectType);
+
+    /**
+     * Return the environment associated with the service
+     * 
+     * @return
+     */
+    public Environment getEnvironment();
+
+    /**
+     * Return the sysadmin utils service
+     * 
+     * @return
+     */
+    public ISysAdminUtils getSysAdminUtils();
 }

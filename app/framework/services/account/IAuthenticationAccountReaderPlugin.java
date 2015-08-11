@@ -33,7 +33,6 @@ import java.util.List;
  * 
  */
 public interface IAuthenticationAccountReaderPlugin {
-    public static final String NAME = "authenticationAccountReaderPlugin";
 
     /**
      * Return the {@link IUserAuthenticationAccount} object associated with the
