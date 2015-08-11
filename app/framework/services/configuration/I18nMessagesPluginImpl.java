@@ -18,20 +18,26 @@
 package framework.services.configuration;
 
 import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Hashtable;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import org.apache.commons.lang3.StringUtils;
 
+import play.Configuration;
+import play.Environment;
 import play.Logger;
-import play.Play;
 import play.i18n.Lang;
 import play.i18n.Messages;
 import play.inject.ApplicationLifecycle;
 import play.libs.F.Promise;
+import play.mvc.Http;
 import play.twirl.api.Html;
 
 import com.avaje.ebean.Ebean;
@@ -40,8 +46,7 @@ import com.avaje.ebean.SqlRow;
 import com.avaje.ebean.SqlUpdate;
 
 import framework.services.database.IDatabaseDependencyService;
-import framework.utils.Language;
-import framework.utils.LanguageUtil;
+import framework.utils.DefaultSelectableValueHolderCollection;
 
 /**
  * The default implementation for the {@link II18nMessagesPlugin} interface.<br/>
@@ -58,18 +63,43 @@ import framework.utils.LanguageUtil;
 public class I18nMessagesPluginImpl implements II18nMessagesPlugin {
     private static Logger.ALogger log = Logger.of(I18nMessagesPluginImpl.class);
     private Hashtable<String, Hashtable<Object, Object>> i18nMessagesStore;
+    private List<Language> validLanguageList;
+    private Map<String, Language> validLanguageMap;
+    private Configuration configuration;
+    private Environment environment;
+
+    public enum Config {
+        LANGUAGE_LIST("play.i18n.langs");
+
+        private String configurationKey;
+
+        private Config(String configurationKey) {
+            this.configurationKey = configurationKey;
+        }
+
+        public String getConfigurationKey() {
+            return configurationKey;
+        }
+    }
 
     /**
      * Creates a new I18nMessagesPluginImpl
      * 
      * @param lifecycle
      *            the play application lifecycle listener
+     * @param configuration
+     *            the play application configuration
+     * @param environment
+     *            the play environment
      * @param databaseDependencyService
      *            the service which secure the availability of the database
      */
     @Inject
-    public I18nMessagesPluginImpl(ApplicationLifecycle lifecycle, IDatabaseDependencyService databaseDependencyService) {
+    public I18nMessagesPluginImpl(ApplicationLifecycle lifecycle, Configuration configuration, Environment environment,
+            IDatabaseDependencyService databaseDependencyService) {
         log.info("SERVICE>>> I18nMessagesPluginImpl starting...");
+        this.configuration = configuration;
+        initOnce();
         reload(true);
         lifecycle.addStopHook(() -> {
             log.info("SERVICE>>> I18nMessagesPluginImpl stopping...");
@@ -77,6 +107,29 @@ public class I18nMessagesPluginImpl implements II18nMessagesPlugin {
             return Promise.pure(null);
         });
         log.info("SERVICE>>> I18nMessagesPluginImpl started");
+    }
+
+    /**
+     * The very first initialization of the service
+     */
+    private void initOnce() {
+        this.validLanguageList = Collections.synchronizedList(new ArrayList<Language>());
+        this.validLanguageMap = Collections.unmodifiableMap(Collections.synchronizedMap(new LinkedHashMap<String, Language>() {
+            private static final long serialVersionUID = 1L;
+            {
+                Integer c = 1;
+                List<String> languageCodes = getConfiguration().getStringList(Config.LANGUAGE_LIST.getConfigurationKey());
+                for (String l : languageCodes) {
+                    String code = l.trim().toLowerCase();
+                    Language language = new Language(code, c);
+                    validLanguageList.add(language);
+                    this.put(code, language);
+                    c++;
+                }
+            }
+        }));
+        this.validLanguageList = Collections.unmodifiableList(this.validLanguageList);
+        log.info("Supported languages are " + getValidLanguageMap());
     }
 
     @Override
@@ -145,13 +198,12 @@ public class I18nMessagesPluginImpl implements II18nMessagesPlugin {
 
     @Override
     public String get(String key, Object... args) {
-        Language language = LanguageUtil.getCurrent();
-        return get(language.getLang(), key, args);
+        return get(getCurrentLanguage().getLang(), key, args);
     }
 
     @Override
     public void add(String key, String value, String languageCode) {
-        if (!LanguageUtil.isValid(languageCode)) {
+        if (!isLanguageValid(languageCode)) {
             log.error("Invalid language code " + languageCode + " the key [" + key + "] will not be added");
             return;
         }
@@ -197,7 +249,7 @@ public class I18nMessagesPluginImpl implements II18nMessagesPlugin {
 
     @Override
     public void delete(String key, String languageCode) {
-        if (!LanguageUtil.isValid(languageCode)) {
+        if (!isLanguageValid(languageCode)) {
             throw new IllegalArgumentException("Invalid language code " + languageCode);
         }
         try {
@@ -225,7 +277,7 @@ public class I18nMessagesPluginImpl implements II18nMessagesPlugin {
     @Override
     public boolean isDefinedForAtLeastOneLanguage(String key) {
         boolean result = false;
-        for (Language language : LanguageUtil.VALID_LANGUAGES_LIST) {
+        for (Language language : getValidLanguageMap().values()) {
             result = result || isDefined(key, language);
         }
         return result;
@@ -233,9 +285,62 @@ public class I18nMessagesPluginImpl implements II18nMessagesPlugin {
 
     @Override
     public boolean isDefined(String key) {
-        return isDefined(key, LanguageUtil.getCurrent());
+        return isDefined(key, getCurrentLanguage());
     }
 
+    @Override
+    public String getDefaultLanguageCode() {
+        // The first defined language is the default one
+        return getValidLanguageList().get(0).getCode();
+    }
+
+    @Override
+    public List<Language> getValidLanguageList() {
+        return validLanguageList;
+    }
+
+    @Override
+    public Map<String, Language> getValidLanguageMap() {
+        return validLanguageMap;
+    }
+
+    @Override
+    public DefaultSelectableValueHolderCollection<String> getValidLanguagesAsValueHolderCollection() {
+        return new DefaultSelectableValueHolderCollection<String>(getValidLanguageMap().values());
+    }
+
+    @Override
+    public Language getCurrentLanguage() {
+        try {
+            return getValidLanguageMap().get(Http.Context.current().lang().code());
+        } catch (Exception e) {
+            if (log.isDebugEnabled()) {
+                log.debug("[I18n] Attempt to get the language out of the scope of a session, default language is used instead", e);
+            }
+            return getValidLanguageMap().get(getDefaultLanguageCode());
+        }
+    }
+
+    @Override
+    public Language getLanguageByCode(String code) {
+        return new Language(code);
+    }
+
+    @Override
+    public boolean isLanguageValid(String code) {
+        return getValidLanguageMap().containsKey(code);
+    }
+
+    /**
+     * Check if the specified message is defined in one of the messages
+     * repository
+     * 
+     * @param key
+     *            the i1n message key
+     * @param language
+     *            a language
+     * @return
+     */
     private boolean isDefined(String key, Language language) {
         if (Messages.isDefined(language.getLang(), key)) {
             return true;
@@ -265,9 +370,9 @@ public class I18nMessagesPluginImpl implements II18nMessagesPlugin {
      *            the language to be used for this content
      * @return a String or the i18n key itself
      */
-    private static String getI18nContent(String key, String language) {
+    private String getI18nContent(String key, String language) {
         try {
-            Class<?> viewClass = Play.application().classloader().loadClass(String.format("views.html.content.%s.%s", language, key));
+            Class<?> viewClass = getEnvironment().classLoader().loadClass(String.format("views.html.content.%s.%s", language, key));
             return ((Html) viewClass.getMethod("render").invoke(viewClass, new Object[] {})).body();
         } catch (Exception e) {
             log.error("Error while calling the i18n content template " + key, e);
@@ -277,5 +382,13 @@ public class I18nMessagesPluginImpl implements II18nMessagesPlugin {
 
     private Hashtable<String, Hashtable<Object, Object>> getI18nMessagesStore() {
         return i18nMessagesStore;
+    }
+
+    private Configuration getConfiguration() {
+        return configuration;
+    }
+
+    private Environment getEnvironment() {
+        return environment;
     }
 }

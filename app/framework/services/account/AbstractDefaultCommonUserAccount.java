@@ -40,10 +40,10 @@ public abstract class AbstractDefaultCommonUserAccount implements ICommonUserAcc
     protected boolean markedForDeletion;
     protected boolean isActive;
     protected Boolean isDisplayed;
-    protected List<Role> roles = new ArrayList<Role>();
-    protected List<Role> selectableRoles = new ArrayList<Role>();
-    protected List<String> systemLevelRoleTypes = new ArrayList<String>();
-    protected List<Permission> permissions = new ArrayList<Permission>();
+    protected List<Role> roles = Collections.synchronizedList(new ArrayList<Role>());
+    protected List<Role> selectableRoles = Collections.synchronizedList(new ArrayList<Role>());
+    protected List<String> systemLevelRoleTypes = Collections.synchronizedList(new ArrayList<String>());
+    protected List<Permission> permissions = Collections.synchronizedList(new ArrayList<Permission>());
 
     public AbstractDefaultCommonUserAccount() {
         addGroup(new DefaultRole(IFrameworkConstants.DEFAULT_PERMISSION_PRIVATE));

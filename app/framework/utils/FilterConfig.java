@@ -2003,8 +2003,8 @@ public class FilterConfig<T> {
         @Override
         public <T> void addEBeanSortExpression(OrderBy<T> orderby, SortStatusType sortStatusType, String fieldName) {
             if (sortStatusType != SortStatusType.NONE && sortStatusType != SortStatusType.UNSORTED) {
-                String sql = String.format(SORT_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id, LanguageUtil
-                        .getCurrent().getCode());
+                String sql = String.format(SORT_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id,
+                        ServiceStaticAccessor.getMessagesPlugin().getCurrentLanguage().getCode());
                 if (sortStatusType == SortStatusType.DESC) {
                     orderby.desc(sql);
                 } else {

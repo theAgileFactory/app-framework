@@ -48,10 +48,10 @@ import com.avaje.ebean.Model;
 import com.avaje.ebean.SqlQuery;
 import com.avaje.ebean.SqlRow;
 
+import framework.services.ServiceStaticAccessor;
 import framework.utils.DefaultSelectableValueHolder;
 import framework.utils.DefaultSelectableValueHolderCollection;
 import framework.utils.ISelectableValueHolderCollection;
-import framework.utils.LanguageUtil;
 import framework.utils.Msg;
 import framework.utils.PropertiesLoader;
 import framework.utils.Utilities;
@@ -478,7 +478,7 @@ public class CustomAttributeDefinition extends Model implements IModel {
         SqlQuery sqlQuery = Ebean.createSqlQuery(sql);
         sqlQuery.setParameter("searchstring", searchstring + "%");
         sqlQuery.setParameter("uid", uid);
-        sqlQuery.setParameter("lang", LanguageUtil.getCurrent().getCode());
+        sqlQuery.setParameter("lang", ServiceStaticAccessor.getMessagesPlugin().getCurrentLanguage().getCode());
         if (log.isDebugEnabled()) {
             log.debug("uid passed as a parameter : " + uid);
         }
@@ -543,7 +543,7 @@ public class CustomAttributeDefinition extends Model implements IModel {
                 log.debug("SQL Query : " + sql);
             }
             SqlQuery sqlQuery = Ebean.createSqlQuery(sql);
-            sqlQuery.setParameter("lang", LanguageUtil.getCurrent().getCode());
+            sqlQuery.setParameter("lang", ServiceStaticAccessor.getMessagesPlugin().getCurrentLanguage().getCode());
             sqlQuery.setParameter("valuetofind", valueOfValueHolder);
             SqlRow row = sqlQuery.findUnique();
             return row != null ? row.getString("name") : null;

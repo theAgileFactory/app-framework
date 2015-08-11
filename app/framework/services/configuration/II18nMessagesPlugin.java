@@ -17,8 +17,12 @@
  */
 package framework.services.configuration;
 
+import java.util.List;
+import java.util.Map;
+
 import play.i18n.Lang;
 import play.i18n.Messages;
+import framework.utils.DefaultSelectableValueHolderCollection;
 
 /**
  * Interface to be implemented by the service which manages the I18Messages.<br/>
@@ -117,4 +121,54 @@ public interface II18nMessagesPlugin {
      */
     public void delete(String key, String languageCode);
 
+    /**
+     * Return the default language code that is to say the primary language code
+     * of the system
+     * 
+     * @return
+     */
+    public String getDefaultLanguageCode();
+
+    /**
+     * Return a list of valid languages in the order which has been defined by
+     * the configuration (default language is the first one)
+     * 
+     * @return
+     */
+    public List<Language> getValidLanguageList();
+
+    /**
+     * Return the list of valid languages supported by the system
+     * 
+     * @return
+     */
+    public Map<String, Language> getValidLanguageMap();
+
+    /**
+     * get the list of valid languages as value holder collection
+     */
+    public DefaultSelectableValueHolderCollection<String> getValidLanguagesAsValueHolderCollection();
+
+    /**
+     * Get the current language according to the current context.<br/>
+     * If the context is not available (example: no context, server side or
+     * asynchronous process then the default language is used).
+     */
+    public Language getCurrentLanguage();
+
+    /**
+     * get a language by code.
+     * 
+     * @param code
+     *            the language code
+     */
+    public Language getLanguageByCode(String code);
+
+    /**
+     * get a language by code.
+     * 
+     * @param code
+     *            the language code
+     */
+    public boolean isLanguageValid(String code);
 }

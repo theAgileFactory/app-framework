@@ -29,10 +29,10 @@
     <label class="control-label" for="@field.id">
         @(fieldLabel) @if(isRequired(field)){&nbsp;<i style="color: red;" class="glyphicons glyphicons-asterisk"></i> <small><span style="color: red;">@parts.Msg("form.input.multi_languages_string.required")</span></small>}</label>
 
-        @helper.repeat(field("values"), min = framework.utils.LanguageUtil.VALID_LANGUAGES_LIST.size) { vField =>
+        @helper.repeat(field("values"), min = framework.services.ServiceStaticAccessor.getMessagesPlugin().getValidLanguageList().size) { vField =>
 
             <div class="input-group">
-                <div class="input-group-addon">@framework.utils.LanguageUtil.VALID_LANGUAGES_LIST.get(count).getCode.toUpperCase</div>
+                <div class="input-group-addon">@framework.services.ServiceStaticAccessor.getMessagesPlugin().getValidLanguageList().get(count).getCode.toUpperCase</div>
                 <input class="form-control" type="text" id="@vField.id" name="@vField.name" value="@vField.value"/>
             </div>
             

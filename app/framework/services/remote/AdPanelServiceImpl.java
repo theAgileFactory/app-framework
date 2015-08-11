@@ -45,10 +45,10 @@ import akka.actor.Cancellable;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import framework.commons.IFrameworkConstants;
+import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.configuration.IImplementationDefinedObjectService;
 import framework.services.database.IDatabaseDependencyService;
 import framework.services.system.ISysAdminUtils;
-import framework.utils.LanguageUtil;
 
 /**
  * Default implementation of the {@link IAdPanelManagerService}.<br/>
@@ -134,6 +134,7 @@ public class AdPanelServiceImpl implements IAdPanelManagerService {
 
     private ISysAdminUtils sysAdminUtils;
     private IImplementationDefinedObjectService implementationDefinedObjectService;
+    private II18nMessagesPlugin i18nMessagesPlugin;
 
     public enum Config {
         PANEL_IS_ACTIVE("maf.ad_panel.is_active"), PANEL_URL("maf.ad_panel.url"), PANEL_CACHE_TTL("maf.ad_panel.cache_ttl");
@@ -163,9 +164,11 @@ public class AdPanelServiceImpl implements IAdPanelManagerService {
      */
     @Inject
     public AdPanelServiceImpl(ApplicationLifecycle lifecycle, Configuration configuration, ISysAdminUtils sysAdminUtils,
-            IImplementationDefinedObjectService implementationDefinedObjectService, IDatabaseDependencyService databaseDependencyService) {
+            IImplementationDefinedObjectService implementationDefinedObjectService, II18nMessagesPlugin i18nMessagesPlugin,
+            IDatabaseDependencyService databaseDependencyService) {
         log.info("SERVICE>>> AdPanelServiceImpl starting...");
         this.sysAdminUtils = sysAdminUtils;
+        this.i18nMessagesPlugin = i18nMessagesPlugin;
         this.implementationDefinedObjectService = implementationDefinedObjectService;
         this.isActive = configuration.getBoolean(Config.PANEL_IS_ACTIVE.getConfigurationKey());
         this.cacheDuration = configuration.getInt(Config.PANEL_CACHE_TTL.getConfigurationKey());
@@ -303,7 +306,7 @@ public class AdPanelServiceImpl implements IAdPanelManagerService {
 
     @Override
     public Promise<Result> getRemotePanel(final String page) {
-        String lang = LanguageUtil.getCurrent().getCode();
+        String lang = getI18nMessagesPlugin().getCurrentLanguage().getCode();
         String url = getRootUrl() + AD_HTML_FILE_PATTERN.replace("{name}", page).replace("{language}", lang);
         try {
             final Promise<Result> resultPromise = WS.url(url).get().map(new Function<WSResponse, Result>() {
@@ -349,8 +352,8 @@ public class AdPanelServiceImpl implements IAdPanelManagerService {
      * 
      * @return
      */
-    private static String pageNameToCacheKey(String page) {
-        String lang = LanguageUtil.getCurrent().getCode();
+    private String pageNameToCacheKey(String page) {
+        String lang = getI18nMessagesPlugin().getCurrentLanguage().getCode();
         return IFrameworkConstants.AD_CACHE_PREFIX + lang + "." + page;
     }
 
@@ -376,5 +379,9 @@ public class AdPanelServiceImpl implements IAdPanelManagerService {
 
     private IImplementationDefinedObjectService getImplementationDefinedObjectService() {
         return implementationDefinedObjectService;
+    }
+
+    private II18nMessagesPlugin getI18nMessagesPlugin() {
+        return i18nMessagesPlugin;
     }
 }

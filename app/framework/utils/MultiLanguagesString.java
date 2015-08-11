@@ -21,8 +21,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import framework.services.ServiceStaticAccessor;
 import framework.services.configuration.II18nMessagesPlugin;
+import framework.services.configuration.Language;
 
 /**
  * A String in all BizDock languages.
@@ -107,16 +107,17 @@ public class MultiLanguagesString {
     /**
      * Persist the values in the DB (this method is called after a save/update
      * of an entry => one call for each field with MultiLanguagesString type).
+     * 
+     * @param
      */
-    public void persist() {
-        II18nMessagesPlugin messagesPlugin = ServiceStaticAccessor.getMessagesPlugin();
-        for (int i = 0; i < LanguageUtil.VALID_LANGUAGES_LIST.size(); i++) {
-            Language language = LanguageUtil.VALID_LANGUAGES_LIST.get(i);
+    public void persist(II18nMessagesPlugin i18nMessagesPlugin) {
+        for (int i = 0; i < i18nMessagesPlugin.getValidLanguageList().size(); i++) {
+            Language language = i18nMessagesPlugin.getValidLanguageList().get(i);
             String value = this.values.get(i);
             if (value != null && !value.equals("")) {
-                messagesPlugin.add(this.key, value, language.getCode());
+                i18nMessagesPlugin.add(this.key, value, language.getCode());
             } else {
-                messagesPlugin.delete(this.key, language.getCode());
+                i18nMessagesPlugin.delete(this.key, language.getCode());
             }
         }
     }
@@ -127,8 +128,10 @@ public class MultiLanguagesString {
      * 
      * @param key
      *            the key
+     * @param i18nMessagesPlugin
+     *            the i18 messages manager
      */
-    public static MultiLanguagesString getByKey(String key) {
+    public static MultiLanguagesString getByKey(String key, II18nMessagesPlugin i18nMessagesPlugin) {
 
         /**
          * if the key is not null (and not empty) but not defined => we consider
@@ -143,8 +146,8 @@ public class MultiLanguagesString {
             MultiLanguagesString s = new MultiLanguagesString();
             s.setKey(key);
 
-            for (Language language : LanguageUtil.VALID_LANGUAGES_LIST) {
-                if (language.getCode().equals(LanguageUtil.VALID_LANGUAGES_LIST.get(0).getCode())) {
+            for (Language language : i18nMessagesPlugin.getValidLanguageList()) {
+                if (language.getCode().equals(i18nMessagesPlugin.getDefaultLanguageCode())) {
                     s.addValue(value);
                 } else {
                     s.addValue(null);
@@ -162,7 +165,7 @@ public class MultiLanguagesString {
             MultiLanguagesString s = new MultiLanguagesString();
             s.setKey(key);
 
-            for (Language language : LanguageUtil.VALID_LANGUAGES_LIST) {
+            for (Language language : i18nMessagesPlugin.getValidLanguageList()) {
                 String value = Msg.get(language.getLang(), key);
                 if (!key.equals(value)) {
                     s.addValue(value);

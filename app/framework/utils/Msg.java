@@ -23,6 +23,7 @@ import javax.inject.Singleton;
 import play.i18n.Lang;
 import play.i18n.Messages;
 import framework.services.configuration.II18nMessagesPlugin;
+import framework.services.configuration.Language;
 
 /**
  * The class to be used in replacement of the play {@link Messages} class
@@ -55,10 +56,10 @@ public class Msg {
         if (!key.equals(value)) {
             return value;
         } else {
-            for (Language language : LanguageUtil.VALID_LANGUAGES_LIST) {
+            for (Language language : getMessagesPlugin().getValidLanguageMap().values()) {
                 value = getMessagesPlugin().get(language.getLang(), key, args);
                 if (!key.equals(value)) {
-                    return LanguageUtil.getCurrent().getCode().toUpperCase() + " - " + value;
+                    return getMessagesPlugin().getCurrentLanguage().getCode().toUpperCase() + " - " + value;
                 }
             }
             return key;

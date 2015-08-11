@@ -49,6 +49,7 @@ import org.xeustechnologies.jcl.JarClassLoader;
 import org.xeustechnologies.jcl.JclObjectFactory;
 
 import play.Configuration;
+import play.Environment;
 import play.Logger;
 import play.inject.ApplicationLifecycle;
 import play.libs.F.Function0;
@@ -74,7 +75,6 @@ import framework.services.plugins.api.IPluginRunner;
 import framework.services.plugins.api.PluginException;
 import framework.services.router.ICustomRouterService;
 import framework.services.system.ISysAdminUtils;
-import framework.utils.LanguageUtil;
 import framework.utils.Menu.ClickableMenuItem;
 import framework.utils.Menu.HeaderMenuItem;
 import framework.utils.Menu.MenuItem;
@@ -122,6 +122,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
     private Cancellable autoRefreshScheduler;
     private IPluginManagerService pluginManagerService;
     private II18nMessagesPlugin iI18nMessagesPlugin;
+    private Environment environment;
     private ISysAdminUtils sysAdminUtils;
     private IImplementationDefinedObjectService implementationDefinedObjectService;
     private List<IExtension> extensions = Collections.synchronizedList(new ArrayList<IExtension>());
@@ -147,6 +148,8 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
      * 
      * @param lifecycle
      *            the play application lifecycle listener
+     * @param environment
+     *            the play environment
      * @param configuration
      *            the play application configuration
      * @param pluginManagerService
@@ -162,10 +165,10 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
      * @throws ExtensionManagerException
      */
     @Inject
-    public ExtensionManagerServiceImpl(ApplicationLifecycle lifecycle, Configuration configuration, IPluginManagerService pluginManagerService,
-            II18nMessagesPlugin iI18nMessagesPlugin, ICustomRouterService customRouterService, ISysAdminUtils sysAdminUtils,
-            IImplementationDefinedObjectService implementationDefinedObjectService, IDatabaseDependencyService databaseDependencyService)
-            throws ExtensionManagerException {
+    public ExtensionManagerServiceImpl(ApplicationLifecycle lifecycle, Environment environment, Configuration configuration,
+            IPluginManagerService pluginManagerService, II18nMessagesPlugin iI18nMessagesPlugin, ICustomRouterService customRouterService,
+            ISysAdminUtils sysAdminUtils, IImplementationDefinedObjectService implementationDefinedObjectService,
+            IDatabaseDependencyService databaseDependencyService) throws ExtensionManagerException {
         log.info("SERVICE>>> ExtensionManagerServiceImpl starting...");
         this.autoRefreshMode = configuration.getBoolean(Config.AUTO_REFRESH_ACTIVE.getConfigurationKey());
         this.autoRefreshFrequency = configuration.getInt(Config.AUTO_REFRESH_FREQUENCY.getConfigurationKey());
@@ -174,6 +177,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         if (!this.extensionDirectory.exists() || !this.extensionDirectory.isDirectory()) {
             throw new IllegalArgumentException("Invalid extension directory " + extensionDirectoryPath);
         }
+        this.environment = environment;
         this.pluginManagerService = pluginManagerService;
         this.iI18nMessagesPlugin = iI18nMessagesPlugin;
         this.sysAdminUtils = sysAdminUtils;
@@ -319,7 +323,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             // Unloading the i18 resources
             if (extensionObject.getDescriptorInternal().getI18nMessages() != null) {
                 for (I18nMessage i18nMessage : extensionObject.getDescriptorInternal().getI18nMessages()) {
-                    if (LanguageUtil.isValid(i18nMessage.getLanguage())) {
+                    if (getiI18nMessagesPlugin().isLanguageValid(i18nMessage.getLanguage())) {
                         Properties properties = new Properties();
                         try {
                             properties.load(new StringReader(i18nMessage.getMessages()));
@@ -426,7 +430,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         }
         Extension extension = null;
         try {
-            extension = new Extension(jarFile);
+            extension = new Extension(jarFile, getEnvironment());
         } catch (ExtensionManagerException e) {
             log.error("Unable to load the extension " + jarFile, e);
             return false;
@@ -466,7 +470,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         // Load the i18n keys into
         if (extension.getDescriptorInternal().getI18nMessages() != null) {
             for (I18nMessage i18nMessage : extension.getDescriptorInternal().getI18nMessages()) {
-                if (LanguageUtil.isValid(i18nMessage.getLanguage())) {
+                if (getiI18nMessagesPlugin().isLanguageValid(i18nMessage.getLanguage())) {
                     Properties properties = new Properties();
                     try {
                         properties.load(new StringReader(i18nMessage.getMessages()));
@@ -588,6 +592,18 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         return iI18nMessagesPlugin;
     }
 
+    private ISysAdminUtils getSysAdminUtils() {
+        return sysAdminUtils;
+    }
+
+    private IImplementationDefinedObjectService getImplementationDefinedObjectService() {
+        return implementationDefinedObjectService;
+    }
+
+    private Environment getEnvironment() {
+        return environment;
+    }
+
     /**
      * The class which encapsulate an extension
      * 
@@ -604,11 +620,14 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
          * Creates an extension using the specified JAR file
          * 
          * @param jarFile
+         *            the jar file which contains the extension
+         * @param environment
+         *            the play environment required to get the play class loader
          */
-        public Extension(File jarFile) throws ExtensionManagerException {
+        public Extension(File jarFile, Environment environment) throws ExtensionManagerException {
             super();
-            loadingTime = new Date();
-            parseJarFile(jarFile);
+            this.loadingTime = new Date();
+            parseJarFile(jarFile, environment);
             this.jarFile = jarFile;
         }
 
@@ -647,14 +666,16 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
          * 
          * @param jarFile
          *            an extension JAR file
+         * @param environment
+         *            the play environment used to get the play classloader
          * @throws ExtensionManagerException
          */
-        private void parseJarFile(File jarFile) throws ExtensionManagerException {
+        private void parseJarFile(File jarFile, Environment environment) throws ExtensionManagerException {
             try {
                 // Reading the descriptor
                 log.info("Loading extension " + jarFile);
                 this.jarClassLoader = new JarClassLoader();
-                PlayProxyClassLoader proxyClassLoader = new PlayProxyClassLoader();
+                PlayProxyClassLoader proxyClassLoader = new PlayProxyClassLoader(environment.classLoader());
                 proxyClassLoader.setOrder(6);// After the other default class
                                              // loaders
                 this.jarClassLoader.addLoader(proxyClassLoader);
@@ -991,13 +1012,5 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                 return "ParameterMeta [parameterName=" + parameterName + ", realIndex=" + realIndex + ", parameterType=" + parameterType + "]";
             }
         }
-    }
-
-    private ISysAdminUtils getSysAdminUtils() {
-        return sysAdminUtils;
-    }
-
-    private IImplementationDefinedObjectService getImplementationDefinedObjectService() {
-        return implementationDefinedObjectService;
     }
 }

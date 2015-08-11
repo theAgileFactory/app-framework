@@ -358,7 +358,8 @@ public abstract class Utilities {
      */
     public static Html renderViewI18n(String viewPrefix, Object... parameters) {
         try {
-            Class<?> viewClass = Play.application().classloader().loadClass(String.format("%s_%s", viewPrefix, LanguageUtil.getCurrent().getCode()));
+            Class<?> viewClass = Play.application().classloader()
+                    .loadClass(String.format("%s_%s", viewPrefix, ServiceStaticAccessor.getMessagesPlugin().getCurrentLanguage().getCode()));
             @SuppressWarnings("rawtypes")
             Class[] signature = new Class[parameters.length];
             for (int i = 0; i < parameters.length; i++) {

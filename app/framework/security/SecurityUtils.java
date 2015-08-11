@@ -30,6 +30,7 @@ import models.framework_models.account.SystemPermission;
 
 import org.apache.commons.lang.ArrayUtils;
 
+import play.Configuration;
 import play.Logger;
 import play.libs.F.Function0;
 import play.libs.F.Promise;
@@ -48,6 +49,7 @@ import be.objectify.deadbolt.java.actions.SubjectPresentAction;
 import be.objectify.deadbolt.java.actions.Unrestricted;
 import be.objectify.deadbolt.java.cache.HandlerCache;
 import be.objectify.deadbolt.java.cache.SubjectCache;
+import framework.commons.IFrameworkConstants;
 import framework.services.account.IAccountManagerPlugin;
 import framework.services.account.IUserAccount;
 import framework.services.session.IUserSessionManagerPlugin;
@@ -81,6 +83,28 @@ public class SecurityUtils {
     private static IAccountManagerPlugin accountManagerPlugin;
     @Inject
     private static IUserSessionManagerPlugin userSessionManagerPlugin;
+
+    /**
+     * Read the database to find the system preference which contains the
+     * authentication mode.<br/>
+     * If not found, use the default one configured in the system application
+     * file.
+     * 
+     * @param configuration
+     *            the play configuration
+     * @return
+     */
+    public static IFrameworkConstants.AuthenticationMode getAuthenticationMode(Configuration configuration) {
+        String authModeAsString = configuration.getString("maf.authentication.mode");
+        try {
+            // Creating an SQL connection "manually"
+            // This is mandatory since the database access system might not be
+            // yet activated
+        } catch (Exception e) {
+            log.error("Unable to read an authentication mode from the database, using the default one " + authModeAsString, e);
+        }
+        return IFrameworkConstants.AuthenticationMode.valueOf(authModeAsString);
+    }
 
     /**
      * Check if there is a subject in the current session.<br/>

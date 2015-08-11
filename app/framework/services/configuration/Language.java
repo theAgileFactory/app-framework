@@ -15,12 +15,13 @@
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package framework.utils;
+package framework.services.configuration;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import play.i18n.Lang;
+import framework.utils.ISelectableValueHolder;
 
 /**
  * A system language
@@ -73,13 +74,6 @@ public class Language implements ISelectableValueHolder<String> {
 
     public void setOrder(Integer order) {
         this.order = order;
-    }
-
-    /**
-     * a language is valid if it's defines in the application.conf file
-     */
-    public boolean isValid() {
-        return LanguageUtil.isValid(getCode());
     }
 
     /**
@@ -141,4 +135,8 @@ public class Language implements ISelectableValueHolder<String> {
         return false;
     }
 
+    @Override
+    public String toString() {
+        return "Language [code=" + code + ", order=" + order + "]";
+    }
 }

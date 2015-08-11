@@ -23,8 +23,6 @@ import java.net.URL;
 import org.xeustechnologies.jcl.JarClassLoader;
 import org.xeustechnologies.jcl.ProxyClassLoader;
 
-import play.Play;
-
 /**
  * A proxy class loader which encapsulates the Play class loader to be used by
  * the {@link JarClassLoader}.<br/>
@@ -33,18 +31,21 @@ import play.Play;
  * @author Pierre-Yves Cloux
  */
 class PlayProxyClassLoader extends ProxyClassLoader {
-    public PlayProxyClassLoader() {
+    private ClassLoader environmentClassLoader;
+
+    public PlayProxyClassLoader(ClassLoader environmentClassLoader) {
+        this.environmentClassLoader = environmentClassLoader;
     }
 
     @Override
     public URL findResource(String name) {
-        return Play.application().classloader().getResource(name);
+        return getEnvironmentClassLoader().getResource(name);
     }
 
     @Override
     public Class<?> loadClass(String name, boolean resolveIt) {
         try {
-            return Play.application().classloader().loadClass(name);
+            return getEnvironmentClassLoader().loadClass(name);
         } catch (ClassNotFoundException e) {
             return null;
         }
@@ -52,6 +53,10 @@ class PlayProxyClassLoader extends ProxyClassLoader {
 
     @Override
     public InputStream loadResource(String name) {
-        return Play.application().classloader().getResourceAsStream(name);
+        return getEnvironmentClassLoader().getResourceAsStream(name);
+    }
+
+    private ClassLoader getEnvironmentClassLoader() {
+        return environmentClassLoader;
     }
 }

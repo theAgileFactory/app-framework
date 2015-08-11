@@ -18,7 +18,7 @@
 package framework.services.job;
 
 import framework.commons.IFrameworkConstants;
-import framework.utils.LanguageUtil;
+import framework.services.configuration.II18nMessagesPlugin;
 import framework.utils.Table;
 import framework.utils.formats.ObjectFormatter;
 import framework.utils.formats.StringFormatFormatter;
@@ -117,8 +117,7 @@ public interface IJobDescriptor {
 
                     addColumn("triggerActionLink", "id", "", Table.ColumnDef.SorterType.NONE);
                     setJavaColumnFormatter("triggerActionLink", new StringFormatFormatter<JobDescriptorRow>(
-                            "<a href=\"%s\"><span class=\"glyphicons glyphicons-play-button\"></span></a>",
-                            new StringFormatFormatter.Hook<JobDescriptorRow>() {
+                            "<a href=\"%s\"><span class=\"glyphicons glyphicons-play-button\"></span></a>", new StringFormatFormatter.Hook<JobDescriptorRow>() {
                                 @Override
                                 public String convert(JobDescriptorRow jobDescriptorRow) {
                                     return jobDescriptorRow.triggerUrl;
@@ -143,11 +142,13 @@ public interface IJobDescriptor {
          * 
          * @param jobDescriptor
          *            the job descriptor
+         * @param i18nMessagePlugin
+         *            the i18 messages manager
          */
-        public JobDescriptorRow(IJobDescriptor jobDescriptor) {
+        public JobDescriptorRow(IJobDescriptor jobDescriptor, II18nMessagesPlugin i18nMessagePlugin) {
             this.id = jobDescriptor.getId();
-            this.name = jobDescriptor.getName(LanguageUtil.getCurrent().getCode());
-            this.description = jobDescriptor.getDescription(LanguageUtil.getCurrent().getCode());
+            this.name = jobDescriptor.getName(i18nMessagePlugin.getCurrentLanguage().getCode());
+            this.description = jobDescriptor.getDescription(i18nMessagePlugin.getCurrentLanguage().getCode());
             this.executionTime = String.format("%02d", jobDescriptor.getStartHour()) + "h" + String.format("%02d", jobDescriptor.getStartMinute());
             this.frequency = jobDescriptor.getFrequency();
             this.triggerUrl = jobDescriptor.getTriggerUrl();
