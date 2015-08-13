@@ -59,12 +59,14 @@ public interface IApiSignatureService {
      * @param testable
      *            true if the application can be tested (using the API
      *            simulator)
+     * @param isDisplay
+     *            true if the key is displayed in BizDock
      * @param apiAuthorization
      *            some application authorizations
      * @return the generated {@link ApiApplicationConfiguration} object
      */
-    public IApiApplicationConfiguration setApplicationConfiguration(String applicationName, String description, boolean testable, String apiAuthorization)
-            throws ApiSignatureException;
+    public IApiApplicationConfiguration setApplicationConfiguration(String applicationName, String description, boolean testable, boolean isDisplayed,
+            String apiAuthorization) throws ApiSignatureException;
 
     /**
      * Generate a new set of keys (application/secret) for the specified

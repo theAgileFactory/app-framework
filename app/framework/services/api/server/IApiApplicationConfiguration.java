@@ -74,4 +74,9 @@ public interface IApiApplicationConfiguration {
      * @return
      */
     public boolean isTestable();
+
+    /**
+     * Return true if the application key should be displayed in BizDock.
+     */
+    public boolean isDisplayed();
 }

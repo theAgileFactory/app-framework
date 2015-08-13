@@ -27,20 +27,19 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import models.framework_models.api.ApiRegistration;
-
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 
-import play.Configuration;
-import play.Logger;
-import play.inject.ApplicationLifecycle;
-import play.libs.F.Promise;
 import framework.services.api.client.SignatureGeneratorImpl;
 import framework.services.api.commons.ApiMethod;
 import framework.services.api.commons.ApiSignatureException;
 import framework.services.database.IDatabaseDependencyService;
+import models.framework_models.api.ApiRegistration;
+import play.Configuration;
+import play.Logger;
+import play.inject.ApplicationLifecycle;
+import play.libs.F.Promise;
 
 /**
  * A class which holds some methods useful for API signature and authentication
@@ -135,14 +134,14 @@ public class ApiSignatureServiceImpl implements IApiSignatureService {
             signatureGenerator.setHashAlgorithm(getHashAlgorithm());
             signatureGenerator.setProtocolVersion(getProtocolVersion());
             ApiApplicationConfiguration apiAppConfig = new ApiApplicationConfiguration(apiRegistration.name, apiRegistration.description,
-                    apiRegistration.testable, signatureGenerator, new String(apiRegistration.apiAuthorization));
+                    apiRegistration.testable, apiRegistration.isDisplayed, signatureGenerator, new String(apiRegistration.apiAuthorization));
             getApplicationConfigRegistry().put(apiRegistration.applicationKey, apiAppConfig);
         }
     }
 
     @Override
-    public IApiApplicationConfiguration setApplicationConfiguration(String applicationName, String description, boolean testable, String apiAuthorization)
-            throws ApiSignatureException {
+    public IApiApplicationConfiguration setApplicationConfiguration(String applicationName, String description, boolean testable, boolean isDisplayed,
+            String apiAuthorization) throws ApiSignatureException {
         if (applicationName == null || applicationName.equals(ROOT_APPLICATION)) {
             throw new ApiSignatureException("Invalid application name " + applicationName + " (null or reserved)");
         }
@@ -155,7 +154,7 @@ public class ApiSignatureServiceImpl implements IApiSignatureService {
             SignatureGeneratorImpl signatureGenerator = new SignatureGeneratorImpl(getRandomKey(), applicationKey);
             signatureGenerator.setHashAlgorithm(getHashAlgorithm());
             signatureGenerator.setProtocolVersion(getProtocolVersion());
-            apiAppConfig = new ApiApplicationConfiguration(applicationName, description, testable, signatureGenerator, apiAuthorization);
+            apiAppConfig = new ApiApplicationConfiguration(applicationName, description, testable, isDisplayed, signatureGenerator, apiAuthorization);
 
             // Create the API registration into the database
             apiRegistration = new ApiRegistration();
@@ -221,7 +220,12 @@ public class ApiSignatureServiceImpl implements IApiSignatureService {
     @Override
     public List<IApiApplicationConfiguration> listAuthorizedApplications() throws ApiSignatureException {
         List<IApiApplicationConfiguration> list = new ArrayList<IApiApplicationConfiguration>();
-        list.addAll(getApplicationConfigRegistry().values());
+        // add only displayed key
+        for (ApiApplicationConfiguration applicationConfiguration : getApplicationConfigRegistry().values()) {
+            if (applicationConfiguration.isDisplayed()) {
+                list.add(applicationConfiguration);
+            }
+        }
         try {
             list.remove(getApplicationConfigurationFromApplicationName(ROOT_APPLICATION));
         } catch (Exception e) {
@@ -270,7 +274,8 @@ public class ApiSignatureServiceImpl implements IApiSignatureService {
     }
 
     @Override
-    public IApiApplicationConfiguration changeApplicationConfigurationName(String oldApplicationName, String newApplicationName) throws ApiSignatureException {
+    public IApiApplicationConfiguration changeApplicationConfigurationName(String oldApplicationName, String newApplicationName)
+            throws ApiSignatureException {
         ApiRegistration apiRegistration = ApiRegistration.getFromApplicationName(oldApplicationName);
         if (apiRegistration == null) {
             throw new ApiSignatureException("Unknown application name : " + oldApplicationName);

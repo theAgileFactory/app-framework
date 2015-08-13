@@ -27,10 +27,10 @@ import javax.persistence.Id;
 import javax.persistence.Lob;
 import javax.persistence.Version;
 
+import com.avaje.ebean.Model;
+
 import models.framework_models.parent.IModel;
 import models.framework_models.parent.IModelConstants;
-
-import com.avaje.ebean.Model;
 
 /**
  * An entity which stores the API authorizations.<br/>
@@ -57,7 +57,6 @@ import com.avaje.ebean.Model;
  */
 @Entity
 public class ApiRegistration extends Model implements IModel {
-    private static final long serialVersionUID = 4564562397296L;
 
     public static Finder<Long, ApiRegistration> find = new Finder<Long, ApiRegistration>(ApiRegistration.class);
 
@@ -88,6 +87,8 @@ public class ApiRegistration extends Model implements IModel {
     public byte[] apiAuthorization;
 
     public boolean testable;
+
+    public boolean isDisplayed;
 
     /**
      * Return all the registrations from the database

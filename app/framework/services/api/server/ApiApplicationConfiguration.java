@@ -42,16 +42,18 @@ public class ApiApplicationConfiguration implements IApiApplicationConfiguration
     private String applicationName;
     private String description;
     private boolean testable;
+    private boolean isDisplayed;
     private String apiAuthorizationsAsString;
     private ISignatureGenerator signatureGenerator;
     private List<Pair<ApiMethod, Pattern>> allowedApiPatterns;
 
-    public ApiApplicationConfiguration(String applicationName, String description, boolean testable, ISignatureGenerator signatureGenerator,
-            String apiAuthorizationsAsString) throws ApiSignatureException {
+    public ApiApplicationConfiguration(String applicationName, String description, boolean testable, boolean isDisplayed,
+            ISignatureGenerator signatureGenerator, String apiAuthorizationsAsString) throws ApiSignatureException {
         super();
         this.applicationName = applicationName;
         this.description = description;
         this.testable = testable;
+        this.isDisplayed = isDisplayed;
         this.signatureGenerator = signatureGenerator;
         this.apiAuthorizationsAsString = apiAuthorizationsAsString;
         fillAllowedApiPatterns(false);
@@ -60,9 +62,8 @@ public class ApiApplicationConfiguration implements IApiApplicationConfiguration
     /*
      * (non-Javadoc)
      * 
-     * @see
-     * framework.services.api.server.IApiApplicationConfiguration#checkUrl(framework
-     * .services.api.commons.ApiMethod, java.lang.String)
+     * @see framework.services.api.server.IApiApplicationConfiguration#checkUrl(
+     * framework .services.api.commons.ApiMethod, java.lang.String)
      */
     @Override
     public void checkUrl(ApiMethod method, String url) throws ApiSignatureException {
@@ -97,9 +98,8 @@ public class ApiApplicationConfiguration implements IApiApplicationConfiguration
     /*
      * (non-Javadoc)
      * 
-     * @see
-     * framework.services.api.server.IApiApplicationConfiguration#getApplicationName
-     * ()
+     * @see framework.services.api.server.IApiApplicationConfiguration#
+     * getApplicationName ()
      */
     @Override
     public String getApplicationName() {
@@ -121,6 +121,11 @@ public class ApiApplicationConfiguration implements IApiApplicationConfiguration
     @Override
     public boolean isTestable() {
         return testable;
+    }
+
+    @Override
+    public boolean isDisplayed() {
+        return isDisplayed;
     }
 
     /*
@@ -216,4 +221,5 @@ public class ApiApplicationConfiguration implements IApiApplicationConfiguration
     void setTestable(boolean testable) {
         this.testable = testable;
     }
+
 }
