@@ -266,7 +266,7 @@
 				</exclusion>
 				<exclusion>
 					<groupId>org.scala-lang</groupId>
-					<artifactId>scala-library</artifactId>
+					<artifactId>scala-*</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -527,12 +527,11 @@
 					<buildDist>true</buildDist>
 					<buildWar>false</buildWar>
 					<testFailureIgnore>true</testFailureIgnore>
+					<testLib>${project.build.directory}/providedlibs</testLib>
 				</configuration>
 			</plugin>
 
-			<!-- Pierre-Yves Cloux Patch to Nanoko This one merge the assets with 
-				the application jar (as it was done before). WARNING: ensure that the Nanoko 
-				plugin configuration is "buildDist" is set to "true" -->
+			<!-- Merge the play jar and the web-assets into a unique jar -->
 			<plugin>
 				<artifactId>maven-antrun-plugin</artifactId>
 				<version>${maven-antrun-plugin.version}</version>
