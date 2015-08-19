@@ -18,10 +18,10 @@
 
 package framework.utils;
 
+import be.objectify.deadbolt.java.actions.SubjectPresent;
 import play.Play;
 import play.mvc.Controller;
 import play.mvc.Result;
-import be.objectify.deadbolt.java.actions.SubjectPresent;
 
 /**
  * Controller for the top menu bar.
@@ -40,7 +40,7 @@ public class TopMenuBarController extends Controller {
     @SubjectPresent
     public Result switchPerspective(String key) {
         TopMenuBar.getInstance().setPerspectiveFromPreference(key);
-        return redirect(Play.application().configuration().getString("application.context"));
+        return redirect(Play.application().configuration().getString("play.http.context"));
     }
 
 }
