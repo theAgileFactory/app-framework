@@ -1,10 +1,9 @@
 package framework.services;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import play.Configuration;
-import play.cache.CacheApi;
+import com.google.inject.Inject;
+
 import framework.services.account.IAccountManagerPlugin;
 import framework.services.account.IAuthenticationAccountReaderPlugin;
 import framework.services.account.IAuthenticationAccountWriterPlugin;
@@ -25,52 +24,60 @@ import framework.services.storage.IAttachmentManagerPlugin;
 import framework.services.storage.IPersonalStoragePlugin;
 import framework.services.storage.ISharedStorageService;
 import framework.services.system.ISysAdminUtils;
+import play.Configuration;
+import play.cache.CacheApi;
 
+/**
+ * Temporary solution to deal with the migration between Spring and Juice for
+ * service management.
+ * 
+ * @author Pierre-Yves Cloux
+ */
 @Singleton
 public class ServiceStaticAccessor {
-    @Inject
+    @Inject(optional = true)
     private static IUserSessionManagerPlugin userSessionManagerPlugin;
-    @Inject
+    @Inject(optional = true)
     private static IKpiService kpiService;
-    @Inject
+    @Inject(optional = true)
     private static IAuthenticationAccountWriterPlugin authenticationAccountWriterPlugin;
-    @Inject
+    @Inject(optional = true)
     private static IAuthenticationAccountReaderPlugin authenticationAccountReaderPlugin;
-    @Inject
+    @Inject(optional = true)
     private static IAccountManagerPlugin accountManagerPlugin;
-    @Inject
+    @Inject(optional = true)
     private static II18nMessagesPlugin messagesPlugin;
-    @Inject
+    @Inject(optional = true)
     private static IPreferenceManagerPlugin preferenceManagerPlugin;
-    @Inject
+    @Inject(optional = true)
     private static IPluginManagerService pluginManagerService;
-    @Inject
+    @Inject(optional = true)
     private static IExtensionManagerService extensionmanagerService;
-    @Inject
+    @Inject(optional = true)
     private static IPersonalStoragePlugin personalStoragePlugin;
-    @Inject
+    @Inject(optional = true)
     private static ISharedStorageService sharedStorageService;
-    @Inject
+    @Inject(optional = true)
     private static INotificationManagerPlugin notificationManagerPlugin;
-    @Inject
+    @Inject(optional = true)
     private static IAttachmentManagerPlugin attachmentManagerPlugin;
-    @Inject
+    @Inject(optional = true)
     private static IAdPanelManagerService adPanelManagerService;
-    @Inject
+    @Inject(optional = true)
     private static ISysAdminUtils sysAdminUtils;
-    @Inject
+    @Inject(optional = true)
     private static IImplementationDefinedObjectService implementationDefinedObjectService;
-    @Inject
+    @Inject(optional = true)
     private static ICustomRouterService customRouterService;
-    @Inject
+    @Inject(optional = true)
     private static ICustomRouterNotificationService customRouterNotificationService;
-    @Inject
+    @Inject(optional = true)
     private static IAuditLoggerService auditLoggerService;
-    @Inject
+    @Inject(optional = true)
     private static IDatabaseDependencyService databaseDependencyService;
-    @Inject
+    @Inject(optional = true)
     private static Configuration configuration;
-    @Inject
+    @Inject(optional = true)
     private static CacheApi cacheApi;
 
     public ServiceStaticAccessor() {
