@@ -2,23 +2,20 @@ package framework.modules;
 
 import java.util.Date;
 
-import play.Logger;
-import play.data.format.Formatters;
-
 import com.google.inject.AbstractModule;
-import com.wordnik.swagger.converter.ModelConverters;
 
 import framework.commons.DataType;
 import framework.commons.IFrameworkConstants;
 import framework.security.SecurityUtils;
 import framework.services.ServiceStaticAccessor;
-import framework.services.api.ClassSchemaDocumentationConverter;
 import framework.services.ext.ExtensionUtils;
 import framework.services.plugins.api.PluginUtils;
 import framework.taftree.TafTreeHelper;
 import framework.utils.FileAttachmentHelper;
 import framework.utils.Msg;
 import framework.utils.formats.AnnotationDateTypeFormatter;
+import play.Logger;
+import play.data.format.Formatters;
 
 /**
  * The module which holds the framework specific injections. This one can be
@@ -46,8 +43,6 @@ public abstract class FrameworkModule extends AbstractModule {
         DataType.add(IFrameworkConstants.SystemLevelRoleType, "models.framework_models.account.SystemLevelRoleType", false, false);
         // Register the play framework date formatter
         Formatters.register(Date.class, new AnnotationDateTypeFormatter());
-        // Register the model converter for Swagger
-        ModelConverters.addConverter(new ClassSchemaDocumentationConverter(), true);
     }
 
     @Override
