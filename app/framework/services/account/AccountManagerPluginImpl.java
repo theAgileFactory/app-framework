@@ -28,18 +28,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import models.framework_models.account.Principal;
-import models.framework_models.account.SystemLevelRole;
-import models.framework_models.account.SystemLevelRoleType;
-import models.framework_models.account.SystemPermission;
-
 import org.apache.commons.lang3.RandomStringUtils;
-
-import play.Configuration;
-import play.Logger;
-import play.cache.Cache;
-import play.inject.ApplicationLifecycle;
-import play.libs.F.Promise;
 
 import com.avaje.ebean.Ebean;
 
@@ -49,7 +38,16 @@ import framework.commons.message.EventMessage;
 import framework.commons.message.UserEventMessage;
 import framework.services.account.IUserAccount.AccountType;
 import framework.services.database.IDatabaseDependencyService;
-import framework.services.plugins.IPluginManagerService;
+import framework.services.plugins.IEventBroadcastingService;
+import models.framework_models.account.Principal;
+import models.framework_models.account.SystemLevelRole;
+import models.framework_models.account.SystemLevelRoleType;
+import models.framework_models.account.SystemPermission;
+import play.Configuration;
+import play.Logger;
+import play.cache.Cache;
+import play.inject.ApplicationLifecycle;
+import play.libs.F.Promise;
 
 /**
  * The plugin managing the user accounts.<br/>
@@ -59,16 +57,17 @@ import framework.services.plugins.IPluginManagerService;
  * <ul>
  * <li>authenticationRepositoryMasterMode : true if the system is configured in
  * "master mode".</li>
- * <li>selfMailUpdateAllowed : true if the user can update his e-mail himself</li>
+ * <li>selfMailUpdateAllowed : true if the user can update his e-mail himself
+ * </li>
  * <li>authenticationAccountWriterPlugin : the plugin to be used to update the
  * authentication back-end (if master mode)</li>
  * <li>authenticationAccountReaderPlugin : the plugin to be used to read the
  * authentication back-end</li>
- * <li>pluginManagerService : the service that manages the notification of the
- * third party</li>
- * plugins
+ * <li>eventBroadcastingService : the service that manages the notification of
+ * the third party</li> plugins
  * <li>validationKeyValidity : how much time a validation key is valid in
- * minutes (validation for password change, account creation of e-mail update)</li>
+ * minutes (validation for password change, account creation of e-mail update)
+ * </li>
  * <li>commonUserAccountClass : the class which implements the
  * {@link ICommonUserAccount} interface and which is to be used as the basis of
  * the {@link IUserAccount}</li>
@@ -85,7 +84,7 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
     private boolean selfMailUpdateAllowed;
     private IAuthenticationAccountWriterPlugin authenticationAccountWriterPlugin;
     private IAuthenticationAccountReaderPlugin authenticationAccountReaderPlugin;
-    private IPluginManagerService pluginManagerService;
+    private IEventBroadcastingService eventBroadcastingService;
     private int validationKeyValidity;
     private int userAccountCacheDurationInSeconds;
     private Class<?> commonUserAccountClass;
@@ -118,7 +117,7 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
      *            if true the system is in LDAP master mode (LDAP is writable)
      * @param authenticationAccountWriterPlugin
      * @param authenticationAccountReaderPlugin
-     * @param pluginManagerService
+     * @param eventBroadcastingService
      * @param databaseDependencyService
      * @throws ClassNotFoundException
      */
@@ -127,7 +126,7 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
             @Named("UserAccountClassName") String commonUserAccountClassName,
             @Named("AuthenticationRepositoryMasterMode") Boolean authenticationRepositoryMasterMode,
             IAuthenticationAccountWriterPlugin authenticationAccountWriterPlugin, IAuthenticationAccountReaderPlugin authenticationAccountReaderPlugin,
-            IPluginManagerService pluginManagerService, IDatabaseDependencyService databaseDependencyService) throws ClassNotFoundException {
+            IEventBroadcastingService eventBroadcastingService, IDatabaseDependencyService databaseDependencyService) throws ClassNotFoundException {
         log.info("SERVICE>>> AccountManagerPluginImpl starting...");
         this.authenticationRepositoryMasterMode = authenticationRepositoryMasterMode;
         this.userAccountCacheDurationInSeconds = configuration.getInt(Config.ACCOUNT_CACHE_DURATION.getConfigurationKey());
@@ -138,12 +137,12 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
         log.info("Loading the user account class " + commonUserAccountClassName);
         this.commonUserAccountClass = Class.forName(commonUserAccountClassName);
         if (!ICommonUserAccount.class.isAssignableFrom(commonUserAccountClass) || !hasDefaultConstructor(commonUserAccountClass)) {
-            throw new IllegalArgumentException("The class " + commonUserAccountClass
-                    + " cannot implement the ICommonUserAccount interface or has no default constructor");
+            throw new IllegalArgumentException(
+                    "The class " + commonUserAccountClass + " cannot implement the ICommonUserAccount interface or has no default constructor");
         }
         this.authenticationAccountWriterPlugin = authenticationAccountWriterPlugin;
         this.authenticationAccountReaderPlugin = authenticationAccountReaderPlugin;
-        this.pluginManagerService = pluginManagerService;
+        this.eventBroadcastingService = eventBroadcastingService;
         lifecycle.addStopHook(() -> {
             log.info("SERVICE>>> AccountManagerPluginImpl stopping...");
             log.info("SERVICE>>> AccountManagerPluginImpl stopped");
@@ -717,8 +716,8 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
      * @param eventMessage
      */
     private void postToPlugginManagerService(EventMessage eventMessage) {
-        if (pluginManagerService != null) {
-            pluginManagerService.postOutMessage(eventMessage);
+        if (eventBroadcastingService != null) {
+            eventBroadcastingService.postOutMessage(eventMessage);
         }
     }
 
@@ -733,8 +732,8 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
      */
     private ICommonUserAccount createUserAccountFromAuthenticationAccount(IUserAuthenticationAccount userAuthenticationAccount) {
         // Get user Account from cache if available
-        ICommonUserAccount cachedUserAccount = (ICommonUserAccount) Cache.get(IFrameworkConstants.USER_ACCOUNT_CACHE_PREFIX
-                + userAuthenticationAccount.getUid());
+        ICommonUserAccount cachedUserAccount = (ICommonUserAccount) Cache
+                .get(IFrameworkConstants.USER_ACCOUNT_CACHE_PREFIX + userAuthenticationAccount.getUid());
         if (log.isDebugEnabled()) {
             log.debug("Look for user account associated with uid " + userAuthenticationAccount.getUid() + " "
                     + (cachedUserAccount != null ? "FOUND" : "NOT FOUND)"));

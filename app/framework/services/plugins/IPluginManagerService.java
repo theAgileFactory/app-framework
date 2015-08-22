@@ -223,14 +223,6 @@ public interface IPluginManagerService extends IActorServiceLifecycleHook {
     public void stopPlugin(Long pluginConfigurationId);
 
     /**
-     * Post an event to the OUT interface.
-     * 
-     * @param eventMessage
-     *            an event message
-     */
-    public void postOutMessage(EventMessage eventMessage);
-
-    /**
      * Post an event to the IN interface.
      * 
      * @param eventMessage

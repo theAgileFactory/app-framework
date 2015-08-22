@@ -33,19 +33,9 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import models.framework_models.plugin.PluginConfiguration;
-import models.framework_models.plugin.PluginDefinition;
-import models.framework_models.plugin.PluginLog;
-
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
-import play.Logger;
-import play.inject.ApplicationLifecycle;
-import play.libs.F.Promise;
-import scala.concurrent.Await;
-import scala.concurrent.Future;
-import scala.concurrent.duration.Duration;
 import akka.actor.ActorIdentity;
 import akka.actor.ActorRef;
 import akka.actor.ActorSelection;
@@ -77,6 +67,15 @@ import framework.services.plugins.api.PluginException;
 import framework.services.system.ISysAdminUtils;
 import framework.utils.Msg;
 import framework.utils.Utilities;
+import models.framework_models.plugin.PluginConfiguration;
+import models.framework_models.plugin.PluginDefinition;
+import models.framework_models.plugin.PluginLog;
+import play.Logger;
+import play.inject.ApplicationLifecycle;
+import play.libs.F.Promise;
+import scala.concurrent.Await;
+import scala.concurrent.Future;
+import scala.concurrent.duration.Duration;
 
 /**
  * This service implementation manages the lifecycle of the plugins.<br/>
@@ -84,7 +83,7 @@ import framework.utils.Utilities;
  * @author Pierre-Yves Cloux
  */
 @Singleton
-public class PluginManagerServiceImpl implements IPluginManagerService {
+public class PluginManagerServiceImpl implements IPluginManagerService, IEventBroadcastingService {
     private static Logger.ALogger log = Logger.of(PluginManagerServiceImpl.class);
     private ActorSystem actorSystem;
     private ActorRef pluginStatusCallbackActorRef;
@@ -392,14 +391,14 @@ public class PluginManagerServiceImpl implements IPluginManagerService {
             log.info(String.format("The class for the plugin %d has been found and instanciated", pluginConfiguration.id));
             if (pluginRunner.getStaticDescriptor() == null || pluginRunner.getStaticDescriptor().getPluginDefinitionIdentifier() == null
                     || !pluginRunner.getStaticDescriptor().getPluginDefinitionIdentifier().equals(pluginConfiguration.pluginDefinition.identifier)) {
-                throw new PluginException(String.format(
-                        "Plugin description is null or the plugin definition id %s is not matching the id of the implementation class %s",
-                        pluginRunner.getStaticDescriptor() != null ? pluginRunner.getStaticDescriptor().getPluginDefinitionIdentifier() : "null",
-                        pluginConfiguration.pluginDefinition.identifier));
+                throw new PluginException(
+                        String.format("Plugin description is null or the plugin definition id %s is not matching the id of the implementation class %s",
+                                pluginRunner.getStaticDescriptor() != null ? pluginRunner.getStaticDescriptor().getPluginDefinitionIdentifier() : "null",
+                                pluginConfiguration.pluginDefinition.identifier));
             }
             pluginRunner.init(new PluginContextImpl(pluginConfiguration, this));
-            ActorRef pluginLifeCycleControllingActorRef = getActorSystem().actorOf(
-                    Props.create(new PluginLifeCycleControllingActorCreator(pluginConfiguration.id, pluginRunner, getPluginStatusCallbackActorRef())));
+            ActorRef pluginLifeCycleControllingActorRef = getActorSystem()
+                    .actorOf(Props.create(new PluginLifeCycleControllingActorCreator(pluginConfiguration.id, pluginRunner, getPluginStatusCallbackActorRef())));
             log.info(String.format("[END] the plugin %d has been initialized", pluginConfiguration.id));
             return new PluginRegistrationEntry(pluginConfiguration.id, pluginRunner, pluginLifeCycleControllingActorRef);
         } catch (Exception e) {
@@ -515,11 +514,12 @@ public class PluginManagerServiceImpl implements IPluginManagerService {
         }
         if (eventInterfaceConfiguration != null) {
             actorRef = getActorSystem().actorOf(
-                    (new RoundRobinPool(eventInterfaceConfiguration.getPoolSize())).withSupervisorStrategy(
-                            getSupervisorStrategy(eventInterfaceConfiguration.getNumberOfRetry(), eventInterfaceConfiguration.getRetryDuration(),
-                                    pluginRegistrationEntry.getPluginConfigurationId())).props(
-                            Props.create(new EventMessageProcessingActorCreator(pluginRegistrationEntry.getPluginConfigurationId(), pluginRegistrationEntry
-                                    .getPluginRunner(), FlowType.OUT))), flowType.getRouterPrefix() + pluginRegistrationEntry.getPluginConfigurationId());
+                    (new RoundRobinPool(eventInterfaceConfiguration.getPoolSize()))
+                            .withSupervisorStrategy(getSupervisorStrategy(eventInterfaceConfiguration.getNumberOfRetry(),
+                                    eventInterfaceConfiguration.getRetryDuration(), pluginRegistrationEntry.getPluginConfigurationId()))
+                    .props(Props.create(new EventMessageProcessingActorCreator(pluginRegistrationEntry.getPluginConfigurationId(),
+                            pluginRegistrationEntry.getPluginRunner(), FlowType.OUT))),
+                    flowType.getRouterPrefix() + pluginRegistrationEntry.getPluginConfigurationId());
             String message = "The %s interface for the plugin %d has been started";
             log.info(String.format(message, flowType.name(), pluginRegistrationEntry.getPluginConfigurationId()));
             return actorRef;
@@ -541,7 +541,8 @@ public class PluginManagerServiceImpl implements IPluginManagerService {
      * <ol>
      * <li>Stopping the IN interface (if any)</li>
      * <li>Stopping the OUT interface (if any)</li>
-     * <li>Sending to the plugin lifecycle management actor the STOP message</li>
+     * <li>Sending to the plugin lifecycle management actor the STOP message
+     * </li>
      * </ol>
      * 
      * <b>WARNING</b> : if the stop process succeed, the plugin status is
@@ -657,7 +658,8 @@ public class PluginManagerServiceImpl implements IPluginManagerService {
      * is two possible scenarios:
      * <ul>
      * <li>The message is CUSTOM : this means that one specific plugin must be
-     * notified and its identifier should be hold by the {@link EventMessage}</li>
+     * notified and its identifier should be hold by the {@link EventMessage}
+     * </li>
      * <li>The message is not CUSTOM : then all the plugins which are
      * "compatible" with the {@link DataType} of the message are notified</li>
      * </ul>
@@ -837,7 +839,8 @@ public class PluginManagerServiceImpl implements IPluginManagerService {
      * A plugin registration entry which holds the data related to a registered
      * plugin.<br/>
      * <ul>
-     * <li>pluginConfigurationId : the unique id of the plugin configuration</li>
+     * <li>pluginConfigurationId : the unique id of the plugin configuration
+     * </li>
      * <li>pluginStatus : the status of the plugin (started, stopped)</li>
      * <li>inEventMessageProcessingActorRef : the reference to the actor which
      * is managing the IN interface of the plugin (if any)</li>
@@ -1174,9 +1177,9 @@ public class PluginManagerServiceImpl implements IPluginManagerService {
                     } else {
                         String errorMessage = String.format("[FAILURE] Transaction %s for event message processing actor for plugin %d failed",
                                 eventMessage.getTransactionId(), getPluginConfigurationId());
-                        PluginLog.saveOnEventHandlingPluginLog(eventMessage.getTransactionId(), getPluginConfigurationId(), true,
-                                eventMessage.getMessageType(), errorMessage + "\nMessage was : " + eventMessage.toString(), eventMessage.getDataType(),
-                                eventMessage.getInternalId(), eventMessage.getExternalId());
+                        PluginLog.saveOnEventHandlingPluginLog(eventMessage.getTransactionId(), getPluginConfigurationId(), true, eventMessage.getMessageType(),
+                                errorMessage + "\nMessage was : " + eventMessage.toString(), eventMessage.getDataType(), eventMessage.getInternalId(),
+                                eventMessage.getExternalId());
                         throw new PluginException(errorMessage, e);
                     }
                 }
