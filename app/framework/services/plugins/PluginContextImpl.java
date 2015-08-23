@@ -25,16 +25,8 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
 
-import models.framework_models.plugin.PluginConfiguration;
-import models.framework_models.plugin.PluginConfigurationBlock;
-import models.framework_models.plugin.PluginIdentificationLink;
-import models.framework_models.plugin.PluginLog;
-import models.framework_models.plugin.PluginRegistration;
-
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.lang3.tuple.Pair;
-
-import play.Logger;
 
 import com.avaje.ebean.Ebean;
 
@@ -45,6 +37,12 @@ import framework.services.plugins.api.IPluginConfigurationBlockDescriptor.Config
 import framework.services.plugins.api.IPluginContext;
 import framework.services.plugins.api.PluginException;
 import framework.utils.Utilities;
+import models.framework_models.plugin.PluginConfiguration;
+import models.framework_models.plugin.PluginConfigurationBlock;
+import models.framework_models.plugin.PluginIdentificationLink;
+import models.framework_models.plugin.PluginLog;
+import models.framework_models.plugin.PluginRegistration;
+import play.Logger;
 
 /**
  * The object which provides the logging & monitoring features to the plugins
@@ -58,8 +56,11 @@ public class PluginContextImpl implements IPluginContext {
     private String pluginConfigurationName;
     private String pluginPrefix;
     private IPluginManagerService pluginManagerService;
+    private IEventBroadcastingService eventBroadcastingService;
 
-    public PluginContextImpl(PluginConfiguration pluginConfiguration, IPluginManagerService pluginManagerService) {
+    public PluginContextImpl(PluginConfiguration pluginConfiguration, 
+            IPluginManagerService pluginManagerService,
+            IEventBroadcastingService eventBroadcastingService) {
         this.pluginManagerService = pluginManagerService;
         this.pluginConfigurationId = pluginConfiguration.id;
         this.pluginConfigurationName = pluginConfiguration.name;
@@ -413,6 +414,11 @@ public class PluginContextImpl implements IPluginContext {
         return pluginConfigurationId;
     }
 
+    @Override
+    public void postOutMessage(EventMessage eventMessage) {
+        getEventBroadcastingService().postOutMessage(eventMessage);
+    }
+
     private String getPluginPrefix() {
         return pluginPrefix;
     }
@@ -430,5 +436,9 @@ public class PluginContextImpl implements IPluginContext {
 
     private IPluginManagerService getPluginManagerService() {
         return pluginManagerService;
+    }
+
+    private IEventBroadcastingService getEventBroadcastingService() {
+        return eventBroadcastingService;
     }
 }

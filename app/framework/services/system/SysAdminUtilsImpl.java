@@ -30,10 +30,16 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import models.framework_models.scheduler.SchedulerState;
-
 import org.apache.commons.lang3.ArrayUtils;
 
+import com.avaje.ebean.Ebean;
+import com.avaje.ebean.TxIsolation;
+
+import akka.actor.ActorSystem;
+import akka.actor.Cancellable;
+import framework.services.database.IDatabaseDependencyService;
+import framework.utils.Utilities;
+import models.framework_models.scheduler.SchedulerState;
 import play.Configuration;
 import play.Logger;
 import play.Play;
@@ -41,14 +47,6 @@ import play.inject.ApplicationLifecycle;
 import play.libs.F.Promise;
 import scala.concurrent.duration.Duration;
 import scala.concurrent.duration.FiniteDuration;
-import akka.actor.ActorSystem;
-import akka.actor.Cancellable;
-
-import com.avaje.ebean.Ebean;
-import com.avaje.ebean.TxIsolation;
-
-import framework.services.database.IDatabaseDependencyService;
-import framework.utils.Utilities;
 
 /**
  * Utility class which provides methods usefull system level features, namelly:
@@ -86,7 +84,7 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
         this.actorSystem = actorSystem;
         this.configuration=configuration;
         flushAllSchedulerStates();
-        initAutomatedSystemStatus();
+        initAutomatedSystemStatus(configuration);
         lifecycle.addStopHook(() -> {
             log.info("SERVICE>>> SysAdminUtilsImpl stopping...");
             if (automaticSystemStatus != null) {
@@ -363,9 +361,9 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
     /**
      * Initialize the automated system status.
      */
-    private void initAutomatedSystemStatus() {
-        if (getConfiguration().getBoolean("maf.sysadmin.dump.vmstatus.active")) {
-            int frequency = play.Configuration.root().getInt("maf.sysadmin.dump.vmstatus.frequency");
+    private void initAutomatedSystemStatus(Configuration configuration) {
+        if (configuration.getBoolean("maf.sysadmin.dump.vmstatus.active")) {
+            int frequency =configuration.getInt("maf.sysadmin.dump.vmstatus.frequency");
             log.info(">>>>>>>>>>>>>>>> Activate automated system status, frequency " + frequency);
             automaticSystemStatus = scheduleRecurring(true, "AUTOMATED STATUS", Duration.create(frequency, TimeUnit.SECONDS),
                     Duration.create(frequency, TimeUnit.SECONDS), new Runnable() {
@@ -386,9 +384,5 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
 
     private ActorSystem getActorSystem() {
         return actorSystem;
-    }
-
-    private Configuration getConfiguration() {
-        return configuration;
     }
 }

@@ -412,4 +412,12 @@ public interface IPluginContext {
      * This method should only be called if the plugin repeatedly fails.
      */
     public void killMe();
+    
+    /**
+     * Post an event to the OUT interface of a plugin (could  be the current plugin or anything else).
+     * 
+     * @param eventMessage
+     *            an event message
+     */
+    public void postOutMessage(EventMessage eventMessage);
 }

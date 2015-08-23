@@ -398,7 +398,7 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
                                 pluginRunner.getStaticDescriptor() != null ? pluginRunner.getStaticDescriptor().getPluginDefinitionIdentifier() : "null",
                                 pluginConfiguration.pluginDefinition.identifier));
             }
-            pluginRunner.init(new PluginContextImpl(pluginConfiguration, this));
+            pluginRunner.init(new PluginContextImpl(pluginConfiguration, this, this));
             ActorRef pluginLifeCycleControllingActorRef = getActorSystem()
                     .actorOf(Props.create(new PluginLifeCycleControllingActorCreator(pluginConfiguration.id, pluginRunner, getPluginStatusCallbackActorRef(), getMessagesPlugin())));
             log.info(String.format("[END] the plugin %d has been initialized", pluginConfiguration.id));
