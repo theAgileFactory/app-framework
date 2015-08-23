@@ -6,7 +6,10 @@ import play.api.data.Field
  * This class provides a few scala utilities to be reused in various
  * parts
  */
-object commons {
+object commons extends framework.handlers.DefaultContextInjector{
+    /**
+     * Check if a field is marked with the "required" constraint
+     */
 	val isRequired  =  (afield : Field)  =>  {
 		var isConstraintsRequired=false;
 		if(afield.constraints!=null){

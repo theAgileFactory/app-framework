@@ -1,0 +1,40 @@
+package framework.handlers;
+
+import com.google.inject.Inject;
+
+import framework.services.configuration.II18nMessagesPlugin;
+import play.Configuration;
+import play.http.DefaultHttpRequestHandler;
+import play.mvc.Http;
+import play.mvc.Http.Context;
+
+/**
+ * Overriding of the default request handler.<br/>
+ * The abstract implementation provides a "injectCommonServicesIncontext"
+ * which support the injection of commonly used services into the
+ * scala templates.
+ * 
+ * @author Johann Kohler
+ *
+ */
+public abstract class AbstractRequestHandler extends DefaultHttpRequestHandler {
+    @Inject(optional = true)
+    private Configuration configuration;
+    @Inject(optional = true)
+    private II18nMessagesPlugin messagesPlugin;
+
+    /**
+     * This method injects the commonly used services in the {@link Context}.
+     * These common services can then be access from the "args" variable of the current
+     * context in the scala templates.
+     * @param context
+     */
+    protected void injectCommonServicesIncontext(Http.Context context){
+        if(configuration!=null){
+            context.args.put(Configuration.class.getName(), configuration);
+        }
+        if(messagesPlugin!=null){
+            context.args.put(II18nMessagesPlugin.class.getName(), messagesPlugin);
+        }
+    }
+}

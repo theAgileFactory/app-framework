@@ -40,8 +40,8 @@ import framework.utils.DefaultSelectableValueHolderCollection;
 import play.Configuration;
 import play.Environment;
 import play.Logger;
+import play.i18n.MessagesApi;
 import play.i18n.Lang;
-import play.i18n.Messages;
 import play.inject.ApplicationLifecycle;
 import play.libs.F.Promise;
 import play.mvc.Http;
@@ -67,6 +67,7 @@ public class I18nMessagesPluginImpl implements II18nMessagesPlugin {
     private Map<String, Language> validLanguageMap;
     private Configuration configuration;
     private Environment environment;
+    private MessagesApi messagesApi;
 
     public enum Config {
         LANGUAGE_LIST("play.i18n.langs");
@@ -95,10 +96,15 @@ public class I18nMessagesPluginImpl implements II18nMessagesPlugin {
      *            the service which secure the availability of the database
      */
     @Inject
-    public I18nMessagesPluginImpl(ApplicationLifecycle lifecycle, Configuration configuration, Environment environment,
+    public I18nMessagesPluginImpl(
+            ApplicationLifecycle lifecycle, 
+            Configuration configuration, 
+            Environment environment,
+            MessagesApi messagesApi,
             IDatabaseDependencyService databaseDependencyService) {
         log.info("SERVICE>>> I18nMessagesPluginImpl starting...");
         this.configuration = configuration;
+        this.messagesApi=messagesApi;
         initOnce();
         reload(true);
         lifecycle.addStopHook(() -> {
@@ -175,8 +181,8 @@ public class I18nMessagesPluginImpl implements II18nMessagesPlugin {
         if (key.endsWith("_content")) {
             return getI18nContent(key, lang.code());
         }
-        if (Messages.isDefined(lang, key)) {
-            return Messages.get(lang, key, args);
+        if (getMessagesApi().isDefinedAt(lang,key)) {
+            return getMessagesApi().get(lang, key, args);
         }
         Hashtable<Object, Object> messages = getI18nMessagesStore().get(lang.code());
         if (messages == null) {
@@ -358,7 +364,7 @@ public class I18nMessagesPluginImpl implements II18nMessagesPlugin {
      * @return
      */
     private boolean isDefined(String key, Language language) {
-        if (Messages.isDefined(language.getLang(), key)) {
+        if (getMessagesApi().isDefinedAt(language.getLang(), key)) {
             return true;
         }
         Hashtable<Object, Object> messages = getI18nMessagesStore().get(language.getCode());
@@ -406,5 +412,9 @@ public class I18nMessagesPluginImpl implements II18nMessagesPlugin {
 
     private Environment getEnvironment() {
         return environment;
+    }
+
+    private MessagesApi getMessagesApi() {
+        return messagesApi;
     }
 }

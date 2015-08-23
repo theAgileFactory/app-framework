@@ -17,6 +17,7 @@
  */
 package framework.commons;
 
+
 public interface IFrameworkConstants {
     // -------------------------------------------------------------------------------------
     // DataType name constants
