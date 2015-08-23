@@ -62,6 +62,7 @@ public class PluginContextImpl implements IPluginContext {
             IPluginManagerService pluginManagerService,
             IEventBroadcastingService eventBroadcastingService) {
         this.pluginManagerService = pluginManagerService;
+        this.eventBroadcastingService=eventBroadcastingService;
         this.pluginConfigurationId = pluginConfiguration.id;
         this.pluginConfigurationName = pluginConfiguration.name;
         this.pluginPrefix = String.format(LOG_PREFIX_TEMPLATE, pluginConfiguration.pluginDefinition.identifier, pluginConfigurationId);
