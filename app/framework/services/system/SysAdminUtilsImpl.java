@@ -63,6 +63,7 @@ import framework.utils.Utilities;
 public class SysAdminUtilsImpl implements ISysAdminUtils {
     private static Logger.ALogger log = Logger.of(SysAdminUtilsImpl.class);
     private static final String PERMGEN_MEMORY_POOL_NAME = "PS Perm Gen";
+    private Configuration configuration;
     private ActorSystem actorSystem;
     private Cancellable automaticSystemStatus;
 
@@ -83,12 +84,14 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
             ActorSystem actorSystem) {
         log.info("SERVICE>>> SysAdminUtilsImpl starting...");
         this.actorSystem = actorSystem;
+        this.configuration=configuration;
         flushAllSchedulerStates();
+        initAutomatedSystemStatus();
         lifecycle.addStopHook(() -> {
             log.info("SERVICE>>> SysAdminUtilsImpl stopping...");
             if (automaticSystemStatus != null) {
                 try {
-                    automaticSystemStatus.cancel();
+                    getAutomaticSystemStatus().cancel();
                 } catch (Exception e) {
                     log.error("Unable to stop the automatic system status", e);
                 }
@@ -361,7 +364,7 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
      * Initialize the automated system status.
      */
     private void initAutomatedSystemStatus() {
-        if (play.Configuration.root().getBoolean("maf.sysadmin.dump.vmstatus.active")) {
+        if (getConfiguration().getBoolean("maf.sysadmin.dump.vmstatus.active")) {
             int frequency = play.Configuration.root().getInt("maf.sysadmin.dump.vmstatus.frequency");
             log.info(">>>>>>>>>>>>>>>> Activate automated system status, frequency " + frequency);
             automaticSystemStatus = scheduleRecurring(true, "AUTOMATED STATUS", Duration.create(frequency, TimeUnit.SECONDS),
@@ -383,5 +386,9 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
 
     private ActorSystem getActorSystem() {
         return actorSystem;
+    }
+
+    private Configuration getConfiguration() {
+        return configuration;
     }
 }

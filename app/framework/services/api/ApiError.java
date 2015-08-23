@@ -28,7 +28,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.wordnik.swagger.annotations.ApiModelProperty;
 
-import framework.utils.Msg;
+import framework.services.configuration.II18nMessagesPlugin;
 import framework.utils.Utilities;
 
 /**
@@ -89,13 +89,18 @@ public class ApiError {
         return trace;
     }
 
-    // Method to get teh errors from valifation form of play
-    public static String getValidationErrorsMessage(Map<String, List<ValidationError>> errors) {
+    /**
+     * Return the validation data errors as a String
+     * @param messagesPlugin a {@link II18nMessagesPlugin} for internationalization management
+     * @param errors the errors
+     * @return
+     */
+    public static String getValidationErrorsMessage(II18nMessagesPlugin messagesPlugin ,Map<String, List<ValidationError>> errors) {
         String errorMsg = "[ ";
         for (String field : errors.keySet()) {
             errorMsg += field + " : ";
             for (ValidationError error : errors.get(field)) {
-                errorMsg += Msg.get(error.message()) + ", ";
+                errorMsg += messagesPlugin.get(error.message()) + ", ";
             }
         }
         // cut the last colon

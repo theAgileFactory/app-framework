@@ -20,10 +20,9 @@ package framework.utils;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import framework.services.configuration.II18nMessagesPlugin;
 import play.i18n.Lang;
 import play.i18n.Messages;
-import framework.services.configuration.II18nMessagesPlugin;
-import framework.services.configuration.Language;
 
 /**
  * The class to be used in replacement of the play {@link Messages} class
@@ -46,25 +45,7 @@ public class Msg {
      * @return the content
      */
     public static String get(String key, Object... args) {
-
-        if (key == null) {
-            return null;
-        }
-
-        String value = getMessagesPlugin().get(key, args);
-
-        if (!key.equals(value)) {
-            return value;
-        } else {
-            for (Language language : getMessagesPlugin().getValidLanguageMap().values()) {
-                value = getMessagesPlugin().get(language.getLang(), key, args);
-                if (!key.equals(value)) {
-                    return getMessagesPlugin().getCurrentLanguage().getCode().toUpperCase() + " - " + value;
-                }
-            }
-            return key;
-        }
-
+        return getMessagesPlugin().get(key, args);
     }
 
     /**

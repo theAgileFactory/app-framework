@@ -55,6 +55,7 @@ import framework.commons.DataType;
 import framework.commons.IFrameworkConstants;
 import framework.commons.message.EventMessage;
 import framework.commons.message.EventMessage.MessageType;
+import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.database.IDatabaseDependencyService;
 import framework.services.ext.ExtensionManagerException;
 import framework.services.ext.IExtension;
@@ -65,7 +66,6 @@ import framework.services.plugins.api.IPluginRunnerConfigurator;
 import framework.services.plugins.api.IStaticPluginRunnerDescriptor;
 import framework.services.plugins.api.PluginException;
 import framework.services.system.ISysAdminUtils;
-import framework.utils.Msg;
 import framework.utils.Utilities;
 import models.framework_models.plugin.PluginConfiguration;
 import models.framework_models.plugin.PluginDefinition;
@@ -87,6 +87,7 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
     private static Logger.ALogger log = Logger.of(PluginManagerServiceImpl.class);
     private ActorSystem actorSystem;
     private ActorRef pluginStatusCallbackActorRef;
+    private II18nMessagesPlugin messagesPlugin;
 
     /**
      * Loaded plugin extensions
@@ -130,8 +131,9 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
      *            the service which ensures that the database is available
      */
     @Inject
-    public PluginManagerServiceImpl(ApplicationLifecycle lifecycle, ISysAdminUtils sysAdminUtils, IDatabaseDependencyService databaseDependencyService) {
+    public PluginManagerServiceImpl(ApplicationLifecycle lifecycle, ISysAdminUtils sysAdminUtils, II18nMessagesPlugin messagesPlugin, IDatabaseDependencyService databaseDependencyService) {
         log.info("SERVICE>>> PluginManagerServiceImpl starting...");
+        this.messagesPlugin=messagesPlugin;
         pluginByIds = Collections.synchronizedMap(new HashMap<Long, PluginRegistrationEntry>());
         pluginExtensions = Collections.synchronizedMap(new HashMap<String, IExtension>());
         lifecycle.addStopHook(() -> {
@@ -398,7 +400,7 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
             }
             pluginRunner.init(new PluginContextImpl(pluginConfiguration, this));
             ActorRef pluginLifeCycleControllingActorRef = getActorSystem()
-                    .actorOf(Props.create(new PluginLifeCycleControllingActorCreator(pluginConfiguration.id, pluginRunner, getPluginStatusCallbackActorRef())));
+                    .actorOf(Props.create(new PluginLifeCycleControllingActorCreator(pluginConfiguration.id, pluginRunner, getPluginStatusCallbackActorRef(), getMessagesPlugin())));
             log.info(String.format("[END] the plugin %d has been initialized", pluginConfiguration.id));
             return new PluginRegistrationEntry(pluginConfiguration.id, pluginRunner, pluginLifeCycleControllingActorRef);
         } catch (Exception e) {
@@ -483,7 +485,7 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
                 } catch (Exception e) {
                     String uuid = UUID.randomUUID().toString();
                     log.error(String.format("The plugin %d cannot be started, unexpected error %s", pluginConfigurationId, uuid), e);
-                    PluginLog.saveStartPluginLog(pluginConfigurationId, Msg.get("plugin.failed.start", pluginConfigurationId, uuid), true);
+                    PluginLog.saveStartPluginLog(pluginConfigurationId, getMessagesPlugin().get("plugin.failed.start", pluginConfigurationId, uuid), true);
                 }
             } else {
                 log.error(String.format("The router for the plugin configuration %d is not stopped, cannot start it", pluginConfigurationId));
@@ -575,7 +577,7 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
                 } catch (Exception e) {
                     String uuid = UUID.randomUUID().toString();
                     log.error(String.format("The plugin %d cannot be stopped, status is unknown, id of error is %s", pluginConfigurationId, uuid), e);
-                    PluginLog.saveStopPluginLog(pluginConfigurationId, Msg.get("plugin.failed.stop", pluginConfigurationId, uuid), true);
+                    PluginLog.saveStopPluginLog(pluginConfigurationId, getMessagesPlugin().get("plugin.failed.stop", pluginConfigurationId, uuid), true);
                 }
             } else {
                 log.error(String.format("The plugin %d is not started, cannot stop it", pluginConfigurationId));
@@ -772,6 +774,10 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
             log.error(String.format("Error while searching for an actor path %s to check if the actor is running or not", actorPath), e);
         }
         return false;
+    }
+
+    private II18nMessagesPlugin getMessagesPlugin() {
+        return messagesPlugin;
     }
 
     /**
@@ -1010,16 +1016,22 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
         private Long pluginConfigurationId;
         private IPluginRunner pluginRunner;
         private ActorRef pluginStatusCallbackActorRef;
+        private II18nMessagesPlugin messagesPlugin;
 
-        public PluginLifeCycleControllingActorCreator(Long pluginConfigurationId, IPluginRunner pluginRunner, ActorRef pluginStatusCallbackActorRef) {
+        public PluginLifeCycleControllingActorCreator(Long pluginConfigurationId, IPluginRunner pluginRunner, ActorRef pluginStatusCallbackActorRef, II18nMessagesPlugin messagesPlugin) {
             this.pluginStatusCallbackActorRef = pluginStatusCallbackActorRef;
             this.pluginConfigurationId = pluginConfigurationId;
             this.pluginRunner = pluginRunner;
+            this.messagesPlugin=messagesPlugin;
         }
 
         @Override
         public PluginLifeCycleControllingActor create() throws Exception {
-            return new PluginLifeCycleControllingActor(pluginConfigurationId, pluginRunner, pluginStatusCallbackActorRef);
+            return new PluginLifeCycleControllingActor(pluginConfigurationId, pluginRunner, pluginStatusCallbackActorRef, getMessagesPlugin());
+        }
+
+        private II18nMessagesPlugin getMessagesPlugin() {
+            return messagesPlugin;
         }
     }
 
@@ -1037,9 +1049,15 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
         private Long pluginConfigurationId;
         private IPluginRunner pluginRunner;
         private ActorRef pluginStatusCallbackActorRef;
+        private II18nMessagesPlugin messagesPlugin;
 
-        public PluginLifeCycleControllingActor(Long pluginConfigurationId, IPluginRunner pluginRunner, ActorRef pluginStatusCallbackActorRef) {
+        public PluginLifeCycleControllingActor(
+                Long pluginConfigurationId, 
+                IPluginRunner pluginRunner, 
+                ActorRef pluginStatusCallbackActorRef,
+                II18nMessagesPlugin messagesPlugin) {
             super();
+            this.messagesPlugin=messagesPlugin;
             this.pluginConfigurationId = pluginConfigurationId;
             this.pluginRunner = pluginRunner;
             this.pluginStatusCallbackActorRef = pluginStatusCallbackActorRef;
@@ -1054,23 +1072,23 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
                         getPluginRunner().start();
                         getPluginStatusCallbackActorRef().tell(new CallbackLifeCycleMessage(PluginStatus.STARTED, getPluginConfigurationId()),
                                 ActorRef.noSender());
-                        PluginLog.saveStartPluginLog(getPluginConfigurationId(), Msg.get("plugin.success.start", getPluginConfigurationId()), false);
+                        PluginLog.saveStartPluginLog(getPluginConfigurationId(), getMessagesPlugin().get("plugin.success.start", getPluginConfigurationId()), false);
                     } catch (Exception e) {
                         getPluginStatusCallbackActorRef().tell(new CallbackLifeCycleMessage(PluginStatus.START_FAILED, getPluginConfigurationId()),
                                 ActorRef.noSender());
                         log.error(String.format("The plugin %d cannot be started, unexpected error", pluginConfigurationId), e);
                         PluginLog.saveStartPluginLog(pluginConfigurationId,
-                                Msg.get("plugin.failed.start", pluginConfigurationId, Utilities.getExceptionAsString(e)), true);
+                                getMessagesPlugin().get("plugin.failed.start", pluginConfigurationId, Utilities.getExceptionAsString(e)), true);
                     }
                     break;
                 case STOP:
                     try {
                         getPluginRunner().stop();
-                        PluginLog.saveStopPluginLog(pluginConfigurationId, Msg.get("plugin.success.stop", pluginConfigurationId), false);
+                        PluginLog.saveStopPluginLog(pluginConfigurationId, getMessagesPlugin().get("plugin.success.stop", pluginConfigurationId), false);
                     } catch (Exception e) {
                         String uuid = UUID.randomUUID().toString();
                         log.error(String.format("The plugin %d has reported an error while stopping, id of error is %s", pluginConfigurationId, uuid), e);
-                        PluginLog.saveStopPluginLog(pluginConfigurationId, Msg.get("plugin.failed.stop", pluginConfigurationId, uuid), true);
+                        PluginLog.saveStopPluginLog(pluginConfigurationId, getMessagesPlugin().get("plugin.failed.stop", pluginConfigurationId, uuid), true);
                     }
                     getPluginStatusCallbackActorRef().tell(new CallbackLifeCycleMessage(PluginStatus.STOPPED, getPluginConfigurationId()), ActorRef.noSender());
                     break;
@@ -1090,6 +1108,10 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
 
         private ActorRef getPluginStatusCallbackActorRef() {
             return pluginStatusCallbackActorRef;
+        }
+
+        private II18nMessagesPlugin getMessagesPlugin() {
+            return messagesPlugin;
         }
     }
 

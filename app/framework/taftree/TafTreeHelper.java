@@ -21,9 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
 import play.Logger;
 import play.mvc.Http;
 import play.mvc.Http.Request;
@@ -32,7 +29,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import framework.services.configuration.II18nMessagesPlugin;
-import framework.utils.Msg;
 
 /**
  * The taf tree helper provides the methods to manage the objects that represent
@@ -41,11 +37,7 @@ import framework.utils.Msg;
  * @author Johann Kohler
  * 
  */
-@Singleton
 public class TafTreeHelper {
-    @Inject
-    private static II18nMessagesPlugin messagesPlugin;
-
     /**
      * Get the id of node from the JSON request.
      * 
@@ -94,8 +86,10 @@ public class TafTreeHelper {
      *            the http request
      * @param node
      *            the node to fill
+     * @param messagesPlugin
+     *            the i18n management service
      */
-    public static void fill(Request request, ITafTreeNode node) {
+    public static void fill(Request request, ITafTreeNode node, II18nMessagesPlugin messagesPlugin) {
 
         JsonNode json = request.body().asJson();
 
@@ -108,7 +102,7 @@ public class TafTreeHelper {
 
             node.setDeleted(false);
             node.setManageable(true);
-            setName(true, node, name);
+            setName(true, node, name,messagesPlugin);
             node.setOrder(order);
             node.setParent(null);
 
@@ -116,13 +110,13 @@ public class TafTreeHelper {
 
             node.setDeleted(false);
             node.setManageable(true);
-            setName(true, node, name);
+            setName(true, node, name,messagesPlugin);
             node.setOrder(order);
             node.setParent(parentId);
 
         } else if (action.equals("edit")) {
 
-            setName(false, node, name);
+            setName(false, node, name,messagesPlugin);
 
         } else if (action.equals("changeOrder")) {
 
@@ -146,10 +140,12 @@ public class TafTreeHelper {
      * 
      * @param node
      *            the node to jsonify
+     * @param messagesPlugin
+     *            the i18n management service
      */
-    public static JsonNode get(ITafTreeNode node) {
+    public static JsonNode get(ITafTreeNode node, II18nMessagesPlugin messagesPlugin) {
 
-        JSTafTreeNode jsNode = new JSTafTreeNode(node.getId(), getName(node), node.isManageable(), node.getOrder(), node.hasChildren(),
+        JSTafTreeNode jsNode = new JSTafTreeNode(node.getId(), getName(node,messagesPlugin), node.isManageable(), node.getOrder(), node.hasChildren(),
                 node.getLastChildrenOrder());
 
         ObjectMapper mapper = new ObjectMapper();
@@ -162,12 +158,14 @@ public class TafTreeHelper {
      * 
      * @param nodes
      *            the nodes to jsonify
+     * @param messagesPlugin
+     *            the i18n management service
      */
-    public static JsonNode gets(List<? extends ITafTreeNode> nodes) {
+    public static JsonNode gets(List<? extends ITafTreeNode> nodes, II18nMessagesPlugin messagesPlugin) {
 
         List<JSTafTreeNode> jsNodes = new ArrayList<JSTafTreeNode>();
         for (ITafTreeNode node : nodes) {
-            JSTafTreeNode jsNode = new JSTafTreeNode(node.getId(), getName(node), node.isManageable(), node.getOrder(), node.hasChildren(),
+            JSTafTreeNode jsNode = new JSTafTreeNode(node.getId(), getName(node, messagesPlugin), node.isManageable(), node.getOrder(), node.hasChildren(),
                     node.getLastChildrenOrder());
             jsNodes.add(jsNode);
         }
@@ -186,8 +184,10 @@ public class TafTreeHelper {
      *            the node
      * @param name
      *            the name
+     * @param messagesPlugin
+     *            the i18n management service
      */
-    private static void setName(boolean isNew, ITafTreeNode node, String name) {
+    private static void setName(boolean isNew, ITafTreeNode node, String name, II18nMessagesPlugin messagesPlugin) {
 
         String key = null;
         if (isNew) {
@@ -198,7 +198,7 @@ public class TafTreeHelper {
 
         String lang = Http.Context.current().lang().code();
 
-        getMessagesPlugin().add(key, name, lang);
+        messagesPlugin.add(key, name, lang);
 
         node.setName(key);
     }
@@ -209,11 +209,7 @@ public class TafTreeHelper {
      * @param node
      *            the node
      */
-    public static String getName(ITafTreeNode node) {
-        return Msg.get(node.getName());
-    }
-
-    private static II18nMessagesPlugin getMessagesPlugin() {
-        return messagesPlugin;
+    public static String getName(ITafTreeNode node, II18nMessagesPlugin messagesPlugin) {
+        return messagesPlugin.get(node.getName());
     }
 }

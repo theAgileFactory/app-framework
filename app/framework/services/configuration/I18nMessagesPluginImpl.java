@@ -30,6 +30,13 @@ import javax.inject.Singleton;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.avaje.ebean.Ebean;
+import com.avaje.ebean.SqlQuery;
+import com.avaje.ebean.SqlRow;
+import com.avaje.ebean.SqlUpdate;
+
+import framework.services.database.IDatabaseDependencyService;
+import framework.utils.DefaultSelectableValueHolderCollection;
 import play.Configuration;
 import play.Environment;
 import play.Logger;
@@ -40,16 +47,9 @@ import play.libs.F.Promise;
 import play.mvc.Http;
 import play.twirl.api.Html;
 
-import com.avaje.ebean.Ebean;
-import com.avaje.ebean.SqlQuery;
-import com.avaje.ebean.SqlRow;
-import com.avaje.ebean.SqlUpdate;
-
-import framework.services.database.IDatabaseDependencyService;
-import framework.utils.DefaultSelectableValueHolderCollection;
-
 /**
- * The default implementation for the {@link II18nMessagesPlugin} interface.<br/>
+ * The default implementation for the {@link II18nMessagesPlugin} interface.
+ * <br/>
  * This implementation is based on a in memory {@link Hashtable} which:
  * <ul>
  * <li>key = a language code (lower case)</li>
@@ -116,6 +116,7 @@ public class I18nMessagesPluginImpl implements II18nMessagesPlugin {
         this.validLanguageList = Collections.synchronizedList(new ArrayList<Language>());
         this.validLanguageMap = Collections.unmodifiableMap(Collections.synchronizedMap(new LinkedHashMap<String, Language>() {
             private static final long serialVersionUID = 1L;
+
             {
                 Integer c = 1;
                 List<String> languageCodes = getConfiguration().getStringList(Config.LANGUAGE_LIST.getConfigurationKey());
@@ -198,7 +199,22 @@ public class I18nMessagesPluginImpl implements II18nMessagesPlugin {
 
     @Override
     public String get(String key, Object... args) {
-        return get(getCurrentLanguage().getLang(), key, args);
+        if (key == null) {
+            return null;
+        }
+        String value = get(getCurrentLanguage().getLang(), key, args);
+
+        if (!key.equals(value)) {
+            return value;
+        } else {
+            for (Language language : getValidLanguageMap().values()) {
+                value = get(language.getLang(), key, args);
+                if (!key.equals(value)) {
+                    return getCurrentLanguage().getCode().toUpperCase() + " - " + value;
+                }
+            }
+            return key;
+        }
     }
 
     @Override

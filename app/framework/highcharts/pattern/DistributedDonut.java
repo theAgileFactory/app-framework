@@ -27,7 +27,7 @@ import framework.highcharts.HighchartsUtils;
 import framework.highcharts.data.NameValueItem;
 import framework.highcharts.data.Serie;
 import framework.highcharts.data.SeriesContainer;
-import framework.utils.Msg;
+import framework.services.configuration.II18nMessagesPlugin;
 
 /**
  * A distributed donut pattern is a pie chart with 2 series: the inner serie
@@ -37,9 +37,13 @@ import framework.utils.Msg;
  * @author Johann Kohler
  */
 public class DistributedDonut {
-
+    private II18nMessagesPlugin messagesPlugin;
     private List<Elem> elems = new ArrayList<Elem>();
 
+    public DistributedDonut(II18nMessagesPlugin messagesPlugin){
+        this.messagesPlugin=messagesPlugin;
+    }
+    
     /**
      * Add an elem.
      * 
@@ -84,7 +88,7 @@ public class DistributedDonut {
             // if the total of the sub values is lesser than the category value,
             // then we add a new item for the difference.
             if (subValuesTotal.compareTo(elem.getValue()) < 0) {
-                NameValueItem subItem = new NameValueItem(Msg.get("other"), elem.getValue() - subValuesTotal, HighchartsUtils.LIGHT_COLORS[i]);
+                NameValueItem subItem = new NameValueItem(getMessagesPlugin().get("other"), elem.getValue() - subValuesTotal, HighchartsUtils.LIGHT_COLORS[i]);
                 outerSerie.add(subItem);
             }
 
@@ -166,6 +170,10 @@ public class DistributedDonut {
             return this.subValues;
         }
 
+    }
+
+    private II18nMessagesPlugin getMessagesPlugin() {
+        return messagesPlugin;
     }
 
 }

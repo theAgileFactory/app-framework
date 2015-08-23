@@ -49,7 +49,6 @@ import framework.commons.IFrameworkConstants;
 import framework.utils.DefaultSelectableValueHolder;
 import framework.utils.DefaultSelectableValueHolderCollection;
 import framework.utils.ISelectableValueHolderCollection;
-import framework.utils.Msg;
 
 /**
  * A KPI is a correctly defined KPI definition that is ready to use.
@@ -628,7 +627,7 @@ public class Kpi {
             switch (kpiValueDefinition.renderType) {
             case LABEL:
                 if (colorRule != null && colorRule.renderLabel != null && !colorRule.renderLabel.equals("")) {
-                    return Msg.get(colorRule.renderLabel);
+                    return colorRule.renderLabel;
                 } else {
                     return IFrameworkConstants.DEFAULT_VALUE_EMPTY_DATA;
                 }

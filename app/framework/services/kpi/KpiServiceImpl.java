@@ -40,11 +40,11 @@ import play.mvc.Result;
 import framework.highcharts.HighchartsUtils;
 import framework.highcharts.data.SeriesContainer;
 import framework.highcharts.data.TimeValueItem;
+import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.configuration.IImplementationDefinedObjectService;
 import framework.services.database.IDatabaseDependencyService;
 import framework.services.kpi.Kpi.DataType;
 import framework.services.system.ISysAdminUtils;
-import framework.utils.Msg;
 
 /**
  * The KPI service.
@@ -59,6 +59,7 @@ public class KpiServiceImpl implements IKpiService {
     private String defaultCurrencyCode = "CHF";
     private ISysAdminUtils sysAdminUtils;
     private Environment environment;
+    private II18nMessagesPlugin messagesPlugin;
 
     /**
      * Create a new KpiServiceImpl
@@ -72,13 +73,16 @@ public class KpiServiceImpl implements IKpiService {
      * @param implementationDefinedObjectService
      *            the implementation time service (depends on the application in
      *            which the framework is implemented)
+     * @param messagesPlugin service for i18n
      * @param databaseDependencyService
+     * @param sysAdminUtils
      */
     @Inject
     public KpiServiceImpl(ApplicationLifecycle lifecycle, Environment environment, Configuration configuration,
-            IImplementationDefinedObjectService implementationDefinedObjectService, IDatabaseDependencyService databaseDependencyService,
+            IImplementationDefinedObjectService implementationDefinedObjectService, II18nMessagesPlugin messagesPlugin,IDatabaseDependencyService databaseDependencyService,
             ISysAdminUtils sysAdminUtils) {
         log.info("SERVICE>>> KpiServiceImpl starting...");
+        this.messagesPlugin=messagesPlugin;
         this.environment = environment;
         this.sysAdminUtils = sysAdminUtils;
         this.defaultCurrencyCode = implementationDefinedObjectService.getDefaultCurrencyCode();
@@ -196,7 +200,7 @@ public class KpiServiceImpl implements IKpiService {
         if (datas != null && datas.size() > 0) {
 
             seriesContainer = new SeriesContainer<TimeValueItem>();
-            framework.highcharts.data.Serie<TimeValueItem> timeSerie = new framework.highcharts.data.Serie<TimeValueItem>(Msg.get(kpi
+            framework.highcharts.data.Serie<TimeValueItem> timeSerie = new framework.highcharts.data.Serie<TimeValueItem>(getMessagesPlugin().get(kpi
                     .getValueName(DataType.MAIN)));
             seriesContainer.addSerie(timeSerie);
 
@@ -271,5 +275,9 @@ public class KpiServiceImpl implements IKpiService {
     @Override
     public ISysAdminUtils getSysAdminUtils() {
         return sysAdminUtils;
+    }
+
+    private II18nMessagesPlugin getMessagesPlugin() {
+        return messagesPlugin;
     }
 }
