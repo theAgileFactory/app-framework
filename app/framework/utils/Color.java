@@ -17,6 +17,8 @@
  */
 package framework.utils;
 
+import framework.services.configuration.II18nMessagesPlugin;
+
 /**
  * This helper provides the components to manage an attribute that is a
  * bootstrap color.
@@ -28,23 +30,26 @@ public class Color {
 
     /**
      * Get the the selectable colors as a value holder collection.
+     * 
+     * @param messagesPlugin
+     *            the service to i18n the color name
      */
-    public static DefaultSelectableValueHolderCollection<CssValueForValueHolder> getColorsAsValueHolderCollection() {
+    public static DefaultSelectableValueHolderCollection<CssValueForValueHolder> getColorsAsValueHolderCollection(II18nMessagesPlugin messagesPlugin) {
 
         DefaultSelectableValueHolderCollection<CssValueForValueHolder> selectableCssClasses;
         selectableCssClasses = new DefaultSelectableValueHolderCollection<CssValueForValueHolder>();
-        selectableCssClasses.add(new DefaultSelectableValueHolder<CssValueForValueHolder>(new CssValueForValueHolder("default", Msg.get("maf.color.default"),
-                "light"), "1"));
-        selectableCssClasses.add(new DefaultSelectableValueHolder<CssValueForValueHolder>(new CssValueForValueHolder("info", Msg.get("maf.color.info"),
-                "info"), "2"));
-        selectableCssClasses.add(new DefaultSelectableValueHolder<CssValueForValueHolder>(new CssValueForValueHolder("primary", Msg.get("maf.color.primary"),
-                "primary"), "3"));
-        selectableCssClasses.add(new DefaultSelectableValueHolder<CssValueForValueHolder>(new CssValueForValueHolder("success", Msg.get("maf.color.success"),
-                "success"), "4"));
-        selectableCssClasses.add(new DefaultSelectableValueHolder<CssValueForValueHolder>(new CssValueForValueHolder("warning", Msg.get("maf.color.warning"),
-                "warning"), "5"));
-        selectableCssClasses.add(new DefaultSelectableValueHolder<CssValueForValueHolder>(new CssValueForValueHolder("danger", Msg.get("maf.color.danger"),
-                "danger"), "6"));
+        selectableCssClasses.add(new DefaultSelectableValueHolder<CssValueForValueHolder>(
+                new CssValueForValueHolder("default", messagesPlugin.get("maf.color.default"), "light"), "1"));
+        selectableCssClasses.add(new DefaultSelectableValueHolder<CssValueForValueHolder>(
+                new CssValueForValueHolder("info", messagesPlugin.get("maf.color.info"), "info"), "2"));
+        selectableCssClasses.add(new DefaultSelectableValueHolder<CssValueForValueHolder>(
+                new CssValueForValueHolder("primary", messagesPlugin.get("maf.color.primary"), "primary"), "3"));
+        selectableCssClasses.add(new DefaultSelectableValueHolder<CssValueForValueHolder>(
+                new CssValueForValueHolder("success", messagesPlugin.get("maf.color.success"), "success"), "4"));
+        selectableCssClasses.add(new DefaultSelectableValueHolder<CssValueForValueHolder>(
+                new CssValueForValueHolder("warning", messagesPlugin.get("maf.color.warning"), "warning"), "5"));
+        selectableCssClasses.add(new DefaultSelectableValueHolder<CssValueForValueHolder>(
+                new CssValueForValueHolder("danger", messagesPlugin.get("maf.color.danger"), "danger"), "6"));
 
         return selectableCssClasses;
 
@@ -55,10 +60,12 @@ public class Color {
      * 
      * @param cssColor
      *            the CSS color
+     * @param messagesPlugin
+     *            the service to i18n the color name
      * @return
      */
-    public static String getLabel(String cssColor) {
-        return "<span class='label label-" + cssColor + "'>" + Msg.get("maf.color." + cssColor) + "</span>";
+    public static String getLabel(String cssColor, II18nMessagesPlugin messagesPlugin) {
+        return "<span class='label label-" + cssColor + "'>" + messagesPlugin.get("maf.color." + cssColor) + "</span>";
     }
 
 }

@@ -19,7 +19,8 @@ package framework.utils;
 
 /**
  * A specific value object which contains a label and a CSS class that is used
- * as the value of a ValueHolder
+ * as the value of a {@link ISelectableValueHolder}.<br/>
+ * The CSS element is to be used by some "compatible" graphical components such as "parts.radiobuttongroup".
  * 
  * @author Johann Kohler
  */

@@ -61,7 +61,6 @@ import scala.concurrent.duration.FiniteDuration;
 public class SysAdminUtilsImpl implements ISysAdminUtils {
     private static Logger.ALogger log = Logger.of(SysAdminUtilsImpl.class);
     private static final String PERMGEN_MEMORY_POOL_NAME = "PS Perm Gen";
-    private Configuration configuration;
     private ActorSystem actorSystem;
     private Cancellable automaticSystemStatus;
 
@@ -82,7 +81,6 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
             ActorSystem actorSystem) {
         log.info("SERVICE>>> SysAdminUtilsImpl starting...");
         this.actorSystem = actorSystem;
-        this.configuration=configuration;
         flushAllSchedulerStates();
         initAutomatedSystemStatus(configuration);
         lifecycle.addStopHook(() -> {
@@ -209,9 +207,9 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
                 Timestamp lastUpdate = schedulerState.lastUpdate;
                 int numberOfMinutes = Play.application().configuration().getInt("maf.test.old.running.process");
                 Date currentMinus24Hours = new Date(System.currentTimeMillis() - (numberOfMinutes * 60 * 1000));
-                log.info(String
-                        .format("Conflict notification : The scheduled process %s with transaction id %s will not run because another process is already running with transaction id %s",
-                                scheduledActionUuid, transactionId, schedulerState.transactionId));
+                log.info(String.format(
+                        "Conflict notification : The scheduled process %s with transaction id %s will not run because another process is already running with transaction id %s",
+                        scheduledActionUuid, transactionId, schedulerState.transactionId));
                 if (lastUpdate.before(currentMinus24Hours)) {
                     log.error(String.format("ERROR : the scheduled process %s with transaction id %s is still running after %d minutes", scheduledActionUuid,
                             schedulerState.transactionId, numberOfMinutes));
@@ -246,7 +244,8 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
             } else {
                 schedulerState.isRunning = false;
                 schedulerState.save();
-                log.info(String.format("Scheduled action for %s with transaction id %s completed, scheduler state flushed", scheduledActionUuid, transactionId));
+                log.info(
+                        String.format("Scheduled action for %s with transaction id %s completed, scheduler state flushed", scheduledActionUuid, transactionId));
             }
             SchedulerState.flushOldStates();
             Ebean.commitTransaction();
@@ -271,9 +270,8 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
     /*
      * (non-Javadoc)
      * 
-     * @see
-     * framework.services.system.ISysAdminUtils#dumpSystemStatus(java.lang.String
-     * )
+     * @see framework.services.system.ISysAdminUtils#dumpSystemStatus(java.lang.
+     * String )
      */
     @Override
     public void dumpSystemStatus(String eventName) {
@@ -283,9 +281,8 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
     /*
      * (non-Javadoc)
      * 
-     * @see
-     * framework.services.system.ISysAdminUtils#dumpSystemStatus(java.lang.String
-     * , boolean)
+     * @see framework.services.system.ISysAdminUtils#dumpSystemStatus(java.lang.
+     * String , boolean)
      */
     @Override
     public void dumpSystemStatus(String eventName, boolean logAsDebug) {
@@ -363,7 +360,7 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
      */
     private void initAutomatedSystemStatus(Configuration configuration) {
         if (configuration.getBoolean("maf.sysadmin.dump.vmstatus.active")) {
-            int frequency =configuration.getInt("maf.sysadmin.dump.vmstatus.frequency");
+            int frequency = configuration.getInt("maf.sysadmin.dump.vmstatus.frequency");
             log.info(">>>>>>>>>>>>>>>> Activate automated system status, frequency " + frequency);
             automaticSystemStatus = scheduleRecurring(true, "AUTOMATED STATUS", Duration.create(frequency, TimeUnit.SECONDS),
                     Duration.create(frequency, TimeUnit.SECONDS), new Runnable() {

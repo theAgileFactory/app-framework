@@ -23,6 +23,16 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Properties;
 
+/**
+ * The java.util.Properites class uses the "ISO 8859-1" encoding when reading
+ * contents from an input file. This is a major predicament when the input file
+ * contains non-plain English text.<br/>
+ * The ProperitesLoader class, below, makes it possible to load properties from
+ * an input file of any type of encoding.
+ * 
+ * @author Pierre-Yves Cloux
+ *
+ */
 public class PropertiesLoader {
 
     public static Properties loadProperties(InputStream is, String encoding) throws IOException {

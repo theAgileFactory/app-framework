@@ -23,7 +23,9 @@ import java.text.NumberFormat;
 import java.text.ParsePosition;
 
 /**
- * define the signed number format
+ * Define a signed number format.<br/>
+ * This one is appending to a standard number format a + if the value is
+ * positive.
  * 
  * @author Johann Kohler
  * 
