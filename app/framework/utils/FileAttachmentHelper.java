@@ -23,22 +23,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
-
-import models.framework_models.common.Attachment;
 
 import org.apache.commons.io.IOUtils;
 
+import framework.commons.IFrameworkConstants;
+import framework.services.session.IUserSessionManagerPlugin;
+import framework.services.storage.IAttachmentManagerPlugin;
+import models.framework_models.common.Attachment;
 import play.Logger;
 import play.cache.Cache;
 import play.mvc.Controller;
 import play.mvc.Http.MultipartFormData;
 import play.mvc.Http.MultipartFormData.FilePart;
 import play.mvc.Result;
-import framework.commons.IFrameworkConstants;
-import framework.services.session.IUserSessionManagerPlugin;
-import framework.services.storage.IAttachmentManagerPlugin;
 
 /**
  * An utility class which manages the extraction of uploaded (one or more) files
@@ -52,11 +50,6 @@ import framework.services.storage.IAttachmentManagerPlugin;
  */
 @Singleton
 public class FileAttachmentHelper {
-    @Inject
-    private static IAttachmentManagerPlugin attachmentPlugin;
-    @Inject
-    private static IUserSessionManagerPlugin sessionPluginManager;
-
     private static final int AUTHZ_FILE_DURATION = 1800;
 
     public static final String FILE_ATTRIBUTE_PREFIX = "_file_field_";
@@ -217,8 +210,10 @@ public class FileAttachmentHelper {
      *            the object class
      * @param objectId
      *            the object id
+     * @param attachmentPlugin
+     *            the service which is managing attachments
      */
-    public static Long saveAsAttachement(String fieldName, Class<?> objectClass, Long objectId) throws IOException {
+    public static Long saveAsAttachement(String fieldName, Class<?> objectClass, Long objectId, IAttachmentManagerPlugin attachmentPlugin) throws IOException {
         FileInputStream fIn = null;
         try {
 
@@ -228,9 +223,9 @@ public class FileAttachmentHelper {
             case UPLOAD:
                 FilePart filePart = getFilePart(fieldName);
                 fIn = new FileInputStream(filePart.getFile());
-                return getAttachmentPlugin().addFileAttachment(fIn, filePart.getContentType(), getFileName(fieldName), objectClass, objectId);
+                return attachmentPlugin.addFileAttachment(fIn, filePart.getContentType(), getFileName(fieldName), objectClass, objectId);
             case URL:
-                return getAttachmentPlugin().addUrlAttachment(getUrl(fieldName), getFileName(fieldName), objectClass, objectId);
+                return attachmentPlugin.addUrlAttachment(getUrl(fieldName), getFileName(fieldName), objectClass, objectId);
             default:
                 return null;
 
@@ -246,7 +241,8 @@ public class FileAttachmentHelper {
 
     /**
      * Get attachments for display.<br/>
-     * Return a list of attachments which is to be displayed to the end user.<br/>
+     * Return a list of attachments which is to be displayed to the end user.
+     * <br/>
      * If this method is called this means that the user is "allowed" to
      * download the file.<br/>
      * This methods thus generates an authorization token which contains the id
@@ -258,9 +254,14 @@ public class FileAttachmentHelper {
      *            the object class
      * @param objectId
      *            the object id
+     * @param attachmentManagerPlugin
+     *            the service which is managing attachments
+     * @param sessionManagerPlugin
+     *            the service which is managing user sessions
      */
-    public static List<Attachment> getFileAttachmentsForDisplay(Class<?> objectClass, Long objectId) {
-        return getFileAttachmentsForUpdateOrDisplay(objectClass, objectId, false);
+    public static List<Attachment> getFileAttachmentsForDisplay(Class<?> objectClass, Long objectId, IAttachmentManagerPlugin attachmentManagerPlugin,
+            IUserSessionManagerPlugin sessionManagerPlugin) {
+        return getFileAttachmentsForUpdateOrDisplay(objectClass, objectId, false, attachmentManagerPlugin, sessionManagerPlugin);
     }
 
     /**
@@ -278,9 +279,14 @@ public class FileAttachmentHelper {
      *            the object class
      * @param objectId
      *            the object id
+     * @param attachmentManagerPlugin
+     *            the service which is managing attachments
+     * @param sessionManagerPlugin
+     *            the service which is managing user sessions
      */
-    public static List<Attachment> getFileAttachmentsForUpdate(Class<?> objectClass, Long objectId) {
-        return getFileAttachmentsForUpdateOrDisplay(objectClass, objectId, true);
+    public static List<Attachment> getFileAttachmentsForUpdate(Class<?> objectClass, Long objectId, IAttachmentManagerPlugin attachmentManagerPlugin,
+            IUserSessionManagerPlugin sessionManagerPlugin) {
+        return getFileAttachmentsForUpdateOrDisplay(objectClass, objectId, true, attachmentManagerPlugin, sessionManagerPlugin);
     }
 
     /**
@@ -292,14 +298,19 @@ public class FileAttachmentHelper {
      *            the id of the object to which the attachment belong
      * @param canUpdate
      *            true if the update authorization should be allocated
+     * @param attachmentManagerPlugin
+     *            the service which is managing attachments
+     * @param sessionManagerPlugin
+     *            the service which is managing user sessions
      */
-    private static List<Attachment> getFileAttachmentsForUpdateOrDisplay(Class<?> objectClass, Long objectId, boolean canUpdate) {
-        List<Attachment> attachments = getAttachmentPlugin().getAttachmentsFromObjectTypeAndObjectId(objectClass, objectId, false);
+    private static List<Attachment> getFileAttachmentsForUpdateOrDisplay(Class<?> objectClass, Long objectId, boolean canUpdate,
+            IAttachmentManagerPlugin attachmentManagerPlugin, IUserSessionManagerPlugin sessionManagerPlugin) {
+        List<Attachment> attachments = attachmentManagerPlugin.getAttachmentsFromObjectTypeAndObjectId(objectClass, objectId, false);
         Set<Long> allowedIds = new HashSet<Long>();
         for (Attachment attachment : attachments) {
             allowedIds.add(attachment.id);
         }
-        String uid = getSessionPluginManager().getUserSessionId(Controller.ctx());
+        String uid = sessionManagerPlugin.getUserSessionId(Controller.ctx());
         allocateReadAuthorization(allowedIds, uid);
         if (canUpdate) {
             allocateUpdateAuthorization(allowedIds, uid);
@@ -348,21 +359,26 @@ public class FileAttachmentHelper {
      * 
      * @param attachmentId
      *            the id of an attachment
+     * @param attachmentManagerPlugin
+     *            the service which is managing attachments
+     * @param sessionManagerPlugin
+     *            the service which is managing user sessions
      * @return the attachment as a stream
      */
-    public static Result downloadFileAttachment(Long attachmentId) {
+    public static Result downloadFileAttachment(Long attachmentId, IAttachmentManagerPlugin attachmentManagerPlugin,
+            IUserSessionManagerPlugin sessionManagerPlugin) {
         @SuppressWarnings("unchecked")
-        Set<Long> allowedIds = (Set<Long>) Cache.get(IFrameworkConstants.ATTACHMENT_READ_AUTHZ_CACHE_PREFIX
-                + getSessionPluginManager().getUserSessionId(Controller.ctx()));
+        Set<Long> allowedIds = (Set<Long>) Cache
+                .get(IFrameworkConstants.ATTACHMENT_READ_AUTHZ_CACHE_PREFIX + sessionManagerPlugin.getUserSessionId(Controller.ctx()));
         if (allowedIds != null && allowedIds.contains(attachmentId)) {
             try {
-                Attachment attachment = getAttachmentPlugin().getAttachmentFromId(attachmentId);
+                Attachment attachment = attachmentManagerPlugin.getAttachmentFromId(attachmentId);
 
                 if (attachment.mimeType.equals(FileAttachmentHelper.FileType.URL.name())) {
                     return Controller.redirect(attachment.path);
                 } else {
                     Controller.response().setHeader("Content-Disposition", "attachment; filename=\"" + attachment.name + "\"");
-                    return Controller.ok(getAttachmentPlugin().getAttachmentContent(attachmentId));
+                    return Controller.ok(attachmentManagerPlugin.getAttachmentContent(attachmentId));
                 }
             } catch (IOException e) {
                 log.error("Error while retreiving the attachment content for " + attachmentId);
@@ -381,14 +397,20 @@ public class FileAttachmentHelper {
      * 
      * @param attachmentId
      *            the id of an attachment
+     * @param attachmentManagerPlugin
+     *            the service which is managing attachments
+     * @param sessionManagerPlugin
+     *            the service which is managing user sessions
+     * @return the result
      */
-    public static Result deleteFileAttachment(Long attachmentId) {
+    public static Result deleteFileAttachment(Long attachmentId, IAttachmentManagerPlugin attachmentManagerPlugin,
+            IUserSessionManagerPlugin sessionManagerPlugin) {
         @SuppressWarnings("unchecked")
-        Set<Long> allowedIds = (Set<Long>) Cache.get(IFrameworkConstants.ATTACHMENT_WRITE_AUTHZ_CACHE_PREFIX
-                + getSessionPluginManager().getUserSessionId(Controller.ctx()));
+        Set<Long> allowedIds = (Set<Long>) Cache
+                .get(IFrameworkConstants.ATTACHMENT_WRITE_AUTHZ_CACHE_PREFIX + sessionManagerPlugin.getUserSessionId(Controller.ctx()));
         if (allowedIds != null && allowedIds.contains(attachmentId)) {
             try {
-                getAttachmentPlugin().deleteAttachment(attachmentId);
+                attachmentManagerPlugin.deleteAttachment(attachmentId);
                 return Controller.ok();
             } catch (IOException e) {
                 log.error("Error while deleting the attachment content for " + attachmentId);
@@ -410,13 +432,5 @@ public class FileAttachmentHelper {
         public String getLabel() {
             return Msg.get("form.input.file_field.type." + name() + ".label");
         }
-    }
-
-    private static IAttachmentManagerPlugin getAttachmentPlugin() {
-        return attachmentPlugin;
-    }
-
-    private static IUserSessionManagerPlugin getSessionPluginManager() {
-        return sessionPluginManager;
     }
 }

@@ -18,9 +18,10 @@
 @(objectType: Class[_], objectId: Long)
 
 @import framework_views.parts
+@import framework_views.parts.commons._
 
 @fileAttachments=@{
-framework.utils.FileAttachmentHelper.getFileAttachmentsForDisplay(objectType, objectId);
+framework.utils.FileAttachmentHelper.getFileAttachmentsForDisplay(objectType, objectId,_fattach, _usession);
 }
 @if(fileAttachments!=null && fileAttachments.size()!=0){
 	<ul>

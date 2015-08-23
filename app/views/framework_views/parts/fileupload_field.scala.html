@@ -22,7 +22,7 @@
 
 @fileAttachments=@{
     if(objectType!=null && objectId!=null){
-        FileAttachmentHelper.getFileAttachmentsForUpdate(objectType, objectId);
+        FileAttachmentHelper.getFileAttachmentsForUpdate(objectType, objectId, _fattach, _usession);
     }else{
         null;
     }

@@ -34,18 +34,20 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.Version;
 
+import com.avaje.ebean.Model;
+
+import framework.services.ServiceStaticAccessor;
+import framework.services.session.IUserSessionManagerPlugin;
+import framework.services.storage.IAttachmentManagerPlugin;
+import framework.utils.CustomAttributeFormAndDisplayHandler;
+import framework.utils.FileAttachmentHelper;
+import framework.utils.Msg;
 import models.framework_models.parent.IModel;
 import models.framework_models.parent.IModelConstants;
 import play.Logger;
 import play.api.data.Field;
 import play.mvc.Http.MultipartFormData.FilePart;
 import play.twirl.api.Html;
-
-import com.avaje.ebean.Model;
-
-import framework.utils.CustomAttributeFormAndDisplayHandler;
-import framework.utils.FileAttachmentHelper;
-import framework.utils.Msg;
 
 /**
  * The image custom attribute value. An image is represented by a String in the
@@ -63,6 +65,7 @@ public class ImageCustomAttributeValue extends Model implements IModel, ICustomA
 
     public static ArrayList<String> authorizedContentType = new ArrayList<String>() {
         private static final long serialVersionUID = 1L;
+
         {
             add("image/gif");
             add("image/jpeg");
@@ -270,16 +273,18 @@ public class ImageCustomAttributeValue extends Model implements IModel, ICustomA
             this.isNotReadFromDb = false;
 
             try {
-
+                IUserSessionManagerPlugin userSessionManager = ServiceStaticAccessor.getUserSessionManagerPlugin();
+                IAttachmentManagerPlugin attachmentManagerPlugin = ServiceStaticAccessor.getAttachmentManagerPlugin();
                 // if exists, remove the current image
-                List<Attachment> attachments = FileAttachmentHelper.getFileAttachmentsForDisplay(ImageCustomAttributeValue.class, this.id);
+                List<Attachment> attachments = FileAttachmentHelper.getFileAttachmentsForDisplay(ImageCustomAttributeValue.class, this.id,
+                        attachmentManagerPlugin, userSessionManager);
                 if (attachments != null && attachments.size() > 0) {
-                    FileAttachmentHelper.deleteFileAttachment(attachments.get(0).id);
+                    FileAttachmentHelper.deleteFileAttachment(attachments.get(0).id, attachmentManagerPlugin, userSessionManager);
                     attachments.get(0).doDelete();
                 }
 
                 // add the new image
-                FileAttachmentHelper.saveAsAttachement(fieldName, ImageCustomAttributeValue.class, this.id);
+                FileAttachmentHelper.saveAsAttachement(fieldName, ImageCustomAttributeValue.class, this.id, attachmentManagerPlugin);
 
             } catch (Exception e) {
             }
