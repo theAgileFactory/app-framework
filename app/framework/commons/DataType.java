@@ -7,18 +7,17 @@ import java.util.List;
 import java.util.Map;
 
 import play.Logger;
-import framework.services.audit.Auditable;
-import framework.utils.Msg;
 
 /**
  * A data type from BizDock.<br/>
  * A data type can have different attributes:
  * <ul>
  * <li>dataName : the name of the data object</li>
- * <li>dataTypeClassName : the java class name associated with this data object</li>
- * <li>isAuditable : true if the data object is "auditable" (see
- * {@link Auditable}</li>
- * <li>isCustomAttribute : true if the data object can have custom attributes</li>
+ * <li>dataTypeClassName : the java class name associated with this data object
+ * </li>
+ * <li>isAuditable : true if the data object is "auditable"</li>
+ * <li>isCustomAttribute : true if the data object can have custom attributes
+ * </li>
  * </ul>
  * 
  * @author Pierre-Yves Cloux
@@ -87,7 +86,7 @@ public class DataType {
     }
 
     public String getLabel() {
-        return Msg.get("data_type." + this.getDataName() + ".label");
+        return "data_type." + this.getDataName() + ".label";
     }
 
     /**
