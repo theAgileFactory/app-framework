@@ -42,7 +42,6 @@ import framework.utils.Utilities;
 import models.framework_models.scheduler.SchedulerState;
 import play.Configuration;
 import play.Logger;
-import play.Play;
 import play.inject.ApplicationLifecycle;
 import play.libs.F.Promise;
 import scala.concurrent.duration.Duration;
@@ -59,10 +58,13 @@ import scala.concurrent.duration.FiniteDuration;
  */
 @Singleton
 public class SysAdminUtilsImpl implements ISysAdminUtils {
+
     private static Logger.ALogger log = Logger.of(SysAdminUtilsImpl.class);
     private static final String PERMGEN_MEMORY_POOL_NAME = "PS Perm Gen";
     private ActorSystem actorSystem;
     private Cancellable automaticSystemStatus;
+
+    private Configuration configuration;
 
     /**
      * Create a new SysAdminUtilsImpl
@@ -81,8 +83,9 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
             ActorSystem actorSystem) {
         log.info("SERVICE>>> SysAdminUtilsImpl starting...");
         this.actorSystem = actorSystem;
+        this.configuration = configuration;
         flushAllSchedulerStates();
-        initAutomatedSystemStatus(configuration);
+        // initAutomatedSystemStatus();
         lifecycle.addStopHook(() -> {
             log.info("SERVICE>>> SysAdminUtilsImpl stopping...");
             if (automaticSystemStatus != null) {
@@ -205,7 +208,7 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
                 return true;
             } else {
                 Timestamp lastUpdate = schedulerState.lastUpdate;
-                int numberOfMinutes = Play.application().configuration().getInt("maf.test.old.running.process");
+                int numberOfMinutes = this.getConfiguration().getInt("maf.test.old.running.process");
                 Date currentMinus24Hours = new Date(System.currentTimeMillis() - (numberOfMinutes * 60 * 1000));
                 log.info(String.format(
                         "Conflict notification : The scheduled process %s with transaction id %s will not run because another process is already running with transaction id %s",
@@ -244,8 +247,8 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
             } else {
                 schedulerState.isRunning = false;
                 schedulerState.save();
-                log.info(
-                        String.format("Scheduled action for %s with transaction id %s completed, scheduler state flushed", scheduledActionUuid, transactionId));
+                log.info(String.format("Scheduled action for %s with transaction id %s completed, scheduler state flushed", scheduledActionUuid,
+                        transactionId));
             }
             SchedulerState.flushOldStates();
             Ebean.commitTransaction();
@@ -358,9 +361,9 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
     /**
      * Initialize the automated system status.
      */
-    private void initAutomatedSystemStatus(Configuration configuration) {
-        if (configuration.getBoolean("maf.sysadmin.dump.vmstatus.active")) {
-            int frequency = configuration.getInt("maf.sysadmin.dump.vmstatus.frequency");
+    private void initAutomatedSystemStatus() {
+        if (this.getConfiguration().getBoolean("maf.sysadmin.dump.vmstatus.active")) {
+            int frequency = this.getConfiguration().getInt("maf.sysadmin.dump.vmstatus.frequency");
             log.info(">>>>>>>>>>>>>>>> Activate automated system status, frequency " + frequency);
             automaticSystemStatus = scheduleRecurring(true, "AUTOMATED STATUS", Duration.create(frequency, TimeUnit.SECONDS),
                     Duration.create(frequency, TimeUnit.SECONDS), new Runnable() {
@@ -381,5 +384,9 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
 
     private ActorSystem getActorSystem() {
         return actorSystem;
+    }
+
+    private Configuration getConfiguration() {
+        return this.configuration;
     }
 }
