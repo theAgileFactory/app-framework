@@ -27,11 +27,11 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Version;
 
-import models.framework_models.parent.IModel;
-import models.framework_models.parent.IModelConstants;
-
 import com.avaje.ebean.Model;
 import com.avaje.ebean.annotation.EnumMapping;
+
+import models.framework_models.parent.IModel;
+import models.framework_models.parent.IModelConstants;
 
 /**
  * An object which represents category for a notification.
@@ -85,9 +85,9 @@ public class NotificationCategory extends Model implements IModel {
     }
 
     @EnumMapping(nameValuePairs = "USER_MANAGEMENT=USER_MANAGEMENT, APPROVAL=APPROVAL, REQUEST_REVIEW=REQUEST_REVIEW, DOCUMENT=DOCUMENT, ISSUE=ISSUE,"
-            + " AUDIT=AUDIT, PORTFOLIO_ENTRY=PORTFOLIO_ENTRY, TIMESHEET=TIMESHEET", integerType = false)
+            + " AUDIT=AUDIT, PORTFOLIO_ENTRY=PORTFOLIO_ENTRY, TIMESHEET=TIMESHEET, INFORMATION=INFORMATION", integerType = false)
     public static enum Code {
-        USER_MANAGEMENT, APPROVAL, REQUEST_REVIEW, DOCUMENT, ISSUE, AUDIT, PORTFOLIO_ENTRY, TIMESHEET;
+        USER_MANAGEMENT, APPROVAL, REQUEST_REVIEW, DOCUMENT, ISSUE, AUDIT, PORTFOLIO_ENTRY, TIMESHEET, INFORMATION;
     }
 
 }
