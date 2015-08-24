@@ -36,17 +36,6 @@ public abstract class AbstractRequestHandler extends DefaultHttpRequestHandler {
      * @param context
      */
     protected void injectCommonServicesIncontext(Http.Context context) {
-        if (configuration != null) {
-            context.args.put(Configuration.class.getName(), configuration);
-        }
-        if (messagesPlugin != null) {
-            context.args.put(II18nMessagesPlugin.class.getName(), messagesPlugin);
-        }
-        if (userSessionManagerPlugin != null) {
-            context.args.put(IUserSessionManagerPlugin.class.getName(), userSessionManagerPlugin);
-        }
-        if (attachmentManagerPlugin != null) {
-            context.args.put(IAttachmentManagerPlugin.class.getName(), attachmentManagerPlugin);
-        }
+        ContextArgsInjector.injectCommonServicesIncontext(context, configuration, messagesPlugin, userSessionManagerPlugin, attachmentManagerPlugin);
     }
 }

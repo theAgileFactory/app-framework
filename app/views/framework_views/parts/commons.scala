@@ -6,7 +6,7 @@ import play.api.data.Field
  * This class provides a few scala utilities to be reused in various
  * parts
  */
-object commons extends framework.handlers.DefaultContextInjector{
+object commons extends framework.handlers.ViewsInjector{
     /**
      * Check if a field is marked with the "required" constraint
      */

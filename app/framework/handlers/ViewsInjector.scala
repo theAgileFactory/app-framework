@@ -1,6 +1,6 @@
 package framework.handlers
 
-trait DefaultContextInjector{
+trait ViewsInjector{
 
 	//-----------------------------------------------------------------------------------
 	// Injection of common services into the scala templates
