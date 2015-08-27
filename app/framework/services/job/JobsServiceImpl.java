@@ -30,17 +30,15 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.apache.commons.lang3.tuple.Pair;
-
+import akka.actor.Cancellable;
+import framework.services.database.IDatabaseDependencyService;
+import framework.services.system.ISysAdminUtils;
 import play.Configuration;
 import play.Logger;
 import play.inject.ApplicationLifecycle;
 import play.libs.F.Promise;
 import scala.concurrent.duration.Duration;
 import scala.concurrent.duration.FiniteDuration;
-import akka.actor.Cancellable;
-import framework.services.database.IDatabaseDependencyService;
-import framework.services.system.ISysAdminUtils;
 
 /**
  * The jobs service.
@@ -86,13 +84,13 @@ public class JobsServiceImpl implements IJobsService {
         log.info("SERVICE>>> JobsServiceImpl started");
     }
 
-    public void start(List<Pair<IJobDescriptor, Boolean>> jobs) {
+    public void start(List<IJobDescriptor> jobs) {
         log.info("***** START start JobsServiceImpl ****");
         this.schedulers = Collections.synchronizedList(new ArrayList<Cancellable>());
 
         // initialize the schedulers
-        for (Pair<IJobDescriptor, Boolean> jobConfig : jobs) {
-            final IJobDescriptor job = jobConfig.getLeft();
+        for (IJobDescriptor job : jobs) {
+
             getJobDescriptorMap().put(job.getId(), job);
 
             log.info("***** START initialization JobsServiceImpl:" + job.getId() + " ****");
@@ -114,6 +112,8 @@ public class JobsServiceImpl implements IJobsService {
 
             FiniteDuration frequency = null;
             switch (job.getFrequency()) {
+            case ONE_TIME:
+                break;
             case DAILY:
                 frequency = FiniteDuration.create(1, TimeUnit.DAYS);
                 break;
@@ -125,21 +125,25 @@ public class JobsServiceImpl implements IJobsService {
                 break;
             }
 
-            this.schedulers.add(getSysAdminUtils().scheduleRecurring(true, "JobsServiceImpl:" + job.getId(),
-                    Duration.create(howMuchMinutesUntilStartTime, TimeUnit.MINUTES), frequency, new Runnable() {
-                        @Override
-                        public void run() {
-                            job.trigger();
-                        }
-                    }));
+            if (frequency != null) {
+                this.schedulers.add(getSysAdminUtils().scheduleRecurring(true, "JobsServiceImpl:" + job.getId(),
+                        Duration.create(howMuchMinutesUntilStartTime, TimeUnit.MINUTES), frequency, new Runnable() {
+                            @Override
+                            public void run() {
+                                job.trigger();
+                            }
+                        }));
+            } else {
+                this.schedulers
+                        .add(getSysAdminUtils().scheduleOnce(true, "JobsServiceImpl:" + job.getId(), Duration.create(5, TimeUnit.MINUTES), new Runnable() {
+                            @Override
+                            public void run() {
+                                job.trigger();
+                            }
+                        }));
+            }
 
             log.info("***** END initialization JobsServiceImpl:" + job.getId() + " ****");
-        }
-        // Check for jobs to be executed at startup
-        for (Pair<IJobDescriptor, Boolean> jobConfig : jobs) {
-            if (jobConfig.getRight()) {
-                trigger(jobConfig.getLeft().getId());
-            }
         }
 
         log.info("***** END start JobsServiceImpl ****");

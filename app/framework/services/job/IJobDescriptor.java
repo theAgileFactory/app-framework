@@ -83,7 +83,7 @@ public interface IJobDescriptor {
      * @author Johann Kohler
      */
     public static enum Frequency {
-        HOURLY, DAILY;
+        ONE_TIME, HOURLY, DAILY;
     }
 
     /**
@@ -116,13 +116,14 @@ public interface IJobDescriptor {
                     setJavaColumnFormatter("frequency", new ObjectFormatter<JobDescriptorRow>());
 
                     addColumn("triggerActionLink", "id", "", Table.ColumnDef.SorterType.NONE);
-                    setJavaColumnFormatter("triggerActionLink", new StringFormatFormatter<JobDescriptorRow>(
-                            "<a href=\"%s\"><span class=\"glyphicons glyphicons-play-button\"></span></a>", new StringFormatFormatter.Hook<JobDescriptorRow>() {
-                                @Override
-                                public String convert(JobDescriptorRow jobDescriptorRow) {
-                                    return jobDescriptorRow.triggerUrl;
-                                }
-                            }));
+                    setJavaColumnFormatter("triggerActionLink",
+                            new StringFormatFormatter<JobDescriptorRow>("<a href=\"%s\"><span class=\"glyphicons glyphicons-play-button\"></span></a>",
+                                    new StringFormatFormatter.Hook<JobDescriptorRow>() {
+                        @Override
+                        public String convert(JobDescriptorRow jobDescriptorRow) {
+                            return jobDescriptorRow.triggerUrl;
+                        }
+                    }));
                     setColumnCssClass("triggerActionLink", IFrameworkConstants.BOOTSTRAP_COLUMN_1);
                     setColumnValueCssClass("triggerActionLink", IFrameworkConstants.BOOTSTRAP_TEXT_ALIGN_RIGHT);
 
