@@ -30,7 +30,7 @@ import play.mvc.Result;
  * @author Pierre-Yves Cloux
  */
 public interface IExtensionManagerService extends IRequestListener, ILinkGenerationService {
-    public static final String PATH_PREFIX = "/extension";
+    public static final String PATH_PREFIX = "/ext";
 
     /**
      * Return the list of the loaded extensions

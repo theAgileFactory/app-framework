@@ -123,6 +123,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
     private Cancellable autoRefreshScheduler;
     private IPluginManagerService pluginManagerService;
     private II18nMessagesPlugin iI18nMessagesPlugin;
+    private Configuration configuration;
     private Environment environment;
     private ISysAdminUtils sysAdminUtils;
     private IImplementationDefinedObjectService implementationDefinedObjectService;
@@ -179,6 +180,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             throw new IllegalArgumentException("Invalid extension directory " + extensionDirectoryPath);
         }
         this.environment = environment;
+        this.configuration = configuration;
         this.pluginManagerService = pluginManagerService;
         this.iI18nMessagesPlugin = iI18nMessagesPlugin;
         this.sysAdminUtils = sysAdminUtils;
@@ -300,7 +302,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         if (webCommand == null) {
             throw new ExtensionManagerException("Unknown command " + commandId + " in the controller " + controller);
         }
-        return PATH_PREFIX + webCommand.generateLink(parameters);
+        return getConfiguration().getString("play.http.context") + PATH_PREFIX + webCommand.generateLink(parameters);
     }
 
     @Override
@@ -608,6 +610,10 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
 
     private Environment getEnvironment() {
         return environment;
+    }
+
+    private Configuration getConfiguration() {
+        return configuration;
     }
 
     /**
