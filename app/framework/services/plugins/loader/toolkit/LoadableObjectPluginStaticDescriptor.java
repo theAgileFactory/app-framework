@@ -116,11 +116,6 @@ public abstract class LoadableObjectPluginStaticDescriptor implements IStaticPlu
             this.put(ActionMessage.TRIGGER_LOAD.name(), new IPluginActionDescriptor() {
 
                 @Override
-                public boolean isAdmin() {
-                    return true;
-                }
-
-                @Override
                 public Object getPayLoad(Long id) {
                     return ActionMessage.TRIGGER_LOAD;
                 }
@@ -151,11 +146,6 @@ public abstract class LoadableObjectPluginStaticDescriptor implements IStaticPlu
                 }
             });
             this.put(ActionMessage.CHECK_LOADING.name(), new IPluginActionDescriptor() {
-
-                @Override
-                public boolean isAdmin() {
-                    return true;
-                }
 
                 @Override
                 public Object getPayLoad(Long id) {
@@ -312,5 +302,4 @@ public abstract class LoadableObjectPluginStaticDescriptor implements IStaticPlu
     public Map<String, IPluginActionDescriptor> getActionDescriptors() {
         return pluginActions;
     }
-
 }

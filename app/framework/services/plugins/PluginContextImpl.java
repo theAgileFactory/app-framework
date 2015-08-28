@@ -19,12 +19,16 @@ package framework.services.plugins;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
 
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -36,6 +40,7 @@ import framework.services.plugins.api.IPluginConfigurationBlockDescriptor;
 import framework.services.plugins.api.IPluginConfigurationBlockDescriptor.ConfigurationBlockEditionType;
 import framework.services.plugins.api.IPluginContext;
 import framework.services.plugins.api.PluginException;
+import framework.services.storage.ISharedStorageService;
 import framework.utils.Utilities;
 import models.framework_models.plugin.PluginConfiguration;
 import models.framework_models.plugin.PluginConfigurationBlock;
@@ -57,12 +62,12 @@ public class PluginContextImpl implements IPluginContext {
     private String pluginPrefix;
     private IPluginManagerService pluginManagerService;
     private IEventBroadcastingService eventBroadcastingService;
+    private ISharedStorageService sharedStorageService;
 
-    public PluginContextImpl(PluginConfiguration pluginConfiguration, 
-            IPluginManagerService pluginManagerService,
+    public PluginContextImpl(PluginConfiguration pluginConfiguration, IPluginManagerService pluginManagerService,
             IEventBroadcastingService eventBroadcastingService) {
         this.pluginManagerService = pluginManagerService;
-        this.eventBroadcastingService=eventBroadcastingService;
+        this.eventBroadcastingService = eventBroadcastingService;
         this.pluginConfigurationId = pluginConfiguration.id;
         this.pluginConfigurationName = pluginConfiguration.name;
         this.pluginPrefix = String.format(LOG_PREFIX_TEMPLATE, pluginConfiguration.pluginDefinition.identifier, pluginConfigurationId);
@@ -93,8 +98,8 @@ public class PluginContextImpl implements IPluginContext {
     @Override
     public void reportOnEventHandling(String transactionId, boolean isError, EventMessage eventMessage, String logMessage, Exception exception) {
         String exceptionStack = logException(exception);
-        PluginLog.saveOnEventHandlingPluginLog(transactionId, getPluginConfigurationId(), isError, eventMessage.getMessageType(), logMessage
-                + "\nError trace:\n" + exceptionStack, eventMessage.getDataType(), eventMessage.getInternalId(), eventMessage.getExternalId());
+        PluginLog.saveOnEventHandlingPluginLog(transactionId, getPluginConfigurationId(), isError, eventMessage.getMessageType(),
+                logMessage + "\nError trace:\n" + exceptionStack, eventMessage.getDataType(), eventMessage.getInternalId(), eventMessage.getExternalId());
     }
 
     @Override
@@ -420,6 +425,50 @@ public class PluginContextImpl implements IPluginContext {
         getEventBroadcastingService().postOutMessage(eventMessage);
     }
 
+    @Override
+    public PropertiesConfiguration getPropertiesConfigurationFromByteArray(byte[] rawConfigurationBlock) throws PluginException {
+        if (rawConfigurationBlock == null || rawConfigurationBlock.length == 0) {
+            return new PropertiesConfiguration();
+        }
+        PropertiesConfiguration properties = new PropertiesConfiguration();
+        try {
+            properties.load(new ByteArrayInputStream(rawConfigurationBlock));
+        } catch (ConfigurationException e) {
+            throw new PluginException("Unable to parse the configuration", e);
+        }
+        return properties;
+    }
+
+    @Override
+    public InputStream getFileFromSharedStorage(String filePath) throws IOException {
+        return getSharedStorageService().getFileAsStream(filePath);
+    }
+
+    @Override
+    public OutputStream writeFileInSharedStorage(String filePath, boolean overwrite) throws IOException {
+        return getSharedStorageService().writeFile(filePath, overwrite);
+    }
+
+    @Override
+    public void deleteFileInSharedStorage(String filePath) throws IOException {
+        getSharedStorageService().deleteFile(filePath);
+    }
+
+    @Override
+    public String[] getFileListInSharedStorage(String directoryPath) throws IOException {
+        return getSharedStorageService().getFileList(directoryPath);
+    }
+
+    @Override
+    public void renameFileInSharedStorage(String sourceFilePath, String targetFilePath) throws IOException {
+        getSharedStorageService().rename(sourceFilePath, targetFilePath);
+    }
+
+    @Override
+    public void moveFileInSharedStorage(String sourceFilePath, String targetFolderPath) throws IOException {
+        getSharedStorageService().move(sourceFilePath, targetFolderPath);
+    }
+
     private String getPluginPrefix() {
         return pluginPrefix;
     }
@@ -433,6 +482,10 @@ public class PluginContextImpl implements IPluginContext {
      */
     private static String logException(Exception e) {
         return Utilities.getExceptionAsString(e);
+    }
+
+    private ISharedStorageService getSharedStorageService() {
+        return sharedStorageService;
     }
 
     private IPluginManagerService getPluginManagerService() {

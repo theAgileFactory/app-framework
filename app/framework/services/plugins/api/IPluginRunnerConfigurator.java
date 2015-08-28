@@ -38,16 +38,6 @@ public interface IPluginRunnerConfigurator {
     public AbstractCustomConfiguratorController getCustomConfigurator();
 
     /**
-     * The OUT interface configuration
-     */
-    public EventInterfaceConfiguration getOutInterfaceConfiguration();
-
-    /**
-     * The IN interface configuration
-     */
-    public EventInterfaceConfiguration getInInterfaceConfiguration();
-
-    /**
      * Returns a map of registration option for a named DataType.
      */
     public Map<DataType, AbstractRegistrationConfiguratorController> getDataTypesWithRegistration();

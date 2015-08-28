@@ -17,13 +17,18 @@
  */
 package framework.services.plugins.api;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.List;
 
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.lang3.tuple.Pair;
 
 import framework.commons.DataType;
 import framework.commons.message.EventMessage;
+import models.framework_models.plugin.PluginConfigurationBlock;
 
 /**
  * The plugin context provides each plugin with some services, namely:
@@ -412,12 +417,87 @@ public interface IPluginContext {
      * This method should only be called if the plugin repeatedly fails.
      */
     public void killMe();
-    
+
     /**
-     * Post an event to the OUT interface of a plugin (could  be the current plugin or anything else).
+     * Post an event to the OUT interface of a plugin (could be the current
+     * plugin or anything else).
      * 
      * @param eventMessage
      *            an event message
      */
     public void postOutMessage(EventMessage eventMessage);
+
+    /**
+     * Get a properties object from an array of bytes (probably extracted from a
+     * {@link PluginConfigurationBlock})
+     * 
+     * @param rawConfigurationBlock
+     *            an array of bytes
+     * @return a properties object
+     * @throws PluginException
+     */
+    public PropertiesConfiguration getPropertiesConfigurationFromByteArray(byte[] rawConfigurationBlock) throws PluginException;
+
+    /**
+     * Return an input stream pointing to a file on the local storage (sFTP
+     * storage).<br/>
+     * 
+     * @param filePath
+     *            the path in the local storage
+     * @return an input stream
+     */
+    public InputStream getFileFromSharedStorage(String filePath) throws IOException;
+
+    /**
+     * Get an outputstream to write in.<br/>
+     * It is not possible to overwrite an existing file.
+     * 
+     * @param filePath
+     *            the path in the local storage
+     * @param overwrite
+     *            if true any existing file will be overwritten (otherwise an
+     *            exception is thrown)
+     * @return an outputstream
+     */
+    public OutputStream writeFileInSharedStorage(String filePath, boolean overwrite) throws IOException;
+
+    /**
+     * Delete the specified file.<br/>
+     * 
+     * @param filePath
+     *            the path of the file in the local storage
+     */
+    public void deleteFileInSharedStorage(String filePath) throws IOException;
+
+    /**
+     * Lists the files in a named folder
+     * 
+     * @param directoryPath
+     *            a directory path
+     * @return a list of file names
+     * @throws IOException
+     */
+    public String[] getFileListInSharedStorage(String directoryPath) throws IOException;
+
+    /**
+     * Rename a file in one folder to another name.<br/>
+     * You can only rename a file in the same folder
+     * 
+     * @param sourceFilePath
+     *            the path to the source file
+     * @param targetFilePath
+     *            the path to the target file
+     * @throws IOException
+     */
+    public void renameFileInSharedStorage(String sourceFilePath, String targetFilePath) throws IOException;
+
+    /**
+     * Move a file into a named folder
+     * 
+     * @param sourceFilePath
+     *            the path to the source file
+     * @param targetFolderPath
+     *            the path to the target folder
+     */
+    public void moveFileInSharedStorage(String sourceFilePath, String targetFolderPath) throws IOException;
 }

@@ -32,9 +32,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
-import play.Logger;
-import scala.concurrent.duration.Duration;
-import scala.concurrent.duration.FiniteDuration;
 import akka.actor.Cancellable;
 import framework.commons.DataType;
 import framework.commons.message.EventMessage;
@@ -42,15 +39,16 @@ import framework.commons.message.EventMessage.MessageType;
 import framework.services.ServiceStaticAccessor;
 import framework.services.plugins.api.AbstractCustomConfiguratorController;
 import framework.services.plugins.api.AbstractRegistrationConfiguratorController;
-import framework.services.plugins.api.EventInterfaceConfiguration;
 import framework.services.plugins.api.IPluginContext;
 import framework.services.plugins.api.IPluginContext.LogLevel;
 import framework.services.plugins.api.IPluginRunner;
 import framework.services.plugins.api.IPluginRunnerConfigurator;
 import framework.services.plugins.api.PluginException;
-import framework.services.plugins.api.PluginUtils;
 import framework.services.plugins.loader.toolkit.GenericFileLoader.AllowedCharSet;
 import framework.utils.EmailUtils;
+import play.Logger;
+import scala.concurrent.duration.Duration;
+import scala.concurrent.duration.FiniteDuration;
 
 /**
  * Abstract class for a plugin which loads some objects from a CSV file.<br/>
@@ -164,8 +162,9 @@ public abstract class LoadableObjectPluginRunner<K extends ILoadableObject> impl
     public void start() throws PluginException {
         try {
             // Load the configuration
-            PropertiesConfiguration properties = PluginUtils.getPropertiesConfigurationFromByteArray(getPluginContext().getConfigurationAndMergeWithDefault(
-                    getStaticDescriptor().getConfigurationBlockDescriptors().get(LoadableObjectPluginStaticDescriptor.MAIN_CONFIGURATION_IDENTIFIER)));
+            PropertiesConfiguration properties = getPluginContext()
+                    .getPropertiesConfigurationFromByteArray(getPluginContext().getConfigurationAndMergeWithDefault(
+                            getStaticDescriptor().getConfigurationBlockDescriptors().get(LoadableObjectPluginStaticDescriptor.MAIN_CONFIGURATION_IDENTIFIER)));
 
             properties.setThrowExceptionOnMissing(true);
             setInputFilePath(properties.getString(LoadableObjectPluginStaticDescriptor.INPUT_FILE_PATH_PARAMETER));
@@ -173,11 +172,11 @@ public abstract class LoadableObjectPluginRunner<K extends ILoadableObject> impl
             if (getLoadStartTime() == null || !getLoadStartTime().matches("^([01]?[0-9]|2[0-3])h[0-5][0-9]$")) {
                 throw new IllegalArgumentException("Invalid time format for the " + LoadableObjectPluginStaticDescriptor.LOAD_START_TIME + " parameter");
             }
-            setLoadFrequency(FiniteDuration.create(properties.getLong(LoadableObjectPluginStaticDescriptor.LOAD_FREQUENCY_IN_MINUTES_PARAMETER),
-                    TimeUnit.MINUTES));
+            setLoadFrequency(
+                    FiniteDuration.create(properties.getLong(LoadableObjectPluginStaticDescriptor.LOAD_FREQUENCY_IN_MINUTES_PARAMETER), TimeUnit.MINUTES));
             if (properties.getLong(LoadableObjectPluginStaticDescriptor.LOAD_FREQUENCY_IN_MINUTES_PARAMETER) < MINIMAL_FREQUENCY) {
-                throw new IllegalArgumentException("Invalid frequency " + LoadableObjectPluginStaticDescriptor.LOAD_FREQUENCY_IN_MINUTES_PARAMETER
-                        + " must be more than 5 minutes");
+                throw new IllegalArgumentException(
+                        "Invalid frequency " + LoadableObjectPluginStaticDescriptor.LOAD_FREQUENCY_IN_MINUTES_PARAMETER + " must be more than 5 minutes");
             }
             setUnactivateNotFoundObjects(properties.getBoolean(LoadableObjectPluginStaticDescriptor.UNACTIVATE_NOT_FOUND_PARAMETER));
             setUnactivationSelectionClause(properties.getString(LoadableObjectPluginStaticDescriptor.UNACTIVATION_SELECTION_CLAUSE_PARAMETER));
@@ -187,9 +186,9 @@ public abstract class LoadableObjectPluginRunner<K extends ILoadableObject> impl
                 while (matcher.find()) {
                     System.out.println(matcher.group(1));
                     if (!getAllowedFieldsForUnactivationWhereClause().contains(matcher.group(1))) {
-                        throw new IllegalArgumentException("Field not allowed in "
-                                + LoadableObjectPluginStaticDescriptor.UNACTIVATION_SELECTION_CLAUSE_PARAMETER + " please use only "
-                                + getAllowedFieldsForUnactivationWhereClause());
+                        throw new IllegalArgumentException(
+                                "Field not allowed in " + LoadableObjectPluginStaticDescriptor.UNACTIVATION_SELECTION_CLAUSE_PARAMETER + " please use only "
+                                        + getAllowedFieldsForUnactivationWhereClause());
                     }
                 }
             }
@@ -202,9 +201,8 @@ public abstract class LoadableObjectPluginRunner<K extends ILoadableObject> impl
                     getStaticDescriptor().getConfigurationBlockDescriptors().get(LoadableObjectPluginStaticDescriptor.CSV_MAPPING_CONFIGURATION_IDENTIFIER),
                     true);
             if (javascriptMappingConfiguration.getLeft()) {
-                throw new PluginException(
-                        "WARNING: the javascript configuration may be outdated and the plugin might crash, please check it againt the current"
-                                + " documentation and save it before attempting to start the plugin");
+                throw new PluginException("WARNING: the javascript configuration may be outdated and the plugin might crash, please check it againt the current"
+                        + " documentation and save it before attempting to start the plugin");
             }
 
             // Creates the generic file loader
@@ -258,16 +256,6 @@ public abstract class LoadableObjectPluginRunner<K extends ILoadableObject> impl
     @Override
     public IPluginRunnerConfigurator getConfigurator() {
         return new IPluginRunnerConfigurator() {
-            @Override
-            public EventInterfaceConfiguration getOutInterfaceConfiguration() {
-                return new EventInterfaceConfiguration();
-            }
-
-            @Override
-            public EventInterfaceConfiguration getInInterfaceConfiguration() {
-                return null;
-            }
-
             @Override
             public Map<DataType, AbstractRegistrationConfiguratorController> getDataTypesWithRegistration() {
                 return null;
@@ -326,10 +314,7 @@ public abstract class LoadableObjectPluginRunner<K extends ILoadableObject> impl
                 getPluginContext().reportOnEventHandling(eventMessage.getTransactionId(), false, eventMessage,
                         "A file is being processed, please wait for the completion of the current load");
             } else {
-                getPluginContext().reportOnEventHandling(
-                        eventMessage.getTransactionId(),
-                        true,
-                        eventMessage,
+                getPluginContext().reportOnEventHandling(eventMessage.getTransactionId(), true, eventMessage,
                         "WARNING: the scheduled load was blocked because another load was already running."
                                 + "If you need to be executed, please proceed via the manual interface.");
             }
@@ -345,12 +330,13 @@ public abstract class LoadableObjectPluginRunner<K extends ILoadableObject> impl
      */
     private synchronized void loadFile() throws PluginException {
         try {
-            String reportAsString = getGenericFileLoader().performLoad(PluginUtils.getFile(getInputFilePath()));
+            String reportAsString = getGenericFileLoader().performLoad(getPluginContext().getFileFromSharedStorage(getInputFilePath()));
             // If a file is defined, write the report to the file system
             if (!StringUtils.isBlank(getReportFilePath())) {
                 BufferedWriter bWriter = null;
                 try {
-                    bWriter = new BufferedWriter(new OutputStreamWriter(PluginUtils.writeFile(String.format(getReportFilePath(), new Date()), true)));
+                    bWriter = new BufferedWriter(
+                            new OutputStreamWriter(getPluginContext().writeFileInSharedStorage(String.format(getReportFilePath(), new Date()), true)));
                     bWriter.append(reportAsString);
                 } catch (Exception e) {
                     throw new PluginException("Error while writing the load report", e);

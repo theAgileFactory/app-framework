@@ -48,12 +48,6 @@ public interface IPluginActionDescriptor {
     public String getLabel();
 
     /**
-     * Return true if the action is an admin action.<br/>
-     * If true, the "getDataType" method must return null.
-     */
-    public boolean isAdmin();
-
-    /**
      * The data type to which this action can be sent
      * 
      * @return a data type

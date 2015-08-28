@@ -64,6 +64,22 @@ public interface IStaticPluginRunnerDescriptor {
     public String getDescription();
 
     /**
+     * True if the plugin is able to listen for "external" messages sent to
+     * BizDock by a third party system
+     * 
+     * @return a boolean
+     */
+    public boolean hasInMessageInterface();
+
+    /**
+     * True if the plugin is able to listen for "internal" messages sent by
+     * BizDock core or other plugins
+     * 
+     * @return a boolean
+     */
+    public boolean hasOutMessageInterface();
+
+    /**
      * Returns a map of configuration blocks required by this plugin indexed by
      * their unique identifier
      * 

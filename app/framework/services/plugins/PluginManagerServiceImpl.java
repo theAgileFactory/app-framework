@@ -59,7 +59,6 @@ import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.database.IDatabaseDependencyService;
 import framework.services.ext.ExtensionManagerException;
 import framework.services.ext.IExtension;
-import framework.services.plugins.api.EventInterfaceConfiguration;
 import framework.services.plugins.api.IPluginContext;
 import framework.services.plugins.api.IPluginRunner;
 import framework.services.plugins.api.IPluginRunnerConfigurator;
@@ -131,9 +130,10 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
      *            the service which ensures that the database is available
      */
     @Inject
-    public PluginManagerServiceImpl(ApplicationLifecycle lifecycle, ISysAdminUtils sysAdminUtils, II18nMessagesPlugin messagesPlugin, IDatabaseDependencyService databaseDependencyService) {
+    public PluginManagerServiceImpl(ApplicationLifecycle lifecycle, ISysAdminUtils sysAdminUtils, II18nMessagesPlugin messagesPlugin,
+            IDatabaseDependencyService databaseDependencyService) {
         log.info("SERVICE>>> PluginManagerServiceImpl starting...");
-        this.messagesPlugin=messagesPlugin;
+        this.messagesPlugin = messagesPlugin;
         pluginByIds = Collections.synchronizedMap(new HashMap<Long, PluginRegistrationEntry>());
         pluginExtensions = Collections.synchronizedMap(new HashMap<String, IExtension>());
         lifecycle.addStopHook(() -> {
@@ -399,8 +399,8 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
                                 pluginConfiguration.pluginDefinition.identifier));
             }
             pluginRunner.init(new PluginContextImpl(pluginConfiguration, this, this));
-            ActorRef pluginLifeCycleControllingActorRef = getActorSystem()
-                    .actorOf(Props.create(new PluginLifeCycleControllingActorCreator(pluginConfiguration.id, pluginRunner, getPluginStatusCallbackActorRef(), getMessagesPlugin())));
+            ActorRef pluginLifeCycleControllingActorRef = getActorSystem().actorOf(Props.create(
+                    new PluginLifeCycleControllingActorCreator(pluginConfiguration.id, pluginRunner, getPluginStatusCallbackActorRef(), getMessagesPlugin())));
             log.info(String.format("[END] the plugin %d has been initialized", pluginConfiguration.id));
             return new PluginRegistrationEntry(pluginConfiguration.id, pluginRunner, pluginLifeCycleControllingActorRef);
         } catch (Exception e) {
@@ -509,9 +509,11 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
 
         if (pluginRegistrationEntry.getPluginRunner().getConfigurator() != null) {
             if (flowType.equals(FlowType.IN)) {
-                eventInterfaceConfiguration = pluginRegistrationEntry.getPluginRunner().getConfigurator().getInInterfaceConfiguration();
+                eventInterfaceConfiguration = (pluginRegistrationEntry.getPluginRunner().getStaticDescriptor().hasInMessageInterface()
+                        ? new EventInterfaceConfiguration() : null);
             } else {
-                eventInterfaceConfiguration = pluginRegistrationEntry.getPluginRunner().getConfigurator().getOutInterfaceConfiguration();
+                eventInterfaceConfiguration = (pluginRegistrationEntry.getPluginRunner().getStaticDescriptor().hasOutMessageInterface()
+                        ? new EventInterfaceConfiguration() : null);
             }
         }
         if (eventInterfaceConfiguration != null) {
@@ -1018,11 +1020,12 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
         private ActorRef pluginStatusCallbackActorRef;
         private II18nMessagesPlugin messagesPlugin;
 
-        public PluginLifeCycleControllingActorCreator(Long pluginConfigurationId, IPluginRunner pluginRunner, ActorRef pluginStatusCallbackActorRef, II18nMessagesPlugin messagesPlugin) {
+        public PluginLifeCycleControllingActorCreator(Long pluginConfigurationId, IPluginRunner pluginRunner, ActorRef pluginStatusCallbackActorRef,
+                II18nMessagesPlugin messagesPlugin) {
             this.pluginStatusCallbackActorRef = pluginStatusCallbackActorRef;
             this.pluginConfigurationId = pluginConfigurationId;
             this.pluginRunner = pluginRunner;
-            this.messagesPlugin=messagesPlugin;
+            this.messagesPlugin = messagesPlugin;
         }
 
         @Override
@@ -1051,13 +1054,10 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
         private ActorRef pluginStatusCallbackActorRef;
         private II18nMessagesPlugin messagesPlugin;
 
-        public PluginLifeCycleControllingActor(
-                Long pluginConfigurationId, 
-                IPluginRunner pluginRunner, 
-                ActorRef pluginStatusCallbackActorRef,
+        public PluginLifeCycleControllingActor(Long pluginConfigurationId, IPluginRunner pluginRunner, ActorRef pluginStatusCallbackActorRef,
                 II18nMessagesPlugin messagesPlugin) {
             super();
-            this.messagesPlugin=messagesPlugin;
+            this.messagesPlugin = messagesPlugin;
             this.pluginConfigurationId = pluginConfigurationId;
             this.pluginRunner = pluginRunner;
             this.pluginStatusCallbackActorRef = pluginStatusCallbackActorRef;
@@ -1072,7 +1072,8 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
                         getPluginRunner().start();
                         getPluginStatusCallbackActorRef().tell(new CallbackLifeCycleMessage(PluginStatus.STARTED, getPluginConfigurationId()),
                                 ActorRef.noSender());
-                        PluginLog.saveStartPluginLog(getPluginConfigurationId(), getMessagesPlugin().get("plugin.success.start", getPluginConfigurationId()), false);
+                        PluginLog.saveStartPluginLog(getPluginConfigurationId(), getMessagesPlugin().get("plugin.success.start", getPluginConfigurationId()),
+                                false);
                     } catch (Exception e) {
                         getPluginStatusCallbackActorRef().tell(new CallbackLifeCycleMessage(PluginStatus.START_FAILED, getPluginConfigurationId()),
                                 ActorRef.noSender());
