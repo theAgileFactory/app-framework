@@ -1,54 +1,49 @@
-/*! LICENSE
- *
- * Copyright (c) 2015, The Agile Factory SA and/or its affiliates. All rights
- * reserved.
- *
- * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; version 2 of the License.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
- * details.
- *
- * You should have received a copy of the GNU General Public License along with
- * this program. If not, see <http://www.gnu.org/licenses/>.
- */
-package framework.services.ext;
+package framework.services.ext.api;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
+import framework.services.ext.ExtensionManagerException;
+import framework.services.ext.ILinkGenerationService;
 import play.Logger;
 
 /**
- * An utility class to be used by extensions for logging and generating links.
+ * The root class to be implemented by the extension controllers.<br/>
+ * This one provides various utilities. This class implements the interface
+ * {@link ILinkGenerator}.<br/>
+ * This allow to pass the controller to a view to support link generation
+ * without creating a "hard link" with the controller.
  * 
  * @author Pierre-Yves Cloux
  */
-@Singleton
-public class ExtensionUtils {
-    @Inject
-    private static IExtensionManagerService extensionManagerService;
-
+public abstract class AbstractExtensionController implements ILinkGenerator {
+    private ILinkGenerationService linkGenerationService;
     private static Log log = new Log();
+
+    public AbstractExtensionController() {
+    }
+
+    /**
+     * Set the link generation service
+     * 
+     * @param linkGenerationService
+     */
+    public void setLinkGenerationService(ILinkGenerationService linkGenerationService) {
+        this.linkGenerationService = linkGenerationService;
+    }
 
     /**
      * Creates a link to a command identified by the specified commandId
      * 
-     * @param controller
-     *            a controller name (this one must contains a command with the
-     *            specified Id)
      * @param commandId
      *            a unique id for a command
      * @param parameters
      *            one or more args matching the command parameters
      * @return a link
-     * @throws ExtensionManagerException
      */
-    public static String link(Class<?> controller, String commandId, Object... parameters) throws ExtensionManagerException {
-        return getExtensionManagerService().link(controller, commandId, parameters);
+    public String link(String commandId, Object... parameters) {
+        try {
+            return getLinkGenerationService().link(getClass(), commandId, parameters);
+        } catch (ExtensionManagerException e) {
+            throw new IllegalArgumentException("Cannot generate link", e);
+        }
     }
 
     /**
@@ -58,7 +53,7 @@ public class ExtensionUtils {
      * 
      * @return
      */
-    public static Log getLog() {
+    public Log getLog() {
         return log;
     }
 
@@ -68,7 +63,7 @@ public class ExtensionUtils {
      * @author Pierre-Yves Cloux
      */
     public static class Log {
-        private Logger.ALogger log = Logger.of(ExtensionUtils.class);
+        private Logger.ALogger log = Logger.of(AbstractExtensionController.class);
 
         private Log() {
         }
@@ -112,7 +107,7 @@ public class ExtensionUtils {
         }
     }
 
-    private static IExtensionManagerService getExtensionManagerService() {
-        return extensionManagerService;
+    private ILinkGenerationService getLinkGenerationService() {
+        return linkGenerationService;
     }
 }
