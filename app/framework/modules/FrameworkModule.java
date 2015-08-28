@@ -8,10 +8,6 @@ import framework.commons.DataType;
 import framework.commons.IFrameworkConstants;
 import framework.security.SecurityUtils;
 import framework.services.ServiceStaticAccessor;
-import framework.services.ext.ExtensionUtils;
-import framework.services.plugins.api.PluginUtils;
-import framework.taftree.TafTreeHelper;
-import framework.utils.FileAttachmentHelper;
 import framework.utils.Msg;
 import framework.utils.formats.AnnotationDateTypeFormatter;
 import play.Logger;
@@ -51,10 +47,6 @@ public abstract class FrameworkModule extends AbstractModule {
         requestStaticInjection(ServiceStaticAccessor.class);
         requestStaticInjection(Msg.class);
         requestStaticInjection(SecurityUtils.class);
-        requestStaticInjection(ExtensionUtils.class);
-        requestStaticInjection(PluginUtils.class);
-        requestStaticInjection(TafTreeHelper.class);
-        requestStaticInjection(FileAttachmentHelper.class);
         log.info("...Static dependency injected end");
     }
 }

@@ -22,8 +22,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import framework.services.ext.ExtensionUtils;
-
 /**
  * The annotation which defines an alternative routing mechanism to be used with
  * {@link ExtensionUtils}.<br/>
@@ -85,7 +83,7 @@ public @interface WebCommandPath {
      * 
      * @return a permission
      */
-    public String[] permissions() default {};
+    public String[]permissions() default {};
 
     /**
      * A unique id for the command.<br/>

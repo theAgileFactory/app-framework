@@ -19,9 +19,9 @@ package framework.services.ext;
 
 import java.util.List;
 
+import framework.services.router.IRequestListener;
 import play.mvc.Http.Context;
 import play.mvc.Result;
-import framework.services.router.IRequestListener;
 
 /**
  * The extension manager service is responsible for the management of the
@@ -29,7 +29,7 @@ import framework.services.router.IRequestListener;
  * 
  * @author Pierre-Yves Cloux
  */
-public interface IExtensionManagerService extends IRequestListener {
+public interface IExtensionManagerService extends IRequestListener, ILinkGenerationService {
     public static final String PATH_PREFIX = "/extension";
 
     /**
@@ -72,20 +72,6 @@ public interface IExtensionManagerService extends IRequestListener {
      * @return a Result
      */
     public Result execute(String path, Context ctx);
-
-    /**
-     * Creates a link to a command identified by the specified commandId
-     * 
-     * @param controller
-     *            an extension controller class (this one must contains a
-     *            command with the specified Id)
-     * @param commandId
-     *            a unique id for a command
-     * @param args
-     *            one or more args matching the command method parameters
-     * @return a link
-     */
-    public String link(Class<?> controller, String commandId, Object... parameters) throws ExtensionManagerException;
 
     /**
      * Get the size (bytes) of the extensions folder.

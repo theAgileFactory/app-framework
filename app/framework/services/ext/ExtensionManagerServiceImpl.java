@@ -48,16 +48,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.xeustechnologies.jcl.JarClassLoader;
 import org.xeustechnologies.jcl.JclObjectFactory;
 
-import play.Configuration;
-import play.Environment;
-import play.Logger;
-import play.inject.ApplicationLifecycle;
-import play.libs.F.Function0;
-import play.libs.F.Promise;
-import play.mvc.Controller;
-import play.mvc.Http.Context;
-import play.mvc.Result;
-import scala.concurrent.duration.Duration;
 import akka.actor.Cancellable;
 import framework.security.SecurityUtils;
 import framework.services.configuration.II18nMessagesPlugin;
@@ -67,6 +57,7 @@ import framework.services.ext.ExtensionDescriptor.I18nMessage;
 import framework.services.ext.ExtensionDescriptor.MenuCustomizationDescriptor;
 import framework.services.ext.ExtensionDescriptor.MenuItemDescriptor;
 import framework.services.ext.ExtensionDescriptor.PluginDescriptor;
+import framework.services.ext.api.AbstractExtensionController;
 import framework.services.ext.api.WebCommandPath;
 import framework.services.ext.api.WebControllerPath;
 import framework.services.ext.api.WebParameter;
@@ -80,6 +71,16 @@ import framework.utils.Menu.HeaderMenuItem;
 import framework.utils.Menu.MenuItem;
 import framework.utils.TopMenuBar;
 import framework.utils.Utilities;
+import play.Configuration;
+import play.Environment;
+import play.Logger;
+import play.inject.ApplicationLifecycle;
+import play.libs.F.Function0;
+import play.libs.F.Promise;
+import play.mvc.Controller;
+import play.mvc.Http.Context;
+import play.mvc.Result;
+import scala.concurrent.duration.Duration;
 
 /**
  * The default implementation for the {@link IExtensionManagerService}
@@ -386,8 +387,8 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                     menuItem = new HeaderMenuItem(menuItemDescriptor.getUuid(), menuItemDescriptor.getLabel());
                 }
                 if (menuItemDescriptor.getPermissions() != null) {
-                    menuItem.setAuthorizedPermissions(SecurityUtils.getListOfArray(menuItemDescriptor.getPermissions().toArray(
-                            new String[menuItemDescriptor.getPermissions().size()])));
+                    menuItem.setAuthorizedPermissions(
+                            SecurityUtils.getListOfArray(menuItemDescriptor.getPermissions().toArray(new String[menuItemDescriptor.getPermissions().size()])));
                 }
                 if (menuItemDescriptor.getAddAfterUuid() != null) {
                     log.info("Adding menu " + menuItemDescriptor.getUuid() + " after " + menuItemDescriptor.getAddAfterUuid());
@@ -479,7 +480,8 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                         }
                         log.info("Loaded i18n keys [" + i18nMessage.getLanguage() + "] for the extension" + extension.getDescriptor().getName());
                     } catch (IOException e) {
-                        log.error("Unable to load the i18n keys [" + i18nMessage.getLanguage() + "] for the extension" + extension.getDescriptor().getName(), e);
+                        log.error("Unable to load the i18n keys [" + i18nMessage.getLanguage() + "] for the extension" + extension.getDescriptor().getName(),
+                                e);
                     }
                 }
             }
@@ -500,10 +502,14 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
      */
     private void addExtensionController(Object controllerInstance) throws ExtensionManagerException {
         Class<?> controllerClass = controllerInstance.getClass();
-        if (controllerClass.isAnnotationPresent(WebControllerPath.class)) {
+        if (controllerClass.isAnnotationPresent(WebControllerPath.class) && AbstractExtensionController.class.isAssignableFrom(controllerClass)) {
             WebControllerPath controllerAnnotation = controllerClass.getAnnotation(WebControllerPath.class);
             if (!StringUtils.isBlank(controllerAnnotation.path())) {
                 try {
+                    // Set the link generator
+                    AbstractExtensionController extensionController = AbstractExtensionController.class.cast(controllerInstance);
+                    extensionController.setLinkGenerationService(this);
+                    // Parse the controller to discover its interface
                     Method[] methods = controllerClass.getDeclaredMethods();
                     if (methods != null) {
                         for (Method method : methods) {
@@ -517,9 +523,8 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                                     if (StringUtils.isBlank(commandId)) {
                                         commandId = UUID.randomUUID().toString();
                                     }
-                                    WebCommand webCommand = new WebCommand(controllerInstance, commandId,
-                                            controllerAnnotation.path() + methodAnnotation.path(), permissions.toArray(new String[permissions.size()]),
-                                            methodAnnotation.httpMethod(), method);
+                                    WebCommand webCommand = new WebCommand(controllerInstance, commandId, controllerAnnotation.path() + methodAnnotation.path(),
+                                            permissions.toArray(new String[permissions.size()]), methodAnnotation.httpMethod(), method);
                                     addWebCommands(controllerInstance, webCommand);
                                     log.info("Registered web command " + webCommand);
                                 }
@@ -531,7 +536,8 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                 }
             }
         } else {
-            throw new ExtensionManagerException("Invalid extension controller, no WebCommandPath " + controllerClass.getName());
+            throw new ExtensionManagerException(
+                    "Invalid extension controller, no WebCommandPath or do not extends AbstractExtensionController" + controllerClass.getName());
         }
     }
 
