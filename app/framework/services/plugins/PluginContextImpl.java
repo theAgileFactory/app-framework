@@ -65,9 +65,10 @@ public class PluginContextImpl implements IPluginContext {
     private ISharedStorageService sharedStorageService;
 
     public PluginContextImpl(PluginConfiguration pluginConfiguration, IPluginManagerService pluginManagerService,
-            IEventBroadcastingService eventBroadcastingService) {
+            IEventBroadcastingService eventBroadcastingService, ISharedStorageService sharedStorageService) {
         this.pluginManagerService = pluginManagerService;
         this.eventBroadcastingService = eventBroadcastingService;
+        this.sharedStorageService = sharedStorageService;
         this.pluginConfigurationId = pluginConfiguration.id;
         this.pluginConfigurationName = pluginConfiguration.name;
         this.pluginPrefix = String.format(LOG_PREFIX_TEMPLATE, pluginConfiguration.pluginDefinition.identifier, pluginConfigurationId);

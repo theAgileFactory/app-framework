@@ -64,6 +64,7 @@ import framework.services.plugins.api.IPluginRunner;
 import framework.services.plugins.api.IPluginRunnerConfigurator;
 import framework.services.plugins.api.IStaticPluginRunnerDescriptor;
 import framework.services.plugins.api.PluginException;
+import framework.services.storage.ISharedStorageService;
 import framework.services.system.ISysAdminUtils;
 import framework.utils.Utilities;
 import models.framework_models.plugin.PluginConfiguration;
@@ -87,6 +88,7 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
     private ActorSystem actorSystem;
     private ActorRef pluginStatusCallbackActorRef;
     private II18nMessagesPlugin messagesPlugin;
+    private ISharedStorageService sharedStorageService;
 
     /**
      * Loaded plugin extensions
@@ -126,12 +128,17 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
      *            the play application lifecycle listener
      * @param sysAdminUtils
      *            scheduler which may be used by some plugins
+     * @param messagesPlugin
+     *            the i18n plugin
      * @param databaseDependencyService
      *            the service which ensures that the database is available
+     * @param sharedStorageService
+     *            the service which is managing the shared storage for the
+     *            plugins
      */
     @Inject
     public PluginManagerServiceImpl(ApplicationLifecycle lifecycle, ISysAdminUtils sysAdminUtils, II18nMessagesPlugin messagesPlugin,
-            IDatabaseDependencyService databaseDependencyService) {
+            IDatabaseDependencyService databaseDependencyService, ISharedStorageService sharedStorageService) {
         log.info("SERVICE>>> PluginManagerServiceImpl starting...");
         this.messagesPlugin = messagesPlugin;
         pluginByIds = Collections.synchronizedMap(new HashMap<Long, PluginRegistrationEntry>());
@@ -398,7 +405,7 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
                                 pluginRunner.getStaticDescriptor() != null ? pluginRunner.getStaticDescriptor().getPluginDefinitionIdentifier() : "null",
                                 pluginConfiguration.pluginDefinition.identifier));
             }
-            pluginRunner.init(new PluginContextImpl(pluginConfiguration, this, this));
+            pluginRunner.init(new PluginContextImpl(pluginConfiguration, this, this, getSharedStorageService()));
             ActorRef pluginLifeCycleControllingActorRef = getActorSystem().actorOf(Props.create(
                     new PluginLifeCycleControllingActorCreator(pluginConfiguration.id, pluginRunner, getPluginStatusCallbackActorRef(), getMessagesPlugin())));
             log.info(String.format("[END] the plugin %d has been initialized", pluginConfiguration.id));
@@ -780,6 +787,10 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
 
     private II18nMessagesPlugin getMessagesPlugin() {
         return messagesPlugin;
+    }
+
+    private ISharedStorageService getSharedStorageService() {
+        return sharedStorageService;
     }
 
     /**
