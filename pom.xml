@@ -54,7 +54,7 @@
         <!-- Dependencies properties -->
         <javax.mail.version>1.5.3</javax.mail.version>
         <jcl-core.version>2.6</jcl-core.version>
-        <mysql-connector-java.version>5.1.32</mysql-connector-java.version>
+        <mysql-connector-java.version>5.1.36</mysql-connector-java.version>
         <qrgen.version>1.2</qrgen.version>
         <play-pac4j-java.version>1.5.1-SNAPSHOT</play-pac4j-java.version>
         <pac4j-http.version>1.7.0</pac4j-http.version>
@@ -62,22 +62,22 @@
         <pac4j-core.version>1.7.0</pac4j-core.version>
         <pac4j-saml.version>1.7.0</pac4j-saml.version>
         <spring.version>4.0.3.RELEASE</spring.version>
-        <rhino.version>1.7R4</rhino.version>
+        <rhino.version>1.7.7</rhino.version>
         <swagger-play2.version>1.3.12</swagger-play2.version>
         <swagger-play2-utils.version>1.3.12</swagger-play2-utils.version>
 		<commons-beanutils.version>1.9.2</commons-beanutils.version>
-		<commons-codec.version>1.9</commons-codec.version>
+		<commons-codec.version>1.10</commons-codec.version>
 		<commons-io.version>2.4</commons-io.version>
-		<poi.version>3.10.1</poi.version>
+		<poi.version>3.12</poi.version>
 		<commons-jexl.version>2.1.1</commons-jexl.version>
 		<commons-collections.version>3.2.1</commons-collections.version>
-		<commons-lang3.version>3.3.2</commons-lang3.version>
+		<commons-lang3.version>3.4</commons-lang3.version>
 		<commons-configuration.version>1.10</commons-configuration.version>
 		<jericho-html.version>3.3</jericho-html.version>
-		<commons-csv.version>1.0</commons-csv.version>
-		<redmine-java-api.version>2.0.0</redmine-java-api.version>
-		<json.version>20090211</json.version>
-		<httpclient.version>4.2.6</httpclient.version>
+		<commons-csv.version>1.1</commons-csv.version>
+		<redmine-java-api.version>2.4.0</redmine-java-api.version>
+		<json.version>20141113</json.version>
+		<httpclient.version>4.5</httpclient.version>
 		<jasperreports.version>6.1.0</jasperreports.version>
 		<deadbolt.version>2.4.0</deadbolt.version>
 		<commons-eclipse-jdt.version>3.10.0</commons-eclipse-jdt.version>
@@ -169,11 +169,7 @@
 			<artifactId>mysql-connector-java</artifactId>
 			<version>${mysql-connector-java.version}</version>
 		</dependency>
-		<dependency>
-			<groupId>net.glxn</groupId>
-			<artifactId>qrgen</artifactId>
-			<version>${qrgen.version}</version>
-		</dependency>
+		
 		<!-- JavaxMail API -->
 		<dependency>
 		    <groupId>com.sun.mail</groupId>
@@ -222,16 +218,6 @@
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-context</artifactId>
-			<version>${spring.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-jdbc</artifactId>
-			<version>${spring.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-tx</artifactId>
 			<version>${spring.version}</version>
 		</dependency>
 
