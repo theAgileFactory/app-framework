@@ -18,27 +18,12 @@
 package framework.security;
 
 import java.lang.annotation.Annotation;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import models.framework_models.account.SystemLevelRoleType;
-import models.framework_models.account.SystemPermission;
-
-import org.apache.commons.lang.ArrayUtils;
-
-import play.Configuration;
-import play.Logger;
-import play.libs.F.Function0;
-import play.libs.F.Promise;
-import play.mvc.Action;
-import play.mvc.Controller;
-import play.mvc.Http;
-import play.mvc.Http.Context;
-import play.mvc.Result;
 import be.objectify.deadbolt.core.models.Role;
 import be.objectify.deadbolt.core.models.Subject;
 import be.objectify.deadbolt.java.DeadboltHandler;
@@ -53,11 +38,23 @@ import framework.commons.IFrameworkConstants;
 import framework.services.account.IAccountManagerPlugin;
 import framework.services.account.IUserAccount;
 import framework.services.session.IUserSessionManagerPlugin;
+import framework.utils.Utilities;
+import models.framework_models.account.SystemLevelRoleType;
+import models.framework_models.account.SystemPermission;
+import play.Configuration;
+import play.Logger;
+import play.libs.F.Function0;
+import play.libs.F.Promise;
+import play.mvc.Action;
+import play.mvc.Controller;
+import play.mvc.Http;
+import play.mvc.Http.Context;
+import play.mvc.Result;
 
 /**
  * An utility class which performs a test to be used in java code (instead of
- * annotations). It is based upon Deadbolt
- * "DeadboltAnalyzer.hasRole(subject, "admin")".<br/>
+ * annotations). It is based upon Deadbolt "DeadboltAnalyzer.hasRole(subject, "
+ * admin")".<br/>
  * <b>WARNING:</b> The Deadbolt roles (see {@link Role} are actually
  * {@link SystemPermission}.<br/>
  * They are thus different from {@link SystemLevelRoleType}.
@@ -249,7 +246,8 @@ public class SecurityUtils {
         try {
             if (log.isDebugEnabled()) {
                 log.debug("RESTRICT with handler cache [" + getHandlerCache() + "]");
-                log.debug("RESTRICT with handler [" + getHandlerCache().get() + "] timeout [" + DEFAULT_TIMEOUT + "] for roles " + toString(deadBoltRoles));
+                log.debug("RESTRICT with handler [" + getHandlerCache().get() + "] timeout [" + DEFAULT_TIMEOUT + "] for roles "
+                        + Utilities.toString(deadBoltRoles));
             }
             Optional<Subject> subjectOption = getSubject(ctx, getHandlerCache().get()).get(DEFAULT_TIMEOUT);
             if (!subjectOption.isPresent()) {
@@ -264,7 +262,7 @@ public class SecurityUtils {
             }
             return restrict(deadBoltRoles, subject);
         } catch (Throwable e) {
-            log.error("Error while checking restriction for " + toString(deadBoltRoles), e);
+            log.error("Error while checking restriction for " + Utilities.toString(deadBoltRoles), e);
             return false;
         }
     }
@@ -284,12 +282,12 @@ public class SecurityUtils {
         try {
             if (log.isDebugEnabled()) {
                 log.debug("RESTRICT for uid [" + uid + "] [" + getHandlerCache().get() + "] timeout [" + DEFAULT_TIMEOUT + "] for roles "
-                        + toString(deadBoltRoles));
+                        + Utilities.toString(deadBoltRoles));
             }
             Subject subject = getAccountManagerPlugin().getUserAccountFromUid(uid);
             return restrict(deadBoltRoles, subject);
         } catch (Throwable e) {
-            log.error("Error while checking restriction for " + toString(deadBoltRoles), e);
+            log.error("Error while checking restriction for " + Utilities.toString(deadBoltRoles), e);
             return false;
         }
     }
@@ -317,7 +315,7 @@ public class SecurityUtils {
             }
             return false;
         } catch (Throwable e) {
-            log.error("Error while checking restriction for " + toString(deadBoltRoles), e);
+            log.error("Error while checking restriction for " + Utilities.toString(deadBoltRoles), e);
             return false;
         }
     }
@@ -346,47 +344,6 @@ public class SecurityUtils {
      */
     public static boolean hasAllRoles(final Subject subject, final String[] roleNames) {
         return getDeadBoltAnalyzer().hasAllRoles(Optional.of(subject), roleNames);
-    }
-
-    /**
-     * Deadbolt expects a certain structure for the permissions statements.<br/>
-     * The basic structure is a List of array of String (AND between the
-     * permissions in an array and OR between the arrays in the list). This
-     * method takes an array as a parameter and creates a list of array (one
-     * array per value of the array passed as a parameter). This creates a
-     * permission statement of ORed permissions.
-     * 
-     * @param values
-     *            an array of permissions (to be associated with or)
-     * @return
-     */
-    public static List<String[]> getListOfArray(String... values) {
-        ArrayList<String[]> list = new ArrayList<String[]>();
-        for (String value : values) {
-            list.add(new String[] { value });
-        }
-        return list;
-    }
-
-    /**
-     * Provide a String representation of the provided list of array of String
-     * 
-     * @return
-     */
-    public static String toString(List<String[]> values) {
-        StringBuffer sb = new StringBuffer();
-        if (values != null) {
-            sb.append('[');
-            for (String[] array : values) {
-                sb.append(ArrayUtils.toString(array));
-                sb.append(',');
-            }
-            sb.deleteCharAt(sb.length() - 1);
-            sb.append(']');
-        } else {
-            return null;
-        }
-        return sb.toString();
     }
 
     private static JavaAnalyzer getDeadBoltAnalyzer() {

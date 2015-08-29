@@ -39,20 +39,9 @@ import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
-import models.framework_models.account.Preference;
-import models.framework_models.parent.IModelConstants;
-
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-
-import play.Configuration;
-import play.Logger;
-import play.Play;
-import play.cache.Cache;
-import play.libs.Json;
-import play.mvc.Controller;
-import play.mvc.Http.Context;
-import play.twirl.api.Html;
 
 import com.avaje.ebean.ExpressionList;
 import com.avaje.ebean.OrderBy;
@@ -62,6 +51,17 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import framework.commons.IFrameworkConstants;
 import framework.services.ServiceStaticAccessor;
 import framework.services.configuration.IImplementationDefinedObjectService;
+import models.framework_models.account.Preference;
+import models.framework_models.parent.IModelConstants;
+import play.Configuration;
+import play.Logger;
+import play.Play;
+import play.cache.Cache;
+import play.libs.Json;
+import play.mvc.Controller;
+import play.mvc.Http;
+import play.mvc.Http.Context;
+import play.twirl.api.Html;
 
 /**
  * An abstract class which gathers useful features
@@ -682,5 +682,91 @@ public abstract class Utilities {
                 currentOrderBy.add(property);
             }
         }
+    }
+
+    /**
+     * Return a list of array of String from an array of string.
+     * 
+     * Deadbolt expects a certain structure for the permissions statements.<br/>
+     * The basic structure is a List of array of String (AND between the
+     * permissions in an array and OR between the arrays in the list). This
+     * method takes an array as a parameter and creates a list of array (one
+     * array per value of the array passed as a parameter). This creates a
+     * permission statement of ORed permissions.
+     * 
+     * @param values
+     *            an array of permissions (to be associated with or)
+     * @return
+     */
+    public static List<String[]> getListOfArray(String... values) {
+        ArrayList<String[]> list = new ArrayList<String[]>();
+        for (String value : values) {
+            list.add(new String[] { value });
+        }
+        return list;
+    }
+
+    /**
+     * Provide a String representation of the provided list of array of String
+     * 
+     * @return
+     */
+    public static String toString(List<String[]> values) {
+        StringBuffer sb = new StringBuffer();
+        if (values != null) {
+            sb.append('[');
+            for (String[] array : values) {
+                sb.append(ArrayUtils.toString(array));
+                sb.append(',');
+            }
+            sb.deleteCharAt(sb.length() - 1);
+            sb.append(']');
+        } else {
+            return null;
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Get the current object id from the context.<br/>
+     * This feature is mainly used for authorization purpose to get the
+     * "current" manipulated object from the context.
+     * 
+     * @param context
+     *            the context
+     */
+    public static Long getId(Http.Context context) {
+        Long id = null;
+
+        if (context.request().getQueryString("id") != null) {
+            // get the id as a query parameter
+
+            id = Long.valueOf(context.request().getQueryString("id"));
+        } else if (context.request().headers().get("id") != null) {
+            // get the id as a header parameter
+
+            id = Long.valueOf(context.request().headers().get("id")[0]);
+        } else if (context.request().body().asFormUrlEncoded() != null && context.request().body().asFormUrlEncoded().get("id") != null) {
+            // get the id as a form content parameter
+
+            id = Long.valueOf(context.request().body().asFormUrlEncoded().get("id")[0]);
+        } else if (context.request().body().asMultipartFormData() != null && context.request().body().asMultipartFormData().asFormUrlEncoded() != null
+                && context.request().body().asMultipartFormData().asFormUrlEncoded().get("id") != null) {
+            // get the id as a multipart form content parameter
+
+            id = Long.valueOf(context.request().body().asMultipartFormData().asFormUrlEncoded().get("id")[0]);
+        } else {
+            // else try to get the id as a route parameter (only at the end of
+            // the path), example: https://localhost/portfolio-entry/view/10
+
+            try {
+                id = Long.parseLong(context.request().path().substring(context.request().path().lastIndexOf('/') + 1));
+            } catch (Exception e) {
+                Logger.debug("impossible to find the id as a route parameter");
+            }
+        }
+
+        return id;
+
     }
 }

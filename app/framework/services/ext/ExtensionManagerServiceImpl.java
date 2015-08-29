@@ -390,7 +390,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                 }
                 if (menuItemDescriptor.getPermissions() != null) {
                     menuItem.setAuthorizedPermissions(
-                            SecurityUtils.getListOfArray(menuItemDescriptor.getPermissions().toArray(new String[menuItemDescriptor.getPermissions().size()])));
+                            Utilities.getListOfArray(menuItemDescriptor.getPermissions().toArray(new String[menuItemDescriptor.getPermissions().size()])));
                 }
                 if (menuItemDescriptor.getAddAfterUuid() != null) {
                     log.info("Adding menu " + menuItemDescriptor.getUuid() + " after " + menuItemDescriptor.getAddAfterUuid());
