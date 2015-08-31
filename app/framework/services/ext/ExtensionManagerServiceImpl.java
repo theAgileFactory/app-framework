@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,11 +45,13 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 
 import org.apache.commons.beanutils.ConvertUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.xeustechnologies.jcl.JarClassLoader;
 import org.xeustechnologies.jcl.JclObjectFactory;
 
 import akka.actor.Cancellable;
+import framework.security.ISecurityService;
 import framework.security.SecurityUtils;
 import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.configuration.IImplementationDefinedObjectService;
@@ -65,6 +68,7 @@ import framework.services.plugins.IPluginManagerService;
 import framework.services.plugins.api.IPluginRunner;
 import framework.services.plugins.api.PluginException;
 import framework.services.router.ICustomRouterService;
+import framework.services.session.IUserSessionManagerPlugin;
 import framework.services.system.ISysAdminUtils;
 import framework.utils.Menu.ClickableMenuItem;
 import framework.utils.Menu.HeaderMenuItem;
@@ -74,6 +78,7 @@ import framework.utils.Utilities;
 import play.Configuration;
 import play.Environment;
 import play.Logger;
+import play.Play;
 import play.inject.ApplicationLifecycle;
 import play.libs.F.Function0;
 import play.libs.F.Promise;
@@ -622,6 +627,9 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
      * @author Pierre-Yves Cloux
      */
     public static class Extension implements IExtension {
+        private static final List<Class<?>> AUTHORIZED_INJECTED_SERVICE = Arrays.asList(ISecurityService.class, IUserSessionManagerPlugin.class,
+                ILinkGenerationService.class, II18nMessagesPlugin.class);
+
         private Date loadingTime;
         private File jarFile;
         private JarClassLoader jarClassLoader;
@@ -648,6 +656,14 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             try {
                 String pluginRunnerClassName = getDescriptorInternal().getPluginClassNameFromIdentifier(pluginIdentifier);
                 JclObjectFactory factory = JclObjectFactory.getInstance();
+
+                Class<?> pluginRunnerClass = getJarClassLoader().loadClass(pluginRunnerClassName);
+                // Look for the constructor injection tag
+                Object[] parameters = getInjectableConstructorParameters(pluginRunnerClass);
+                if (parameters != null) {
+                    return (IPluginRunner) factory.create(getJarClassLoader(), pluginRunnerClassName, parameters);
+                }
+
                 return (IPluginRunner) factory.create(getJarClassLoader(), pluginRunnerClassName);
             } catch (Exception e) {
                 throw new ExtensionManagerException("Unable to create an instance for the specified plugin " + pluginIdentifier, e);
@@ -706,12 +722,81 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                 JclObjectFactory factory = JclObjectFactory.getInstance();
                 for (String controllerClassName : getDescriptor().getDeclaredControllers()) {
                     log.info("Loading controller " + controllerClassName);
-                    Object obj = factory.create(this.jarClassLoader, controllerClassName);
+                    Object obj = null;
+                    Class<?> controllerClass = getJarClassLoader().loadClass(controllerClassName);
+                    // Look for the constructor injection tag
+                    Object[] parameters = getInjectableConstructorParameters(controllerClass);
+                    if (parameters != null) {
+                        obj = factory.create(getJarClassLoader(), controllerClassName, parameters);
+                    } else {
+                        obj = factory.create(this.jarClassLoader, controllerClassName);
+                    }
                     this.controllers.add(obj);
                 }
             } catch (Exception e) {
                 throw new ExtensionManagerException("Unable to read the JAR extension : " + jarFile, e);
             }
+        }
+
+        /**
+         * Return the parameters to be injected for creating an instance of the
+         * specified class
+         * 
+         * @param clazz
+         *            a class
+         * @return an array of objects
+         */
+        private Object[] getInjectableConstructorParameters(Class<?> clazz) {
+            Constructor<?> injectableConstructor = null;
+            Constructor<?>[] constructors = clazz.getConstructors();
+
+            // Look for injectable constructor
+            for (Constructor<?> constructor : constructors) {
+                if (constructor.isAnnotationPresent(Inject.class)) {
+                    if (injectableConstructor == null) {
+                        injectableConstructor = constructor;
+                    } else {
+                        throw new IllegalArgumentException("Multiple injectable constructor defined, please correct : only one injectable constructor allowed");
+                    }
+                }
+            }
+            if (injectableConstructor == null) {
+                if (log.isDebugEnabled()) {
+                    log.debug("No injectable constructor");
+                }
+                return null;// No Inject
+            }
+
+            if (log.isDebugEnabled()) {
+                log.debug("Found a constructor for the class " + clazz.getName() + " : " + injectableConstructor);
+            }
+
+            // Check if the Injected services are authorized
+            Class<?>[] parameterClasses = injectableConstructor.getParameterTypes();
+            if (parameterClasses != null && parameterClasses.length != 0) {
+                Object[] parameters = new Object[parameterClasses.length];
+                if (log.isDebugEnabled()) {
+                    log.debug("Constructor expects " + parameterClasses.length + " arguments : " + ArrayUtils.toString(parameterClasses));
+                }
+                int count = 0;
+                for (Class<?> parameterClass : parameterClasses) {
+                    if (!AUTHORIZED_INJECTED_SERVICE.contains(parameterClass)) {
+                        throw new IllegalArgumentException(parameterClass.getName() + " cannot be injected in the extension constructor");
+                    } else {
+                        parameters[count] = Play.application().injector().instanceOf(parameterClass);
+                        if (parameters[count] == null) {
+                            throw new IllegalArgumentException("Cannot inject " + parameterClass.getName() + " unknown reason");
+                        }
+                        count++;
+                    }
+                }
+                if (log.isDebugEnabled()) {
+                    log.debug("Created an array of parameters : " + ArrayUtils.toString(parameters));
+                }
+                return parameters;
+            }
+
+            return null;
         }
 
         /**
