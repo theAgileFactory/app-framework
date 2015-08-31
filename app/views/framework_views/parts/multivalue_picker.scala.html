@@ -225,7 +225,7 @@ function _@(field.id)_pickerFormIsReady(){
                     $('#'+inputField.attr('id')+'_value').html('<li>'+_@(field.id)_get_html_display_for_value(valueHolder)+'</li>');
                     _@(field.id)_selectedValues[valueHolder.value]=valueHolder;
                 } else {
-                    $('#'+inputField.attr('id')+'_value').parent().remove();
+                    $('#'+inputField.attr('id')+'_value').parent().hide();
                 }
             });
             _@(field.id)_displaySelectableValues(result['message']);
