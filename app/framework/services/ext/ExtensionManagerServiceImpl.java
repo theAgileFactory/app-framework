@@ -657,17 +657,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             try {
                 String pluginRunnerClassName = getDescriptorInternal().getPluginClassNameFromIdentifier(pluginIdentifier);
                 JclObjectFactory factory = JclObjectFactory.getInstance();
-
-                Class<?> pluginRunnerClass = getJarClassLoader().loadClass(pluginRunnerClassName);
-                // Look for the constructor injection tag
-                // Look for the constructor injection tag
-                Pair<Object[], Class<?>[]> injectableParameters = getInjectableConstructorParameters(pluginRunnerClass);
-                if (injectableParameters != null) {
-                    return (IPluginRunner) factory.create(getJarClassLoader(), pluginRunnerClassName, injectableParameters.getLeft(),
-                            injectableParameters.getRight());
-                }
-
-                return (IPluginRunner) factory.create(getJarClassLoader(), pluginRunnerClassName);
+                return (IPluginRunner) createInstanceOfClass(pluginRunnerClassName, factory);
             } catch (Exception e) {
                 throw new ExtensionManagerException("Unable to create an instance for the specified plugin " + pluginIdentifier, e);
             }
@@ -720,25 +710,37 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                 this.descriptor = (ExtensionDescriptor) u.unmarshal(inStream);
                 log.info("Found descriptor for extension " + descriptor.getName());
 
-                // Loading the controllers
+                // Loading the standalone web controllers
                 this.controllers = Collections.synchronizedList(new ArrayList<Object>());
                 JclObjectFactory factory = JclObjectFactory.getInstance();
                 for (String controllerClassName : getDescriptor().getDeclaredControllers()) {
                     log.info("Loading controller " + controllerClassName);
-                    Object obj = null;
-                    Class<?> controllerClass = getJarClassLoader().loadClass(controllerClassName);
-                    // Look for the constructor injection tag
-                    Pair<Object[], Class<?>[]> injectableParameters = getInjectableConstructorParameters(controllerClass);
-                    if (injectableParameters != null) {
-                        obj = factory.create(getJarClassLoader(), controllerClassName, injectableParameters.getLeft(), injectableParameters.getRight());
-                    } else {
-                        obj = factory.create(this.jarClassLoader, controllerClassName);
-                    }
-                    this.controllers.add(obj);
+                    this.controllers.add(createInstanceOfClass(controllerClassName, factory));
                 }
             } catch (Exception e) {
                 throw new ExtensionManagerException("Unable to read the JAR extension : " + jarFile, e);
             }
+        }
+
+        /**
+         * Create dynamically an instance of the specified object class
+         * 
+         * @param objectClass
+         *            an object class name
+         * @param factory
+         *            a JCL factory
+         * @return an instance of object
+         * @throws ClassNotFoundException
+         */
+        private Object createInstanceOfClass(String objectClassName, JclObjectFactory factory) throws ClassNotFoundException {
+            Class<?> pluginRunnerClass = getJarClassLoader().loadClass(objectClassName);
+            // Look for the constructor injection tag
+            // Look for the constructor injection tag
+            Pair<Object[], Class<?>[]> injectableParameters = getInjectableConstructorParameters(pluginRunnerClass);
+            if (injectableParameters != null) {
+                return factory.create(getJarClassLoader(), objectClassName, injectableParameters.getLeft(), injectableParameters.getRight());
+            }
+            return factory.create(getJarClassLoader(), objectClassName);
         }
 
         /**
