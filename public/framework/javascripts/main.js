@@ -119,9 +119,9 @@ function maf_load_value_holders_in_select(selectId, data){
 }
 
 function maf_sort_value_holder(a, b) {
-    if ( a.name < b.name )
+    if ( a.name.toLowerCase() < b.name.toLowerCase() )
         return -1;
-    if ( a.name > b.name )
+    if ( a.name.toLowerCase() > b.name.toLowerCase() )
         return 1;
     return 0;
 }
