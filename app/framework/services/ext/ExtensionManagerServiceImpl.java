@@ -47,6 +47,7 @@ import javax.xml.bind.Unmarshaller;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.xeustechnologies.jcl.JarClassLoader;
 import org.xeustechnologies.jcl.JclObjectFactory;
 
@@ -659,9 +660,11 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
 
                 Class<?> pluginRunnerClass = getJarClassLoader().loadClass(pluginRunnerClassName);
                 // Look for the constructor injection tag
-                Object[] parameters = getInjectableConstructorParameters(pluginRunnerClass);
-                if (parameters != null) {
-                    return (IPluginRunner) factory.create(getJarClassLoader(), pluginRunnerClassName, parameters);
+                // Look for the constructor injection tag
+                Pair<Object[], Class<?>[]> injectableParameters = getInjectableConstructorParameters(pluginRunnerClass);
+                if (injectableParameters != null) {
+                    return (IPluginRunner) factory.create(getJarClassLoader(), pluginRunnerClassName, injectableParameters.getLeft(),
+                            injectableParameters.getRight());
                 }
 
                 return (IPluginRunner) factory.create(getJarClassLoader(), pluginRunnerClassName);
@@ -725,9 +728,9 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                     Object obj = null;
                     Class<?> controllerClass = getJarClassLoader().loadClass(controllerClassName);
                     // Look for the constructor injection tag
-                    Object[] parameters = getInjectableConstructorParameters(controllerClass);
-                    if (parameters != null) {
-                        obj = factory.create(getJarClassLoader(), controllerClassName, parameters);
+                    Pair<Object[], Class<?>[]> injectableParameters = getInjectableConstructorParameters(controllerClass);
+                    if (injectableParameters != null) {
+                        obj = factory.create(getJarClassLoader(), controllerClassName, injectableParameters.getLeft(), injectableParameters.getRight());
                     } else {
                         obj = factory.create(this.jarClassLoader, controllerClassName);
                     }
@@ -746,7 +749,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
          *            a class
          * @return an array of objects
          */
-        private Object[] getInjectableConstructorParameters(Class<?> clazz) {
+        private Pair<Object[], Class<?>[]> getInjectableConstructorParameters(Class<?> clazz) {
             Constructor<?> injectableConstructor = null;
             Constructor<?>[] constructors = clazz.getConstructors();
 
@@ -793,7 +796,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                 if (log.isDebugEnabled()) {
                     log.debug("Created an array of parameters : " + ArrayUtils.toString(parameters));
                 }
-                return parameters;
+                return Pair.of(parameters, parameterClasses);
             }
 
             return null;
