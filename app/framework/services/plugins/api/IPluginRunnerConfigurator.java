@@ -41,4 +41,19 @@ public interface IPluginRunnerConfigurator {
      * Returns a map of registration option for a named DataType.
      */
     public Map<DataType, AbstractRegistrationConfiguratorController> getDataTypesWithRegistration();
+
+    /**
+     * Returns a descriptor of plugin menu entry (giving access to a plugin GUI)
+     * 
+     * @return a plugin menu descriptor
+     */
+    public IPluginMenuDescriptor getMenuDescriptor();
+
+    /**
+     * Returns a map of actions supported by this plugin indexed by their unique
+     * identifier
+     * 
+     * @return a map of actions descriptors
+     */
+    public Map<String, IPluginActionDescriptor> getActionDescriptors();
 }

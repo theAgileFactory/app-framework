@@ -45,16 +45,6 @@ import framework.commons.message.EventMessage;
  */
 public interface IPluginRunner {
     /**
-     * Return the descriptor for this plugin.<br/>
-     * THIS INTERFACE CAN BE CALLED BEFORE THE PLUGIN IS INITIALIZED.
-     * <b>WARNING</b> : please do not implement long running code into this
-     * method. It must be fast and static as much as possible.
-     * 
-     * @return a descriptor
-     */
-    public IStaticPluginRunnerDescriptor getStaticDescriptor();
-
-    /**
      * The configurator gathers the dynamic configuration features of the
      * plugin.<br/>
      * THIS INTERFACE IS NOT CALLED BEFORE THE PLUGIN IS INITIALIZED. You may
@@ -64,7 +54,8 @@ public interface IPluginRunner {
 
     /**
      * Initialize the plugin.<br/>
-     * This method is called only once in the context of the plugin lifecycle.<br/>
+     * This method is called only once in the context of the plugin lifecycle.
+     * <br/>
      * 
      * @param pluginContext
      *            the context of the plugin (access to various plugin services)

@@ -20,7 +20,9 @@ package framework.services.plugins.loader.toolkit;
 import java.io.BufferedWriter;
 import java.io.OutputStreamWriter;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -39,12 +41,15 @@ import framework.commons.message.EventMessage.MessageType;
 import framework.services.ServiceStaticAccessor;
 import framework.services.plugins.api.AbstractCustomConfiguratorController;
 import framework.services.plugins.api.AbstractRegistrationConfiguratorController;
+import framework.services.plugins.api.IPluginActionDescriptor;
 import framework.services.plugins.api.IPluginContext;
 import framework.services.plugins.api.IPluginContext.LogLevel;
+import framework.services.plugins.api.IPluginMenuDescriptor;
 import framework.services.plugins.api.IPluginRunner;
 import framework.services.plugins.api.IPluginRunnerConfigurator;
 import framework.services.plugins.api.PluginException;
 import framework.services.plugins.loader.toolkit.GenericFileLoader.AllowedCharSet;
+import framework.utils.DynamicFormDescriptor;
 import framework.utils.EmailUtils;
 import play.Logger;
 import scala.concurrent.duration.Duration;
@@ -67,6 +72,106 @@ public abstract class LoadableObjectPluginRunner<K extends ILoadableObject> impl
      * The minimal frequency for the scheduler.
      */
     private static final int MINIMAL_FREQUENCY = 5;
+
+    public static final String MAIN_CONFIGURATION_IDENTIFIER = "main";
+    public static final String CSV_MAPPING_CONFIGURATION_IDENTIFIER = "csv_mapping";
+
+    public static final String INPUT_FILE_CHARSET_PARAMETER = "input.file.charset";
+    public static final String INPUT_FILE_PATH_PARAMETER = "input.file.path";
+    public static final String REPORT_FILE_PATH_PARAMETER = "report.file.path";
+    public static final String UNACTIVATE_NOT_FOUND_PARAMETER = "unactivate.not.found";
+    public static final String UNACTIVATION_SELECTION_CLAUSE_PARAMETER = "unactivate.selection.clause";
+    public static final String IGNORE_INVALID_ROWS_PARAMETER = "ignore.invalid.rows";
+    public static final String CSV_FORMAT_PARAMETER = "csv.format";
+    public static final String AUTOMATIC_LOAD_BY_SCHEDULER_PARAMETER = "automatic.load.by.scheduler";
+    public static final String LOAD_FREQUENCY_IN_MINUTES_PARAMETER = "load.frequency.in.minutes";
+    public static final String LOAD_START_TIME = "load.start.time";
+    public static final String REPORT_MAIL_PARAMETER = "report.mail";
+    public static final String TEST_MODE_PARAMETER = "test.mode";
+
+    /**
+     * List of actions.
+     * 
+     * @author Pierre-Yves Cloux
+     * 
+     */
+    public static enum ActionMessage {
+        TRIGGER_LOAD, CHECK_LOADING;
+    }
+
+    /**
+     * The actions implemented by the plugin see {@link ActionMessage}
+     */
+    static Map<String, IPluginActionDescriptor> pluginActions = Collections.synchronizedMap(new HashMap<String, IPluginActionDescriptor>() {
+        private static final long serialVersionUID = 1L;
+
+        {
+            this.put(ActionMessage.TRIGGER_LOAD.name(), new IPluginActionDescriptor() {
+
+                @Override
+                public Object getPayLoad(Long id) {
+                    return ActionMessage.TRIGGER_LOAD;
+                }
+
+                @Override
+                public String getLabel() {
+                    return "Trigger load";
+                }
+
+                @Override
+                public String getIdentifier() {
+                    return ActionMessage.TRIGGER_LOAD.name();
+                }
+
+                @Override
+                public DataType getDataType() {
+                    return null;
+                }
+
+                @Override
+                public DynamicFormDescriptor getFormDescriptor() {
+                    return null;
+                }
+
+                @Override
+                public Object getPayLoad(Long arg0, Map<String, Object> arg1) {
+                    throw new UnsupportedOperationException();
+                }
+            });
+            this.put(ActionMessage.CHECK_LOADING.name(), new IPluginActionDescriptor() {
+
+                @Override
+                public Object getPayLoad(Long id) {
+                    return ActionMessage.CHECK_LOADING;
+                }
+
+                @Override
+                public String getLabel() {
+                    return "Check if loading";
+                }
+
+                @Override
+                public String getIdentifier() {
+                    return ActionMessage.CHECK_LOADING.name();
+                }
+
+                @Override
+                public DataType getDataType() {
+                    return null;
+                }
+
+                @Override
+                public DynamicFormDescriptor getFormDescriptor() {
+                    return null;
+                }
+
+                @Override
+                public Object getPayLoad(Long arg0, Map<String, Object> arg1) {
+                    throw new UnsupportedOperationException();
+                }
+            });
+        }
+    });
 
     private IPluginContext pluginContext;
 
@@ -122,8 +227,8 @@ public abstract class LoadableObjectPluginRunner<K extends ILoadableObject> impl
     @Override
     public void handleOutProvisioningMessage(EventMessage eventMessage) throws PluginException {
         if (eventMessage.getMessageType().equals(MessageType.CUSTOM) && eventMessage.getPayload() != null
-                && eventMessage.getPayload() instanceof LoadableObjectPluginStaticDescriptor.ActionMessage) {
-            switch ((LoadableObjectPluginStaticDescriptor.ActionMessage) eventMessage.getPayload()) {
+                && eventMessage.getPayload() instanceof ActionMessage) {
+            switch ((ActionMessage) eventMessage.getPayload()) {
             case CHECK_LOADING:
                 getPluginContext().reportOnEventHandling(eventMessage.getTransactionId(), false, eventMessage,
                         "Loading status is : " + getLoadingStatusHolder().isLoading());
@@ -164,42 +269,38 @@ public abstract class LoadableObjectPluginRunner<K extends ILoadableObject> impl
             // Load the configuration
             PropertiesConfiguration properties = getPluginContext()
                     .getPropertiesConfigurationFromByteArray(getPluginContext().getConfigurationAndMergeWithDefault(
-                            getStaticDescriptor().getConfigurationBlockDescriptors().get(LoadableObjectPluginStaticDescriptor.MAIN_CONFIGURATION_IDENTIFIER)));
+                            getPluginContext().getPluginDescriptor().getConfigurationBlockDescriptors().get(MAIN_CONFIGURATION_IDENTIFIER)));
 
             properties.setThrowExceptionOnMissing(true);
-            setInputFilePath(properties.getString(LoadableObjectPluginStaticDescriptor.INPUT_FILE_PATH_PARAMETER));
-            setLoadStartTime(properties.getString(LoadableObjectPluginStaticDescriptor.LOAD_START_TIME));
+            setInputFilePath(properties.getString(INPUT_FILE_PATH_PARAMETER));
+            setLoadStartTime(properties.getString(LOAD_START_TIME));
             if (getLoadStartTime() == null || !getLoadStartTime().matches("^([01]?[0-9]|2[0-3])h[0-5][0-9]$")) {
-                throw new IllegalArgumentException("Invalid time format for the " + LoadableObjectPluginStaticDescriptor.LOAD_START_TIME + " parameter");
+                throw new IllegalArgumentException("Invalid time format for the " + LOAD_START_TIME + " parameter");
             }
-            setLoadFrequency(
-                    FiniteDuration.create(properties.getLong(LoadableObjectPluginStaticDescriptor.LOAD_FREQUENCY_IN_MINUTES_PARAMETER), TimeUnit.MINUTES));
-            if (properties.getLong(LoadableObjectPluginStaticDescriptor.LOAD_FREQUENCY_IN_MINUTES_PARAMETER) < MINIMAL_FREQUENCY) {
-                throw new IllegalArgumentException(
-                        "Invalid frequency " + LoadableObjectPluginStaticDescriptor.LOAD_FREQUENCY_IN_MINUTES_PARAMETER + " must be more than 5 minutes");
+            setLoadFrequency(FiniteDuration.create(properties.getLong(LOAD_FREQUENCY_IN_MINUTES_PARAMETER), TimeUnit.MINUTES));
+            if (properties.getLong(LOAD_FREQUENCY_IN_MINUTES_PARAMETER) < MINIMAL_FREQUENCY) {
+                throw new IllegalArgumentException("Invalid frequency " + LOAD_FREQUENCY_IN_MINUTES_PARAMETER + " must be more than 5 minutes");
             }
-            setUnactivateNotFoundObjects(properties.getBoolean(LoadableObjectPluginStaticDescriptor.UNACTIVATE_NOT_FOUND_PARAMETER));
-            setUnactivationSelectionClause(properties.getString(LoadableObjectPluginStaticDescriptor.UNACTIVATION_SELECTION_CLAUSE_PARAMETER));
+            setUnactivateNotFoundObjects(properties.getBoolean(UNACTIVATE_NOT_FOUND_PARAMETER));
+            setUnactivationSelectionClause(properties.getString(UNACTIVATION_SELECTION_CLAUSE_PARAMETER));
             if (!StringUtils.isBlank(getUnactivationSelectionClause())) {
                 Pattern pattern = Pattern.compile("\\s?\\(?(\\S*)\\s?(=|like)\\s*'");
                 Matcher matcher = pattern.matcher(getUnactivationSelectionClause());
                 while (matcher.find()) {
                     System.out.println(matcher.group(1));
                     if (!getAllowedFieldsForUnactivationWhereClause().contains(matcher.group(1))) {
-                        throw new IllegalArgumentException(
-                                "Field not allowed in " + LoadableObjectPluginStaticDescriptor.UNACTIVATION_SELECTION_CLAUSE_PARAMETER + " please use only "
-                                        + getAllowedFieldsForUnactivationWhereClause());
+                        throw new IllegalArgumentException("Field not allowed in " + UNACTIVATION_SELECTION_CLAUSE_PARAMETER + " please use only "
+                                + getAllowedFieldsForUnactivationWhereClause());
                     }
                 }
             }
-            setReportFilePath(properties.getString(LoadableObjectPluginStaticDescriptor.REPORT_FILE_PATH_PARAMETER));
-            setAutomaticLoadByScheduler(properties.getBoolean(LoadableObjectPluginStaticDescriptor.AUTOMATIC_LOAD_BY_SCHEDULER_PARAMETER));
-            setReportEmail(properties.getString(LoadableObjectPluginStaticDescriptor.REPORT_MAIL_PARAMETER));
+            setReportFilePath(properties.getString(REPORT_FILE_PATH_PARAMETER));
+            setAutomaticLoadByScheduler(properties.getBoolean(AUTOMATIC_LOAD_BY_SCHEDULER_PARAMETER));
+            setReportEmail(properties.getString(REPORT_MAIL_PARAMETER));
 
             // Load the javaScript mapping script
             Pair<Boolean, byte[]> javascriptMappingConfiguration = getPluginContext().getConfiguration(
-                    getStaticDescriptor().getConfigurationBlockDescriptors().get(LoadableObjectPluginStaticDescriptor.CSV_MAPPING_CONFIGURATION_IDENTIFIER),
-                    true);
+                    getPluginContext().getPluginDescriptor().getConfigurationBlockDescriptors().get(CSV_MAPPING_CONFIGURATION_IDENTIFIER), true);
             if (javascriptMappingConfiguration.getLeft()) {
                 throw new PluginException("WARNING: the javascript configuration may be outdated and the plugin might crash, please check it againt the current"
                         + " documentation and save it before attempting to start the plugin");
@@ -207,10 +308,9 @@ public abstract class LoadableObjectPluginRunner<K extends ILoadableObject> impl
 
             // Creates the generic file loader
             this.genericFileLoader = new GenericFileLoader<K>(createGenericFileLoaderMapper(new String(javascriptMappingConfiguration.getRight())),
-                    GenericFileLoader.CSVFormatType.valueOf(properties.getString(LoadableObjectPluginStaticDescriptor.CSV_FORMAT_PARAMETER)),
-                    AllowedCharSet.getFromCharset(properties.getString(LoadableObjectPluginStaticDescriptor.INPUT_FILE_CHARSET_PARAMETER)), log,
-                    properties.getBoolean(LoadableObjectPluginStaticDescriptor.TEST_MODE_PARAMETER),
-                    properties.getBoolean(LoadableObjectPluginStaticDescriptor.IGNORE_INVALID_ROWS_PARAMETER));
+                    GenericFileLoader.CSVFormatType.valueOf(properties.getString(CSV_FORMAT_PARAMETER)),
+                    AllowedCharSet.getFromCharset(properties.getString(INPUT_FILE_CHARSET_PARAMETER)), log, properties.getBoolean(TEST_MODE_PARAMETER),
+                    properties.getBoolean(IGNORE_INVALID_ROWS_PARAMETER));
 
             // If scheduled, start the scheduler
             // Find the right FiniteDuration before starting the plugin
@@ -218,7 +318,7 @@ public abstract class LoadableObjectPluginRunner<K extends ILoadableObject> impl
                 long howMuchMinutesUntilStartTime = howMuchMinutesUntilStartTime();
 
                 setCurrentScheduler(ServiceStaticAccessor.getSysAdminUtils().scheduleRecurring(true,
-                        getStaticDescriptor().getName() + " plugin " + getPluginContext().getPluginConfigurationName(),
+                        getPluginContext().getPluginDescriptor().getName() + " plugin " + getPluginContext().getPluginConfigurationName(),
                         Duration.create(howMuchMinutesUntilStartTime, TimeUnit.MINUTES), getLoadFrequency(), new Runnable() {
                             @Override
                             public void run() {
@@ -263,6 +363,16 @@ public abstract class LoadableObjectPluginRunner<K extends ILoadableObject> impl
 
             @Override
             public AbstractCustomConfiguratorController getCustomConfigurator() {
+                return null;
+            }
+
+            @Override
+            public Map<String, IPluginActionDescriptor> getActionDescriptors() {
+                return pluginActions;
+            }
+
+            @Override
+            public IPluginMenuDescriptor getMenuDescriptor() {
                 return null;
             }
         };

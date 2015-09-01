@@ -59,10 +59,10 @@ import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.database.IDatabaseDependencyService;
 import framework.services.ext.ExtensionManagerException;
 import framework.services.ext.IExtension;
+import framework.services.ext.api.IExtensionDescriptor.IPluginDescriptor;
 import framework.services.plugins.api.IPluginContext;
 import framework.services.plugins.api.IPluginRunner;
 import framework.services.plugins.api.IPluginRunnerConfigurator;
-import framework.services.plugins.api.IStaticPluginRunnerDescriptor;
 import framework.services.plugins.api.PluginException;
 import framework.services.storage.ISharedStorageService;
 import framework.services.system.ISysAdminUtils;
@@ -91,9 +91,13 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
     private ISharedStorageService sharedStorageService;
 
     /**
-     * Loaded plugin extensions
+     * Loaded plugin extensions.<br/>
+     * This map is indexing the plugin extensions using the plugin identifier as
+     * a key.<br/>
+     * The purpose is to have a quick mean to get the plugin extension from a
+     * plugin identifier.
      */
-    private Map<String, IExtension> pluginExtensions;
+    private Map<String, Pair<IExtension, IPluginDescriptor>> pluginExtensions;
 
     /**
      * Map : key=plugin id , value= {@link PluginRegistrationEntry}.
@@ -141,8 +145,9 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
             IDatabaseDependencyService databaseDependencyService, ISharedStorageService sharedStorageService) {
         log.info("SERVICE>>> PluginManagerServiceImpl starting...");
         this.messagesPlugin = messagesPlugin;
+        this.sharedStorageService = sharedStorageService;
         pluginByIds = Collections.synchronizedMap(new HashMap<Long, PluginRegistrationEntry>());
-        pluginExtensions = Collections.synchronizedMap(new HashMap<String, IExtension>());
+        pluginExtensions = Collections.synchronizedMap(new HashMap<String, Pair<IExtension, IPluginDescriptor>>());
         lifecycle.addStopHook(() -> {
             log.info("SERVICE>>> PluginManagerServiceImpl stopping...");
             shutdown();
@@ -153,22 +158,22 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
     }
 
     @Override
-    public void loadPluginExtension(IExtension pluginExtension, String identifier, String clazz, boolean isAvailable) throws PluginException {
-        PluginDefinition pluginDefinition = PluginDefinition.getPluginDefinitionFromIdentifier(identifier);
+    public void loadPluginExtension(IExtension pluginExtension, IPluginDescriptor pluginDescriptor) throws PluginException {
+        PluginDefinition pluginDefinition = PluginDefinition.getPluginDefinitionFromIdentifier(pluginDescriptor.getIdentifier());
         if (pluginDefinition == null) {
-            // TODO : If the plugin is not currently listed into the database,
+            // If the plugin is not currently listed into the database,
             // do not load it
             return;
         }
-        pluginDefinition.clazz = clazz;
-        getPluginExtensions().put(identifier, pluginExtension);
-        log.info("Plugin definition loaded with identifier " + identifier + " and class " + clazz);
+        pluginDefinition.clazz = pluginDescriptor.getClazz();
+        getPluginExtensions().put(pluginDescriptor.getIdentifier(), Pair.of(pluginExtension, pluginDescriptor));
+        log.info("Plugin definition loaded with identifier " + pluginDescriptor.getIdentifier() + " and class " + pluginDescriptor.getClazz());
         pluginDefinition.save();
     }
 
     @Override
     public InputStream getPluginSmallImageSrc(String pluginDefinitionIdentifier) {
-        IExtension extension = getPluginExtensions().get(pluginDefinitionIdentifier);
+        IExtension extension = getPluginExtensions().get(pluginDefinitionIdentifier).getLeft();
         if (extension == null)
             return null;
         return extension.getResourceAsStream(String.format(IFrameworkConstants.PLUGIN_SMALL_IMAGE_TEMPLATE, pluginDefinitionIdentifier));
@@ -176,22 +181,21 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
 
     @Override
     public InputStream getPluginBigImageSrc(String pluginDefinitionIdentifier) {
-        IExtension extension = getPluginExtensions().get(pluginDefinitionIdentifier);
+        IExtension extension = getPluginExtensions().get(pluginDefinitionIdentifier).getLeft();
         if (extension == null)
             return null;
         return extension.getResourceAsStream(String.format(IFrameworkConstants.PLUGIN_BIG_IMAGE_TEMPLATE, pluginDefinitionIdentifier));
     }
 
     @Override
-    public Map<Pair<String, Boolean>, IStaticPluginRunnerDescriptor> getAllPluginDescriptors() {
+    public Map<Pair<String, Boolean>, IPluginDescriptor> getAllPluginDescriptors() {
         List<PluginDefinition> pluginDefinitions = PluginDefinition.getAllPluginDefinitions();
-        Map<Pair<String, Boolean>, IStaticPluginRunnerDescriptor> pluginDescriptions = new HashMap<Pair<String, Boolean>, IStaticPluginRunnerDescriptor>();
+        Map<Pair<String, Boolean>, IPluginDescriptor> pluginDescriptions = new HashMap<Pair<String, Boolean>, IPluginDescriptor>();
         if (pluginDefinitions != null) {
             for (PluginDefinition pluginDefinition : pluginDefinitions) {
                 try {
-                    IPluginRunner pluginRunner = getPluginRunnerFromDefinition(pluginDefinition);
-                    pluginDescriptions.put(Pair.of(pluginRunner.getStaticDescriptor().getPluginDefinitionIdentifier(), pluginDefinition.isAvailable),
-                            pluginRunner.getStaticDescriptor());
+                    IPluginDescriptor pluginDescriptor = getPluginExtensions().get(pluginDefinition.identifier).getRight();
+                    pluginDescriptions.put(Pair.of(pluginDefinition.identifier, pluginDefinition.isAvailable), pluginDescriptor);
                 } catch (Exception e) {
                     String message = String.format("Unable to instanciate the plugin %s", pluginDefinition.identifier);
                     log.error(message, e);
@@ -208,13 +212,13 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
     }
 
     @Override
-    public IStaticPluginRunnerDescriptor getAvailablePluginDescriptor(String pluginDefinitionIdentifier) {
+    public IPluginDescriptor getAvailablePluginDescriptor(String pluginDefinitionIdentifier) {
         PluginDefinition pluginDefinition = PluginDefinition.getAvailablePluginDefinitionFromIdentifier(pluginDefinitionIdentifier);
         if (pluginDefinition == null || !pluginDefinition.isAvailable) {
             return null;
         }
         try {
-            return getPluginRunnerFromDefinition(pluginDefinition).getStaticDescriptor();
+            return getPluginExtensions().get(pluginDefinitionIdentifier).getRight();
         } catch (Exception e) {
             String message = String.format("Unable to instanciate the plugin %s", pluginDefinition.identifier);
             log.error(message, e);
@@ -223,36 +227,18 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
     }
 
     @Override
-    public IStaticPluginRunnerDescriptor getPluginDescriptor(String pluginDefinitionIdentifier) {
+    public IPluginDescriptor getPluginDescriptor(String pluginDefinitionIdentifier) {
         PluginDefinition pluginDefinition = PluginDefinition.getPluginDefinitionFromIdentifier(pluginDefinitionIdentifier);
         if (pluginDefinition == null) {
             return null;
         }
         try {
-            return getPluginRunnerFromDefinition(pluginDefinition).getStaticDescriptor();
+            return getPluginExtensions().get(pluginDefinitionIdentifier).getRight();
         } catch (Exception e) {
             String message = String.format("Unable to instanciate the plugin %s", pluginDefinition.identifier);
             log.error(message, e);
         }
         return null;
-    }
-
-    /**
-     * Return the {@link IPluginRunner} class associated with the specified
-     * definition.<br/>
-     * 
-     * @param pluginDefinition
-     *            a plugin definition
-     * @return
-     * @throws ClassNotFoundException
-     */
-    private IPluginRunner getPluginRunnerFromDefinition(PluginDefinition pluginDefinition) throws ClassNotFoundException {
-        IExtension extension = getPluginExtensions().get(pluginDefinition.identifier);
-        try {
-            return extension.createPluginInstance(pluginDefinition.identifier);
-        } catch (ExtensionManagerException e) {
-            throw new ClassNotFoundException("No class for the plugin " + pluginDefinition.identifier, e);
-        }
     }
 
     @Override
@@ -393,23 +379,17 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
      * @throws PluginException
      */
     private PluginRegistrationEntry initializePlugin(PluginConfiguration pluginConfiguration) throws PluginException {
-        IPluginRunner pluginRunner;
         log.info(String.format("[BEGIN] initialize the plugin %d", pluginConfiguration.id));
         try {
-            pluginRunner = getPluginRunnerFromDefinition(pluginConfiguration.pluginDefinition);
+            String pluginIdentifier = pluginConfiguration.pluginDefinition.identifier;
+            IPluginDescriptor pluginDescriptor = getPluginExtensions().get(pluginIdentifier).getRight();
+            IPluginRunner pluginRunner = getPluginRunnerFromDefinitionIdentifier(pluginIdentifier);
             log.info(String.format("The class for the plugin %d has been found and instanciated", pluginConfiguration.id));
-            if (pluginRunner.getStaticDescriptor() == null || pluginRunner.getStaticDescriptor().getPluginDefinitionIdentifier() == null
-                    || !pluginRunner.getStaticDescriptor().getPluginDefinitionIdentifier().equals(pluginConfiguration.pluginDefinition.identifier)) {
-                throw new PluginException(
-                        String.format("Plugin description is null or the plugin definition id %s is not matching the id of the implementation class %s",
-                                pluginRunner.getStaticDescriptor() != null ? pluginRunner.getStaticDescriptor().getPluginDefinitionIdentifier() : "null",
-                                pluginConfiguration.pluginDefinition.identifier));
-            }
-            pluginRunner.init(new PluginContextImpl(pluginConfiguration, this, this, getSharedStorageService()));
+            pluginRunner.init(new PluginContextImpl(pluginConfiguration, pluginDescriptor, this, this, getSharedStorageService()));
             ActorRef pluginLifeCycleControllingActorRef = getActorSystem().actorOf(Props.create(
                     new PluginLifeCycleControllingActorCreator(pluginConfiguration.id, pluginRunner, getPluginStatusCallbackActorRef(), getMessagesPlugin())));
             log.info(String.format("[END] the plugin %d has been initialized", pluginConfiguration.id));
-            return new PluginRegistrationEntry(pluginConfiguration.id, pluginRunner, pluginLifeCycleControllingActorRef);
+            return new PluginRegistrationEntry(pluginConfiguration.id, pluginRunner, pluginDescriptor, pluginLifeCycleControllingActorRef);
         } catch (Exception e) {
             String message = String.format("Unable to initiaize the plugin %d", pluginConfiguration.id);
             log.error(message, e);
@@ -427,6 +407,24 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
             getActorSystem().stop(pluginRegistrationEntry.getLifeCycleControllingRouter());
         } catch (Exception e) {
             log.error(String.format("Unable to uninitialize the plugin %d", pluginRegistrationEntry.getPluginConfigurationId()), e);
+        }
+    }
+
+    /**
+     * Return the {@link IPluginRunner} class associated with the specified
+     * pluginIdentifier.<br/>
+     * 
+     * @param pluginIdentifier
+     *            a unique plugin definition identifier
+     * @return
+     * @throws ClassNotFoundException
+     */
+    private IPluginRunner getPluginRunnerFromDefinitionIdentifier(String pluginIdentifier) throws ClassNotFoundException {
+        IExtension extension = getPluginExtensions().get(pluginIdentifier).getLeft();
+        try {
+            return extension.createPluginInstance(pluginIdentifier);
+        } catch (ExtensionManagerException e) {
+            throw new ClassNotFoundException("No class for the plugin " + pluginIdentifier, e);
         }
     }
 
@@ -516,11 +514,9 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
 
         if (pluginRegistrationEntry.getPluginRunner().getConfigurator() != null) {
             if (flowType.equals(FlowType.IN)) {
-                eventInterfaceConfiguration = (pluginRegistrationEntry.getPluginRunner().getStaticDescriptor().hasInMessageInterface()
-                        ? new EventInterfaceConfiguration() : null);
+                eventInterfaceConfiguration = (pluginRegistrationEntry.getDescriptor().hasInMessageInterface() ? new EventInterfaceConfiguration() : null);
             } else {
-                eventInterfaceConfiguration = (pluginRegistrationEntry.getPluginRunner().getStaticDescriptor().hasOutMessageInterface()
-                        ? new EventInterfaceConfiguration() : null);
+                eventInterfaceConfiguration = (pluginRegistrationEntry.getDescriptor().hasOutMessageInterface() ? new EventInterfaceConfiguration() : null);
             }
         }
         if (eventInterfaceConfiguration != null) {
@@ -752,7 +748,7 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
         return pluginByIds;
     }
 
-    private Map<String, IExtension> getPluginExtensions() {
+    private Map<String, Pair<IExtension, IPluginDescriptor>> getPluginExtensions() {
         return pluginExtensions;
     }
 
@@ -877,12 +873,15 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
         private ActorRef inEventMessageProcessingActorRef;
         private ActorRef outEventMessageProcessingActorRef;
         private ActorRef lifeCycleControllingRouter;
+        private IPluginDescriptor descriptor;
         private IPluginRunner pluginRunner;
 
-        public PluginRegistrationEntry(Long pluginConfigurationId, IPluginRunner pluginRunner, ActorRef lifeCycleControllingRouter) {
+        public PluginRegistrationEntry(Long pluginConfigurationId, IPluginRunner pluginRunner, IPluginDescriptor descriptor,
+                ActorRef lifeCycleControllingRouter) {
             super();
             this.pluginConfigurationId = pluginConfigurationId;
             this.pluginRunner = pluginRunner;
+            this.descriptor = descriptor;
             this.lifeCycleControllingRouter = lifeCycleControllingRouter;
             pluginStatus = PluginStatus.STOPPED;
         }
@@ -908,10 +907,10 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
         }
 
         public synchronized boolean isPluginCompatible(DataType dataType) {
-            if (getPluginRunner().getStaticDescriptor().getSupportedDataTypes() == null) {
+            if (getDescriptor().getSupportedDataTypes() == null) {
                 return false;
             }
-            return getPluginRunner().getStaticDescriptor().getSupportedDataTypes().contains(dataType);
+            return getDescriptor().getSupportedDataTypes().contains(dataType);
         }
 
         public synchronized void setPluginStatus(PluginStatus pluginStatus) {
@@ -922,8 +921,9 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
             return pluginStatus;
         }
 
-        public synchronized IStaticPluginRunnerDescriptor getStaticDescriptor() {
-            return getPluginRunner().getStaticDescriptor();
+        @Override
+        public IPluginDescriptor getDescriptor() {
+            return descriptor;
         }
 
         public synchronized IPluginRunnerConfigurator getConfigurator() {
@@ -936,16 +936,6 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
 
         public synchronized ActorRef getLifeCycleControllingRouter() {
             return lifeCycleControllingRouter;
-        }
-
-        @Override
-        public String getPluginSmallImage() {
-            return String.format(IFrameworkConstants.PLUGIN_SMALL_IMAGE_TEMPLATE, getStaticDescriptor().getPluginDefinitionIdentifier());
-        }
-
-        @Override
-        public String getPluginBigImage() {
-            return String.format(IFrameworkConstants.PLUGIN_BIG_IMAGE_TEMPLATE, getStaticDescriptor().getPluginDefinitionIdentifier());
         }
 
         @Override

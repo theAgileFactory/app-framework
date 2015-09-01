@@ -28,9 +28,8 @@ import framework.commons.DataType;
 import framework.commons.message.EventMessage;
 import framework.services.actor.IActorServiceLifecycleHook;
 import framework.services.ext.IExtension;
-import framework.services.plugins.api.IPluginRunner;
+import framework.services.ext.api.IExtensionDescriptor.IPluginDescriptor;
 import framework.services.plugins.api.IPluginRunnerConfigurator;
-import framework.services.plugins.api.IStaticPluginRunnerDescriptor;
 import framework.services.plugins.api.PluginException;
 
 /**
@@ -61,13 +60,9 @@ public interface IPluginManagerService extends IActorServiceLifecycleHook {
     public interface IPluginInfo {
         public PluginStatus getPluginStatus();
 
-        public IStaticPluginRunnerDescriptor getStaticDescriptor();
+        public IPluginDescriptor getDescriptor();
 
         public IPluginRunnerConfigurator getConfigurator();
-
-        public String getPluginSmallImage();
-
-        public String getPluginBigImage();
     }
 
     /**
@@ -78,15 +73,11 @@ public interface IPluginManagerService extends IActorServiceLifecycleHook {
      * 
      * @param pluginExtension
      *            a plugin extension
-     * @param identifier
-     *            a unique plugin identifier
-     * @param clazz
-     *            a {@link IPluginRunner} class name
-     * @param isAvailable
-     *            true if the plugin will be available for creation
+     * @param descriptor
+     *            a plugin descriptor (which is part of the extension)
      * @throws PluginException
      */
-    public void loadPluginExtension(IExtension pluginExtension, String identifier, String clazz, boolean isAvailable) throws PluginException;
+    public void loadPluginExtension(IExtension pluginExtension, IPluginDescriptor descriptor) throws PluginException;
 
     /**
      * Register the specified plugin.<br/>
@@ -118,7 +109,8 @@ public interface IPluginManagerService extends IActorServiceLifecycleHook {
      * <li>
      * <ul>
      * <li>key : the plugin definition identifier</li>
-     * <li>available : true if the plugin is "available" (can be registered)</li>
+     * <li>available : true if the plugin is "available" (can be registered)
+     * </li>
      * </ul>
      * </li>
      * <li>value : the {@link IStaticPluginRunnerDescriptor} describing the
@@ -127,7 +119,7 @@ public interface IPluginManagerService extends IActorServiceLifecycleHook {
      * 
      * @return a map
      */
-    public Map<Pair<String, Boolean>, IStaticPluginRunnerDescriptor> getAllPluginDescriptors();
+    public Map<Pair<String, Boolean>, IPluginDescriptor> getAllPluginDescriptors();
 
     /**
      * Return true if the plugin is available
@@ -145,7 +137,7 @@ public interface IPluginManagerService extends IActorServiceLifecycleHook {
      *            a unique plugin definition identifier
      * @return a descriptor or null if no available descriptor can be found
      */
-    public IStaticPluginRunnerDescriptor getAvailablePluginDescriptor(String pluginDefinitionIdentifier);
+    public IPluginDescriptor getAvailablePluginDescriptor(String pluginDefinitionIdentifier);
 
     /**
      * Return the descriptor associated with the specified id.
@@ -154,7 +146,7 @@ public interface IPluginManagerService extends IActorServiceLifecycleHook {
      *            a unique plugin definition identifier
      * @return a descriptor or null if not descriptor can be found
      */
-    public IStaticPluginRunnerDescriptor getPluginDescriptor(String pluginDefinitionIdentifier);
+    public IPluginDescriptor getPluginDescriptor(String pluginDefinitionIdentifier);
 
     /**
      * Return a map with the following structure:

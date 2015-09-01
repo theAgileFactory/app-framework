@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.Date;
 
+import framework.services.ext.api.IExtensionDescriptor;
 import framework.services.plugins.api.IPluginRunner;
 
 public interface IExtension {

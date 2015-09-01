@@ -36,8 +36,9 @@ import com.avaje.ebean.Ebean;
 
 import framework.commons.DataType;
 import framework.commons.message.EventMessage;
-import framework.services.plugins.api.IPluginConfigurationBlockDescriptor;
-import framework.services.plugins.api.IPluginConfigurationBlockDescriptor.ConfigurationBlockEditionType;
+import framework.services.ext.api.IExtensionDescriptor.IPluginConfigurationBlockDescriptor;
+import framework.services.ext.api.IExtensionDescriptor.IPluginConfigurationBlockDescriptor.ConfigurationBlockEditionType;
+import framework.services.ext.api.IExtensionDescriptor.IPluginDescriptor;
 import framework.services.plugins.api.IPluginContext;
 import framework.services.plugins.api.PluginException;
 import framework.services.storage.ISharedStorageService;
@@ -59,19 +60,26 @@ public class PluginContextImpl implements IPluginContext {
     private static final String LOG_PREFIX_TEMPLATE = "[PLUGIN %s-%d] ";
     private Long pluginConfigurationId;
     private String pluginConfigurationName;
+    private IPluginDescriptor pluginDescriptor;
     private String pluginPrefix;
     private IPluginManagerService pluginManagerService;
     private IEventBroadcastingService eventBroadcastingService;
     private ISharedStorageService sharedStorageService;
 
-    public PluginContextImpl(PluginConfiguration pluginConfiguration, IPluginManagerService pluginManagerService,
+    public PluginContextImpl(PluginConfiguration pluginConfiguration, IPluginDescriptor pluginDescriptor, IPluginManagerService pluginManagerService,
             IEventBroadcastingService eventBroadcastingService, ISharedStorageService sharedStorageService) {
         this.pluginManagerService = pluginManagerService;
         this.eventBroadcastingService = eventBroadcastingService;
         this.sharedStorageService = sharedStorageService;
         this.pluginConfigurationId = pluginConfiguration.id;
         this.pluginConfigurationName = pluginConfiguration.name;
+        this.pluginDescriptor = pluginDescriptor;
         this.pluginPrefix = String.format(LOG_PREFIX_TEMPLATE, pluginConfiguration.pluginDefinition.identifier, pluginConfigurationId);
+    }
+
+    @Override
+    public IPluginDescriptor getPluginDescriptor() {
+        return pluginDescriptor;
     }
 
     @Override

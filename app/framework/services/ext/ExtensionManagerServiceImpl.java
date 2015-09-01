@@ -57,11 +57,12 @@ import framework.security.SecurityUtils;
 import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.configuration.IImplementationDefinedObjectService;
 import framework.services.database.IDatabaseDependencyService;
-import framework.services.ext.ExtensionDescriptor.I18nMessage;
-import framework.services.ext.ExtensionDescriptor.MenuCustomizationDescriptor;
-import framework.services.ext.ExtensionDescriptor.MenuItemDescriptor;
-import framework.services.ext.ExtensionDescriptor.PluginDescriptor;
+import framework.services.ext.XmlExtensionDescriptor.I18nMessage;
+import framework.services.ext.XmlExtensionDescriptor.MenuCustomizationDescriptor;
+import framework.services.ext.XmlExtensionDescriptor.MenuItemDescriptor;
 import framework.services.ext.api.AbstractExtensionController;
+import framework.services.ext.api.IExtensionDescriptor;
+import framework.services.ext.api.IExtensionDescriptor.IPluginDescriptor;
 import framework.services.ext.api.WebCommandPath;
 import framework.services.ext.api.WebControllerPath;
 import framework.services.ext.api.WebParameter;
@@ -330,8 +331,8 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             }
 
             // Unloading the i18 resources
-            if (extensionObject.getDescriptorInternal().getI18nMessages() != null) {
-                for (I18nMessage i18nMessage : extensionObject.getDescriptorInternal().getI18nMessages()) {
+            if (extensionObject.getDescriptorInternal().getXmlExtensionDescriptor().getI18nMessages() != null) {
+                for (I18nMessage i18nMessage : extensionObject.getDescriptorInternal().getXmlExtensionDescriptor().getI18nMessages()) {
                     if (getiI18nMessagesPlugin().isLanguageValid(i18nMessage.getLanguage())) {
                         Properties properties = new Properties();
                         try {
@@ -365,8 +366,8 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         for (IExtension extension : getExtensions()) {
             if (extension.getDescriptor().isMenuCustomized()) {
                 log.info("Loading menu customization for extension " + extension.getDescriptor().getName());
-                ExtensionDescriptor extensionDescriptor = (ExtensionDescriptor) extension.getDescriptor();
-                return updateTopMenu(extensionDescriptor.getMenuCustomizationDescriptor());
+                XmlExtensionDescriptor xmlExtensionDescriptor = (XmlExtensionDescriptor) extension.getDescriptor();
+                return updateTopMenu(xmlExtensionDescriptor.getMenuCustomizationDescriptor());
             }
         }
         return false;
@@ -465,11 +466,10 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         }
 
         // Load the plugins into the plugin manager
-        if (extension.getDescriptorInternal().getPluginDescriptors() != null) {
-            for (PluginDescriptor pluginDescriptor : extension.getDescriptorInternal().getPluginDescriptors()) {
+        if (extension.getDescriptorInternal().getDeclaredPlugins().size() != 0) {
+            for (IPluginDescriptor pluginDescriptor : extension.getDescriptorInternal().getDeclaredPlugins().values()) {
                 try {
-                    getPluginManagerService().loadPluginExtension(extension, pluginDescriptor.getIdentifier(), pluginDescriptor.getClazz(),
-                            pluginDescriptor.isAvailable());
+                    getPluginManagerService().loadPluginExtension(extension, pluginDescriptor);
                 } catch (PluginException e) {
                     log.error("Error with plugin " + pluginDescriptor.getIdentifier(), e);
                 }
@@ -477,8 +477,8 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         }
 
         // Load the i18n keys into
-        if (extension.getDescriptorInternal().getI18nMessages() != null) {
-            for (I18nMessage i18nMessage : extension.getDescriptorInternal().getI18nMessages()) {
+        if (extension.getDescriptorInternal().getXmlExtensionDescriptor().getI18nMessages() != null) {
+            for (I18nMessage i18nMessage : extension.getDescriptorInternal().getXmlExtensionDescriptor().getI18nMessages()) {
                 if (getiI18nMessagesPlugin().isLanguageValid(i18nMessage.getLanguage())) {
                     Properties properties = new Properties();
                     try {
@@ -634,7 +634,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         private Date loadingTime;
         private File jarFile;
         private JarClassLoader jarClassLoader;
-        private ExtensionDescriptor descriptor;
+        private ReadOnlyExtensionDescriptor descriptor;
         private List<Object> controllers;
 
         /**
@@ -655,7 +655,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         @Override
         public synchronized IPluginRunner createPluginInstance(String pluginIdentifier) throws ExtensionManagerException {
             try {
-                String pluginRunnerClassName = getDescriptorInternal().getPluginClassNameFromIdentifier(pluginIdentifier);
+                String pluginRunnerClassName = getDescriptor().getDeclaredPlugins().get(pluginIdentifier).getClazz();
                 JclObjectFactory factory = JclObjectFactory.getInstance();
                 return (IPluginRunner) createInstanceOfClass(pluginRunnerClassName, factory);
             } catch (Exception e) {
@@ -705,9 +705,9 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                 if (inStream == null) {
                     throw new ExtensionManagerException("No descriptor file in the JAR");
                 }
-                JAXBContext jc = JAXBContext.newInstance(ExtensionDescriptor.class);
+                JAXBContext jc = JAXBContext.newInstance(XmlExtensionDescriptor.class);
                 Unmarshaller u = jc.createUnmarshaller();
-                this.descriptor = (ExtensionDescriptor) u.unmarshal(inStream);
+                this.descriptor = new ReadOnlyExtensionDescriptor((XmlExtensionDescriptor) u.unmarshal(inStream));
                 log.info("Found descriptor for extension " + descriptor.getName());
 
                 // Loading the standalone web controllers
@@ -831,16 +831,16 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             return descriptor;
         }
 
-        private ExtensionDescriptor getDescriptorInternal() {
-            return descriptor;
-        }
-
         public synchronized File getJarFile() {
             return jarFile;
         }
 
         public synchronized void setJarFile(File jarFile) {
             this.jarFile = jarFile;
+        }
+
+        private synchronized ReadOnlyExtensionDescriptor getDescriptorInternal() {
+            return descriptor;
         }
 
         private JarClassLoader getJarClassLoader() {

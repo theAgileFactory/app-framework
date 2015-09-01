@@ -28,6 +28,8 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import framework.commons.DataType;
 import framework.commons.message.EventMessage;
+import framework.services.ext.api.IExtensionDescriptor.IPluginConfigurationBlockDescriptor;
+import framework.services.ext.api.IExtensionDescriptor.IPluginDescriptor;
 import models.framework_models.plugin.PluginConfigurationBlock;
 
 /**
@@ -59,6 +61,13 @@ public interface IPluginContext {
     public enum HttpMethod {
         GET, POST
     }
+
+    /**
+     * Return the descriptor of the plugin
+     * 
+     * @return
+     */
+    public IPluginDescriptor getPluginDescriptor();
 
     /**
      * Returns the plugin configuration name (the instance of the plugin
