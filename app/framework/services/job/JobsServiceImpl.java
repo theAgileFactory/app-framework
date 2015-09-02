@@ -104,7 +104,16 @@ public class JobsServiceImpl implements IJobsService {
             firstExecCal.set(Calendar.MILLISECOND, 0);
 
             if (firstExecCal.getTime().before(now)) {
-                firstExecCal.add(Calendar.DATE, 1);
+                switch (job.getFrequency()) {
+                case HOURLY:
+                    while (firstExecCal.getTime().before(now)) {
+                        firstExecCal.add(Calendar.HOUR_OF_DAY, 1);
+                    }
+                    break;
+                default:
+                    firstExecCal.add(Calendar.DATE, 1);
+                    break;
+                }
             }
 
             long diff = firstExecCal.getTimeInMillis() - now.getTime();
@@ -113,9 +122,6 @@ public class JobsServiceImpl implements IJobsService {
             FiniteDuration frequency = null;
             switch (job.getFrequency()) {
             case ONE_TIME:
-                break;
-            case DAILY:
-                frequency = FiniteDuration.create(1, TimeUnit.DAYS);
                 break;
             case HOURLY:
                 frequency = FiniteDuration.create(1, TimeUnit.HOURS);
