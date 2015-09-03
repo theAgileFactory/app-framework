@@ -77,7 +77,8 @@
 		<commons-csv.version>1.1</commons-csv.version>
 		<redmine-java-api.version>2.4.0</redmine-java-api.version>
 		<json.version>20141113</json.version>
-		<httpclient.version>4.2</httpclient.version>
+		<httpclient.version>4.3.6</httpclient.version>
+		<httpcore.version>4.3.3</httpcore.version>
 		<jasperreports.version>6.1.0</jasperreports.version>
 		<deadbolt.version>2.4.0</deadbolt.version>
 		<commons-eclipse-jdt.version>3.10.0</commons-eclipse-jdt.version>
@@ -443,7 +444,7 @@
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpcore</artifactId>
-			<version>${httpclient.version}</version>
+			<version>${httpcore.version}</version>
 		</dependency>
 
 		<!-- Jasper dependencies -->
