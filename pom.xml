@@ -285,6 +285,13 @@
 			</exclusions>
 		</dependency>
 		
+		<!-- JAXRS API dependency (used by swagger which depends on an outdated API) -->
+		<dependency>
+			<groupId>javax.ws.rs</groupId>
+			<artifactId>javax.ws.rs-api</artifactId>
+			<version>2.0.1</version>
+		</dependency>
+		
 		<!-- Swagger -->
 		<dependency>
             <groupId>com.wordnik</groupId>
@@ -318,6 +325,10 @@
 				<exclusion>
 					<groupId>com.fasterxml.jackson.core</groupId>
 					<artifactId>jackson-annotations</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>javax.ws.rs</groupId>
+					<artifactId>jsr311-api</artifactId>
 				</exclusion>
             </exclusions>
         </dependency>
