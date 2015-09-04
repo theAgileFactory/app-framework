@@ -20,20 +20,15 @@ package framework.services.notification;
 import static akka.actor.SupervisorStrategy.resume;
 
 import java.io.Serializable;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import models.framework_models.account.Notification;
-import models.framework_models.account.NotificationCategory;
-import models.framework_models.account.Principal;
-import play.Configuration;
-import play.Logger;
-import play.inject.ApplicationLifecycle;
-import play.libs.F.Promise;
-import scala.concurrent.duration.Duration;
+import com.avaje.ebean.ExpressionList;
+
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.OneForOneStrategy;
@@ -43,10 +38,21 @@ import akka.actor.SupervisorStrategy.Directive;
 import akka.actor.UntypedActor;
 import akka.japi.Function;
 import akka.routing.RoundRobinPool;
-
-import com.avaje.ebean.ExpressionList;
-
-import framework.services.database.IDatabaseDependencyService;
+import framework.commons.IFrameworkConstants;
+import framework.services.account.IAccountManagerPlugin;
+import framework.services.account.IPreferenceManagerPlugin;
+import framework.services.account.IUserAccount;
+import framework.utils.EmailUtils;
+import framework.utils.Utilities;
+import models.framework_models.account.Notification;
+import models.framework_models.account.NotificationCategory;
+import models.framework_models.account.Principal;
+import play.Configuration;
+import play.Logger;
+import play.Play;
+import play.inject.ApplicationLifecycle;
+import play.libs.F.Promise;
+import scala.concurrent.duration.Duration;
 
 /**
  * Implementation of the {@link INotificationManagerPlugin} interface.<br/>
@@ -57,9 +63,19 @@ import framework.services.database.IDatabaseDependencyService;
  */
 @Singleton
 public class DefaultNotificationManagerPlugin implements INotificationManagerPlugin {
+
     private static final String SUPERVISOR_ACTOR_NAME = "notification-router";
     private static Logger.ALogger log = Logger.of(DefaultNotificationManagerPlugin.class);
 
+    /**
+     * The supervisor strategy.
+     * 
+     * @param notificationRetryNumber
+     *            Number of retry when a delivery failed.
+     * @param notificationRetryDuration
+     *            How long to wait before attempting to distribute the message
+     *            again.
+     */
     private static SupervisorStrategy getSupervisorStrategy(int notificationRetryNumber, String notificationRetryDuration) {
         return new OneForOneStrategy(notificationRetryNumber, Duration.create(notificationRetryDuration), new Function<Throwable, Directive>() {
             @Override
@@ -71,59 +87,87 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
     }
 
     /**
-     * The size of the actor pool which is managing the notifications
+     * The size of the actor pool which is managing the notifications.
      */
     private int poolSize;
 
-    /**
-     * How long to wait before attempting to distribute the message again
-     */
     private String notificationRetryDuration;
 
-    /**
-     * Number of retry when a delivery failed
-     */
     private int notificationRetryNumber;
+
+    private IPreferenceManagerPlugin preferenceManagerPlugin;
+
+    private IAccountManagerPlugin accountManagerPlugin;
 
     private ActorRef supervisorActor;
 
+    /**
+     * The service configurations.
+     * 
+     * @author Pierre-Yves Cloux
+     */
     public enum Config {
         NOTIFICATION_POOL_SIZE("maf.actor.notification.pool"), RETRY_DURATION("maf.actor.notification.retry.duration"), RETRY_NUMBER(
                 "maf.actor.notification.retry.number");
 
         private String configurationKey;
 
+        /**
+         * Construct with the configuration key.
+         * 
+         * @param configurationKey
+         *            the configuration key
+         */
         private Config(String configurationKey) {
             this.configurationKey = configurationKey;
         }
 
+        /**
+         * Get the configuration key.
+         */
         public String getConfigurationKey() {
             return configurationKey;
         }
     }
 
     /**
-     * Create a new DefaultNotificationManagerPlugin
+     * Create a new DefaultNotificationManagerPlugin.
      * 
      * @param lifecycle
      *            the play application lifecycle listener
      * @param configuration
      *            the play application configuration
-     * @param databaseDependencyService
-     *            the service which ensures that the database is available
+     * @param preferenceManagerPlugin
+     *            the preference manager service
+     * @param accountManagerPlugin
+     *            the account manager service
+     * 
      */
     @Inject
-    public DefaultNotificationManagerPlugin(ApplicationLifecycle lifecycle, Configuration configuration, IDatabaseDependencyService databaseDependencyService) {
+    public DefaultNotificationManagerPlugin(ApplicationLifecycle lifecycle, Configuration configuration, IPreferenceManagerPlugin preferenceManagerPlugin,
+            IAccountManagerPlugin accountManagerPlugin) {
         log.info("SERVICE>>> DefaultNotificationManagerPlugin starting...");
         this.poolSize = configuration.getInt(Config.NOTIFICATION_POOL_SIZE.getConfigurationKey());
         this.notificationRetryDuration = configuration.getString(Config.RETRY_DURATION.getConfigurationKey());
         this.notificationRetryNumber = configuration.getInt(Config.RETRY_NUMBER.getConfigurationKey());
+        this.preferenceManagerPlugin = preferenceManagerPlugin;
+        this.accountManagerPlugin = accountManagerPlugin;
         lifecycle.addStopHook(() -> {
             log.info("SERVICE>>> DefaultNotificationManagerPlugin stopping...");
             log.info("SERVICE>>> DefaultNotificationManagerPlugin stopped");
             return Promise.pure(null);
         });
         log.info("SERVICE>>> DefaultNotificationManagerPlugin started");
+    }
+
+    @Override
+    public boolean isInternalSendingSystem() {
+        return this.getSendingSystem().equals(SendingSystem.INTERNAL);
+    }
+
+    @Override
+    public SendingSystem getSendingSystem() {
+        return SendingSystem.getByKey(getPreferenceManagerPlugin().getPreferenceValueAsString(IFrameworkConstants.NOTIFICATION_SENDING_SYSTEM_PREFERENCE));
     }
 
     @Override
@@ -253,7 +297,8 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
 
     @Override
     public void sendNotification(String uid, NotificationCategory category, String title, String message, String actionLink) {
-        NotificationToSend notificationToSend = new NotificationToSend(uid, category, title, message, actionLink);
+        NotificationToSend notificationToSend = new NotificationToSend(this.getAccountManagerPlugin(), this.getSendingSystem(), uid, category, title, message,
+                actionLink);
         getSupervisorActor().tell(notificationToSend, ActorRef.noSender());
     }
 
@@ -289,20 +334,47 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
         }
     }
 
+    /**
+     * Get the pool size.
+     * 
+     */
     private int getPoolSize() {
         return poolSize;
     }
 
+    /**
+     * Get the supervisor actor.
+     */
     private ActorRef getSupervisorActor() {
         return supervisorActor;
     }
 
+    /**
+     * Get the notification retry duration.
+     */
     private String getNotificationRetryDuration() {
         return notificationRetryDuration;
     }
 
+    /**
+     * Get the notification retry number.
+     */
     private int getNotificationRetryNumber() {
         return notificationRetryNumber;
+    }
+
+    /**
+     * Get the preference manager service.
+     */
+    private IPreferenceManagerPlugin getPreferenceManagerPlugin() {
+        return preferenceManagerPlugin;
+    }
+
+    /**
+     * Get the account manager service.
+     */
+    private IAccountManagerPlugin getAccountManagerPlugin() {
+        return accountManagerPlugin;
     }
 
     /**
@@ -330,14 +402,50 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
         public void onReceive(Object message) throws Exception {
             if (message instanceof NotificationToSend) {
                 NotificationToSend notificationToSend = (NotificationToSend) message;
+
                 Principal principal = Principal.getPrincipalFromUid(notificationToSend.getUid());
                 if (principal != null) {
-                    principal.sendNotification(notificationToSend.getCategory(), notificationToSend.getTitle(), notificationToSend.getMessage(),
-                            notificationToSend.getLink());
+                    switch (notificationToSend.getSendingSystem()) {
+
+                    case EMAIL:
+
+                        IUserAccount userAccount = notificationToSend.getAccountManagerPlugin().getUserAccountFromUid(notificationToSend.getUid());
+
+                        // construct the full link if it exists
+                        String link = null;
+                        if (notificationToSend.getLink() != null && !notificationToSend.getLink().equals("")) {
+                            try {
+                                URL url = new URL(notificationToSend.getLink());
+                                link = url.toString();
+                            } catch (Exception e) {
+                                link = Utilities.getPreferenceElseConfigurationValue(Play.application().configuration(),
+                                        IFrameworkConstants.PUBLIC_URL_PREFERENCE, "maf.public.url") + notificationToSend.getLink();
+                            }
+                        }
+
+                        EmailUtils.sendEmail("BizDock - " + notificationToSend.getTitle(), play.Configuration.root().getString("maf.email.from"),
+                                Utilities.renderFullViewI18n("views.html.framework_views.parts.mail.notification_html", userAccount.getFirstName(),
+                                        notificationToSend.getMessage(), link).body(),
+                                userAccount.getMail());
+
+                        break;
+
+                    case INTERNAL:
+
+                        principal.sendNotification(notificationToSend.getCategory(), notificationToSend.getTitle(), notificationToSend.getMessage(),
+                                notificationToSend.getLink());
+
+                        break;
+
+                    default:
+                        break;
+                    }
+
                 } else {
                     log.error(String.format("Notification with title %s for user %s failed because this user does not exists", notificationToSend.getTitle(),
                             notificationToSend.getUid()));
                 }
+
             } else if (message instanceof MessageToSend) {
                 MessageToSend messageToSend = (MessageToSend) message;
                 Principal principal = Principal.getPrincipalFromUid(messageToSend.getUid());
@@ -347,9 +455,7 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
                     log.error(String.format("Message with title %s for user %s failed because this user does not exists", messageToSend.getTitle(),
                             messageToSend.getUid()));
                 }
-            }
-
-            else {
+            } else {
                 unhandled(message);
             }
         }
@@ -369,11 +475,37 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
         private String title;
         private String message;
         private String link;
+        private SendingSystem sendingSystem;
+        private IAccountManagerPlugin accountManagerPlugin;
 
+        /**
+         * Default constructor.
+         */
         public NotificationToSend() {
         }
 
-        public NotificationToSend(String uid, NotificationCategory category, String title, String message, String link) {
+        /**
+         * Construct with values.
+         * 
+         * @param accountManagerPlugin
+         *            the account manager service
+         * @param sendingSystem
+         *            the sending system
+         * @param uid
+         *            the uid of the recipient
+         * @param category
+         *            the notification category
+         * @param title
+         *            the notification title
+         * @param message
+         *            the notification message
+         * @param link
+         *            the notification link
+         */
+        public NotificationToSend(IAccountManagerPlugin accountManagerPlugin, SendingSystem sendingSystem, String uid, NotificationCategory category,
+                String title, String message, String link) {
+            this.accountManagerPlugin = accountManagerPlugin;
+            this.sendingSystem = sendingSystem;
             this.uid = uid;
             this.category = category;
             this.title = title;
@@ -381,45 +513,55 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
             this.link = link;
         }
 
+        /**
+         * Get the account manager service.
+         */
+        public IAccountManagerPlugin getAccountManagerPlugin() {
+            return accountManagerPlugin;
+        }
+
+        /**
+         * Get the sending system.
+         */
+        public SendingSystem getSendingSystem() {
+            return this.sendingSystem;
+        }
+
+        /**
+         * Get the message.
+         */
         public String getMessage() {
             return message;
         }
 
-        public void setMessage(String message) {
-            this.message = message;
-        }
-
+        /**
+         * Get the link.
+         */
         public String getLink() {
             return link;
         }
 
-        public void setLink(String link) {
-            this.link = link;
-        }
-
+        /**
+         * Get the uid.
+         */
         public String getUid() {
             return uid;
         }
 
-        public void setUid(String uid) {
-            this.uid = uid;
-        }
-
+        /**
+         * Get the category.
+         */
         public NotificationCategory getCategory() {
             return category;
         }
 
-        public void setCategory(NotificationCategory category) {
-            this.category = category;
-        }
-
+        /**
+         * Get the title.
+         */
         public String getTitle() {
             return title;
         }
 
-        public void setTitle(String title) {
-            this.title = title;
-        }
     }
 
     /**
@@ -436,9 +578,24 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
         private String title;
         private String message;
 
+        /**
+         * Default constructor.
+         */
         public MessageToSend() {
         }
 
+        /**
+         * Construct with values.
+         * 
+         * @param senderUid
+         *            the uid of the send
+         * @param uid
+         *            the uid of the recipient
+         * @param title
+         *            the message title
+         * @param message
+         *            the message content
+         */
         public MessageToSend(String senderUid, String uid, String title, String message) {
             this.senderUid = senderUid;
             this.uid = uid;
@@ -446,36 +603,33 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
             this.message = message;
         }
 
+        /**
+         * Get the message content.
+         */
         public String getMessage() {
             return message;
         }
 
-        public void setMessage(String message) {
-            this.message = message;
-        }
-
+        /**
+         * Get the uid of the recipient.
+         */
         public String getUid() {
             return uid;
         }
 
-        public void setUid(String uid) {
-            this.uid = uid;
-        }
-
+        /**
+         * Get the the message title.
+         */
         public String getTitle() {
             return title;
         }
 
-        public void setTitle(String title) {
-            this.title = title;
-        }
-
+        /**
+         * Get the uid of the sender.
+         */
         public String getSenderUid() {
             return senderUid;
         }
 
-        public void setSenderUid(String senderUid) {
-            this.senderUid = senderUid;
-        }
     }
 }

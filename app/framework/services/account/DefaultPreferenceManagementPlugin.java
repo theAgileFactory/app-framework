@@ -23,6 +23,7 @@ import java.util.Date;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import framework.services.database.IDatabaseDependencyService;
 import models.framework_models.account.Preference;
 import models.framework_models.common.CustomAttributeItemOption;
 import models.framework_models.common.ICustomAttributeValue;
@@ -30,7 +31,6 @@ import play.Logger;
 import play.cache.CacheApi;
 import play.inject.ApplicationLifecycle;
 import play.libs.F.Promise;
-import framework.services.database.IDatabaseDependencyService;
 
 /**
  * The default implementation for the {@link IPreferenceManagerPlugin}.
@@ -69,10 +69,10 @@ public class DefaultPreferenceManagementPlugin implements IPreferenceManagerPlug
         }
         if (customAttributeValue.getAttributeType().equals(ICustomAttributeValue.AttributeType.SINGLE_ITEM)) {
             CustomAttributeItemOption customAttributeItemOption = (CustomAttributeItemOption) customAttributeValue.getValueAsObject();
-            return customAttributeItemOption != null ? customAttributeItemOption.getName() : null;
+            return customAttributeItemOption != null ? customAttributeItemOption.getNameAsKey() : null;
         }
-        throw new PreferenceManagementException(String.format("Invalid type for %s String requested but %s found", uuid,
-                customAttributeValue.getAttributeType()));
+        throw new PreferenceManagementException(
+                String.format("Invalid type for %s String requested but %s found", uuid, customAttributeValue.getAttributeType()));
     }
 
     @Override
@@ -80,8 +80,8 @@ public class DefaultPreferenceManagementPlugin implements IPreferenceManagerPlug
         ICustomAttributeValue customAttributeValue = Preference.getPreferenceValueFromUuid(uuid);
         isAttributeExists(uuid, customAttributeValue);
         if (!customAttributeValue.getAttributeType().equals(ICustomAttributeValue.AttributeType.INTEGER)) {
-            throw new PreferenceManagementException(String.format("Invalid type for %s Integer requested but %s found", uuid,
-                    customAttributeValue.getAttributeType()));
+            throw new PreferenceManagementException(
+                    String.format("Invalid type for %s Integer requested but %s found", uuid, customAttributeValue.getAttributeType()));
         }
         return (Integer) customAttributeValue.getValueAsObject();
     }
@@ -91,8 +91,8 @@ public class DefaultPreferenceManagementPlugin implements IPreferenceManagerPlug
         ICustomAttributeValue customAttributeValue = Preference.getPreferenceValueFromUuid(uuid);
         isAttributeExists(uuid, customAttributeValue);
         if (!customAttributeValue.getAttributeType().equals(ICustomAttributeValue.AttributeType.BOOLEAN)) {
-            throw new PreferenceManagementException(String.format("Invalid type for %s Boolean requested but %s found", uuid,
-                    customAttributeValue.getAttributeType()));
+            throw new PreferenceManagementException(
+                    String.format("Invalid type for %s Boolean requested but %s found", uuid, customAttributeValue.getAttributeType()));
         }
         return (Boolean) customAttributeValue.getValueAsObject();
     }
@@ -102,8 +102,8 @@ public class DefaultPreferenceManagementPlugin implements IPreferenceManagerPlug
         ICustomAttributeValue customAttributeValue = Preference.getPreferenceValueFromUuid(uuid);
         isAttributeExists(uuid, customAttributeValue);
         if (!customAttributeValue.getAttributeType().equals(ICustomAttributeValue.AttributeType.DECIMAL)) {
-            throw new PreferenceManagementException(String.format("Invalid type for %s Decimal requested but %s found", uuid,
-                    customAttributeValue.getAttributeType()));
+            throw new PreferenceManagementException(
+                    String.format("Invalid type for %s Decimal requested but %s found", uuid, customAttributeValue.getAttributeType()));
         }
         return (BigDecimal) customAttributeValue.getValueAsObject();
     }
@@ -113,8 +113,8 @@ public class DefaultPreferenceManagementPlugin implements IPreferenceManagerPlug
         ICustomAttributeValue customAttributeValue = Preference.getPreferenceValueFromUuid(uuid);
         isAttributeExists(uuid, customAttributeValue);
         if (!customAttributeValue.getAttributeType().equals(ICustomAttributeValue.AttributeType.DATE)) {
-            throw new PreferenceManagementException(String.format("Invalid type for %s Date requested but %s found", uuid,
-                    customAttributeValue.getAttributeType()));
+            throw new PreferenceManagementException(
+                    String.format("Invalid type for %s Date requested but %s found", uuid, customAttributeValue.getAttributeType()));
         }
         return (Date) customAttributeValue.getValueAsObject();
     }

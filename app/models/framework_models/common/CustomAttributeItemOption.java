@@ -29,15 +29,14 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Version;
 
-import models.framework_models.parent.IModel;
-import models.framework_models.parent.IModelConstants;
-
 import com.avaje.ebean.Model;
 
 import framework.utils.DefaultSelectableValueHolderCollection;
 import framework.utils.ISelectableValueHolder;
 import framework.utils.ISelectableValueHolderCollection;
 import framework.utils.Msg;
+import models.framework_models.parent.IModel;
+import models.framework_models.parent.IModelConstants;
 
 /**
  * A possible value for an item (single or multi value) custom attribute.
@@ -107,6 +106,13 @@ public class CustomAttributeItemOption extends Model implements IModel, ISelecta
         return Msg.get(this.name);
     }
 
+    /**
+     * Get the name as a i18n key.
+     */
+    public String getNameAsKey() {
+        return this.name;
+    }
+
     @Override
     public String getUrl() {
         return null;
@@ -145,8 +151,8 @@ public class CustomAttributeItemOption extends Model implements IModel, ISelecta
      * @return a value holders collection
      */
     public static ISelectableValueHolderCollection<Long> getSelectableValuesForDefinitionId(Long customAttributeDefinitionId) {
-        return new DefaultSelectableValueHolderCollection<Long>(find.where().eq("deleted", false)
-                .eq("customAttributeDefinition.id", customAttributeDefinitionId).orderBy("order").findList());
+        return new DefaultSelectableValueHolderCollection<Long>(
+                find.where().eq("deleted", false).eq("customAttributeDefinition.id", customAttributeDefinitionId).orderBy("order").findList());
     }
 
     public static CustomAttributeItemOption getCustomAttributeItemOptionById(Long id) {

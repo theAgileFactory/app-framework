@@ -17,7 +17,6 @@
  */
 package framework.commons;
 
-
 public interface IFrameworkConstants {
     // -------------------------------------------------------------------------------------
     // DataType name constants
@@ -138,7 +137,9 @@ public interface IFrameworkConstants {
      * @author Pierre-Yves Cloux
      */
     public enum AuthenticationMode {
-        STANDALONE, /* The authentication is managed within the play application */
+        STANDALONE, /*
+                     * The authentication is managed within the play application
+                     */
         FEDERATED, /*
                     * The authentication is delegated to a SAMLv2 server and the
                     * credentials provisioning is not managed
@@ -172,7 +173,8 @@ public interface IFrameworkConstants {
     }
 
     /**
-     * System preference for storing the authentication mode into the database.<br/>
+     * System preference for storing the authentication mode into the database.
+     * <br/>
      * The possible authentication mode are defined by
      * {@link AuthenticationMode}
      */
@@ -199,7 +201,6 @@ public interface IFrameworkConstants {
     /**
      * System preference for SMTP
      */
-
     public static final String SMTP_HOST_PREFERENCE = "SMTP_HOST_PREFERENCE";
     public static final String SMTP_PORT_PREFERENCE = "SMTP_PORT_PREFERENCE";
     public static final String SMTP_SSL_PREFERENCE = "SMTP_SSL_PREFERENCE";
@@ -210,8 +211,12 @@ public interface IFrameworkConstants {
     /**
      * User preference: current perspective
      */
-
     public static final String CURRENT_PERSPECTIVE_PREFERENCE = "CURRENT_PERSPECTIVE_PREFERENCE";
+
+    /**
+     * The notification sending system preference.
+     */
+    public static final String NOTIFICATION_SENDING_SYSTEM_PREFERENCE = "NOTIFICATION_SENDING_SYSTEM_PREFERENCE";
 
     // -------------------------------------------------------------------------------------
     // Syntax supported for code edition (plugins configuration blocks)

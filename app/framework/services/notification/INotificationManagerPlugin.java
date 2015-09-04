@@ -19,13 +19,12 @@ package framework.services.notification;
 
 import java.util.List;
 
-import models.framework_models.account.Notification;
-import models.framework_models.account.NotificationCategory;
-import models.framework_models.account.Principal;
-
 import com.avaje.ebean.ExpressionList;
 
 import framework.services.actor.IActorServiceLifecycleHook;
+import models.framework_models.account.Notification;
+import models.framework_models.account.NotificationCategory;
+import models.framework_models.account.Principal;
 
 /**
  * The interface to be implemented by the service which handles the notification
@@ -43,8 +42,18 @@ import framework.services.actor.IActorServiceLifecycleHook;
 public interface INotificationManagerPlugin extends IActorServiceLifecycleHook {
 
     /**
+     * Return true if the sending system is INTERNAL.
+     */
+    public boolean isInternalSendingSystem();
+
+    /**
+     * Get the sending system.
+     */
+    public SendingSystem getSendingSystem();
+
+    /**
      * Return true if the specified Principal (identified by its uid) has some
-     * notifications
+     * notifications.
      * 
      * @param uid
      *            a unique user login
@@ -54,7 +63,7 @@ public interface INotificationManagerPlugin extends IActorServiceLifecycleHook {
     public boolean hasNotifications(String uid);
 
     /**
-     * Return the number of not read notifications for the specified Principal
+     * Return the number of not read notifications for the specified Principal.
      * 
      * @param uid
      *            a unique user login
@@ -63,7 +72,7 @@ public interface INotificationManagerPlugin extends IActorServiceLifecycleHook {
 
     /**
      * Return true if the specified Principal (identified by its uid) has some
-     * messages (notification with is_message flag equals to true)
+     * messages (notification with is_message flag equals to true).
      * 
      * @param uid
      *            a unique user login
@@ -73,7 +82,7 @@ public interface INotificationManagerPlugin extends IActorServiceLifecycleHook {
     public boolean hasMessages(String uid);
 
     /**
-     * Return the number of not read messages for the specified Principal
+     * Return the number of not read messages for the specified Principal.
      * 
      * @param uid
      *            a unique user login
@@ -105,7 +114,7 @@ public interface INotificationManagerPlugin extends IActorServiceLifecycleHook {
     public ExpressionList<Notification> getNotificationsForUidAsExpr(String uid);
 
     /**
-     * Return the last 5 not read notifications for the specified user
+     * Return the last 5 not read notifications for the specified user.
      * 
      * @param uid
      *            a unique user login
@@ -115,7 +124,7 @@ public interface INotificationManagerPlugin extends IActorServiceLifecycleHook {
     public List<Notification> getNotReadNotificationsForUid(String uid);
 
     /**
-     * Return the messages for the specified user
+     * Return the messages for the specified user.
      * 
      * @param uid
      *            a unique user login
@@ -125,7 +134,7 @@ public interface INotificationManagerPlugin extends IActorServiceLifecycleHook {
     public List<Notification> getMessagesForUid(String uid);
 
     /**
-     * Return the last 5 not read messages for the specified user
+     * Return the last 5 not read messages for the specified user.
      * 
      * @param uid
      *            a unique user login
@@ -223,5 +232,42 @@ public interface INotificationManagerPlugin extends IActorServiceLifecycleHook {
      *            the message content
      */
     public void sendMessage(String senderUid, List<String> uids, String title, String message);
+
+    /**
+     * The possible sending system.
+     * 
+     * @author Johann Kohler
+     */
+    public enum SendingSystem {
+
+        INTERNAL("notification.sending_system.internal"), EMAIL("notification.sending_system.email");
+
+        private String key;
+
+        /**
+         * Construct with the i18n key.
+         * 
+         * @param key
+         *            the i18n key
+         */
+        SendingSystem(String key) {
+            this.key = key;
+        }
+
+        /**
+         * Get a sending system by key.
+         * 
+         * @param key
+         *            the i18n key
+         */
+        public static SendingSystem getByKey(String key) {
+            for (SendingSystem sendingSystem : SendingSystem.values()) {
+                if (sendingSystem.key.equals(key)) {
+                    return sendingSystem;
+                }
+            }
+            throw new java.lang.IllegalArgumentException("No enum constant for key " + key);
+        }
+    }
 
 }

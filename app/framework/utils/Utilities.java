@@ -357,9 +357,21 @@ public abstract class Utilities {
      * @return an {@link Html}
      */
     public static Html renderViewI18n(String viewPrefix, Object... parameters) {
+        return renderFullViewI18n(String.format("%s_%s", viewPrefix, ServiceStaticAccessor.getMessagesPlugin().getCurrentLanguage().getCode()), parameters);
+    }
+
+    /**
+     * Select a view and render it.
+     * 
+     * @param viewPath
+     *            the full name of the view to be rendered (including the
+     *            language)
+     * @param parameters
+     *            a variable number of values to be used as place holders
+     */
+    public static Html renderFullViewI18n(String viewPath, Object... parameters) {
         try {
-            Class<?> viewClass = Play.application().classloader()
-                    .loadClass(String.format("%s_%s", viewPrefix, ServiceStaticAccessor.getMessagesPlugin().getCurrentLanguage().getCode()));
+            Class<?> viewClass = Play.application().classloader().loadClass(viewPath);
             @SuppressWarnings("rawtypes")
             Class[] signature = new Class[parameters.length];
             for (int i = 0; i < parameters.length; i++) {
@@ -367,8 +379,8 @@ public abstract class Utilities {
             }
             return (Html) viewClass.getMethod("render", signature).invoke(viewClass, parameters);
         } catch (Exception e) {
-            log.error("Error while rendering the view " + viewPrefix, e);
-            throw new RuntimeException("Error while rendering the view " + viewPrefix, e);
+            log.error("Error while rendering the view " + viewPath, e);
+            throw new RuntimeException("Error while rendering the view " + viewPath, e);
         }
     }
 
