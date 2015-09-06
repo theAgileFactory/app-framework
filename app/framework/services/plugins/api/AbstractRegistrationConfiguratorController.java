@@ -17,12 +17,13 @@
  */
 package framework.services.plugins.api;
 
-import play.mvc.Call;
-import play.mvc.Result;
 import framework.commons.DataType;
 import framework.services.ServiceStaticAccessor;
 import framework.services.configuration.IImplementationDefinedObjectService;
+import framework.services.ext.ILinkGenerationService;
 import framework.services.plugins.api.IPluginContext.HttpMethod;
+import play.mvc.Call;
+import play.mvc.Result;
 
 /**
  * The class to be extended by the plugin controllers which are managing
@@ -32,11 +33,8 @@ import framework.services.plugins.api.IPluginContext.HttpMethod;
  * @author Pierre-Yves Cloux
  */
 public abstract class AbstractRegistrationConfiguratorController extends AbstractConfiguratorController {
-    private DataType dataType;
-
-    public AbstractRegistrationConfiguratorController(DataType dataType, IPluginContext pluginContext) {
-        super(pluginContext);
-        this.dataType = dataType;
+    public AbstractRegistrationConfiguratorController(ILinkGenerationService linkGenerationService) {
+        super(linkGenerationService);
     }
 
     /**
@@ -46,18 +44,20 @@ public abstract class AbstractRegistrationConfiguratorController extends Abstrac
      *            the HTTP method to be used
      * @param dataType
      *            the data type for the configurator
+     * @param objectId
+     *            the id of the object of the specified {@link DataType}
      * @param actionId
      *            the action Id to be passed to the controller
      * @return
      */
-    public Call getRouteForRegistrationController(HttpMethod method, Long objectId, String actionId) {
+    public Call getRouteForRegistrationController(HttpMethod method, DataType dataType, Long objectId, String actionId) {
         IImplementationDefinedObjectService implementationDefinedObjectService = ServiceStaticAccessor.getImplementationDefinedObjectService();
         if (method.equals(HttpMethod.GET)) {
-            return implementationDefinedObjectService.getRouteForPluginConfiguratorControllerDoGetRegistration(getPluginConfigurationId(), getDataType(),
-                    objectId, actionId);
+            return implementationDefinedObjectService.getRouteForPluginConfiguratorControllerDoGetRegistration(getPluginContext().getPluginConfigurationId(),
+                    dataType, objectId, actionId);
         } else {
-            return implementationDefinedObjectService.getRouteForPluginConfiguratorControllerDoPostRegistration(getPluginConfigurationId(), getDataType(),
-                    objectId, actionId);
+            return implementationDefinedObjectService.getRouteForPluginConfiguratorControllerDoPostRegistration(getPluginContext().getPluginConfigurationId(),
+                    dataType, objectId, actionId);
         }
     }
 
@@ -77,14 +77,5 @@ public abstract class AbstractRegistrationConfiguratorController extends Abstrac
      */
     public Result doPost(Long objectId, String actionId) {
         return badRequest("No implementation available");
-    }
-
-    /**
-     * The data type to which this registration option can be sent
-     * 
-     * @return a data type
-     */
-    public DataType getDataType() {
-        return dataType;
     }
 }

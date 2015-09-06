@@ -425,6 +425,7 @@ public class PluginContextImpl implements IPluginContext {
         reportOnEventHandling("-9", true, null, "Plugin kill was requested");
     }
 
+    @Override
     public Long getPluginConfigurationId() {
         return pluginConfigurationId;
     }

@@ -3,6 +3,7 @@ package framework.services.ext.api;
 import framework.services.ext.ExtensionManagerException;
 import framework.services.ext.ILinkGenerationService;
 import play.Logger;
+import play.mvc.Controller;
 
 /**
  * The root class to be implemented by the extension controllers.<br/>
@@ -16,7 +17,7 @@ import play.Logger;
  * 
  * @author Pierre-Yves Cloux
  */
-public abstract class AbstractExtensionController implements ILinkGenerator {
+public abstract class AbstractExtensionController extends Controller implements ILinkGenerator {
     private ILinkGenerationService linkGenerationService;
     private static Log log = new Log();
 

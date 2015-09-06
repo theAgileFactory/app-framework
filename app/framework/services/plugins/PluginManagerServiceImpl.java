@@ -61,6 +61,7 @@ import framework.services.ext.ExtensionManagerException;
 import framework.services.ext.IExtension;
 import framework.services.ext.IExtensionManagerService;
 import framework.services.ext.api.IExtensionDescriptor.IPluginDescriptor;
+import framework.services.plugins.api.AbstractRegistrationConfiguratorController;
 import framework.services.plugins.api.IPluginContext;
 import framework.services.plugins.api.IPluginRunner;
 import framework.services.plugins.api.IPluginRunnerConfigurator;
@@ -382,10 +383,28 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
         try {
             String pluginIdentifier = pluginConfiguration.pluginDefinition.identifier;
             IPluginDescriptor pluginDescriptor = getExtensionPlugins().get(pluginIdentifier).getRight();
-            IPluginContext context = new PluginContextImpl(pluginConfiguration, pluginDescriptor, this, this, getSharedStorageService());
+            IPluginContext pluginContext = new PluginContextImpl(pluginConfiguration, pluginDescriptor, this, this, getSharedStorageService());
             IPluginRunner pluginRunner = getPluginRunnerFromDefinitionIdentifier(pluginIdentifier, pluginConfiguration.id);
             log.info(String.format("The class for the plugin %d has been found and instanciated", pluginConfiguration.id));
-            pluginRunner.init(context);
+
+            // Set the plugin context in the plugin
+            pluginRunner.init(pluginContext);
+
+            // Call init for each of the configurator controllers (if any)
+            if (pluginRunner.getConfigurator() != null) {
+                // Init the custom configurator controller
+                if (pluginRunner.getConfigurator().getCustomConfigurator() != null) {
+                    pluginRunner.getConfigurator().getCustomConfigurator().init(pluginContext);
+                }
+                // Init the data registration configurator controllers
+                if (pluginRunner.getConfigurator().getDataTypesWithRegistration() != null) {
+                    for (AbstractRegistrationConfiguratorController registrationController : pluginRunner.getConfigurator().getDataTypesWithRegistration()
+                            .values()) {
+                        registrationController.init(pluginContext);
+                    }
+                }
+            }
+
             ActorRef pluginLifeCycleControllingActorRef = getActorSystem().actorOf(Props.create(
                     new PluginLifeCycleControllingActorCreator(pluginConfiguration.id, pluginRunner, getPluginStatusCallbackActorRef(), getMessagesPlugin())));
             log.info(String.format("[END] the plugin %d has been initialized", pluginConfiguration.id));

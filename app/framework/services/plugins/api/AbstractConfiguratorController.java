@@ -17,27 +17,31 @@
  */
 package framework.services.plugins.api;
 
-import play.mvc.Controller;
-import framework.services.plugins.PluginContextImpl;
+import framework.services.ext.ILinkGenerationService;
+import framework.services.ext.api.AbstractExtensionController;
 
 /**
  * The root class for the configurator controllers
  * 
  * @author Pierre-Yves Cloux
  */
-public abstract class AbstractConfiguratorController extends Controller {
+public abstract class AbstractConfiguratorController extends AbstractExtensionController {
     /**
      * The first action call by BizDock on a configuration controller.<br/>
      * This one displays the initial screen
      */
     public static final String INITIAL_ACTION = "_root";
-    private Long pluginConfigurationId;
+    private IPluginContext pluginContext;
 
-    public AbstractConfiguratorController(IPluginContext pluginContext) {
-        this.pluginConfigurationId = ((PluginContextImpl) pluginContext).getPluginConfigurationId();
+    public AbstractConfiguratorController(ILinkGenerationService linkGenerationService) {
+        super(linkGenerationService);
     }
 
-    protected Long getPluginConfigurationId() {
-        return pluginConfigurationId;
+    public void init(IPluginContext pluginContext) {
+        this.pluginContext = pluginContext;
+    }
+
+    protected IPluginContext getPluginContext() {
+        return pluginContext;
     }
 }

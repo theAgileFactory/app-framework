@@ -78,6 +78,14 @@ public interface IPluginContext {
     public String getPluginConfigurationName();
 
     /**
+     * The unique id for this instance of plugin.<br/>
+     * A plugin may be instanciated multiple times.
+     * 
+     * @return a long
+     */
+    public Long getPluginConfigurationId();
+
+    /**
      * Log a message into the plugin "technical log".<br/>
      * This log is not visible from the customer. It is to be used to monitor
      * the plugin and possibly to troubleshoot some issues.

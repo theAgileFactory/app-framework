@@ -17,11 +17,12 @@
  */
 package framework.services.plugins.api;
 
-import play.mvc.Call;
-import play.mvc.Result;
 import framework.services.ServiceStaticAccessor;
 import framework.services.configuration.IImplementationDefinedObjectService;
+import framework.services.ext.ILinkGenerationService;
 import framework.services.plugins.api.IPluginContext.HttpMethod;
+import play.mvc.Call;
+import play.mvc.Result;
 
 /**
  * The class to be extended by the plugin controllers which are managing
@@ -30,8 +31,8 @@ import framework.services.plugins.api.IPluginContext.HttpMethod;
  * @author Pierre-Yves Cloux
  */
 public abstract class AbstractCustomConfiguratorController extends AbstractConfiguratorController {
-    public AbstractCustomConfiguratorController(IPluginContext pluginContext) {
-        super(pluginContext);
+    public AbstractCustomConfiguratorController(ILinkGenerationService linkGenerationService) {
+        super(linkGenerationService);
     }
 
     /**
@@ -46,9 +47,11 @@ public abstract class AbstractCustomConfiguratorController extends AbstractConfi
     public Call getRouteForCustomController(HttpMethod method, String actionId) {
         IImplementationDefinedObjectService implementationDefinedObjectService = ServiceStaticAccessor.getImplementationDefinedObjectService();
         if (method.equals(HttpMethod.GET)) {
-            return implementationDefinedObjectService.getRouteForPluginConfiguratorControllerDoGetCustom(getPluginConfigurationId(), actionId);
+            return implementationDefinedObjectService.getRouteForPluginConfiguratorControllerDoGetCustom(getPluginContext().getPluginConfigurationId(),
+                    actionId);
         } else {
-            return implementationDefinedObjectService.getRouteForPluginConfiguratorControllerDoPostCustom(getPluginConfigurationId(), actionId);
+            return implementationDefinedObjectService.getRouteForPluginConfiguratorControllerDoPostCustom(getPluginContext().getPluginConfigurationId(),
+                    actionId);
         }
     }
 
