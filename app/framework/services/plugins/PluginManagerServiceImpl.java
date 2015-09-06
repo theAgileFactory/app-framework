@@ -382,9 +382,10 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
         try {
             String pluginIdentifier = pluginConfiguration.pluginDefinition.identifier;
             IPluginDescriptor pluginDescriptor = getExtensionPlugins().get(pluginIdentifier).getRight();
+            IPluginContext context = new PluginContextImpl(pluginConfiguration, pluginDescriptor, this, this, getSharedStorageService());
             IPluginRunner pluginRunner = getPluginRunnerFromDefinitionIdentifier(pluginIdentifier, pluginConfiguration.id);
             log.info(String.format("The class for the plugin %d has been found and instanciated", pluginConfiguration.id));
-            pluginRunner.init(new PluginContextImpl(pluginConfiguration, pluginDescriptor, this, this, getSharedStorageService()));
+            pluginRunner.init(context);
             ActorRef pluginLifeCycleControllingActorRef = getActorSystem().actorOf(Props.create(
                     new PluginLifeCycleControllingActorCreator(pluginConfiguration.id, pluginRunner, getPluginStatusCallbackActorRef(), getMessagesPlugin())));
             log.info(String.format("[END] the plugin %d has been initialized", pluginConfiguration.id));
@@ -423,8 +424,7 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
      *            a unique plugin definition identifier
      * @param pluginConfigurationId
      *            the id specific to a plugin instance
-     * 
-     * @return
+     * @return a read to be initialized plugin runner
      * @throws ClassNotFoundException
      */
     private IPluginRunner getPluginRunnerFromDefinitionIdentifier(String pluginIdentifier, Long pluginConfigurationId) throws ClassNotFoundException {

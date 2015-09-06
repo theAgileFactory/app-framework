@@ -10,8 +10,8 @@ public interface ILinkGenerationService {
     /**
      * Creates a link to a command identified by the specified commandId
      * 
-     * @param controller
-     *            an extension controller class (this one must contains a
+     * @param controllerInstance
+     *            an extension controller instance (this one must contains a
      *            command with the specified Id)
      * @param commandId
      *            a unique id for a command
@@ -19,6 +19,6 @@ public interface ILinkGenerationService {
      *            one or more args matching the command method parameters
      * @return a link
      */
-    public String link(Class<?> controller, String commandId, Object... parameters) throws ExtensionManagerException;
+    public String link(Object controllerInstance, String commandId, Object... parameters) throws ExtensionManagerException;
 
 }

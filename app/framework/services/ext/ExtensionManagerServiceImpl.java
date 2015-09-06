@@ -133,7 +133,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
     private ISysAdminUtils sysAdminUtils;
     private IImplementationDefinedObjectService implementationDefinedObjectService;
     private List<Extension> extensions = Collections.synchronizedList(new ArrayList<Extension>());
-    private Map<Class<?>, Map<String, WebCommand>> extensionControllers = Collections.synchronizedMap(new HashMap<Class<?>, Map<String, WebCommand>>());
+    private Map<Object, Map<String, WebCommand>> extensionControllers = Collections.synchronizedMap(new HashMap<Object, Map<String, WebCommand>>());
     private List<WebCommand> webCommands = Collections.synchronizedList(new ArrayList<WebCommand>());
 
     public enum Config {
@@ -295,13 +295,13 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
     }
 
     @Override
-    public String link(Class<?> controller, String commandId, Object... parameters) throws ExtensionManagerException {
-        if (!getExtensionControllers().containsKey(controller)) {
-            throw new ExtensionManagerException("Unknown controller " + controller);
+    public String link(Object controllerInstance, String commandId, Object... parameters) throws ExtensionManagerException {
+        if (!getExtensionControllers().containsKey(controllerInstance)) {
+            throw new ExtensionManagerException("Unknown controller " + controllerInstance);
         }
-        WebCommand webCommand = getExtensionControllers().get(controller).get(commandId);
+        WebCommand webCommand = getExtensionControllers().get(controllerInstance).get(commandId);
         if (webCommand == null) {
-            throw new ExtensionManagerException("Unknown command " + commandId + " in the controller " + controller);
+            throw new ExtensionManagerException("Unknown command " + commandId + " in the controller " + controllerInstance);
         }
         return getConfiguration().getString("play.http.context") + PATH_PREFIX + webCommand.generateLink(parameters);
     }
@@ -316,9 +316,15 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         if (getExtensions().contains(extension)) {
             Extension extensionObject = (Extension) extension;
             for (Class<?> controllerClass : extensionObject.getControllerClasses()) {
-                for (WebCommand webCommand : getExtensionControllers().get(controllerClass).values()) {
-                    log.info("Unloading web command " + webCommand.getId());
-                    getWebCommands().remove(webCommand);
+                // Look for all the extention controllers which are implementing
+                // this class
+                for (Object extensionController : getExtensionControllers().keySet()) {
+                    if (controllerClass.isInstance(extensionController)) {
+                        for (WebCommand webCommand : getExtensionControllers().get(extensionController).values()) {
+                            log.info("Unloading web command " + webCommand.getId());
+                            getWebCommands().remove(webCommand);
+                        }
+                    }
                 }
                 log.info("Unloading controller " + controllerClass);
                 getExtensionControllers().remove(controllerClass);
@@ -365,7 +371,8 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             JclObjectFactory factory = JclObjectFactory.getInstance();
             log.info("Plugin instance [" + pluginConfigurationId + "] for the unique id [" + pluginIdentifier + "] in the extension "
                     + result.getLeft().getDescriptor().getName() + " loaded");
-            return (IPluginRunner) result.getLeft().createInstanceOfClass(pluginRunnerClassName, factory);
+            IPluginRunner pluginRunner = (IPluginRunner) result.getLeft().createInstanceOfClass(pluginRunnerClassName, factory);
+            return pluginRunner;
         } catch (Exception e) {
             throw new ExtensionManagerException("Unable to create an instance for the specified plugin " + pluginIdentifier, e);
         }
@@ -498,15 +505,15 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         }
 
         // Prepare the controllers to listen to incoming requests
-        List<Class<?>> successFullyLoadedControllers = new ArrayList<Class<?>>();
+        List<Object> successFullyLoadedControllers = new ArrayList<Object>();
         for (Object controllerInstance : extension.getControllerInstances()) {
             try {
-                addExtensionController(controllerInstance);
+                addExtensionController(controllerInstance, null);
                 successFullyLoadedControllers.add(controllerInstance.getClass());
             } catch (Exception e) {
                 log.error("Error with controller " + controllerInstance, e);
                 // Remove all the loaded controllers and their web command
-                for (Class<?> successFullyLoadedController : successFullyLoadedControllers) {
+                for (Object successFullyLoadedController : successFullyLoadedControllers) {
                     for (WebCommand webCommand : getExtensionControllers().get(successFullyLoadedController).values()) {
                         getWebCommands().remove(webCommand);
                     }
@@ -546,17 +553,19 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
      * @param controllerInstance
      *            a controller instance (which class must be annotated by
      *            {@link WebCommandPath} as well as a method)
+     * @param pathPrefix
+     *            add a path prefix to the web commands of the specified
+     *            controller (this is used for instance, for the plugins which
+     *            may declare a controller possibly existing for multiple
+     *            instances)
      * @throws ExtensionManagerException
      */
-    private void addExtensionController(Object controllerInstance) throws ExtensionManagerException {
+    private void addExtensionController(Object controllerInstance, String pathPrefix) throws ExtensionManagerException {
         Class<?> controllerClass = controllerInstance.getClass();
         if (controllerClass.isAnnotationPresent(WebControllerPath.class) && AbstractExtensionController.class.isAssignableFrom(controllerClass)) {
             WebControllerPath controllerAnnotation = controllerClass.getAnnotation(WebControllerPath.class);
             if (!StringUtils.isBlank(controllerAnnotation.path())) {
                 try {
-                    // Set the link generator
-                    AbstractExtensionController extensionController = AbstractExtensionController.class.cast(controllerInstance);
-                    extensionController.setLinkGenerationService(this);
                     // Parse the controller to discover its interface
                     Method[] methods = controllerClass.getDeclaredMethods();
                     if (methods != null) {
@@ -571,7 +580,9 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                                     if (StringUtils.isBlank(commandId)) {
                                         commandId = UUID.randomUUID().toString();
                                     }
-                                    WebCommand webCommand = new WebCommand(controllerInstance, commandId, controllerAnnotation.path() + methodAnnotation.path(),
+                                    String pathPrefixAsString = pathPrefix != null ? pathPrefix : "";
+                                    WebCommand webCommand = new WebCommand(controllerInstance, commandId,
+                                            pathPrefixAsString + controllerAnnotation.path() + methodAnnotation.path(),
                                             permissions.toArray(new String[permissions.size()]), methodAnnotation.httpMethod(), method);
                                     addWebCommands(controllerInstance, webCommand);
                                     log.info("Registered web command " + webCommand);
@@ -599,14 +610,13 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
      */
     private void addWebCommands(Object controllerInstance, WebCommand webCommand) {
         Map<String, WebCommand> controllerCommands = null;
-        Class<?> controllerClass = controllerInstance.getClass();
-        if (getExtensionControllers().containsKey(controllerClass)) {
-            controllerCommands = getExtensionControllers().get(controllerClass);
+        if (getExtensionControllers().containsKey(controllerInstance)) {
+            controllerCommands = getExtensionControllers().get(controllerInstance);
         } else {
             controllerCommands = Collections.synchronizedMap(new HashMap<String, WebCommand>());
         }
         controllerCommands.put(webCommand.getId(), webCommand);
-        getExtensionControllers().put(controllerClass, controllerCommands);
+        getExtensionControllers().put(controllerInstance, controllerCommands);
         getWebCommands().add(webCommand);
     }
 
@@ -614,7 +624,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         return webCommands;
     }
 
-    private Map<Class<?>, Map<String, WebCommand>> getExtensionControllers() {
+    private Map<Object, Map<String, WebCommand>> getExtensionControllers() {
         return extensionControllers;
     }
 

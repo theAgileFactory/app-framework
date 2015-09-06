@@ -9,7 +9,10 @@ import play.Logger;
  * This one provides various utilities. This class implements the interface
  * {@link ILinkGenerator}.<br/>
  * This allow to pass the controller to a view to support link generation
- * without creating a "hard link" with the controller.
+ * without creating a "hard link" with the controller.<br/>
+ * <b>WARNING</b><br/>
+ * The constructor must be injected with a {@link ILinkGenerationService} so
+ * that the link method can work.
  * 
  * @author Pierre-Yves Cloux
  */
@@ -17,15 +20,7 @@ public abstract class AbstractExtensionController implements ILinkGenerator {
     private ILinkGenerationService linkGenerationService;
     private static Log log = new Log();
 
-    public AbstractExtensionController() {
-    }
-
-    /**
-     * Set the link generation service
-     * 
-     * @param linkGenerationService
-     */
-    public void setLinkGenerationService(ILinkGenerationService linkGenerationService) {
+    public AbstractExtensionController(ILinkGenerationService linkGenerationService) {
         this.linkGenerationService = linkGenerationService;
     }
 
@@ -40,7 +35,7 @@ public abstract class AbstractExtensionController implements ILinkGenerator {
      */
     public String link(String commandId, Object... parameters) {
         try {
-            return getLinkGenerationService().link(getClass(), commandId, parameters);
+            return getLinkGenerationService().link(this, commandId, parameters);
         } catch (ExtensionManagerException e) {
             throw new IllegalArgumentException("Cannot generate link", e);
         }
