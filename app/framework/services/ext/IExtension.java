@@ -22,7 +22,6 @@ import java.io.InputStream;
 import java.util.Date;
 
 import framework.services.ext.api.IExtensionDescriptor;
-import framework.services.plugins.api.IPluginRunner;
 
 public interface IExtension {
     public static final String EXTENSION_MANAGER_DESCRIPTOR_FILE = "extension.xml";
@@ -47,15 +46,6 @@ public interface IExtension {
      * @return a file
      */
     public File getJarFile();
-
-    /**
-     * Creates a plugin instance using the provided extension
-     * 
-     * @param pluginIdentifier
-     *            a unique plugin identifier which must be part of this
-     *            extension (otherwise an exception is raise)
-     */
-    public IPluginRunner createPluginInstance(String pluginIdentifier) throws ExtensionManagerException;
 
     /**
      * Return a resource included in this extension as an {@link InputStream}.

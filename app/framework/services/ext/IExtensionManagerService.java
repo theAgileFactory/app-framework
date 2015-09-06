@@ -19,6 +19,7 @@ package framework.services.ext;
 
 import java.util.List;
 
+import framework.services.plugins.api.IPluginRunner;
 import framework.services.router.IRequestListener;
 import play.mvc.Http.Context;
 import play.mvc.Result;
@@ -55,6 +56,35 @@ public interface IExtensionManagerService extends IRequestListener, ILinkGenerat
      * @return a boolean if the extension has been loaded successfully
      */
     public boolean load(String jarFilePath);
+
+    /**
+     * Creates a plugin instance using the provided extension.<br/>
+     * This method also loads and initialize the associated controller.
+     * 
+     * @param pluginIdentifier
+     *            a unique plugin identifier which must be part of this
+     *            extension (otherwise an exception is raise)
+     * @param pluginConfigurationId
+     *            the unique plugin instance id
+     * @throws ExtensionManagerException
+     *             if no associated and loaded extension is available or if the
+     *             loading failed
+     */
+    public IPluginRunner loadPluginInstance(String pluginIdentifier, Long pluginConfigurationId) throws ExtensionManagerException;
+
+    /**
+     * Unload the specified plugin and its associated controllers (if any)
+     * 
+     * @param pluginIdentifier
+     *            a unique plugin identifier which must be part of this
+     *            extension (otherwise an exception is raise)
+     * @param pluginConfigurationId
+     *            the unique plugin instance id
+     * @throws ExtensionManagerException
+     *             if no associated and loaded extension is available or if the
+     *             loading failed
+     */
+    public IPluginRunner unloadPluginInstance(String pluginIdentifier, Long pluginConfigurationId) throws ExtensionManagerException;
 
     /**
      * Look for each menu customization in each extension and execute them.<br/>

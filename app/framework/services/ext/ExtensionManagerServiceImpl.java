@@ -68,7 +68,6 @@ import framework.services.ext.api.WebControllerPath;
 import framework.services.ext.api.WebParameter;
 import framework.services.plugins.IPluginManagerService;
 import framework.services.plugins.api.IPluginRunner;
-import framework.services.plugins.api.PluginException;
 import framework.services.router.ICustomRouterService;
 import framework.services.session.IUserSessionManagerPlugin;
 import framework.services.system.ISysAdminUtils;
@@ -128,13 +127,12 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
     private File extensionDirectory;
 
     private Cancellable autoRefreshScheduler;
-    private IPluginManagerService pluginManagerService;
     private II18nMessagesPlugin iI18nMessagesPlugin;
     private Configuration configuration;
     private Environment environment;
     private ISysAdminUtils sysAdminUtils;
     private IImplementationDefinedObjectService implementationDefinedObjectService;
-    private List<IExtension> extensions = Collections.synchronizedList(new ArrayList<IExtension>());
+    private List<Extension> extensions = Collections.synchronizedList(new ArrayList<Extension>());
     private Map<Class<?>, Map<String, WebCommand>> extensionControllers = Collections.synchronizedMap(new HashMap<Class<?>, Map<String, WebCommand>>());
     private List<WebCommand> webCommands = Collections.synchronizedList(new ArrayList<WebCommand>());
 
@@ -161,9 +159,6 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
      *            the play environment
      * @param configuration
      *            the play application configuration
-     * @param pluginManagerService
-     *            the plugin manager service to be populated with the plugins
-     *            loaded by some extensions
      * @param iI18nMessagesPlugin
      *            the service in charge of the internationalization
      * @param customRouterService
@@ -188,7 +183,6 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         }
         this.environment = environment;
         this.configuration = configuration;
-        this.pluginManagerService = pluginManagerService;
         this.iI18nMessagesPlugin = iI18nMessagesPlugin;
         this.sysAdminUtils = sysAdminUtils;
         this.implementationDefinedObjectService = implementationDefinedObjectService;
@@ -361,6 +355,63 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
     }
 
     @Override
+    public IPluginRunner loadPluginInstance(String pluginIdentifier, Long pluginConfigurationId) throws ExtensionManagerException {
+        try {
+            Pair<Extension, IPluginDescriptor> result = findPluginExtensionFromIdentifier(pluginIdentifier);
+            if (result == null) {
+                throw new ExtensionManagerException("No plugin implementation found for the plugin identifier " + pluginIdentifier);
+            }
+            String pluginRunnerClassName = result.getRight().getClazz();
+            JclObjectFactory factory = JclObjectFactory.getInstance();
+            log.info("Plugin instance [" + pluginConfigurationId + "] for the unique id [" + pluginIdentifier + "] in the extension "
+                    + result.getLeft().getDescriptor().getName() + " loaded");
+            return (IPluginRunner) result.getLeft().createInstanceOfClass(pluginRunnerClassName, factory);
+        } catch (Exception e) {
+            throw new ExtensionManagerException("Unable to create an instance for the specified plugin " + pluginIdentifier, e);
+        }
+    }
+
+    @Override
+    public IPluginRunner unloadPluginInstance(String pluginIdentifier, Long pluginConfigurationId) throws ExtensionManagerException {
+        Pair<Extension, IPluginDescriptor> result = findPluginExtensionFromIdentifier(pluginIdentifier);
+        if (result == null) {
+            throw new ExtensionManagerException("No plugin implementation found for the plugin identifier " + pluginIdentifier);
+        }
+        log.info("Plugin instance [" + pluginConfigurationId + "] for the unique id [" + pluginIdentifier + "] in the extension "
+                + result.getLeft().getDescriptor().getName() + " loaded");
+        return null;
+    }
+
+    /**
+     * Find the {@link Extension} and the {@link IPluginDescriptor} associated
+     * with the unique plugin identifier
+     * 
+     * @param pluginIdentifier
+     *            a unique plugin identifier
+     * @return a pair
+     */
+    private Pair<Extension, IPluginDescriptor> findPluginExtensionFromIdentifier(String pluginIdentifier) {
+        for (Extension extension : getExtensions()) {
+            if (extension.getDescriptor().getDeclaredPlugins().containsKey(pluginIdentifier)) {
+                return Pair.of(extension, extension.getDescriptor().getDeclaredPlugins().get(pluginIdentifier));
+            }
+        }
+        return null;
+    }
+
+    /*
+     * @Override public synchronized IPluginRunner createPluginInstance(String
+     * pluginIdentifier) throws ExtensionManagerException { try { String
+     * pluginRunnerClassName =
+     * getDescriptor().getDeclaredPlugins().get(pluginIdentifier).getClazz();
+     * JclObjectFactory factory = JclObjectFactory.getInstance(); return
+     * (IPluginRunner) createInstanceOfClass(pluginRunnerClassName, factory); }
+     * catch (Exception e) { throw new ExtensionManagerException(
+     * "Unable to create an instance for the specified plugin " +
+     * pluginIdentifier, e); } }
+     */
+
+    @Override
     public synchronized boolean customizeMenu() {
         getImplementationDefinedObjectService().resetTopMenuBar();
         for (IExtension extension : getExtensions()) {
@@ -462,17 +513,6 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                     getExtensionControllers().remove(successFullyLoadedController);
                 }
                 return false;
-            }
-        }
-
-        // Load the plugins into the plugin manager
-        if (extension.getDescriptorInternal().getDeclaredPlugins().size() != 0) {
-            for (IPluginDescriptor pluginDescriptor : extension.getDescriptorInternal().getDeclaredPlugins().values()) {
-                try {
-                    getPluginManagerService().loadPluginExtension(extension, pluginDescriptor);
-                } catch (PluginException e) {
-                    log.error("Error with plugin " + pluginDescriptor.getIdentifier(), e);
-                }
             }
         }
 
@@ -578,7 +618,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         return extensionControllers;
     }
 
-    private List<IExtension> getExtensions() {
+    private List<Extension> getExtensions() {
         return extensions;
     }
 
@@ -596,10 +636,6 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
 
     private File getExtensionDirectory() {
         return extensionDirectory;
-    }
-
-    private IPluginManagerService getPluginManagerService() {
-        return pluginManagerService;
     }
 
     private II18nMessagesPlugin getiI18nMessagesPlugin() {
@@ -650,17 +686,6 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             this.loadingTime = new Date();
             parseJarFile(jarFile, environment);
             this.jarFile = jarFile;
-        }
-
-        @Override
-        public synchronized IPluginRunner createPluginInstance(String pluginIdentifier) throws ExtensionManagerException {
-            try {
-                String pluginRunnerClassName = getDescriptor().getDeclaredPlugins().get(pluginIdentifier).getClazz();
-                JclObjectFactory factory = JclObjectFactory.getInstance();
-                return (IPluginRunner) createInstanceOfClass(pluginRunnerClassName, factory);
-            } catch (Exception e) {
-                throw new ExtensionManagerException("Unable to create an instance for the specified plugin " + pluginIdentifier, e);
-            }
         }
 
         @Override
@@ -734,7 +759,6 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
          */
         private Object createInstanceOfClass(String objectClassName, JclObjectFactory factory) throws ClassNotFoundException {
             Class<?> pluginRunnerClass = getJarClassLoader().loadClass(objectClassName);
-            // Look for the constructor injection tag
             // Look for the constructor injection tag
             Pair<Object[], Class<?>[]> injectableParameters = getInjectableConstructorParameters(pluginRunnerClass);
             if (injectableParameters != null) {

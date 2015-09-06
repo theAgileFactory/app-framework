@@ -27,7 +27,6 @@ import org.apache.commons.lang3.tuple.Triple;
 import framework.commons.DataType;
 import framework.commons.message.EventMessage;
 import framework.services.actor.IActorServiceLifecycleHook;
-import framework.services.ext.IExtension;
 import framework.services.ext.api.IExtensionDescriptor.IPluginDescriptor;
 import framework.services.plugins.api.IPluginRunnerConfigurator;
 import framework.services.plugins.api.PluginException;
@@ -66,20 +65,6 @@ public interface IPluginManagerService extends IActorServiceLifecycleHook {
     }
 
     /**
-     * Load plugin in the manager.<br/>
-     * Loading a plugin will create an entry into the PluginDefinition table so
-     * that later a plugin can be registered with such definition.<br/>
-     * If the plugin definition record already exists, it is kept "as is".
-     * 
-     * @param pluginExtension
-     *            a plugin extension
-     * @param descriptor
-     *            a plugin descriptor (which is part of the extension)
-     * @throws PluginException
-     */
-    public void loadPluginExtension(IExtension pluginExtension, IPluginDescriptor descriptor) throws PluginException;
-
-    /**
      * Register the specified plugin.<br/>
      * This requires that:
      * <ul>
@@ -106,20 +91,19 @@ public interface IPluginManagerService extends IActorServiceLifecycleHook {
      * not available).<br/>
      * Return a map with the following structure:
      * <ul>
-     * <li>
-     * <ul>
      * <li>key : the plugin definition identifier</li>
+     * <li>value :
+     * <ul>
      * <li>available : true if the plugin is "available" (can be registered)
      * </li>
+     * <li>the {@link IStaticPluginRunnerDescriptor} describing the plugin</li>
      * </ul>
      * </li>
-     * <li>value : the {@link IStaticPluginRunnerDescriptor} describing the
-     * plugin</li>
      * </ul>
      * 
      * @return a map
      */
-    public Map<Pair<String, Boolean>, IPluginDescriptor> getAllPluginDescriptors();
+    public Map<String, Pair<Boolean, IPluginDescriptor>> getAllPluginDescriptors();
 
     /**
      * Return true if the plugin is available
