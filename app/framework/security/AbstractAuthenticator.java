@@ -539,25 +539,213 @@ public abstract class AbstractAuthenticator extends SecureController implements 
     }
 
     /**
-     * The routes to for the authentication service
+     * The interface to be implemented by the Authenticator controller explicity
+     * implementation.<br/>
+     * The methods provides various routes to for the authentication service.
+     * <br/>
+     * This interface is required because the play routes are compiled and their
+     * configuration and path may depends on the application implementing the
+     * framework.<br/>
+     * Some of the routes should point to the implementation of the
+     * {@link AbstractAuthenticator} and some others to a controller providing
+     * the GUI for the "standalone" mode (extending
+     * {@link AbstractStandaloneAuthenticationController}). Here is an example
+     * of routes file for an Authenticator controller extending the
+     * {@link AbstractAuthenticator} and a controller implementing the interface
+     * for the standalone authentication named
+     * "StandaloneAuthenticationController" (this one is implementing a method
+     * "displayLoginForm" which is to display the standalone login form):
+     * 
+     * <pre>
+     * #Authentication
+     * GET     /auth/displayLoginForm      controllers.sso.StandaloneAuthenticationController.displayLoginForm()
+     * GET     /not-accessible             controllers.sso.Authenticator.notAccessible()
+     * GET     /loginStandalone            controllers.sso.Authenticator.loginStandalone(redirect)
+     * GET     /loginCasMaster             controllers.sso.Authenticator.loginCasMaster(redirect)
+     * GET     /loginFederated             controllers.sso.Authenticator.loginFederated(redirect)
+     * GET     /redirectToSavedUrl         controllers.sso.Authenticator.redirectToThePreviouslySavedUrl()
+     * GET     /callback                   controllers.sso.Authenticator.customCallback()
+     * POST    /callback                   controllers.sso.Authenticator.customCallback()
+     * GET     /logout                     controllers.sso.Authenticator.customLogout()
+     * </pre>
+     * 
+     * This configuration would then match with the following implementation of
+     * the interface:
+     * 
+     * <pre>
+     * new IAuthenticationLocalRoutes() {
+     *
+     *     &#64;Override
+     *     public Call getRedirectToThePreviouslySavedUrl() {
+     *         return controllers.sso.routes.Authenticator.redirectToThePreviouslySavedUrl();
+     *     }
+     * 
+     *     &#64;Override
+     *     public Call getLogoutRoute() {
+     *         return controllers.sso.routes.Authenticator.customLogout();
+     *     }
+     * 
+     *     &#64;Override
+     *     public Call getLoginStandaloneRoute(String redirectUrl) {
+     *         return controllers.sso.routes.Authenticator.loginStandalone(redirectUrl);
+     *     }
+     * 
+     *     &#64;Override
+     *     public Call getLoginFederatedRoute(String redirectUrl) {
+     *         return controllers.sso.routes.Authenticator.loginFederated(redirectUrl);
+     *     }loginFederated
+     * 
+     *     &#64;Override
+     *     public Call getLoginCasRoute(String redirectUrl) {
+     *         return controllers.sso.routes.Authenticator.loginCasMaster(redirectUrl);
+     *     }
+     * 
+     *     &#64;Override
+     *     public Call getCallbackRoute() {
+     *         return controllers.sso.routes.Authenticator.customCallback();
+     *     }
+     * 
+     *     &#64;Override
+     *     public Call getDisplayStandaloneLoginFormRoute() {
+     *         return controllers.sso.routes.StandaloneAuthenticationController.displayLoginForm();
+     *     }
+     * 
+     *     &#64;Override
+     *     public Call getNotAccessibleRoute() {
+     *         return controllers.sso.routes.Authenticator.notAccessible();
+     *     }
+     * }
+     * </pre>
      * 
      * @author Pierre-Yves Cloux
      */
     public static interface IAuthenticationLocalRoutes {
+        /**
+         * The route to the {@link AbstractAuthenticator} action implemented by
+         * the method "loginCasMaster".
+         * 
+         * Here is an example of route (assuming that "Authenticator" is the
+         * controller extending {@link AbstractAuthenticator}:
+         * 
+         * <pre>
+         * GET     /loginCasMaster             controllers.sso.Authenticator.loginCasMaster(redirect)
+         * </pre>
+         * 
+         * @param redirectUrl
+         *            the URL to which the user will be redirected after login
+         * @return
+         */
         public Call getLoginCasRoute(String redirectUrl);
 
+        /**
+         * The route to the {@link AbstractAuthenticator} action implemented by
+         * the method "loginStandalone".
+         * 
+         * Here is an example of route (assuming that "Authenticator" is the
+         * controller extending {@link AbstractAuthenticator}:
+         * 
+         * <pre>
+         * GET     /loginStandalone             controllers.sso.Authenticator.loginStandalone(redirect)
+         * </pre>
+         * 
+         * @param redirectUrl
+         *            the URL to which the user will be redirected after login
+         * @return
+         */
         public Call getLoginStandaloneRoute(String redirectUrl);
 
+        /**
+         * The route to the {@link AbstractAuthenticator} action implemented by
+         * the method "loginFederated".
+         * 
+         * Here is an example of route (assuming that "Authenticator" is the
+         * controller extending {@link AbstractAuthenticator}:
+         * 
+         * <pre>
+         * GET     /loginFederated             controllers.sso.Authenticator.loginFederated(redirect)
+         * </pre>
+         * 
+         * @param redirectUrl
+         *            the URL to which the user will be redirected after login
+         * @return
+         */
         public Call getLoginFederatedRoute(String redirectUrl);
 
+        /**
+         * The route to the {@link AbstractAuthenticator} action implemented by
+         * the method "customCallback".
+         * 
+         * Here is an example of routes configuration (assuming that
+         * "Authenticator" is the controller extending
+         * {@link AbstractAuthenticator}:
+         * 
+         * <pre>
+         * GET     /callback                   controllers.sso.Authenticator.customCallback()
+         * POST    /callback                   controllers.sso.Authenticator.customCallback()
+         * </pre>
+         * 
+         * <b>IMPORTANT</b> : a GET and POST routes are required since some
+         * {@link AuthenticationMode} can support both methods.
+         * 
+         * @return
+         */
         public Call getCallbackRoute();
 
+        /**
+         * The route to the {@link AbstractAuthenticator} action implemented by
+         * the method "customLogout".
+         * 
+         * Here is an example of route (assuming that "Authenticator" is the
+         * controller extending {@link AbstractAuthenticator}:
+         * 
+         * <pre>
+         * GET     /logout                     controllers.sso.Authenticator.customLogout()
+         * </pre>
+         * 
+         * @return
+         */
         public Call getLogoutRoute();
 
-        public Call getDisplayStandaloneLoginFormRoute();
-
+        /**
+         * The route to the {@link AbstractAuthenticator} action implemented by
+         * the method "redirectToThePreviouslySavedUrl".
+         * 
+         * Here is an example of route (assuming that "Authenticator" is the
+         * controller extending {@link AbstractAuthenticator}:
+         * 
+         * <pre>
+         * GET     /redirectToSavedUrl         controllers.sso.Authenticator.redirectToThePreviouslySavedUrl()
+         * </pre>
+         * 
+         * @return
+         */
         public Call getRedirectToThePreviouslySavedUrl();
 
+        /**
+         * The route to the {@link AbstractAuthenticator} action implemented by
+         * the method "notAccessible".
+         * 
+         * Here is an example of route (assuming that "Authenticator" is the
+         * controller extending {@link AbstractAuthenticator}:
+         * 
+         * <pre>
+         * GET     /not-accessible             controllers.sso.Authenticator.notAccessible()
+         * </pre>
+         * 
+         * @return
+         */
         public Call getNotAccessibleRoute();
+
+        /**
+         * The only route which is not provided by the
+         * {@link AbstractAuthenticator} and must direct to a specific
+         * controller implementation for the standalone mode (this one being
+         * necessarily specific to the application and extending
+         * {@link AbstractStandaloneAuthenticationController}).<br/>
+         * This route must display the standalone login form.
+         * 
+         * @return
+         */
+        public Call getDisplayStandaloneLoginFormRoute();
     }
 }
