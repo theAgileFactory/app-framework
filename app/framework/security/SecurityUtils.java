@@ -28,6 +28,7 @@ import be.objectify.deadbolt.core.models.Role;
 import be.objectify.deadbolt.core.models.Subject;
 import be.objectify.deadbolt.java.DeadboltHandler;
 import be.objectify.deadbolt.java.DynamicResourceHandler;
+import be.objectify.deadbolt.java.ExecutionContextProvider;
 import be.objectify.deadbolt.java.JavaAnalyzer;
 import be.objectify.deadbolt.java.actions.SubjectPresent;
 import be.objectify.deadbolt.java.actions.SubjectPresentAction;
@@ -80,6 +81,10 @@ public class SecurityUtils {
     private static IAccountManagerPlugin accountManagerPlugin;
     @Inject
     private static IUserSessionManagerPlugin userSessionManagerPlugin;
+    @Inject
+    private static Configuration configuration;
+    @Inject
+    private static ExecutionContextProvider ecProvider;
 
     /**
      * Read the database to find the system preference which contains the
@@ -119,7 +124,8 @@ public class SecurityUtils {
      */
     public static Promise<Result> checkHasSubject(final Http.Context ctx, final Function0<Result> resultIfHasSubject) {
         try {
-            SubjectPresentAction subjectPresentAction = new SubjectPresentAction(getDeadBoltAnalyzer(), getSubjectCache(), getHandlerCache());
+            SubjectPresentAction subjectPresentAction = new SubjectPresentAction(getDeadBoltAnalyzer(), getSubjectCache(), getHandlerCache(),
+                    getConfiguration(), getEcProvider());
             subjectPresentAction.configuration = new SubjectPresent() {
 
                 @Override
@@ -364,5 +370,13 @@ public class SecurityUtils {
 
     private static IUserSessionManagerPlugin getUserSessionManagerPlugin() {
         return userSessionManagerPlugin;
+    }
+
+    private static ExecutionContextProvider getEcProvider() {
+        return ecProvider;
+    }
+
+    private static Configuration getConfiguration() {
+        return configuration;
     }
 }

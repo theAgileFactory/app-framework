@@ -15,6 +15,7 @@ import be.objectify.deadbolt.core.models.Subject;
 import be.objectify.deadbolt.java.AbstractDeadboltHandler;
 import be.objectify.deadbolt.java.DeadboltHandler;
 import be.objectify.deadbolt.java.DynamicResourceHandler;
+import be.objectify.deadbolt.java.ExecutionContextProvider;
 import be.objectify.deadbolt.java.JavaAnalyzer;
 import be.objectify.deadbolt.java.actions.SubjectPresent;
 import be.objectify.deadbolt.java.actions.SubjectPresentAction;
@@ -27,6 +28,7 @@ import framework.services.account.IAccountManagerPlugin;
 import framework.services.account.IUserAccount;
 import framework.services.session.IUserSessionManagerPlugin;
 import framework.utils.Utilities;
+import play.Configuration;
 import play.Logger;
 import play.cache.CacheApi;
 import play.libs.F.Function0;
@@ -46,20 +48,21 @@ public abstract class AbstractSecurityServiceImpl implements HandlerCache, ISecu
     private static Logger.ALogger log = Logger.of(AbstractSecurityServiceImpl.class);
     private JavaAnalyzer deadBoltAnalyzer;
     private SubjectCache subjectCache;
+    private Configuration configuration;
+    private ExecutionContextProvider ecProvider;
     private IAccountManagerPlugin accountManagerPlugin;
     private IUserSessionManagerPlugin userSessionManagerPlugin;
-    private ISecurityService securityService;
     private DefaultDeadboltHandler defaultHandler;
     private CacheApi cacheApi;
     private IAuthenticator authenticator;
 
-    public AbstractSecurityServiceImpl(JavaAnalyzer deadBoltAnalyzer, SubjectCache subjectCache, IUserSessionManagerPlugin userSessionManagerPlugin,
-            IAccountManagerPlugin accountManagerPlugin, ISecurityService securityService, CacheApi cacheApi, IAuthenticator authenticator) {
+    public AbstractSecurityServiceImpl(JavaAnalyzer deadBoltAnalyzer, SubjectCache subjectCache, Configuration configuration,
+            ExecutionContextProvider ecProvider, IUserSessionManagerPlugin userSessionManagerPlugin, IAccountManagerPlugin accountManagerPlugin,
+            CacheApi cacheApi, IAuthenticator authenticator) {
         this.deadBoltAnalyzer = deadBoltAnalyzer;
         this.subjectCache = subjectCache;
         this.userSessionManagerPlugin = userSessionManagerPlugin;
         this.accountManagerPlugin = accountManagerPlugin;
-        this.securityService = securityService;
         this.cacheApi = cacheApi;
         this.authenticator = authenticator;
     }
@@ -73,8 +76,8 @@ public abstract class AbstractSecurityServiceImpl implements HandlerCache, ISecu
     protected DefaultDeadboltHandler getDefaultHandler() {
         if (this.defaultHandler == null) {
             log.info(">>>>>>>>>>>>>>>> Lazy initialization of the default deadbolt handler...");
-            this.defaultHandler = new DefaultDeadboltHandler(this, getUserSessionManagerPlugin(), getAccountManagerPlugin(), getSecurityService(),
-                    getCacheApi(), getAuthenticator());
+            this.defaultHandler = new DefaultDeadboltHandler(this, getUserSessionManagerPlugin(), getAccountManagerPlugin(), this, getCacheApi(),
+                    getAuthenticator());
             log.info(">>>>>>>>>>>>>>>> Lazy initialization of the default deadbolt handler (end)");
         }
         return defaultHandler;
@@ -104,7 +107,8 @@ public abstract class AbstractSecurityServiceImpl implements HandlerCache, ISecu
     @Override
     public Promise<Result> checkHasSubject(final Function0<Result> resultIfHasSubject) {
         try {
-            SubjectPresentAction subjectPresentAction = new SubjectPresentAction(getDeadBoltAnalyzer(), getSubjectCache(), this);
+            SubjectPresentAction subjectPresentAction = new SubjectPresentAction(getDeadBoltAnalyzer(), getSubjectCache(), this, getConfiguration(),
+                    getEcProvider());
             subjectPresentAction.configuration = new SubjectPresent() {
 
                 @Override
@@ -330,12 +334,16 @@ public abstract class AbstractSecurityServiceImpl implements HandlerCache, ISecu
         return userSessionManagerPlugin;
     }
 
-    protected ISecurityService getSecurityService() {
-        return securityService;
-    }
-
     protected CacheApi getCacheApi() {
         return cacheApi;
+    }
+
+    protected Configuration getConfiguration() {
+        return configuration;
+    }
+
+    private ExecutionContextProvider getEcProvider() {
+        return ecProvider;
     }
 
     /**
