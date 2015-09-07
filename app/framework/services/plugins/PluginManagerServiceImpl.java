@@ -187,7 +187,6 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
                     // If the plugin is not currently listed into the database,
                     // do not load it
                     extensionPluginDescriptors.put(pluginDescriptor.getIdentifier(), Triple.of(pluginDefinition.isAvailable, extension, pluginDescriptor));
-                    log.info("Plugin definition loaded with identifier " + pluginDescriptor.getIdentifier() + " and class " + pluginDescriptor.getClazz());
                 }
             }
         }
