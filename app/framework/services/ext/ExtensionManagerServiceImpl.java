@@ -862,6 +862,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             if (injectableParameters != null) {
                 return factory.create(getJarClassLoader(), objectClassName, injectableParameters.getLeft(), injectableParameters.getRight());
             }
+            // Attempt to create using a default constructor
             return factory.create(getJarClassLoader(), objectClassName);
         }
 
@@ -878,7 +879,14 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             Constructor<?>[] constructors = clazz.getConstructors();
 
             // Look for injectable constructor
+            boolean hasDefaultConstructor = false;
             for (Constructor<?> constructor : constructors) {
+                if (constructor.getParameterTypes().length == 0) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Found a default constructor");
+                    }
+                    hasDefaultConstructor = true;
+                }
                 if (constructor.isAnnotationPresent(Inject.class)) {
                     if (injectableConstructor == null) {
                         injectableConstructor = constructor;
@@ -890,6 +898,10 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             if (injectableConstructor == null) {
                 if (log.isDebugEnabled()) {
                     log.debug("No injectable constructor");
+                }
+                if (!hasDefaultConstructor) {
+                    throw new IllegalArgumentException(
+                            "There is no injectable nor default constructor for the class " + clazz.getName() + " cannot instanciate");
                 }
                 return null;// No Inject
             }
