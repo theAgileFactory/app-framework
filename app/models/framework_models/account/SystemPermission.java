@@ -30,8 +30,6 @@ import javax.persistence.Id;
 import javax.persistence.ManyToMany;
 import javax.persistence.Version;
 
-import models.framework_models.parent.IModelConstants;
-
 import org.apache.poi.ss.formula.functions.T;
 
 import com.avaje.ebean.Model;
@@ -40,6 +38,7 @@ import framework.utils.DefaultSelectableValueHolderCollection;
 import framework.utils.ISelectableValueHolder;
 import framework.utils.ISelectableValueHolderCollection;
 import framework.utils.Msg;
+import models.framework_models.parent.IModelConstants;
 
 /**
  * A permission is a right given to a user to perform a certain action.<br/>
@@ -171,7 +170,8 @@ public class SystemPermission extends Model implements ISelectableValueHolder<Lo
         List<SystemPermission> systemPermissions = find.where().eq("deleted", false).findList();
         List<String> possibleValuesForPermission = new ArrayList<String>();
         for (Field field : permissionClass.getFields()) {
-            if (Modifier.isStatic(field.getModifiers()) && Modifier.isFinal(field.getModifiers()) && field.getName().endsWith("_PERMISSION")) {
+            if (Modifier.isStatic(field.getModifiers()) && Modifier.isFinal(field.getModifiers()) && field.getName().endsWith("_PERMISSION")
+                    && !field.getName().endsWith("_DYNAMIC_PERMISSION")) {
                 possibleValuesForPermission.add(field.getName());
             }
         }
