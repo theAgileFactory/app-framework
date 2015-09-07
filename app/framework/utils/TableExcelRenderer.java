@@ -21,10 +21,6 @@ import java.io.ByteArrayOutputStream;
 import java.util.Date;
 import java.util.Iterator;
 
-import net.htmlparser.jericho.HTMLElementName;
-import net.htmlparser.jericho.Renderer;
-import net.htmlparser.jericho.Source;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -35,13 +31,17 @@ import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFDataFormat;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import play.Logger;
 import framework.utils.Table.ColumnDef;
 import framework.utils.Table.FormattedRow;
 import framework.utils.Table.NotFormattedRow;
+import net.htmlparser.jericho.HTMLElementName;
+import net.htmlparser.jericho.Renderer;
+import net.htmlparser.jericho.Source;
+import play.Logger;
 
 /**
- * This class takes a {@link Table} as a parameter and renders an Excel file.<br/>
+ * This class takes a {@link Table} as a parameter and renders an Excel file.
+ * <br/>
  * There are two options:
  * <ul>
  * <li>formatted : the column formatters are applied but all the cell will be
@@ -58,6 +58,7 @@ import framework.utils.Table.NotFormattedRow;
 public class TableExcelRenderer {
     public static final String DEFAULT_EXCEL_DATE_FORMAT = "m/d/yy h:mm";
     private static final char INVISIBLE_BULLET_CHAR = 0xFFFA;
+
     static {
         // See Jericho documentation
         Renderer.setDefaultTopMargin(HTMLElementName.UL, 0);

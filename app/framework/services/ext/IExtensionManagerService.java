@@ -75,6 +75,8 @@ public interface IExtensionManagerService extends IRequestListener, ILinkGenerat
     /**
      * Unload the specified plugin and its associated controllers (if any)
      * 
+     * @param pluginRunner
+     *            a plugin runner
      * @param pluginIdentifier
      *            a unique plugin identifier which must be part of this
      *            extension (otherwise an exception is raise)
@@ -84,7 +86,7 @@ public interface IExtensionManagerService extends IRequestListener, ILinkGenerat
      *             if no associated and loaded extension is available or if the
      *             loading failed
      */
-    public IPluginRunner unloadPluginInstance(String pluginIdentifier, Long pluginConfigurationId) throws ExtensionManagerException;
+    public void unloadPluginInstance(IPluginRunner pluginRunner, String pluginIdentifier, Long pluginConfigurationId) throws ExtensionManagerException;
 
     /**
      * Look for each menu customization in each extension and execute them.<br/>

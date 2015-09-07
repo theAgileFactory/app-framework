@@ -17,14 +17,14 @@
  */
 package framework.services.api;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.wordnik.swagger.converter.SwaggerSchemaConverter;
+import com.wordnik.swagger.model.Model;
+
 import play.Logger;
 import scala.Option;
 import scala.collection.Iterator;
 import scala.collection.immutable.Map;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.wordnik.swagger.converter.SwaggerSchemaConverter;
-import com.wordnik.swagger.model.Model;
 
 /**
  * A converter which is hiding irrelevant attributes from the Swagger
@@ -46,7 +46,8 @@ public class ClassSchemaDocumentationConverter extends SwaggerSchemaConverter {
         final Option<Model> modelOption = super.read(modelClass, typeMap);
 
         // Look for public properties
-        java.util.Map<String, ApiUtils.SerializationEntry> entries = ApiUtils.getSerializationEntries(modelClass, null);
+        java.util.Map<String, ApiControllerUtilsServiceImpl.SerializationEntry> entries = ApiControllerUtilsServiceImpl.getSerializationEntries(modelClass,
+                null);
 
         // Remove all properties which are not public
         if (!modelOption.isEmpty()) {

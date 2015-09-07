@@ -19,6 +19,7 @@ package framework.utils;
 
 import java.util.Map;
 
+import framework.services.ServiceStaticAccessor;
 import models.framework_models.account.Preference;
 import models.framework_models.common.CustomAttributeDefinition;
 import models.framework_models.common.ICustomAttributeValue;
@@ -45,7 +46,8 @@ public abstract class PreferenceFormAndDisplayHandler extends CustomAttributeFor
      *            a preference unique Id
      */
     public static <T> void fillWithPreference(Form<T> form, String preferenceUuid) {
-        ICustomAttributeValue customAttributeValue = Preference.getPreferenceValueFromUuid(preferenceUuid);
+        ICustomAttributeValue customAttributeValue = Preference.getPreferenceValueFromUuid(preferenceUuid, ServiceStaticAccessor.getCacheApi(),
+                ServiceStaticAccessor.getUserSessionManagerPlugin(), ServiceStaticAccessor.getAccountManagerPlugin());
         if (log.isDebugEnabled()) {
             log.debug("Preference with uuid " + preferenceUuid + " is " + (customAttributeValue != null ? "not null" : "null"));
         }
@@ -67,7 +69,8 @@ public abstract class PreferenceFormAndDisplayHandler extends CustomAttributeFor
     }
 
     /**
-     * Check the value of the preference associated with the specified uuid.<br/>
+     * Check the value of the preference associated with the specified uuid.
+     * <br/>
      * The value is expected to be stored in the form.
      * 
      * @param form
@@ -111,7 +114,8 @@ public abstract class PreferenceFormAndDisplayHandler extends CustomAttributeFor
         boolean hasErrors = false;
         Map<String, String> data = form.data();
         if (data != null) {
-            ICustomAttributeValue customAttributeValue = Preference.getPreferenceValueFromUuid(preferenceUuid);
+            ICustomAttributeValue customAttributeValue = Preference.getPreferenceValueFromUuid(preferenceUuid, ServiceStaticAccessor.getCacheApi(),
+                    ServiceStaticAccessor.getUserSessionManagerPlugin(), ServiceStaticAccessor.getAccountManagerPlugin());
             String fieldName = getFieldNameFromDefinitionUuid(customAttributeValue.getDefinition().uuid);
             if (log.isDebugEnabled()) {
                 log.debug("Readring preference with uuid " + preferenceUuid + " from form with field name " + fieldName);
@@ -140,7 +144,7 @@ public abstract class PreferenceFormAndDisplayHandler extends CustomAttributeFor
                         if (log.isDebugEnabled()) {
                             log.debug("Readring preference with uuid " + preferenceUuid + " saved to database");
                         }
-                        Preference.savePreferenceValue(customAttributeValue);
+                        Preference.savePreferenceValue(customAttributeValue, ServiceStaticAccessor.getCacheApi());
                     }
                 }
             }

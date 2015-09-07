@@ -12,7 +12,6 @@ import framework.commons.IFrameworkConstants;
 import framework.services.account.IPreferenceManagerPlugin;
 import framework.services.api.ClassSchemaDocumentationConverter;
 import framework.services.api.commons.ApiSignatureException;
-import framework.utils.Utilities;
 import play.Configuration;
 import play.Logger;
 import play.inject.ApplicationLifecycle;
@@ -36,7 +35,7 @@ public class ApiDocumentationServiceImpl implements IApiDocumentationService {
     @Inject
     public ApiDocumentationServiceImpl(ApplicationLifecycle lifecycle, Configuration configuration, IPreferenceManagerPlugin preferenceManagerPlugin) {
         log.info("SERVICE>>> ApiDocumentationServiceImpl starting...");
-        final String swaggerBasePath = Utilities.getPreferenceElseConfigurationValue(configuration, IFrameworkConstants.SWAGGER_API_BASEPATH_PREFERENCE,
+        final String swaggerBasePath = preferenceManagerPlugin.getPreferenceElseConfigurationValue(IFrameworkConstants.SWAGGER_API_BASEPATH_PREFERENCE,
                 "swagger.api.basepath");
         init(swaggerBasePath);
         lifecycle.addStopHook(() -> {

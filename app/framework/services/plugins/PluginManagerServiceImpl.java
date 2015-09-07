@@ -55,6 +55,7 @@ import framework.commons.DataType;
 import framework.commons.IFrameworkConstants;
 import framework.commons.message.EventMessage;
 import framework.commons.message.EventMessage.MessageType;
+import framework.services.account.IPreferenceManagerPlugin;
 import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.database.IDatabaseDependencyService;
 import framework.services.ext.ExtensionManagerException;
@@ -72,6 +73,7 @@ import framework.utils.Utilities;
 import models.framework_models.plugin.PluginConfiguration;
 import models.framework_models.plugin.PluginDefinition;
 import models.framework_models.plugin.PluginLog;
+import play.Configuration;
 import play.Logger;
 import play.inject.ApplicationLifecycle;
 import play.libs.F.Promise;
@@ -92,6 +94,8 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
     private II18nMessagesPlugin messagesPlugin;
     private ISharedStorageService sharedStorageService;
     private IExtensionManagerService extensionManagerService;
+    private IPreferenceManagerPlugin preferenceManagerPlugin;
+    private Configuration configuration;
 
     /**
      * Map : key=plugin id , value= {@link PluginRegistrationEntry}.
@@ -136,15 +140,21 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
      * @param extensionManagerService
      *            the extension manager to be used to "load" the plugin
      *            instances
+     * @param preferenceManagerPlugin
+     *            the plugin which is managing preferences
+     * @param configuration
+     *            the play configuration
      */
     @Inject
     public PluginManagerServiceImpl(ApplicationLifecycle lifecycle, ISysAdminUtils sysAdminUtils, II18nMessagesPlugin messagesPlugin,
-            IDatabaseDependencyService databaseDependencyService, ISharedStorageService sharedStorageService,
-            IExtensionManagerService extensionManagerService) {
+            IDatabaseDependencyService databaseDependencyService, ISharedStorageService sharedStorageService, IExtensionManagerService extensionManagerService,
+            IPreferenceManagerPlugin preferenceManagerPlugin, Configuration configuration) {
         log.info("SERVICE>>> PluginManagerServiceImpl starting...");
         this.messagesPlugin = messagesPlugin;
         this.sharedStorageService = sharedStorageService;
         this.extensionManagerService = extensionManagerService;
+        this.preferenceManagerPlugin = preferenceManagerPlugin;
+        this.configuration = configuration;
         pluginByIds = Collections.synchronizedMap(new HashMap<Long, PluginRegistrationEntry>());
         lifecycle.addStopHook(() -> {
             log.info("SERVICE>>> PluginManagerServiceImpl stopping...");
@@ -383,7 +393,8 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
         try {
             String pluginIdentifier = pluginConfiguration.pluginDefinition.identifier;
             IPluginDescriptor pluginDescriptor = getExtensionPlugins().get(pluginIdentifier).getRight();
-            IPluginContext pluginContext = new PluginContextImpl(pluginConfiguration, pluginDescriptor, this, this, getSharedStorageService());
+            IPluginContext pluginContext = new PluginContextImpl(pluginConfiguration, pluginDescriptor, this, this, getSharedStorageService(),
+                    getPreferenceManagerPlugin(), getConfiguration());
             IPluginRunner pluginRunner = getPluginRunnerFromDefinitionIdentifier(pluginIdentifier, pluginConfiguration.id);
             log.info(String.format("The class for the plugin %d has been found and instanciated", pluginConfiguration.id));
 
@@ -410,7 +421,7 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
             log.info(String.format("[END] the plugin %d has been initialized", pluginConfiguration.id));
             return new PluginRegistrationEntry(pluginConfiguration.id, pluginRunner, pluginDescriptor, pluginLifeCycleControllingActorRef);
         } catch (Exception e) {
-            String message = String.format("Unable to initiaize the plugin %d", pluginConfiguration.id);
+            String message = String.format("Unable to initialize the plugin %d", pluginConfiguration.id);
             log.error(message, e);
             throw new PluginException(message, e);
         }
@@ -423,8 +434,8 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
      */
     private void unInitializePlugin(PluginRegistrationEntry pluginRegistrationEntry) {
         try {
-            getExtensionManagerService().unloadPluginInstance(pluginRegistrationEntry.getDescriptor().getIdentifier(),
-                    pluginRegistrationEntry.getPluginConfigurationId());
+            getExtensionManagerService().unloadPluginInstance(pluginRegistrationEntry.getPluginRunner(),
+                    pluginRegistrationEntry.getDescriptor().getIdentifier(), pluginRegistrationEntry.getPluginConfigurationId());
         } catch (Exception e) {
             log.error(String.format("Unable to uninitialize the plugin %d", pluginRegistrationEntry.getPluginConfigurationId()), e);
         }
@@ -813,6 +824,14 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
 
     private IExtensionManagerService getExtensionManagerService() {
         return extensionManagerService;
+    }
+
+    private IPreferenceManagerPlugin getPreferenceManagerPlugin() {
+        return preferenceManagerPlugin;
+    }
+
+    private Configuration getConfiguration() {
+        return configuration;
     }
 
     /**

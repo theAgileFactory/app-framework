@@ -51,9 +51,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import framework.commons.IFrameworkConstants;
 import framework.services.ServiceStaticAccessor;
 import framework.services.configuration.IImplementationDefinedObjectService;
-import models.framework_models.account.Preference;
 import models.framework_models.parent.IModelConstants;
-import play.Configuration;
 import play.Logger;
 import play.Play;
 import play.cache.Cache;
@@ -543,122 +541,6 @@ public abstract class Utilities {
         } catch (InterruptedException e) {
             log.error("Error while stopping the current thread", e);
         }
-    }
-
-    /**
-     * Read the database to find the system preference which contains the
-     * authentication mode.<br/>
-     * If not found, use the default one configured in the system application
-     * file.
-     * 
-     * @return
-     */
-    public static IFrameworkConstants.AuthenticationMode getAuthenticationMode() {
-        IFrameworkConstants.AuthenticationMode defaultAuthenticationMode = getDefaultAuthenticationMode();
-        try {
-            // WARNING : direct access to Preference is NOT RECOMMENDED
-            // Here it is required since no access to the ServiceManager is
-            // possible since the
-            // Authentication mode is a parameter of the ServiceManager init
-            // The preference must be a StringCustomAttributeValue
-            String authModeAsString = (String) Preference.getPreferenceValueFromUuid(IFrameworkConstants.AUTHENTICATION_MODE_PREFERENCE).getValueAsObject();
-            if (StringUtils.isBlank(authModeAsString)) {
-                log.warn("No valid authentication mode defined in the database, using default one : " + defaultAuthenticationMode);
-                return defaultAuthenticationMode;
-            }
-            return IFrameworkConstants.AuthenticationMode.valueOf(authModeAsString);
-        } catch (Exception e) {
-            log.warn("Exception while retrieving the authentication mode " + IFrameworkConstants.AUTHENTICATION_MODE_PREFERENCE
-                    + " from the database, using default " + defaultAuthenticationMode, e);
-        }
-        return defaultAuthenticationMode;
-    }
-
-    /**
-     * Return the authentication mode which is configured in the system
-     * configuration file
-     */
-    private static IFrameworkConstants.AuthenticationMode getDefaultAuthenticationMode() {
-        String authModeAsString = Play.application().configuration().getString("maf.authentication.mode");
-        return IFrameworkConstants.AuthenticationMode.valueOf(authModeAsString);
-    }
-
-    /**
-     * Get a value from a preference if it exists, else from a play
-     * configuration.
-     * 
-     * Note: this method should be called after the preference manager service
-     * has been started.
-     * 
-     * @param configuration
-     *            the play configuration
-     * @param preferenceName
-     *            the preference name
-     * @param configurationName
-     *            the play configuration name
-     */
-    public static String getPreferenceElseConfigurationValue(Configuration configuration, String preferenceName, String configurationName) {
-
-        String preferenceValue = ServiceStaticAccessor.getPreferenceManagerPlugin().getPreferenceValueAsString(preferenceName);
-
-        if (preferenceValue != null && !preferenceValue.equals("")) {
-            return preferenceValue;
-        } else {
-            return configuration.getString(configurationName);
-        }
-
-    }
-
-    /**
-     * Get an Integer value from a preference if it exists, else from a play
-     * configuration.
-     * 
-     * Note: this method should be called after the preference manager service
-     * has been started.
-     * 
-     * @param configuration
-     *            the play configuration
-     * @param preferenceName
-     *            the preference name
-     * @param configurationName
-     *            the play configuration name
-     */
-    public static Integer getPreferenceElseConfigurationValueAsInteger(Configuration configuration, String preferenceName, String configurationName) {
-
-        Integer preferenceValue = ServiceStaticAccessor.getPreferenceManagerPlugin().getPreferenceValueAsInteger(preferenceName);
-
-        if (preferenceValue != null) {
-            return preferenceValue;
-        } else {
-            return configuration.getInt(configurationName);
-        }
-
-    }
-
-    /**
-     * Get an Boolean value from a preference if it exists, else from a play
-     * configuration.
-     * 
-     * Note: this method should be called after the preference manager service
-     * has been started.
-     * 
-     * @param configuration
-     *            the play configuration
-     * @param preferenceName
-     *            the preference name
-     * @param configurationName
-     *            the play configuration name
-     */
-    public static Boolean getPreferenceElseConfigurationValueAsBoolean(Configuration configuration, String preferenceName, String configurationName) {
-
-        Boolean preferenceValue = ServiceStaticAccessor.getPreferenceManagerPlugin().getPreferenceValueAsBoolean(preferenceName);
-
-        if (preferenceValue != null) {
-            return preferenceValue;
-        } else {
-            return configuration.getBoolean(configurationName);
-        }
-
     }
 
     /**

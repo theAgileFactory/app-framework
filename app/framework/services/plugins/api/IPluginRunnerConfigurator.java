@@ -24,8 +24,6 @@ import framework.commons.DataType;
 /**
  * The interface which provides the "dynamic meta-data" for a plugin.<br/>
  * These meta-data are "dynamic" because they may access some external resources
- * (compared to {@link IStaticPluginRunnerDescriptor} which are supposed to be
- * fully stateless).
  * 
  * @author Pierre-Yves Cloux
  */

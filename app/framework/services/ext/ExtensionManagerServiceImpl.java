@@ -52,6 +52,7 @@ import org.xeustechnologies.jcl.JarClassLoader;
 import org.xeustechnologies.jcl.JclObjectFactory;
 
 import akka.actor.Cancellable;
+import framework.commons.DataType;
 import framework.security.ISecurityService;
 import framework.security.SecurityUtils;
 import framework.services.configuration.II18nMessagesPlugin;
@@ -66,7 +67,6 @@ import framework.services.ext.api.IExtensionDescriptor.IPluginDescriptor;
 import framework.services.ext.api.WebCommandPath;
 import framework.services.ext.api.WebControllerPath;
 import framework.services.ext.api.WebParameter;
-import framework.services.plugins.IPluginManagerService;
 import framework.services.plugins.api.IPluginRunner;
 import framework.services.router.ICustomRouterService;
 import framework.services.session.IUserSessionManagerPlugin;
@@ -79,8 +79,8 @@ import framework.utils.Utilities;
 import play.Configuration;
 import play.Environment;
 import play.Logger;
-import play.Play;
 import play.inject.ApplicationLifecycle;
+import play.inject.Injector;
 import play.libs.F.Function0;
 import play.libs.F.Promise;
 import play.mvc.Controller;
@@ -131,6 +131,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
     private Configuration configuration;
     private Environment environment;
     private ISysAdminUtils sysAdminUtils;
+    private Injector injector;
     private IImplementationDefinedObjectService implementationDefinedObjectService;
     private List<Extension> extensions = Collections.synchronizedList(new ArrayList<Extension>());
     private Map<Object, Map<String, WebCommand>> extensionControllers = Collections.synchronizedMap(new HashMap<Object, Map<String, WebCommand>>());
@@ -157,6 +158,8 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
      *            the play application lifecycle listener
      * @param environment
      *            the play environment
+     * @param injector
+     *            the application injector
      * @param configuration
      *            the play application configuration
      * @param iI18nMessagesPlugin
@@ -164,15 +167,22 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
      * @param customRouterService
      *            the custom router service to register the extension
      * @param sysAdminUtils
+     *            ensure that the service is loaded before being possibly used
+     *            by an extension
      * @param implementationDefinedObjectService
      * @param databaseDependencyService
+     *            ensure that the service is loaded before being possibly used
+     *            by an extension
+     * @param securityService
+     *            ensure that the service is loaded before being possibly used
+     *            by an extension
      * @throws ExtensionManagerException
      */
     @Inject
-    public ExtensionManagerServiceImpl(ApplicationLifecycle lifecycle, Environment environment, Configuration configuration,
-            IPluginManagerService pluginManagerService, II18nMessagesPlugin iI18nMessagesPlugin, ICustomRouterService customRouterService,
-            ISysAdminUtils sysAdminUtils, IImplementationDefinedObjectService implementationDefinedObjectService,
-            IDatabaseDependencyService databaseDependencyService) throws ExtensionManagerException {
+    public ExtensionManagerServiceImpl(ApplicationLifecycle lifecycle, Environment environment, Injector injector, Configuration configuration,
+            II18nMessagesPlugin iI18nMessagesPlugin, ICustomRouterService customRouterService, ISysAdminUtils sysAdminUtils,
+            IImplementationDefinedObjectService implementationDefinedObjectService, IDatabaseDependencyService databaseDependencyService,
+            ISecurityService securityService) throws ExtensionManagerException {
         log.info("SERVICE>>> ExtensionManagerServiceImpl starting...");
         this.autoRefreshMode = configuration.getBoolean(Config.AUTO_REFRESH_ACTIVE.getConfigurationKey());
         this.autoRefreshFrequency = configuration.getInt(Config.AUTO_REFRESH_FREQUENCY.getConfigurationKey());
@@ -183,6 +193,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         }
         this.environment = environment;
         this.configuration = configuration;
+        this.injector = injector;
         this.iI18nMessagesPlugin = iI18nMessagesPlugin;
         this.sysAdminUtils = sysAdminUtils;
         this.implementationDefinedObjectService = implementationDefinedObjectService;
@@ -320,14 +331,10 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                 // this class
                 for (Object extensionController : getExtensionControllers().keySet()) {
                     if (controllerClass.isInstance(extensionController)) {
-                        for (WebCommand webCommand : getExtensionControllers().get(extensionController).values()) {
-                            log.info("Unloading web command " + webCommand.getId());
-                            getWebCommands().remove(webCommand);
-                        }
+                        removeExtensionController(extensionController);
                     }
                 }
                 log.info("Unloading controller " + controllerClass);
-                getExtensionControllers().remove(controllerClass);
             }
 
             // Unloading the i18 resources
@@ -363,15 +370,50 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
     @Override
     public IPluginRunner loadPluginInstance(String pluginIdentifier, Long pluginConfigurationId) throws ExtensionManagerException {
         try {
+            // Find the plugin runner instanciate
             Pair<Extension, IPluginDescriptor> result = findPluginExtensionFromIdentifier(pluginIdentifier);
             if (result == null) {
                 throw new ExtensionManagerException("No plugin implementation found for the plugin identifier " + pluginIdentifier);
             }
             String pluginRunnerClassName = result.getRight().getClazz();
             JclObjectFactory factory = JclObjectFactory.getInstance();
+            IPluginRunner pluginRunner = (IPluginRunner) result.getLeft().createInstanceOfClass(pluginRunnerClassName, factory);
+            log.info("Plugin instance [" + pluginConfigurationId + "] for the unique id [" + pluginIdentifier + "] in the extension "
+                    + result.getLeft().getDescriptor().getName() + " : PluginRunner instanciated");
+
+            // Look for the configuration controllers and register them to the
+            // extension manager
+            if (pluginRunner.getConfigurator() != null) {
+                if (pluginRunner.getConfigurator().getCustomConfigurator() != null) {
+                    try {
+                        log.info("Found a custom configuration controller...");
+                        addExtensionController(pluginRunner.getConfigurator().getCustomConfigurator(), pluginConfigurationId + "/");
+                        log.info("Custom configuration controller loaded !");
+                    } catch (ExtensionManagerException e) {
+                        log.warn("Error while loading the configuration controller (this may be a legacy implementation)"
+                                + pluginRunner.getConfigurator().getCustomConfigurator(), e);
+                    }
+                } else {
+                    log.info("No custom configuration controller !");
+                }
+                if (pluginRunner.getConfigurator().getDataTypesWithRegistration() != null) {
+                    for (DataType dataType : pluginRunner.getConfigurator().getDataTypesWithRegistration().keySet()) {
+                        Object configurationController = pluginRunner.getConfigurator().getDataTypesWithRegistration().get(dataType);
+                        try {
+                            log.info("Found a registration configuration controller for DataType " + dataType + " ...");
+                            addExtensionController(configurationController, pluginConfigurationId + "/");
+                            log.info("Custom registration configuration controller loaded !");
+                        } catch (ExtensionManagerException e) {
+                            log.warn("Error while loading the registration configuration controller (this may be a legacy implementation)"
+                                    + pluginRunner.getConfigurator().getCustomConfigurator(), e);
+                        }
+                    }
+                } else {
+                    log.info("No registration configuration controller !");
+                }
+            }
             log.info("Plugin instance [" + pluginConfigurationId + "] for the unique id [" + pluginIdentifier + "] in the extension "
                     + result.getLeft().getDescriptor().getName() + " loaded");
-            IPluginRunner pluginRunner = (IPluginRunner) result.getLeft().createInstanceOfClass(pluginRunnerClassName, factory);
             return pluginRunner;
         } catch (Exception e) {
             throw new ExtensionManagerException("Unable to create an instance for the specified plugin " + pluginIdentifier, e);
@@ -379,14 +421,27 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
     }
 
     @Override
-    public IPluginRunner unloadPluginInstance(String pluginIdentifier, Long pluginConfigurationId) throws ExtensionManagerException {
+    public void unloadPluginInstance(IPluginRunner pluginRunner, String pluginIdentifier, Long pluginConfigurationId) throws ExtensionManagerException {
         Pair<Extension, IPluginDescriptor> result = findPluginExtensionFromIdentifier(pluginIdentifier);
         if (result == null) {
             throw new ExtensionManagerException("No plugin implementation found for the plugin identifier " + pluginIdentifier);
         }
+
+        // Look for the configuration controllers and register them to the
+        // extension manager
+        if (pluginRunner.getConfigurator() != null) {
+            if (pluginRunner.getConfigurator().getCustomConfigurator() != null) {
+                removeExtensionController(pluginRunner.getConfigurator().getCustomConfigurator());
+            }
+            if (pluginRunner.getConfigurator().getDataTypesWithRegistration() != null) {
+                for (Object configurationController : pluginRunner.getConfigurator().getDataTypesWithRegistration().values()) {
+                    removeExtensionController(configurationController);
+                }
+            }
+        }
+
         log.info("Plugin instance [" + pluginConfigurationId + "] for the unique id [" + pluginIdentifier + "] in the extension "
-                + result.getLeft().getDescriptor().getName() + " loaded");
-        return null;
+                + result.getLeft().getDescriptor().getName() + " unlloaded");
     }
 
     /**
@@ -498,7 +553,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         }
         Extension extension = null;
         try {
-            extension = new Extension(jarFile, getEnvironment());
+            extension = new Extension(jarFile, getEnvironment(), getInjector(), this);
         } catch (ExtensionManagerException e) {
             log.error("Unable to load the extension " + jarFile, e);
             return false;
@@ -601,6 +656,25 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
     }
 
     /**
+     * Remove the specified extension controller instance
+     * 
+     * @param controllerInstance
+     *            a controller instance (which class must be annotated by
+     *            {@link WebCommandPath} as well as a method)
+     */
+    private void removeExtensionController(Object controllerInstance) {
+        if (controllerInstance == null || !getExtensionControllers().containsKey(controllerInstance)) {
+            log.warn("Attempt to remove a non existing controller instance " + controllerInstance);
+            return;
+        }
+        for (WebCommand webCommand : getExtensionControllers().get(controllerInstance).values()) {
+            log.info("Unloading web command " + webCommand.getId());
+            getWebCommands().remove(webCommand);
+        }
+        getExtensionControllers().remove(controllerInstance);
+    }
+
+    /**
      * Add a WebCommand to the service
      * 
      * @param controllerInstance
@@ -668,6 +742,10 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         return configuration;
     }
 
+    private Injector getInjector() {
+        return injector;
+    }
+
     /**
      * The class which encapsulate an extension
      * 
@@ -675,13 +753,15 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
      */
     public static class Extension implements IExtension {
         private static final List<Class<?>> AUTHORIZED_INJECTED_SERVICE = Arrays.asList(ISecurityService.class, IUserSessionManagerPlugin.class,
-                ILinkGenerationService.class, II18nMessagesPlugin.class);
+                ILinkGenerationService.class, II18nMessagesPlugin.class, ISysAdminUtils.class);
 
         private Date loadingTime;
         private File jarFile;
         private JarClassLoader jarClassLoader;
         private ReadOnlyExtensionDescriptor descriptor;
         private List<Object> controllers;
+        private Injector injector;
+        private ILinkGenerationService linkGenerationService;
 
         /**
          * Creates an extension using the specified JAR file
@@ -690,9 +770,14 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
          *            the jar file which contains the extension
          * @param environment
          *            the play environment required to get the play class loader
+         * @param injector
+         *            the application injector
          */
-        public Extension(File jarFile, Environment environment) throws ExtensionManagerException {
+        public Extension(File jarFile, Environment environment, Injector injector, ILinkGenerationService linkGenerationService)
+                throws ExtensionManagerException {
             super();
+            this.injector = injector;
+            this.linkGenerationService = linkGenerationService;
             this.loadingTime = new Date();
             parseJarFile(jarFile, environment);
             this.jarFile = jarFile;
@@ -768,6 +853,9 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
          * @throws ClassNotFoundException
          */
         private Object createInstanceOfClass(String objectClassName, JclObjectFactory factory) throws ClassNotFoundException {
+            if (log.isDebugEnabled()) {
+                log.debug("Attempting to create a class " + objectClassName);
+            }
             Class<?> pluginRunnerClass = getJarClassLoader().loadClass(objectClassName);
             // Look for the constructor injection tag
             Pair<Object[], Class<?>[]> injectableParameters = getInjectableConstructorParameters(pluginRunnerClass);
@@ -822,7 +910,20 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                     if (!AUTHORIZED_INJECTED_SERVICE.contains(parameterClass)) {
                         throw new IllegalArgumentException(parameterClass.getName() + " cannot be injected in the extension constructor");
                     } else {
-                        parameters[count] = Play.application().injector().instanceOf(parameterClass);
+                        if (log.isDebugEnabled()) {
+                            log.debug("Looking for an instance of injector");
+                        }
+                        if (parameterClass.equals(ILinkGenerationService.class)) {
+                            // The ILinkGenerationService interface is
+                            // implemented by the IExtensionManagerService (it
+                            // cannot be in the injector at this time)
+                            parameters[count] = getLinkGenerationService();
+                        } else {
+                            parameters[count] = getInjector().instanceOf(parameterClass);
+                        }
+                        if (log.isDebugEnabled()) {
+                            log.debug("Class " + parameterClass + " injected !");
+                        }
                         if (parameters[count] == null) {
                             throw new IllegalArgumentException("Cannot inject " + parameterClass.getName() + " unknown reason");
                         }
@@ -883,6 +984,14 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
 
         private List<Object> getControllers() {
             return controllers;
+        }
+
+        private Injector getInjector() {
+            return injector;
+        }
+
+        private ILinkGenerationService getLinkGenerationService() {
+            return linkGenerationService;
         }
     }
 

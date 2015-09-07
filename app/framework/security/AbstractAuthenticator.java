@@ -304,7 +304,7 @@ public abstract class AbstractAuthenticator extends SecureController implements 
     private void initCasSingleSignOn() {
         log.info(">>>>>>>>>>>>>>>> Initialize CAS SSO");
         String casLoginUrl = getConfiguration().getString("cas.login.url");
-        String casCallbackUrl = Utilities.getPreferenceElseConfigurationValue(getConfiguration(), IFrameworkConstants.PUBLIC_URL_PREFERENCE, "maf.public.url")
+        String casCallbackUrl = getPreferenceManagerPlugin().getPreferenceElseConfigurationValue(IFrameworkConstants.PUBLIC_URL_PREFERENCE, "maf.public.url")
                 + getLocalRoutes().getCallbackRoute().url();
         final CasClient casClient = new CasClient();
         casClient.setLogoutHandler(new PlayLogoutHandler());
@@ -334,7 +334,7 @@ public abstract class AbstractAuthenticator extends SecureController implements 
         log.info("SAML configuration found, loading properties");
         try {
             PropertiesConfiguration cfg = new PropertiesConfiguration(samlConfigFile);
-            String publicUrl = Utilities.getPreferenceElseConfigurationValue(getConfiguration(), IFrameworkConstants.PUBLIC_URL_PREFERENCE, "maf.public.url");
+            String publicUrl = getPreferenceManagerPlugin().getPreferenceElseConfigurationValue(IFrameworkConstants.PUBLIC_URL_PREFERENCE, "maf.public.url");
             if (cfg.containsKey("maf.saml.entityId")) {
                 saml2Client.setSpEntityId(cfg.getString("maf.saml.entityId"));
             } else {
@@ -380,7 +380,7 @@ public abstract class AbstractAuthenticator extends SecureController implements 
     private void initStandaloneAuthentication() {
         log.info(">>>>>>>>>>>>>>>> Initialize Standalone Authentication mode");
         getPreferenceManagerPlugin().getPreferenceValueAsString(IFrameworkConstants.PUBLIC_URL_PREFERENCE);
-        String casCallbackUrl = Utilities.getPreferenceElseConfigurationValue(getConfiguration(), IFrameworkConstants.PUBLIC_URL_PREFERENCE, "maf.public.url")
+        String casCallbackUrl = getPreferenceManagerPlugin().getPreferenceElseConfigurationValue(IFrameworkConstants.PUBLIC_URL_PREFERENCE, "maf.public.url")
                 + getLocalRoutes().getCallbackRoute().url();
         final FormClient formClient = new FormClient(getLocalRoutes().getDisplayStandaloneLoginFormRoute().url(),
                 new LightAuthenticationUserPasswordAuthenticator(getAuthenticationAccountReader()), new UsernameProfileCreator());

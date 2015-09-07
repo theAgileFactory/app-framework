@@ -21,7 +21,8 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 /**
- * The interface to be implemented by the plugin which manages the preferences.<br/>
+ * The interface to be implemented by the plugin which manages the preferences.
+ * <br/>
  * A preference is not a configuration parameter since it should be modified by
  * the user itself.<br/>
  * 
@@ -36,6 +37,48 @@ import java.util.Date;
  * @author Pierre-Yves Cloux
  */
 public interface IPreferenceManagerPlugin {
+
+    /**
+     * Get a value from a preference if it exists, else from a play
+     * configuration.
+     * 
+     * Note: this method should be called after the preference manager service
+     * has been started.
+     * 
+     * @param preferenceName
+     *            the preference name
+     * @param configurationName
+     *            the play configuration name
+     */
+    public String getPreferenceElseConfigurationValue(String preferenceName, String configurationName);
+
+    /**
+     * Get an Integer value from a preference if it exists, else from a play
+     * configuration.
+     * 
+     * Note: this method should be called after the preference manager service
+     * has been started.
+     * 
+     * @param preferenceName
+     *            the preference name
+     * @param configurationName
+     *            the play configuration name
+     */
+    public Integer getPreferenceElseConfigurationValueAsInteger(String preferenceName, String configurationName);
+
+    /**
+     * Get an Boolean value from a preference if it exists, else from a play
+     * configuration.
+     * 
+     * Note: this method should be called after the preference manager service
+     * has been started.
+     * 
+     * @param preferenceName
+     *            the preference name
+     * @param configurationName
+     *            the play configuration name
+     */
+    public Boolean getPreferenceElseConfigurationValueAsBoolean(String preferenceName, String configurationName);
 
     /**
      * Get a String preference for the specified user

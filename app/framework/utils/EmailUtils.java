@@ -29,10 +29,11 @@ import javax.mail.internet.MimeMessage;
 
 import org.apache.commons.lang3.ArrayUtils;
 
+import framework.services.ServiceStaticAccessor;
+import framework.services.account.IPreferenceManagerPlugin;
 import play.Logger;
 import play.Play;
 import scala.concurrent.duration.Duration;
-import framework.services.ServiceStaticAccessor;
 
 /**
  * This class encapsulate the e-mail notification features. If the flag
@@ -49,6 +50,9 @@ public class EmailUtils {
     /**
      * Send an e-mail
      * 
+     * @param preferenceManagerPlugin
+     *            the preference plugin (required to retrieve the e-mail server
+     *            configuration)
      * @param subject
      *            the subject of the mail
      * @param from
@@ -58,11 +62,12 @@ public class EmailUtils {
      * @param to
      *            a table of recipients for this email
      */
-    public static void sendEmail(final String subject, final String from, final String body, final String... to) {
+    public static void sendEmail(final IPreferenceManagerPlugin preferenceManagerPlugin, final String subject, final String from, final String body,
+            final String... to) {
         ServiceStaticAccessor.getSysAdminUtils().scheduleOnce(false, "SEND_MAIL", Duration.create(0, TimeUnit.MILLISECONDS), new Runnable() {
             @Override
             public void run() {
-                sendEmailSynchronous(subject, from, body, to);
+                sendEmailSynchronous(preferenceManagerPlugin, subject, from, body, to);
             }
         });
     }
@@ -70,6 +75,9 @@ public class EmailUtils {
     /**
      * Send an e-mail
      * 
+     * @param preferenceManagerPlugin
+     *            the preference plugin (required to retrieve the e-mail server
+     *            configuration)
      * @param subject
      *            the subject of the mail
      * @param from
@@ -79,29 +87,30 @@ public class EmailUtils {
      * @param to
      *            a table of recipients for this email
      */
-    private static void sendEmailSynchronous(String subject, String from, String body, String... to) {
+    private static void sendEmailSynchronous(IPreferenceManagerPlugin preferenceManagerPlugin, String subject, String from, String body, String... to) {
         if (!simulateEmailSending) {
             try {
                 // Send a real e-mail
                 Properties props = new Properties();
-                props.put("mail.smtp.host", framework.utils.Utilities.getPreferenceElseConfigurationValue(Play.application().configuration(),
-                        framework.commons.IFrameworkConstants.SMTP_HOST_PREFERENCE, "smtp.host"));
-                props.put("mail.smtp.port", framework.utils.Utilities.getPreferenceElseConfigurationValueAsInteger(Play.application().configuration(),
-                        framework.commons.IFrameworkConstants.SMTP_PORT_PREFERENCE, "smtp.port"));
-                props.put("mail.smtp.starttls.enable", framework.utils.Utilities.getPreferenceElseConfigurationValueAsBoolean(Play.application()
-                        .configuration(), framework.commons.IFrameworkConstants.SMTP_TLS_PREFERENCE, "smtp.tls"));
+                props.put("mail.smtp.host",
+                        preferenceManagerPlugin.getPreferenceElseConfigurationValue(framework.commons.IFrameworkConstants.SMTP_HOST_PREFERENCE, "smtp.host"));
+                props.put("mail.smtp.port", preferenceManagerPlugin
+                        .getPreferenceElseConfigurationValueAsInteger(framework.commons.IFrameworkConstants.SMTP_PORT_PREFERENCE, "smtp.port"));
+                props.put("mail.smtp.starttls.enable", preferenceManagerPlugin
+                        .getPreferenceElseConfigurationValueAsBoolean(framework.commons.IFrameworkConstants.SMTP_TLS_PREFERENCE, "smtp.tls"));
                 props.put("mail.smtp.auth", "true");
-                if (framework.utils.Utilities.getPreferenceElseConfigurationValueAsBoolean(Play.application().configuration(),
-                        framework.commons.IFrameworkConstants.SMTP_SSL_PREFERENCE, "play.mailer.ssl")) {
+                if (preferenceManagerPlugin.getPreferenceElseConfigurationValueAsBoolean(framework.commons.IFrameworkConstants.SMTP_SSL_PREFERENCE,
+                        "play.mailer.ssl")) {
                     props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
                     props.put("mail.smtp.socketFactory.fallback", "false");
                 }
                 Session session = Session.getInstance(props, new javax.mail.Authenticator() {
                     protected PasswordAuthentication getPasswordAuthentication() {
-                        return new PasswordAuthentication(framework.utils.Utilities.getPreferenceElseConfigurationValue(Play.application().configuration(),
-                                framework.commons.IFrameworkConstants.SMTP_USER_PREFERENCE, "smtp.user"), framework.utils.Utilities
-                                .getPreferenceElseConfigurationValue(Play.application().configuration(),
-                                        framework.commons.IFrameworkConstants.SMTP_PASSWORD_PREFERENCE, "smtp.password"));
+                        return new PasswordAuthentication(
+                                preferenceManagerPlugin.getPreferenceElseConfigurationValue(framework.commons.IFrameworkConstants.SMTP_USER_PREFERENCE,
+                                        "smtp.user"),
+                                preferenceManagerPlugin.getPreferenceElseConfigurationValue(framework.commons.IFrameworkConstants.SMTP_PASSWORD_PREFERENCE,
+                                        "smtp.password"));
                     }
                 });
                 Message message = new MimeMessage(session);

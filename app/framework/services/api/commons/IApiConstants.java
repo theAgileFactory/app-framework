@@ -17,6 +17,8 @@
  */
 package framework.services.api.commons;
 
+import java.net.HttpURLConnection;
+
 /**
  * Constants for the APIs
  * 
@@ -24,6 +26,15 @@ package framework.services.api.commons;
  *
  */
 public interface IApiConstants {
+    public static final int ERROR_API_RESPONSE_CODE = HttpURLConnection.HTTP_INTERNAL_ERROR;
+    public static final String ERROR_API_RESPONSE_NAME = "error";
+    public static final int SUCCESS_API_RESPONSE_CODE = HttpURLConnection.HTTP_OK; // HTTP200
+    public static final int SUCCESS_API_CREATED_RESPONSE_CODE = HttpURLConnection.HTTP_CREATED; // HTTP201
+    public static final String SUCCESS_API_RESPONSE_NAME = "success";
+    public static final String STANDARD_API_ROOT_URI = "/api/core";
+
+    public static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
+
     /**
      * The name of the HTTP header which should contains the Epoch timestamp for
      * an API call

@@ -4,6 +4,7 @@ import javax.inject.Provider;
 
 import com.google.inject.Inject;
 
+import framework.services.account.IAccountManagerPlugin;
 import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.session.IUserSessionManagerPlugin;
 import framework.services.storage.IAttachmentManagerPlugin;
@@ -11,6 +12,7 @@ import play.Configuration;
 import play.Environment;
 import play.api.OptionalSourceMapper;
 import play.api.routing.Router;
+import play.cache.CacheApi;
 import play.http.DefaultHttpErrorHandler;
 import play.mvc.Http;
 import play.mvc.Http.Context;
@@ -23,6 +25,10 @@ public class AbstractErrorHandler extends DefaultHttpErrorHandler {
     private IUserSessionManagerPlugin userSessionManagerPlugin;
     @Inject(optional = true)
     private IAttachmentManagerPlugin attachmentManagerPlugin;
+    @Inject(optional = true)
+    private CacheApi cacheApi;
+    @Inject(optional = true)
+    private IAccountManagerPlugin accountManagerPlugin;
 
     @Inject
     public AbstractErrorHandler(Configuration configuration, Environment environment, OptionalSourceMapper optionalSourceMapper,
@@ -39,6 +45,7 @@ public class AbstractErrorHandler extends DefaultHttpErrorHandler {
      * @param context
      */
     protected void injectCommonServicesIncontext(Http.Context context) {
-        ContextArgsInjector.injectCommonServicesIncontext(context, configuration, messagesPlugin, userSessionManagerPlugin, attachmentManagerPlugin);
+        ContextArgsInjector.injectCommonServicesIncontext(context, configuration, messagesPlugin, userSessionManagerPlugin, attachmentManagerPlugin,
+                accountManagerPlugin, cacheApi);
     }
 }

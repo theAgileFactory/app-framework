@@ -517,4 +517,16 @@ public interface IPluginContext {
      *            the path to the target folder
      */
     public void moveFileInSharedStorage(String sourceFilePath, String targetFolderPath) throws IOException;
+
+    /**
+     * Send an e-mail
+     * 
+     * @param subject
+     *            the subject of the mail
+     * @param body
+     *            the body of the message
+     * @param to
+     *            a table of recipients for this email
+     */
+    public void sendEmail(final String subject, final String body, final String... to);
 }

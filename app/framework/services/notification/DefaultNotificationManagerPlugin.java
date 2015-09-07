@@ -36,6 +36,7 @@ import akka.actor.Props;
 import akka.actor.SupervisorStrategy;
 import akka.actor.SupervisorStrategy.Directive;
 import akka.actor.UntypedActor;
+import akka.japi.Creator;
 import akka.japi.Function;
 import akka.routing.RoundRobinPool;
 import framework.commons.IFrameworkConstants;
@@ -49,7 +50,6 @@ import models.framework_models.account.NotificationCategory;
 import models.framework_models.account.Principal;
 import play.Configuration;
 import play.Logger;
-import play.Play;
 import play.inject.ApplicationLifecycle;
 import play.libs.F.Promise;
 import scala.concurrent.duration.Duration;
@@ -94,6 +94,8 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
     private String notificationRetryDuration;
 
     private int notificationRetryNumber;
+
+    private Configuration configuration;
 
     private IPreferenceManagerPlugin preferenceManagerPlugin;
 
@@ -150,6 +152,7 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
         this.poolSize = configuration.getInt(Config.NOTIFICATION_POOL_SIZE.getConfigurationKey());
         this.notificationRetryDuration = configuration.getString(Config.RETRY_DURATION.getConfigurationKey());
         this.notificationRetryNumber = configuration.getInt(Config.RETRY_NUMBER.getConfigurationKey());
+        this.configuration = configuration;
         this.preferenceManagerPlugin = preferenceManagerPlugin;
         this.accountManagerPlugin = accountManagerPlugin;
         lifecycle.addStopHook(() -> {
@@ -173,9 +176,8 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
     @Override
     public void createActors(ActorSystem actorSystem) {
         SupervisorStrategy strategy = getSupervisorStrategy(getNotificationRetryNumber(), getNotificationRetryDuration());
-        this.supervisorActor = actorSystem.actorOf(
-                (new RoundRobinPool(getPoolSize())).withSupervisorStrategy(strategy).props(Props.create(NotificationMessageProcessingActor.class)),
-                SUPERVISOR_ACTOR_NAME);
+        this.supervisorActor = actorSystem.actorOf((new RoundRobinPool(getPoolSize())).withSupervisorStrategy(strategy)
+                .props(Props.create(new NotificationMessageProcessingActorCreator(getConfiguration(), getPreferenceManagerPlugin()))), SUPERVISOR_ACTOR_NAME);
         log.info("Actor based notification system is started");
     }
 
@@ -377,6 +379,39 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
         return accountManagerPlugin;
     }
 
+    private Configuration getConfiguration() {
+        return configuration;
+    }
+
+    /**
+     * A creator class for the actor {@link NotificationMessageProcessingActor}
+     * 
+     * @author Pierre-Yves Cloux
+     */
+    public static class NotificationMessageProcessingActorCreator implements Creator<NotificationMessageProcessingActor> {
+        private static final long serialVersionUID = 4075638451954038626L;
+        private IPreferenceManagerPlugin preferenceManagerPlugin;
+        private Configuration configuration;
+
+        public NotificationMessageProcessingActorCreator(Configuration configuration, IPreferenceManagerPlugin preferenceManagerPlugin) {
+            this.configuration = configuration;
+            this.preferenceManagerPlugin = preferenceManagerPlugin;
+        }
+
+        @Override
+        public NotificationMessageProcessingActor create() throws Exception {
+            return new NotificationMessageProcessingActor(getConfiguration(), getPreferenceManagerPlugin());
+        }
+
+        private IPreferenceManagerPlugin getPreferenceManagerPlugin() {
+            return preferenceManagerPlugin;
+        }
+
+        private Configuration getConfiguration() {
+            return configuration;
+        }
+    }
+
     /**
      * A class which write a notification for a certain uid.<br/>
      * This class is an actor which is called by the
@@ -385,6 +420,13 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
      * @author Pierre-Yves Cloux
      */
     public static class NotificationMessageProcessingActor extends UntypedActor {
+        private Configuration configuration;
+        private IPreferenceManagerPlugin preferenceManagerPlugin;
+
+        public NotificationMessageProcessingActor(Configuration configuration, IPreferenceManagerPlugin preferenceManagerPlugin) {
+            this.configuration = configuration;
+            this.preferenceManagerPlugin = preferenceManagerPlugin;
+        }
 
         @Override
         public void postStop() throws Exception {
@@ -418,12 +460,13 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
                                 URL url = new URL(notificationToSend.getLink());
                                 link = url.toString();
                             } catch (Exception e) {
-                                link = Utilities.getPreferenceElseConfigurationValue(Play.application().configuration(),
-                                        IFrameworkConstants.PUBLIC_URL_PREFERENCE, "maf.public.url") + notificationToSend.getLink();
+                                link = getPreferenceManagerPlugin().getPreferenceElseConfigurationValue(IFrameworkConstants.PUBLIC_URL_PREFERENCE,
+                                        "maf.public.url") + notificationToSend.getLink();
                             }
                         }
 
-                        EmailUtils.sendEmail("BizDock - " + notificationToSend.getTitle(), play.Configuration.root().getString("maf.email.from"),
+                        EmailUtils.sendEmail(getPreferenceManagerPlugin(), "BizDock - " + notificationToSend.getTitle(),
+                                getConfiguration().getString("maf.email.from"),
                                 Utilities.renderFullViewI18n("views.html.framework_views.parts.mail.notification_html", userAccount.getFirstName(),
                                         notificationToSend.getMessage(), link).body(),
                                 userAccount.getMail());
@@ -458,6 +501,14 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
             } else {
                 unhandled(message);
             }
+        }
+
+        private IPreferenceManagerPlugin getPreferenceManagerPlugin() {
+            return preferenceManagerPlugin;
+        }
+
+        private Configuration getConfiguration() {
+            return configuration;
         }
     }
 

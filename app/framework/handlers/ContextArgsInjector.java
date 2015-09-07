@@ -1,9 +1,11 @@
 package framework.handlers;
 
+import framework.services.account.IAccountManagerPlugin;
 import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.session.IUserSessionManagerPlugin;
 import framework.services.storage.IAttachmentManagerPlugin;
 import play.Configuration;
+import play.cache.CacheApi;
 import play.mvc.Http;
 import play.mvc.Http.Context;
 
@@ -27,9 +29,12 @@ abstract class ContextArgsInjector {
      * @param messagesPlugin
      * @param userSessionManagerPlugin
      * @param attachmentManagerPlugin
+     * @param accountManagerPlugin
+     * @param cacheApi
      */
     public static void injectCommonServicesIncontext(Http.Context context, Configuration configuration, II18nMessagesPlugin messagesPlugin,
-            IUserSessionManagerPlugin userSessionManagerPlugin, IAttachmentManagerPlugin attachmentManagerPlugin) {
+            IUserSessionManagerPlugin userSessionManagerPlugin, IAttachmentManagerPlugin attachmentManagerPlugin, IAccountManagerPlugin accountManagerPlugin,
+            CacheApi cacheApi) {
         if (context == null) {
             return;
         }
@@ -44,6 +49,12 @@ abstract class ContextArgsInjector {
         }
         if (attachmentManagerPlugin != null) {
             context.args.put(IAttachmentManagerPlugin.class.getName(), attachmentManagerPlugin);
+        }
+        if (accountManagerPlugin != null) {
+            context.args.put(IAccountManagerPlugin.class.getName(), accountManagerPlugin);
+        }
+        if (cacheApi != null) {
+            context.args.put(CacheApi.class.getName(), cacheApi);
         }
     }
 }

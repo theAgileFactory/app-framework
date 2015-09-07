@@ -50,7 +50,6 @@ import framework.services.plugins.api.IPluginRunnerConfigurator;
 import framework.services.plugins.api.PluginException;
 import framework.services.plugins.loader.toolkit.GenericFileLoader.AllowedCharSet;
 import framework.utils.DynamicFormDescriptor;
-import framework.utils.EmailUtils;
 import play.Logger;
 import scala.concurrent.duration.Duration;
 import scala.concurrent.duration.FiniteDuration;
@@ -457,8 +456,8 @@ public abstract class LoadableObjectPluginRunner<K extends ILoadableObject> impl
 
             // If a mail is defined, send the report to the specified mail
             if (!StringUtils.isBlank(getReportEmail())) {
-                EmailUtils.sendEmail(this.getPluginContext().getPluginConfigurationName() + " report", play.Configuration.root().getString("maf.email.from"),
-                        "<pre>" + reportAsString + "</pre>", getReportEmail());
+                getPluginContext().sendEmail(this.getPluginContext().getPluginConfigurationName() + " report", "<pre>" + reportAsString + "</pre>",
+                        getReportEmail());
             }
         } catch (Exception e) {
             log.error("Error while running the load job", e);

@@ -26,12 +26,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
-import play.libs.F.Function0;
-import play.libs.F.Promise;
-import play.mvc.Action;
-import play.mvc.Http.Context;
-import play.mvc.Http.RawBuffer;
-import play.mvc.Result;
 import framework.commons.IFrameworkConstants;
 import framework.commons.IFrameworkConstants.ApiAuthzMode;
 import framework.security.SecurityUtils;
@@ -39,11 +33,19 @@ import framework.services.account.AccountManagementException;
 import framework.services.account.IAccountManagerPlugin;
 import framework.services.account.IPreferenceManagerPlugin;
 import framework.services.account.IUserAccount;
-import framework.services.api.AbstractApiController;
 import framework.services.api.ApiError;
+import framework.services.api.IApiControllerUtilsService;
 import framework.services.api.commons.ApiMethod;
 import framework.services.api.commons.IApiConstants;
 import framework.services.session.IUserSessionManagerPlugin;
+import play.Configuration;
+import play.libs.F.Function0;
+import play.libs.F.Promise;
+import play.mvc.Action;
+import play.mvc.Http.Context;
+import play.mvc.Http.RawBuffer;
+import play.mvc.Http.Response;
+import play.mvc.Result;
 
 /**
  * The action associated with the annotation {@link ApiAuthentication}.<br/>
@@ -89,11 +91,12 @@ public class ApiAuthenticationAction extends Action<ApiAuthentication> {
     private IAccountManagerPlugin accountManagerPlugin;
     @Inject
     private IApiSignatureService apiSignatureService;
-
-    private String defaultPermission;
+    @Inject
+    private Configuration applicationConfiguration;
+    @Inject
+    private IApiControllerUtilsService apiControllerUtilsService;
 
     public ApiAuthenticationAction() {
-        this.defaultPermission = play.Configuration.root().getString("maf.api.default.permission");
     }
 
     @Override
@@ -102,7 +105,7 @@ public class ApiAuthenticationAction extends Action<ApiAuthentication> {
         if (!this.configuration.additionalCheck().isInterface()) {
             Pair<Boolean, String> additionalCheck = this.configuration.additionalCheck().newInstance().before();
             if (!additionalCheck.getLeft()) {
-                return returnUnauthorized(additionalCheck.getRight());
+                return returnUnauthorized(additionalCheck.getRight(), context.response());
             }
         }
 
@@ -130,7 +133,7 @@ public class ApiAuthenticationAction extends Action<ApiAuthentication> {
             // Authentication by signature
             Pair<Boolean, String> result = authenticationBySignature(context, signatureHeader, timeStampHeader, applicationKeyHeader);
             if (!result.getLeft()) {
-                return returnUnauthorized(result.getRight());
+                return returnUnauthorized(result.getRight(), context.response());
             }
 
         }
@@ -149,7 +152,7 @@ public class ApiAuthenticationAction extends Action<ApiAuthentication> {
                 Pair<Boolean, String> result = authenticationByKey(context, applicationKeyHeader);
                 if (!result.getLeft()) {
                     ApiLog.log.debug(result.getRight());
-                    return returnUnauthorized(result.getRight());
+                    return returnUnauthorized(result.getRight(), context.response());
                 }
             }
             // Authentication mode configured at system level is SIGNATURE
@@ -166,19 +169,19 @@ public class ApiAuthenticationAction extends Action<ApiAuthentication> {
                     if (ApiLog.log.isDebugEnabled()) {
                         ApiLog.log.debug("Application is not testable, can't accept an application authentication");
                     }
-                    return returnUnauthorized("Not a testable application");
+                    return returnUnauthorized("Not a testable application", context.response());
                 }
                 Pair<Boolean, String> result = authenticateByAuthorizations(context, false);
                 if (!result.getLeft()) {
                     ApiLog.log.debug("Application is testable but [" + result.getRight() + "] (please remember that test mode is"
                             + " ONLY allowed from the API browser)");
-                    return returnUnauthorized(result.getRight());
+                    return returnUnauthorized(result.getRight(), context.response());
                 }
                 result = authenticationByKey(context, applicationKeyHeader);
                 if (!result.getLeft()) {
                     ApiLog.log.debug("Application is testable but [" + result.getRight() + "] (please remember that test mode is"
                             + " ONLY allowed from the API browser)");
-                    return returnUnauthorized(result.getRight());
+                    return returnUnauthorized(result.getRight(), context.response());
                 }
             }
 
@@ -196,7 +199,7 @@ public class ApiAuthenticationAction extends Action<ApiAuthentication> {
             Pair<Boolean, String> result = authenticateByAuthorizations(context, true);
             if (!result.getLeft()) {
                 ApiLog.log.debug(result.getRight());
-                return returnUnauthorized(result.getRight());
+                return returnUnauthorized(result.getRight(), context.response());
             }
         }
 
@@ -210,18 +213,18 @@ public class ApiAuthenticationAction extends Action<ApiAuthentication> {
                 IApiApplicationConfiguration sourceKey = getApiSignatureService().getApplicationConfigurationFromApplicationKey(applicationKeyHeader);
 
                 if (!sourceKey.getApplicationName().equals(IApiSignatureService.ROOT_APPLICATION)) {
-                    return returnUnauthorized("the root key should be used for a root action");
+                    return returnUnauthorized("the root key should be used for a root action", context.response());
                 }
 
             } else {
-                return returnUnauthorized("the authentication headers should be given for a root action");
+                return returnUnauthorized("the authentication headers should be given for a root action", context.response());
             }
         }
 
         if (!this.configuration.additionalCheck().isInterface()) {
             Pair<Boolean, String> additionalCheck = this.configuration.additionalCheck().newInstance().after();
             if (!additionalCheck.getLeft()) {
-                return returnUnauthorized(additionalCheck.getRight());
+                return returnUnauthorized(additionalCheck.getRight(), context.response());
             }
         }
 
@@ -295,8 +298,8 @@ public class ApiAuthenticationAction extends Action<ApiAuthentication> {
                 }
                 body = rawBuffer.asBytes();
             }
-            getApiSignatureService().checkApiSignature(applicationKeyHeader, signatureHeader.getBytes(), method, context.request().uri(), body,
-                    timeStampAsLong, configuration.allowTimeDifference());
+            getApiSignatureService().checkApiSignature(applicationKeyHeader, signatureHeader.getBytes(), method, context.request().uri(), body, timeStampAsLong,
+                    configuration.allowTimeDifference());
         } catch (Exception e) {
             String message = "Unauthorized API call : invalid signature or not enough rights";
             ApiLog.log.error(message, e);
@@ -402,17 +405,17 @@ public class ApiAuthenticationAction extends Action<ApiAuthentication> {
         ApiLog.log.info(String.format("API call for [%s %s] from [%s]", method, request, application));
     }
 
-    private Promise<Result> returnUnauthorized(final String message) {
+    private Promise<Result> returnUnauthorized(final String message, final Response response) {
         return Promise.promise(new Function0<Result>() {
             @Override
             public Result apply() throws Throwable {
-                return AbstractApiController.getJsonErrorResponse(new ApiError(HttpURLConnection.HTTP_UNAUTHORIZED, message));
+                return getApiControllerUtilsService().getJsonErrorResponse(new ApiError(HttpURLConnection.HTTP_UNAUTHORIZED, message), response);
             }
         });
     }
 
     private String getDefaultPermission() {
-        return defaultPermission;
+        return getApplicationConfiguration().getString("maf.api.default.permission");
     }
 
     private IPreferenceManagerPlugin getPreferenceManagerPlugin() {
@@ -429,5 +432,13 @@ public class ApiAuthenticationAction extends Action<ApiAuthentication> {
 
     private IApiSignatureService getApiSignatureService() {
         return apiSignatureService;
+    }
+
+    private Configuration getApplicationConfiguration() {
+        return applicationConfiguration;
+    }
+
+    private IApiControllerUtilsService getApiControllerUtilsService() {
+        return apiControllerUtilsService;
     }
 }

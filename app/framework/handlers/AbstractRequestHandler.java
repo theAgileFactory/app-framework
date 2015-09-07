@@ -2,10 +2,12 @@ package framework.handlers;
 
 import com.google.inject.Inject;
 
+import framework.services.account.IAccountManagerPlugin;
 import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.session.IUserSessionManagerPlugin;
 import framework.services.storage.IAttachmentManagerPlugin;
 import play.Configuration;
+import play.cache.CacheApi;
 import play.http.DefaultHttpRequestHandler;
 import play.mvc.Http;
 import play.mvc.Http.Context;
@@ -27,6 +29,10 @@ public abstract class AbstractRequestHandler extends DefaultHttpRequestHandler {
     private IUserSessionManagerPlugin userSessionManagerPlugin;
     @Inject(optional = true)
     private IAttachmentManagerPlugin attachmentManagerPlugin;
+    @Inject(optional = true)
+    private CacheApi cacheApi;
+    @Inject(optional = true)
+    private IAccountManagerPlugin accountManagerPlugin;
 
     /**
      * This method injects the commonly used services in the {@link Context}.
@@ -36,6 +42,7 @@ public abstract class AbstractRequestHandler extends DefaultHttpRequestHandler {
      * @param context
      */
     protected void injectCommonServicesIncontext(Http.Context context) {
-        ContextArgsInjector.injectCommonServicesIncontext(context, configuration, messagesPlugin, userSessionManagerPlugin, attachmentManagerPlugin);
+        ContextArgsInjector.injectCommonServicesIncontext(context, configuration, messagesPlugin, userSessionManagerPlugin, attachmentManagerPlugin,
+                accountManagerPlugin, cacheApi);
     }
 }

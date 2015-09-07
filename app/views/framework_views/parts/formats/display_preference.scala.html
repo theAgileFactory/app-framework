@@ -18,7 +18,9 @@
 @(preferenceUuid: String)
 
 @import framework_views.parts
-@customAttributeValue=@{models.framework_models.account.Preference.getPreferenceValueFromUuid(preferenceUuid);}
+@import framework_views.parts.commons._
+
+@customAttributeValue=@{models.framework_models.account.Preference.getPreferenceValueFromUuid(preferenceUuid, _cache, _usession, _accmngr);}
 @if(customAttributeValue!=null){
 <div class="row">
     <div class="col-md-4">

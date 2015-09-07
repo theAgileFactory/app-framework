@@ -36,18 +36,21 @@ import com.avaje.ebean.Ebean;
 
 import framework.commons.DataType;
 import framework.commons.message.EventMessage;
+import framework.services.account.IPreferenceManagerPlugin;
 import framework.services.ext.api.IExtensionDescriptor.IPluginConfigurationBlockDescriptor;
 import framework.services.ext.api.IExtensionDescriptor.IPluginConfigurationBlockDescriptor.ConfigurationBlockEditionType;
 import framework.services.ext.api.IExtensionDescriptor.IPluginDescriptor;
 import framework.services.plugins.api.IPluginContext;
 import framework.services.plugins.api.PluginException;
 import framework.services.storage.ISharedStorageService;
+import framework.utils.EmailUtils;
 import framework.utils.Utilities;
 import models.framework_models.plugin.PluginConfiguration;
 import models.framework_models.plugin.PluginConfigurationBlock;
 import models.framework_models.plugin.PluginIdentificationLink;
 import models.framework_models.plugin.PluginLog;
 import models.framework_models.plugin.PluginRegistration;
+import play.Configuration;
 import play.Logger;
 
 /**
@@ -62,15 +65,20 @@ public class PluginContextImpl implements IPluginContext {
     private String pluginConfigurationName;
     private IPluginDescriptor pluginDescriptor;
     private String pluginPrefix;
+    private Configuration configuration;
     private IPluginManagerService pluginManagerService;
     private IEventBroadcastingService eventBroadcastingService;
     private ISharedStorageService sharedStorageService;
+    private IPreferenceManagerPlugin preferenceManagerPlugin;
 
     public PluginContextImpl(PluginConfiguration pluginConfiguration, IPluginDescriptor pluginDescriptor, IPluginManagerService pluginManagerService,
-            IEventBroadcastingService eventBroadcastingService, ISharedStorageService sharedStorageService) {
+            IEventBroadcastingService eventBroadcastingService, ISharedStorageService sharedStorageService, IPreferenceManagerPlugin preferenceManagerPlugin,
+            Configuration configuration) {
+        this.configuration = configuration;
         this.pluginManagerService = pluginManagerService;
         this.eventBroadcastingService = eventBroadcastingService;
         this.sharedStorageService = sharedStorageService;
+        this.preferenceManagerPlugin = preferenceManagerPlugin;
         this.pluginConfigurationId = pluginConfiguration.id;
         this.pluginConfigurationName = pluginConfiguration.name;
         this.pluginDescriptor = pluginDescriptor;
@@ -80,6 +88,11 @@ public class PluginContextImpl implements IPluginContext {
     @Override
     public IPluginDescriptor getPluginDescriptor() {
         return pluginDescriptor;
+    }
+
+    @Override
+    public void sendEmail(final String subject, final String body, final String... to) {
+        EmailUtils.sendEmail(getPreferenceManagerPlugin(), subject, getConfiguration().getString("maf.email.from"), body, to);
     }
 
     @Override
@@ -504,5 +517,13 @@ public class PluginContextImpl implements IPluginContext {
 
     private IEventBroadcastingService getEventBroadcastingService() {
         return eventBroadcastingService;
+    }
+
+    private IPreferenceManagerPlugin getPreferenceManagerPlugin() {
+        return preferenceManagerPlugin;
+    }
+
+    private Configuration getConfiguration() {
+        return configuration;
     }
 }

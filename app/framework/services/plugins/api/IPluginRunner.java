@@ -45,14 +45,6 @@ import framework.commons.message.EventMessage;
  */
 public interface IPluginRunner {
     /**
-     * The configurator gathers the dynamic configuration features of the
-     * plugin.<br/>
-     * THIS INTERFACE IS NOT CALLED BEFORE THE PLUGIN IS INITIALIZED. You may
-     * implement dynamic data access and other runtime actions.
-     */
-    public IPluginRunnerConfigurator getConfigurator();
-
-    /**
      * Initialize the plugin.<br/>
      * This method is called only once in the context of the plugin lifecycle.
      * <br/>
@@ -66,6 +58,12 @@ public interface IPluginRunner {
      *            phase</b>
      */
     public void init(IPluginContext pluginContext) throws PluginException;
+
+    /**
+     * The configurator gathers the dynamic configuration features of the
+     * plugin.
+     */
+    public IPluginRunnerConfigurator getConfigurator();
 
     /**
      * Start the plugin with the specified context.
