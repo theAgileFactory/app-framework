@@ -7,16 +7,17 @@ import java.util.Enumeration;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import play.Configuration;
-import play.Logger;
-import play.db.ebean.EbeanConfig;
-import play.inject.ApplicationLifecycle;
-import play.libs.F.Promise;
-
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.EbeanServerFactory;
 import com.avaje.ebeaninternal.server.lib.ShutdownManager;
 import com.mysql.jdbc.AbandonedConnectionCleanupThread;
+
+import play.Configuration;
+import play.Environment;
+import play.Logger;
+import play.db.ebean.EbeanConfig;
+import play.inject.ApplicationLifecycle;
+import play.libs.F.Promise;
 
 /**
  * This service is to ensure that Ebean is loaded before a service depending on
@@ -34,19 +35,23 @@ public class DatabaseDependencyServiceImpl implements IDatabaseDependencyService
      * 
      * @param lifecycle
      *            the play application lifecycle listener
+     * @param environment
+     *            the environment
      * @param configuration
      *            the play application configuration
      * @param ebeanConfig
      *            the Ebean configuration as loaded by the play plugin
      */
     @Inject
-    public DatabaseDependencyServiceImpl(ApplicationLifecycle lifecycle, Configuration configuration, EbeanConfig ebeanConfig) {
+    public DatabaseDependencyServiceImpl(ApplicationLifecycle lifecycle, Environment environment, Configuration configuration, EbeanConfig ebeanConfig) {
         log.info("SERVICE>>> DatabaseDependencyServiceImpl starting...");
         // Register the Ebean server as the default one
         Ebean.register(EbeanServerFactory.create(ebeanConfig.serverConfigs().get(EBEAN_SERVER_DEFAULT_NAME)), true);
         lifecycle.addStopHook(() -> {
             log.info("SERVICE>>> DatabaseDependencyServiceImpl stopping...");
-            shutdownDbResources();
+            if (environment.isDev()) {
+                shutdownDbResources();
+            }
             log.info("SERVICE>>> DatabaseDependencyServiceImpl stopped");
             return Promise.pure(null);
         });

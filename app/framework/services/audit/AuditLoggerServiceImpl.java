@@ -27,18 +27,17 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import models.framework_models.parent.IModel;
-
 import org.apache.commons.io.FileUtils;
 
+import framework.services.session.IUserSessionManagerPlugin;
+import framework.utils.Utilities;
+import models.framework_models.parent.IModel;
 import play.Configuration;
 import play.Logger;
 import play.Play;
 import play.inject.ApplicationLifecycle;
 import play.libs.F.Promise;
 import play.mvc.Http;
-import framework.services.session.IUserSessionManagerPlugin;
-import framework.utils.Utilities;
 
 /**
  * This utility class loads the audit configuration from the {@link Auditable}
@@ -187,7 +186,7 @@ public class AuditLoggerServiceImpl implements IAuditLoggerService {
             try {
                 File auditableEntitiesFile = new File(getAuditableEntitiesFilePath());
                 if (!auditableEntitiesFile.exists() || !auditableEntitiesFile.isFile()) {
-                    log.error("Auditable entities file " + auditableEntitiesFilePath + " not found, will be created next time an item is edited");
+                    log.warn("Auditable entities file " + auditableEntitiesFilePath + " not found, will be created next time an item is edited");
                     return;
                 }
                 byte[] data = FileUtils.readFileToByteArray(auditableEntitiesFile);
