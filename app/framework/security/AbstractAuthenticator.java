@@ -188,7 +188,7 @@ public abstract class AbstractAuthenticator extends SecureController implements 
      */
     @SubjectPresent
     public Result redirectToThePreviouslySavedUrl() {
-        return redirect(getRedirectUrlInSession());
+        return loginCode(getRedirectUrlInSession());
     }
 
     /**
@@ -208,8 +208,10 @@ public abstract class AbstractAuthenticator extends SecureController implements 
                 return badRequest();
             }
 
-            // event: success login / CAS
-            getInstanceAccessSupervisor().logSuccessfulLoginEvent(getUserSessionManagerPlugin().getUserSessionId(ctx()));
+            // event: success login
+            if (userAccount.isDisplayed()) {
+                getInstanceAccessSupervisor().logSuccessfulLoginEvent(getUserSessionManagerPlugin().getUserSessionId(ctx()));
+            }
 
             // get the preferred language as object
             Language language = new Language(userAccount.getPreferredLanguage());
