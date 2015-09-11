@@ -54,7 +54,6 @@ import org.xeustechnologies.jcl.JclObjectFactory;
 import akka.actor.Cancellable;
 import framework.commons.DataType;
 import framework.security.ISecurityService;
-import framework.security.SecurityUtils;
 import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.configuration.IImplementationDefinedObjectService;
 import framework.services.database.IDatabaseDependencyService;
@@ -131,6 +130,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
     private Configuration configuration;
     private Environment environment;
     private ISysAdminUtils sysAdminUtils;
+    private ISecurityService securityService;
     private Injector injector;
     private IImplementationDefinedObjectService implementationDefinedObjectService;
     private List<Extension> extensions = Collections.synchronizedList(new ArrayList<Extension>());
@@ -174,8 +174,6 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
      *            ensure that the service is loaded before being possibly used
      *            by an extension
      * @param securityService
-     *            ensure that the service is loaded before being possibly used
-     *            by an extension
      * @throws ExtensionManagerException
      */
     @Inject
@@ -197,6 +195,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         this.iI18nMessagesPlugin = iI18nMessagesPlugin;
         this.sysAdminUtils = sysAdminUtils;
         this.implementationDefinedObjectService = implementationDefinedObjectService;
+        this.securityService = securityService;
         init();
         // Register to the custom router so that the extension web components
         // could be supported
@@ -278,7 +277,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
     @Override
     public Promise<Result> notifyRequest(final Context ctx) {
         final String path = StringUtils.removeStart(ctx.request().path(), PATH_PREFIX);
-        return SecurityUtils.checkHasSubject(ctx, new Function0<Result>() {
+        return getSecurityService().checkHasSubject(new Function0<Result>() {
             @Override
             public Result apply() throws Throwable {
                 return execute(path, ctx);
@@ -638,7 +637,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                                     String pathPrefixAsString = pathPrefix != null ? pathPrefix : "";
                                     WebCommand webCommand = new WebCommand(controllerInstance, commandId,
                                             pathPrefixAsString + controllerAnnotation.path() + methodAnnotation.path(),
-                                            permissions.toArray(new String[permissions.size()]), methodAnnotation.httpMethod(), method);
+                                            permissions.toArray(new String[permissions.size()]), methodAnnotation.httpMethod(), method, getSecurityService());
                                     addWebCommands(controllerInstance, webCommand);
                                     log.info("Registered web command " + webCommand);
                                 }
@@ -744,6 +743,10 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
 
     private Injector getInjector() {
         return injector;
+    }
+
+    private ISecurityService getSecurityService() {
+        return securityService;
     }
 
     /**
@@ -1034,9 +1037,10 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         private WebCommandPath.HttpMethod httpMethod;
         private Method command;
         private ParameterMeta[] parametersMapping;
+        private ISecurityService securityService;
 
-        public WebCommand(Object controllerInstance, String id, String webPath, String[] permissions, WebCommandPath.HttpMethod httpMethod, Method command)
-                throws ExtensionManagerException {
+        public WebCommand(Object controllerInstance, String id, String webPath, String[] permissions, WebCommandPath.HttpMethod httpMethod, Method command,
+                ISecurityService securityService) throws ExtensionManagerException {
             super();
             this.id = id;
             this.controllerInstance = controllerInstance;
@@ -1044,6 +1048,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             this.httpMethod = httpMethod;
             this.permissions = permissions;
             this.command = command;
+            this.securityService = securityService;
         }
 
         /**
@@ -1129,7 +1134,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                 // Check the permissions
                 ArrayList<String[]> perms = new ArrayList<String[]>();
                 perms.add(getPermissions());
-                if (SecurityUtils.restrict(perms, ctx)) {
+                if (getSecurityService().restrict(perms)) {
                     if (log.isDebugEnabled()) {
                         log.debug("Call to path " + path + " but permissions are not sufficient");
                     }
@@ -1219,6 +1224,10 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
 
         private ParameterMeta[] getParametersMapping() {
             return parametersMapping;
+        }
+
+        private ISecurityService getSecurityService() {
+            return securityService;
         }
 
         @Override

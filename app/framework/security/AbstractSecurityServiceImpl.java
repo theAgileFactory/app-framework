@@ -1,6 +1,5 @@
 package framework.security;
 
-import java.lang.annotation.Annotation;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -15,10 +14,7 @@ import be.objectify.deadbolt.core.models.Subject;
 import be.objectify.deadbolt.java.AbstractDeadboltHandler;
 import be.objectify.deadbolt.java.DeadboltHandler;
 import be.objectify.deadbolt.java.DynamicResourceHandler;
-import be.objectify.deadbolt.java.ExecutionContextProvider;
 import be.objectify.deadbolt.java.JavaAnalyzer;
-import be.objectify.deadbolt.java.actions.SubjectPresent;
-import be.objectify.deadbolt.java.actions.SubjectPresentAction;
 import be.objectify.deadbolt.java.actions.Unrestricted;
 import be.objectify.deadbolt.java.cache.HandlerCache;
 import be.objectify.deadbolt.java.cache.SubjectCache;
@@ -33,8 +29,6 @@ import play.Logger;
 import play.cache.CacheApi;
 import play.libs.F.Function0;
 import play.libs.F.Promise;
-import play.mvc.Action;
-import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Http.Context;
 import play.mvc.Result;
@@ -49,7 +43,6 @@ public abstract class AbstractSecurityServiceImpl implements HandlerCache, ISecu
     private JavaAnalyzer deadBoltAnalyzer;
     private SubjectCache subjectCache;
     private Configuration configuration;
-    private ExecutionContextProvider ecProvider;
     private IAccountManagerPlugin accountManagerPlugin;
     private IUserSessionManagerPlugin userSessionManagerPlugin;
     private DefaultDeadboltHandler defaultHandler;
@@ -57,10 +50,10 @@ public abstract class AbstractSecurityServiceImpl implements HandlerCache, ISecu
     private IAuthenticator authenticator;
 
     public AbstractSecurityServiceImpl(JavaAnalyzer deadBoltAnalyzer, SubjectCache subjectCache, Configuration configuration,
-            ExecutionContextProvider ecProvider, IUserSessionManagerPlugin userSessionManagerPlugin, IAccountManagerPlugin accountManagerPlugin,
-            CacheApi cacheApi, IAuthenticator authenticator) {
+            IUserSessionManagerPlugin userSessionManagerPlugin, IAccountManagerPlugin accountManagerPlugin, CacheApi cacheApi, IAuthenticator authenticator) {
         this.deadBoltAnalyzer = deadBoltAnalyzer;
         this.subjectCache = subjectCache;
+        this.configuration = configuration;
         this.userSessionManagerPlugin = userSessionManagerPlugin;
         this.accountManagerPlugin = accountManagerPlugin;
         this.cacheApi = cacheApi;
@@ -95,72 +88,23 @@ public abstract class AbstractSecurityServiceImpl implements HandlerCache, ISecu
 
     @Override
     public IUserAccount getCurrentUser() throws AccountManagementException {
-        IUserAccount userAccount = getAccountManagerPlugin().getUserAccountFromUid(getUserSessionManagerPlugin().getUserSessionId(Http.Context.current()));
+        String currentUserSessionId = getUserSessionManagerPlugin().getUserSessionId(Http.Context.current());
+        if (currentUserSessionId == null) {
+            return null;
+        }
+        IUserAccount userAccount = getAccountManagerPlugin().getUserAccountFromUid(currentUserSessionId);
         return userAccount;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see security.ISecurityService#checkHasSubject(play.libs.F.Function0)
-     */
     @Override
-    public Promise<Result> checkHasSubject(final Function0<Result> resultIfHasSubject) {
-        try {
-            SubjectPresentAction subjectPresentAction = new SubjectPresentAction(getDeadBoltAnalyzer(), getSubjectCache(), this, getConfiguration(),
-                    getEcProvider());
-            subjectPresentAction.configuration = new SubjectPresent() {
-
-                @Override
-                public Class<? extends Annotation> annotationType() {
-                    return SubjectPresent.class;
-                }
-
-                @Override
-                public String handlerKey() {
-                    return null;
-                }
-
-                @Override
-                public boolean forceBeforeAuthCheck() {
-                    return false;
-                }
-
-                @Override
-                public boolean deferred() {
-                    return false;
-                }
-
-                @Override
-                public String content() {
-                    return null;
-                }
-            };
-            subjectPresentAction.delegate = new Action<String>() {
-                @Override
-                public Promise<Result> call(Context arg0) throws Throwable {
-                    return Promise.promise(() -> resultIfHasSubject.apply());
-                }
-
-            };
-            return subjectPresentAction.call(Http.Context.current());
-        } catch (Throwable e) {
-            log.error("Error while checking if the current context has a subject", e);
-            return Promise.promise(new Function0<Result>() {
-                @Override
-                public Result apply() throws Throwable {
-                    return Controller.badRequest();
-                }
-            });
+    public Promise<Result> checkHasSubject(Function0<Result> resultIfHasSubject) {
+        Optional<Subject> subjectOption = get().getSubject(Http.Context.current()).get(DEFAULT_TIMEOUT);
+        if (subjectOption.isPresent()) {
+            return Promise.promise(() -> resultIfHasSubject.apply());
         }
+        return get().onAuthFailure(Http.Context.current(), null);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see security.ISecurityService#dynamic(java.lang.String,
-     * java.lang.String)
-     */
     @Override
     public boolean dynamic(String name, String meta) {
         if (log.isDebugEnabled()) {
@@ -340,10 +284,6 @@ public abstract class AbstractSecurityServiceImpl implements HandlerCache, ISecu
 
     protected Configuration getConfiguration() {
         return configuration;
-    }
-
-    private ExecutionContextProvider getEcProvider() {
-        return ecProvider;
     }
 
     /**

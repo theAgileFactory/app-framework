@@ -28,16 +28,14 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import framework.commons.IFrameworkConstants;
 import framework.commons.IFrameworkConstants.ApiAuthzMode;
-import framework.security.SecurityUtils;
+import framework.security.ISecurityService;
 import framework.services.account.AccountManagementException;
-import framework.services.account.IAccountManagerPlugin;
 import framework.services.account.IPreferenceManagerPlugin;
 import framework.services.account.IUserAccount;
 import framework.services.api.ApiError;
 import framework.services.api.IApiControllerUtilsService;
 import framework.services.api.commons.ApiMethod;
 import framework.services.api.commons.IApiConstants;
-import framework.services.session.IUserSessionManagerPlugin;
 import play.Configuration;
 import play.libs.F.Function0;
 import play.libs.F.Promise;
@@ -86,15 +84,13 @@ public class ApiAuthenticationAction extends Action<ApiAuthentication> {
     @Inject
     private IPreferenceManagerPlugin preferenceManagerPlugin;
     @Inject
-    private IUserSessionManagerPlugin userSessionManagerPlugin;
-    @Inject
-    private IAccountManagerPlugin accountManagerPlugin;
-    @Inject
     private IApiSignatureService apiSignatureService;
     @Inject
     private Configuration applicationConfiguration;
     @Inject
     private IApiControllerUtilsService apiControllerUtilsService;
+    @Inject
+    private ISecurityService securityService;
 
     public ApiAuthenticationAction() {
     }
@@ -323,11 +319,10 @@ public class ApiAuthenticationAction extends Action<ApiAuthentication> {
      * @throws AccountManagementException
      */
     private Pair<Boolean, String> authenticateByAuthorizations(Context context, boolean addApiRequiredAuthorizations) throws AccountManagementException {
-        String userSessionId = getUserSessionManagerPlugin().getUserSessionId(context);
-        if (userSessionId == null) {
+        IUserAccount userAccount = getSecurityService().getCurrentUser();
+        if (userAccount == null) {
             return Pair.of(false, "No valid user session");
         }
-        IUserAccount userAccount = getAccountManagerPlugin().getUserAccountFromUid(userSessionId);
 
         // If the default permission is null this is not normal
         if (StringUtils.isBlank(getDefaultPermission())) {
@@ -343,7 +338,7 @@ public class ApiAuthenticationAction extends Action<ApiAuthentication> {
                 ApiLog.log.debug("Adding permissions to default : " + Arrays.toString(roles));
             }
         }
-        if (userAccount == null || !(SecurityUtils.hasAllRoles(userAccount, roles))) {
+        if (userAccount == null || !(getSecurityService().restrict(roles))) {
             ApiLog.log.error("Unauthorized API call : permissions of user " + userAccount.getUid() + " are not sufficient expecting " + Arrays.toString(roles));
             return Pair.of(false, "Unauthorized API call for API browser access : insufficient permissions for the currently logged user");
         }
@@ -422,14 +417,6 @@ public class ApiAuthenticationAction extends Action<ApiAuthentication> {
         return preferenceManagerPlugin;
     }
 
-    private IUserSessionManagerPlugin getUserSessionManagerPlugin() {
-        return userSessionManagerPlugin;
-    }
-
-    private IAccountManagerPlugin getAccountManagerPlugin() {
-        return accountManagerPlugin;
-    }
-
     private IApiSignatureService getApiSignatureService() {
         return apiSignatureService;
     }
@@ -440,5 +427,9 @@ public class ApiAuthenticationAction extends Action<ApiAuthentication> {
 
     private IApiControllerUtilsService getApiControllerUtilsService() {
         return apiControllerUtilsService;
+    }
+
+    private ISecurityService getSecurityService() {
+        return securityService;
     }
 }
