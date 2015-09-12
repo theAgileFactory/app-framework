@@ -54,6 +54,7 @@ import org.xeustechnologies.jcl.JclObjectFactory;
 import akka.actor.Cancellable;
 import framework.commons.DataType;
 import framework.security.ISecurityService;
+import framework.security.ISecurityServiceConfiguration;
 import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.configuration.IImplementationDefinedObjectService;
 import framework.services.database.IDatabaseDependencyService;
@@ -131,6 +132,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
     private Environment environment;
     private ISysAdminUtils sysAdminUtils;
     private ISecurityService securityService;
+    private ISecurityServiceConfiguration securityServiceConfiguration;
     private Injector injector;
     private IImplementationDefinedObjectService implementationDefinedObjectService;
     private List<Extension> extensions = Collections.synchronizedList(new ArrayList<Extension>());
@@ -180,7 +182,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
     public ExtensionManagerServiceImpl(ApplicationLifecycle lifecycle, Environment environment, Injector injector, Configuration configuration,
             II18nMessagesPlugin iI18nMessagesPlugin, ICustomRouterService customRouterService, ISysAdminUtils sysAdminUtils,
             IImplementationDefinedObjectService implementationDefinedObjectService, IDatabaseDependencyService databaseDependencyService,
-            ISecurityService securityService) throws ExtensionManagerException {
+            ISecurityService securityService, ISecurityServiceConfiguration securityServiceConfiguration) throws ExtensionManagerException {
         log.info("SERVICE>>> ExtensionManagerServiceImpl starting...");
         this.autoRefreshMode = configuration.getBoolean(Config.AUTO_REFRESH_ACTIVE.getConfigurationKey());
         this.autoRefreshFrequency = configuration.getInt(Config.AUTO_REFRESH_FREQUENCY.getConfigurationKey());
@@ -196,6 +198,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         this.sysAdminUtils = sysAdminUtils;
         this.implementationDefinedObjectService = implementationDefinedObjectService;
         this.securityService = securityService;
+        this.securityServiceConfiguration = securityServiceConfiguration;
         init();
         // Register to the custom router so that the extension web components
         // could be supported
@@ -637,7 +640,8 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                                     String pathPrefixAsString = pathPrefix != null ? pathPrefix : "";
                                     WebCommand webCommand = new WebCommand(controllerInstance, commandId,
                                             pathPrefixAsString + controllerAnnotation.path() + methodAnnotation.path(),
-                                            permissions.toArray(new String[permissions.size()]), methodAnnotation.httpMethod(), method, getSecurityService());
+                                            permissions.toArray(new String[permissions.size()]), methodAnnotation.httpMethod(), method, getSecurityService(),
+                                            getSecurityServiceConfiguration());
                                     addWebCommands(controllerInstance, webCommand);
                                     log.info("Registered web command " + webCommand);
                                 }
@@ -747,6 +751,10 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
 
     private ISecurityService getSecurityService() {
         return securityService;
+    }
+
+    private ISecurityServiceConfiguration getSecurityServiceConfiguration() {
+        return securityServiceConfiguration;
     }
 
     /**
@@ -1038,9 +1046,10 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         private Method command;
         private ParameterMeta[] parametersMapping;
         private ISecurityService securityService;
+        private ISecurityServiceConfiguration securityServiceConfiguration;
 
         public WebCommand(Object controllerInstance, String id, String webPath, String[] permissions, WebCommandPath.HttpMethod httpMethod, Method command,
-                ISecurityService securityService) throws ExtensionManagerException {
+                ISecurityService securityService, ISecurityServiceConfiguration securityServiceConfiguration) throws ExtensionManagerException {
             super();
             this.id = id;
             this.controllerInstance = controllerInstance;
@@ -1049,6 +1058,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             this.permissions = permissions;
             this.command = command;
             this.securityService = securityService;
+            this.securityServiceConfiguration = securityServiceConfiguration;
         }
 
         /**
@@ -1138,7 +1148,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                     if (log.isDebugEnabled()) {
                         log.debug("Call to path " + path + " but permissions are not sufficient");
                     }
-                    return Controller.badRequest();
+                    return getSecurityServiceConfiguration().displayAccessForbidden();
                 }
 
                 // Execute
@@ -1228,6 +1238,10 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
 
         private ISecurityService getSecurityService() {
             return securityService;
+        }
+
+        private ISecurityServiceConfiguration getSecurityServiceConfiguration() {
+            return securityServiceConfiguration;
         }
 
         @Override
