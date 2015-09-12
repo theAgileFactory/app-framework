@@ -32,6 +32,8 @@ import java.lang.annotation.Target;
 @Target({ ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface WebCommandPath {
+    public static final String DEFAULT_PATH = "index";
+
     /**
      * The methods supported by a WebCommandPath
      * 
@@ -70,11 +72,12 @@ public @interface WebCommandPath {
     /**
      * The web path to this resource.<br/>
      * If the annotation is for a type, then it is expected that the full path
-     * is defined by a complementary method level annotation
+     * is defined by a complementary method level annotation.<br/>
+     * Default is : WebCommandPath.DEFAULT_PATH
      * 
      * @return a path
      */
-    public String path();
+    public String path() default DEFAULT_PATH;
 
     /**
      * An array of permissions which are required to access this path.<br/>
