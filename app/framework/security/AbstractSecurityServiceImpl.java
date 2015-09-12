@@ -127,39 +127,14 @@ public abstract class AbstractSecurityServiceImpl implements HandlerCache, ISecu
     }
 
     @Override
-    public boolean restrict(List<String[]> deadBoltRoles) {
+    public boolean restrict(final String[] roleNames, final Subject subject) {
         try {
-            if (log.isDebugEnabled()) {
-                log.debug("RESTRICT with handler [" + get() + "] timeout [" + DEFAULT_TIMEOUT + "] for roles " + Utilities.toString(deadBoltRoles));
-            }
-            Optional<Subject> subjectOption = getSubject(Http.Context.current(), get()).get(DEFAULT_TIMEOUT);
-            if (!subjectOption.isPresent()) {
-                if (log.isDebugEnabled()) {
-                    log.debug("RESTRICT FALSE since no subject found");
-                }
+            if (subject == null) {
                 return false;
             }
-            Subject subject = subjectOption.get();
-            if (log.isDebugEnabled()) {
-                log.debug("RESTRICT Subject = " + subject);
-            }
-            return restrict(deadBoltRoles, subject);
+            return getDeadBoltAnalyzer().hasAllRoles(Optional.of(subject), roleNames);
         } catch (Exception e) {
-            log.error("Error while checking restriction for " + Utilities.toString(deadBoltRoles), e);
-            return false;
-        }
-    }
-
-    @Override
-    public boolean restrict(List<String[]> deadBoltRoles, String uid) {
-        try {
-            if (log.isDebugEnabled()) {
-                log.debug("RESTRICT for uid [" + uid + "] [" + get() + "] timeout [" + DEFAULT_TIMEOUT + "] for roles " + Utilities.toString(deadBoltRoles));
-            }
-            Subject subject = getAccountManagerPlugin().getUserAccountFromUid(uid);
-            return restrict(deadBoltRoles, subject);
-        } catch (Exception e) {
-            log.error("Error while checking restriction for " + Utilities.toString(deadBoltRoles), e);
+            log.error("Error while checking restriction for " + ArrayUtils.toString(roleNames), e);
             return false;
         }
     }
@@ -196,14 +171,39 @@ public abstract class AbstractSecurityServiceImpl implements HandlerCache, ISecu
     }
 
     @Override
-    public boolean restrict(final String[] roleNames, final Subject subject) {
+    public boolean restrict(List<String[]> deadBoltRoles) {
         try {
-            if (subject == null) {
+            if (log.isDebugEnabled()) {
+                log.debug("RESTRICT with handler [" + get() + "] timeout [" + DEFAULT_TIMEOUT + "] for roles " + Utilities.toString(deadBoltRoles));
+            }
+            Optional<Subject> subjectOption = getSubject(Http.Context.current(), get()).get(DEFAULT_TIMEOUT);
+            if (!subjectOption.isPresent()) {
+                if (log.isDebugEnabled()) {
+                    log.debug("RESTRICT FALSE since no subject found");
+                }
                 return false;
             }
-            return getDeadBoltAnalyzer().hasAllRoles(Optional.of(subject), roleNames);
+            Subject subject = subjectOption.get();
+            if (log.isDebugEnabled()) {
+                log.debug("RESTRICT Subject = " + subject);
+            }
+            return restrict(deadBoltRoles, subject);
         } catch (Exception e) {
-            log.error("Error while checking restriction for " + ArrayUtils.toString(roleNames), e);
+            log.error("Error while checking restriction for " + Utilities.toString(deadBoltRoles), e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean restrict(List<String[]> deadBoltRoles, String uid) {
+        try {
+            if (log.isDebugEnabled()) {
+                log.debug("RESTRICT for uid [" + uid + "] [" + get() + "] timeout [" + DEFAULT_TIMEOUT + "] for roles " + Utilities.toString(deadBoltRoles));
+            }
+            Subject subject = getAccountManagerPlugin().getUserAccountFromUid(uid);
+            return restrict(deadBoltRoles, subject);
+        } catch (Exception e) {
+            log.error("Error while checking restriction for " + Utilities.toString(deadBoltRoles), e);
             return false;
         }
     }

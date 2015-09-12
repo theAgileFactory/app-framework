@@ -53,8 +53,10 @@ import org.xeustechnologies.jcl.JclObjectFactory;
 
 import akka.actor.Cancellable;
 import framework.commons.DataType;
+import framework.commons.IFrameworkConstants;
 import framework.security.ISecurityService;
 import framework.security.ISecurityServiceConfiguration;
+import framework.services.account.IPreferenceManagerPlugin;
 import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.configuration.IImplementationDefinedObjectService;
 import framework.services.database.IDatabaseDependencyService;
@@ -134,6 +136,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
     private ISecurityService securityService;
     private ISecurityServiceConfiguration securityServiceConfiguration;
     private Injector injector;
+    private IPreferenceManagerPlugin preferenceManagerPlugin;
     private IImplementationDefinedObjectService implementationDefinedObjectService;
     private List<Extension> extensions = Collections.synchronizedList(new ArrayList<Extension>());
     private Map<Object, Map<String, WebCommand>> extensionControllers = Collections.synchronizedMap(new HashMap<Object, Map<String, WebCommand>>());
@@ -182,7 +185,8 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
     public ExtensionManagerServiceImpl(ApplicationLifecycle lifecycle, Environment environment, Injector injector, Configuration configuration,
             II18nMessagesPlugin iI18nMessagesPlugin, ICustomRouterService customRouterService, ISysAdminUtils sysAdminUtils,
             IImplementationDefinedObjectService implementationDefinedObjectService, IDatabaseDependencyService databaseDependencyService,
-            ISecurityService securityService, ISecurityServiceConfiguration securityServiceConfiguration) throws ExtensionManagerException {
+            ISecurityService securityService, ISecurityServiceConfiguration securityServiceConfiguration, IPreferenceManagerPlugin preferenceManagerPlugin)
+                    throws ExtensionManagerException {
         log.info("SERVICE>>> ExtensionManagerServiceImpl starting...");
         this.autoRefreshMode = configuration.getBoolean(Config.AUTO_REFRESH_ACTIVE.getConfigurationKey());
         this.autoRefreshFrequency = configuration.getInt(Config.AUTO_REFRESH_FREQUENCY.getConfigurationKey());
@@ -199,6 +203,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         this.implementationDefinedObjectService = implementationDefinedObjectService;
         this.securityService = securityService;
         this.securityServiceConfiguration = securityServiceConfiguration;
+        this.preferenceManagerPlugin = preferenceManagerPlugin;
         init();
         // Register to the custom router so that the extension web components
         // could be supported
@@ -316,7 +321,12 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         if (webCommand == null) {
             throw new ExtensionManagerException("Unknown command " + commandId + " in the controller " + controllerInstance);
         }
-        return getConfiguration().getString("play.http.context") + PATH_PREFIX + webCommand.generateLink(parameters);
+        String pathContext = getConfiguration().getString("play.http.context");
+        if (pathContext == null || pathContext.equals("/")) {
+            pathContext = "";
+        }
+        String publicUrl = getPreferenceManagerPlugin().getPreferenceElseConfigurationValue(IFrameworkConstants.PUBLIC_URL_PREFERENCE, "maf.public.url");
+        return publicUrl + pathContext + PATH_PREFIX + webCommand.generateLink(parameters);
     }
 
     @Override
@@ -1144,7 +1154,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                 // Check the permissions
                 ArrayList<String[]> perms = new ArrayList<String[]>();
                 perms.add(getPermissions());
-                if (getSecurityService().restrict(perms)) {
+                if (!getSecurityService().restrict(perms)) {
                     if (log.isDebugEnabled()) {
                         log.debug("Call to path " + path + " but permissions are not sufficient");
                     }
@@ -1292,5 +1302,9 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                 return "ParameterMeta [parameterName=" + parameterName + ", realIndex=" + realIndex + ", parameterType=" + parameterType + "]";
             }
         }
+    }
+
+    private IPreferenceManagerPlugin getPreferenceManagerPlugin() {
+        return preferenceManagerPlugin;
     }
 }
