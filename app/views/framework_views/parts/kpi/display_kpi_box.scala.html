@@ -18,10 +18,11 @@
 @(uid: String, objectId: Long)
 
 @import framework_views.parts
-@import framework.services.ServiceStaticAccessor
 @import framework.services.kpi.IKpiService
+@import framework.services.kpi.Kpi
+@import framework_views.parts.commons._
 
-@defining(ServiceStaticAccessor.getKpiService().getKpiRender(uid, objectId)) { kpiRender =>
+@defining(_kpiService.getKpiRender(uid, objectId)) { kpiRender =>
 
     @if(kpiRender != null && kpiRender.getKpi.hasBoxDisplay) {
     
@@ -33,17 +34,17 @@
                             <span class="@kpiRender.getKpi.getCssGlyphicon"></span>
                         </div>
                         <div class="col-xs-8 value">
-                            <span class="small">@parts.Msg(kpiRender.getKpi.getValueName(framework.services.kpi.Kpi.DataType.MAIN))</span>
+                            <span class="small">@parts.Msg(kpiRender.getKpi.getValueName(Kpi.DataType.MAIN))</span>
                             <p>@kpiRender.getMainValueRender</p>
                         </div>
                     </div>
                     <div class="row content">
                         <div class="col-xs-offset-1 col-xs-5 value">
-                            <span class="small">@parts.Msg(kpiRender.getKpi.getValueName(framework.services.kpi.Kpi.DataType.ADDITIONAL1))</span>
+                            <span class="small">@parts.Msg(kpiRender.getKpi.getValueName(Kpi.DataType.ADDITIONAL1))</span>
                             <p>@kpiRender.getAdditional1ValueRender</p>
                         </div>
                         <div class="col-xs-6 value">
-                            <span class="small">@parts.Msg(kpiRender.getKpi.getValueName(framework.services.kpi.Kpi.DataType.ADDITIONAL2))</span>
+                            <span class="small">@parts.Msg(kpiRender.getKpi.getValueName(Kpi.DataType.ADDITIONAL2))</span>
                             <p>@kpiRender.getAdditional2ValueRender</p>
                         </div>
                     </div>
@@ -71,7 +72,7 @@
         </div>
 
         @if(kpiRender.getKpi.hasTrend()) {
-            @display_kpi_trend_modal(kpiRender.getKpi.getUid + "-b-trend-" + objectId, uid, objectId, kpiRender.getValueTimestamp, kpiRender.getKpi.getValueName(framework.services.kpi.Kpi.DataType.MAIN))
+            @display_kpi_trend_modal(kpiRender.getKpi.getUid + "-b-trend-" + objectId, uid, objectId, kpiRender.getValueTimestamp, kpiRender.getKpi.getValueName(Kpi.DataType.MAIN))
         }
     }
 }

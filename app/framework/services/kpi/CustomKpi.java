@@ -19,8 +19,10 @@ package framework.services.kpi;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.mozilla.javascript.ClassShutter;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Script;
@@ -28,8 +30,9 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.WrapFactory;
 
-import play.Logger;
 import framework.services.kpi.Kpi.DataType;
+import models.framework_models.kpi.KpiData;
+import play.Logger;
 
 /**
  * The custom KPI computation class (for an internal and non-standard KPI).
@@ -139,6 +142,16 @@ public class CustomKpi implements IKpiRunner {
         }
 
         return value;
+    }
+
+    @Override
+    public Pair<Date, Date> getTrendPeriod(Kpi kpi, Long objectId) {
+        return null;
+    }
+
+    @Override
+    public Pair<String, List<KpiData>> getStaticTrendLine(Kpi kpi, Long objectId) {
+        return null;
     }
 
 }

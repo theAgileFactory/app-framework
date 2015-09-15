@@ -18,6 +18,12 @@
 package framework.services.kpi;
 
 import java.math.BigDecimal;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.commons.lang3.tuple.Pair;
+
+import models.framework_models.kpi.KpiData;
 
 /**
  * Interface for an internal KPI.
@@ -65,5 +71,33 @@ public interface IKpiRunner {
      *            the object id
      */
     public String link(Long objectId);
+
+    /**
+     * Get the the trend period.
+     * 
+     * If null, then corresponds to [today - 3 months, today].
+     * 
+     * The return value is composed by a start date and an end date.
+     * 
+     * @param kpi
+     *            the KPI
+     * @param objectId
+     *            the object id
+     */
+    public Pair<Date, Date> getTrendPeriod(Kpi kpi, Long objectId);
+
+    /**
+     * Draw an additionally static line in the trend.
+     * 
+     * If null, then no additionally line is drawn.
+     * 
+     * The return value is composed by a label and list of values.
+     * 
+     * @param kpi
+     *            the KPI
+     * @param objectId
+     *            the object id
+     */
+    public Pair<String, List<KpiData>> getStaticTrendLine(Kpi kpi, Long objectId);
 
 }

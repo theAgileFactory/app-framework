@@ -40,8 +40,6 @@ import com.avaje.ebean.Model;
 @Entity
 public class KpiData extends Model {
 
-    private static final long serialVersionUID = 4564562397296L;
-
     public static Finder<Long, KpiData> find = new Finder<Long, KpiData>(KpiData.class);
 
     @Id
@@ -131,4 +129,22 @@ public class KpiData extends Model {
         return find.orderBy("timestamp ASC").where().eq("deleted", false).eq("kpiValueDefinition.id", kpiValueDefinitionId).eq("objectId", objectId)
                 .isNotNull("value").gt("timestamp", calendar.getTime()).findList();
     }
+
+    /**
+     * Get the KPI data of a value definition for a period.
+     * 
+     * @param kpiValueDefinitionId
+     *            the KPI value definition id
+     * @param objectId
+     *            the object id
+     * @param startDate
+     *            the period start date
+     * @param endDate
+     *            the period end date
+     */
+    public static List<KpiData> getKpiDataAsListByPeriod(Long kpiValueDefinitionId, Long objectId, Date startDate, Date endDate) {
+        return find.orderBy("timestamp ASC").where().eq("deleted", false).eq("kpiValueDefinition.id", kpiValueDefinitionId).eq("objectId", objectId)
+                .isNotNull("value").ge("timestamp", startDate).le("timestamp", endDate).findList();
+    }
+
 }

@@ -17,11 +17,11 @@
  *@
 @(objectType: Class[_], objectId: Long)
 
-@import framework.services.ServiceStaticAccessor
 @import framework.services.kpi.IKpiService
+@import framework_views.parts.commons._
 
 @kpis=@{
-ServiceStaticAccessor.getKpiService().getActiveAndToDisplayKpisOfObjectType(objectType);
+    _kpiService.getActiveAndToDisplayKpisOfObjectType(objectType);
 }
 
 @if(kpis!=null && kpis.size()>0){

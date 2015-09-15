@@ -20,9 +20,9 @@ package framework.services.kpi;
 import java.math.BigDecimal;
 import java.util.Date;
 
+import framework.services.kpi.Kpi.DataType;
 import models.framework_models.kpi.KpiColorRule;
 import models.framework_models.kpi.KpiData;
-import framework.services.kpi.Kpi.DataType;
 
 /**
  * The KPI render is used to display a cell or a box of a KPI.
