@@ -21,14 +21,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import play.Logger;
-import play.mvc.Http;
-import play.mvc.Http.Request;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import framework.services.configuration.II18nMessagesPlugin;
+import play.Logger;
+import play.mvc.Http;
+import play.mvc.Http.Request;
 
 /**
  * The taf tree helper provides the methods to manage the objects that represent
@@ -102,7 +101,7 @@ public class TafTreeHelper {
 
             node.setDeleted(false);
             node.setManageable(true);
-            setName(true, node, name,messagesPlugin);
+            setName(true, node, name, messagesPlugin);
             node.setOrder(order);
             node.setParent(null);
 
@@ -110,13 +109,13 @@ public class TafTreeHelper {
 
             node.setDeleted(false);
             node.setManageable(true);
-            setName(true, node, name,messagesPlugin);
+            setName(true, node, name, messagesPlugin);
             node.setOrder(order);
             node.setParent(parentId);
 
         } else if (action.equals("edit")) {
 
-            setName(false, node, name,messagesPlugin);
+            setName(false, node, name, messagesPlugin);
 
         } else if (action.equals("changeOrder")) {
 
@@ -145,7 +144,7 @@ public class TafTreeHelper {
      */
     public static JsonNode get(ITafTreeNode node, II18nMessagesPlugin messagesPlugin) {
 
-        JSTafTreeNode jsNode = new JSTafTreeNode(node.getId(), getName(node,messagesPlugin), node.isManageable(), node.getOrder(), node.hasChildren(),
+        JSTafTreeNode jsNode = new JSTafTreeNode(node.getId(), getName(node, messagesPlugin), node.isManageable(), node.getOrder(), node.hasChildren(),
                 node.getLastChildrenOrder());
 
         ObjectMapper mapper = new ObjectMapper();
@@ -191,7 +190,7 @@ public class TafTreeHelper {
 
         String key = null;
         if (isNew) {
-            key = "node." + node.getClass().getSimpleName() + "." + UUID.randomUUID();
+            key = "node." + UUID.randomUUID();
         } else {
             key = node.getName();
         }
