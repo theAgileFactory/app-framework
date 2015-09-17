@@ -253,7 +253,15 @@
 				</exclusion>
 				<exclusion>
 					<groupId>org.scala-lang</groupId>
-					<artifactId>scala-*</artifactId>
+					<artifactId>scala-library</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.scala-lang</groupId>
+					<artifactId>scala-reflect</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.scala-lang</groupId>
+					<artifactId>scala-compiler</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -281,6 +289,14 @@
 				<exclusion>
 					<groupId>org.scala-lang</groupId>
 					<artifactId>scala-library</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.scala-lang</groupId>
+					<artifactId>scala-reflect</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.scala-lang</groupId>
+					<artifactId>scala-compiler</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
