@@ -21,7 +21,6 @@ import java.util.Map;
 
 import framework.commons.DataType;
 import framework.commons.message.EventMessage;
-import framework.utils.DynamicFormDescriptor;
 
 /**
  * The meta-descriptor of an action which the plugin is able to handle through
@@ -53,14 +52,6 @@ public interface IPluginActionDescriptor {
      * @return a data type
      */
     public DataType getDataType();
-
-    /**
-     * Return a form structure to be used to collect some parameters for the
-     * payload generation
-     * 
-     * @return a form structure
-     */
-    public DynamicFormDescriptor getFormDescriptor();
 
     /**
      * Payload to be sent in the {@link EventMessage} if this action is

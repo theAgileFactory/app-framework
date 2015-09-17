@@ -32,7 +32,8 @@ import java.lang.annotation.Target;
 @Target({ ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface WebCommandPath {
-    public static final String DEFAULT_PATH = "index";
+    public static final String DEFAULT_COMMAND_ID = "_root";
+    public static final String DEFAULT_COMMAND_PATH = "index";
 
     /**
      * The methods supported by a WebCommandPath
@@ -77,7 +78,7 @@ public @interface WebCommandPath {
      * 
      * @return a path
      */
-    public String path() default DEFAULT_PATH;
+    public String path() default DEFAULT_COMMAND_PATH;
 
     /**
      * An array of permissions which are required to access this path.<br/>
@@ -90,7 +91,8 @@ public @interface WebCommandPath {
 
     /**
      * A unique id for the command.<br/>
-     * This is optional but is to be used for links generation.
+     * This is optional but is to be used for links generation.<br/>
+     * Default is : WebCommandPath.DEFAULT_COMMAND_ID
      */
-    public String id() default "";
+    public String id() default DEFAULT_COMMAND_ID;
 }

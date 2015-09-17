@@ -18,7 +18,12 @@
 package framework.services.ext;
 
 import java.util.List;
+import java.util.Map;
 
+import org.apache.commons.lang3.tuple.Triple;
+
+import framework.commons.DataType;
+import framework.services.plugins.api.IPluginContext;
 import framework.services.plugins.api.IPluginRunner;
 import framework.services.router.IRequestListener;
 import play.mvc.Http.Context;
@@ -41,7 +46,10 @@ public interface IExtensionManagerService extends IRequestListener, ILinkGenerat
     public List<IExtension> getLoadedExtensions();
 
     /**
-     * Unload the specified extension
+     * Unload the specified extension.<br/>
+     * <b>WARNING: all the plugins associated with this extension must be
+     * "stopped" and un-registered before removing the extension otherwise this
+     * may have some side effects</b>
      * 
      * @param extension
      *            a loaded extension
@@ -66,11 +74,18 @@ public interface IExtensionManagerService extends IRequestListener, ILinkGenerat
      *            extension (otherwise an exception is raise)
      * @param pluginConfigurationId
      *            the unique plugin instance id
+     * @param pluginContext
+     *            the plugin context to be passed as a parameter of the plugin
+     *            runner init method
+     * @return a triple which contains : the plugin runner, the custom
+     *         configuration controller instance (if any), the plugin
+     *         registration configuration controllers for this plugin (if any)
      * @throws ExtensionManagerException
      *             if no associated and loaded extension is available or if the
      *             loading failed
      */
-    public IPluginRunner loadPluginInstance(String pluginIdentifier, Long pluginConfigurationId) throws ExtensionManagerException;
+    public Triple<IPluginRunner, Object, Map<DataType, Object>> loadAndInitPluginInstance(String pluginIdentifier, Long pluginConfigurationId,
+            IPluginContext pluginContext) throws ExtensionManagerException;
 
     /**
      * Unload the specified plugin and its associated controllers (if any)

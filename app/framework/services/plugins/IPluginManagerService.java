@@ -28,7 +28,8 @@ import framework.commons.DataType;
 import framework.commons.message.EventMessage;
 import framework.services.actor.IActorServiceLifecycleHook;
 import framework.services.ext.api.IExtensionDescriptor.IPluginDescriptor;
-import framework.services.plugins.api.IPluginRunnerConfigurator;
+import framework.services.plugins.api.IPluginActionDescriptor;
+import framework.services.plugins.api.IPluginMenuDescriptor;
 import framework.services.plugins.api.PluginException;
 
 /**
@@ -57,11 +58,70 @@ public interface IPluginManagerService extends IActorServiceLifecycleHook {
      * An interface that gathers some information about a plugin
      */
     public interface IPluginInfo {
+        /**
+         * Provide an interface giving access to the plugin status
+         * 
+         * @return
+         */
         public PluginStatus getPluginStatus();
 
+        /**
+         * Provide a description of the plugin
+         * 
+         * @return
+         */
         public IPluginDescriptor getDescriptor();
 
-        public IPluginRunnerConfigurator getConfigurator();
+        /**
+         * True if the plugin has a custom configurator
+         * 
+         * @return
+         */
+        public boolean hasCustomConfigurator();
+
+        /**
+         * Return a link to the custom configuration controller default action
+         * 
+         * @return
+         */
+        public String getLinkToCustomConfiguration();
+
+        /**
+         * Return true if the plugin can be registered with this data type
+         * 
+         * @param dataType
+         *            a data type
+         * @return
+         */
+        public boolean isRegistrableWith(DataType dataType);
+
+        /**
+         * Return a link to the default action of the registration controller
+         * managing the specified {@link DataType}
+         * 
+         * @param dataType
+         *            a data type
+         * @param objectId
+         *            an object id (the one which will be registered)
+         * @return
+         */
+        public String getLinkToRegistrationConfiguration(DataType dataType, Long objectId);
+
+        /**
+         * Returns a descriptor of plugin menu entry (giving access to a plugin
+         * GUI)
+         * 
+         * @return a plugin menu descriptor
+         */
+        public IPluginMenuDescriptor getMenuDescriptor();
+
+        /**
+         * Returns a map of actions supported by this plugin indexed by their
+         * unique identifier
+         * 
+         * @return a map of actions descriptors
+         */
+        public Map<String, IPluginActionDescriptor> getActionDescriptors();
     }
 
     /**

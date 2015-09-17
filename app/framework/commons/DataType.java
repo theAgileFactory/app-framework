@@ -55,6 +55,10 @@ public class DataType {
      * @param isCustomAttribute
      */
     public static void add(String dataName, String dataTypeClassName, boolean isAuditable, boolean isCustomAttribute) {
+        if (!dataTypes.containsKey(dataName) && dataTypes.containsKey(dataName.toLowerCase())) {
+            throw new IllegalArgumentException(
+                    "WARNING: ambiguous data name attempt to register " + dataName + " while " + dataName.toLowerCase() + " is already registered");
+        }
         dataTypes.put(dataName, new DataType(dataName, dataTypeClassName, isAuditable, isCustomAttribute));
     }
 
@@ -159,5 +163,10 @@ public class DataType {
 
     public static DataType getSystemLevelRoleType() {
         return DataType.getDataType(IFrameworkConstants.SystemLevelRoleType);
+    }
+
+    @Override
+    public String toString() {
+        return "DataType [dataName=" + dataName + "]";
     }
 }

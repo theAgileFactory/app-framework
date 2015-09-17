@@ -94,7 +94,7 @@ class XmlExtensionDescriptor {
         this.menuCustomizationDescriptor = menuCustomizationDescriptor;
     }
 
-    public List<String> getDeclaredControllers() {
+    public List<String> getStandaloneControllers() {
         return Collections.unmodifiableList(getControllers() != null ? getControllers() : new ArrayList<String>());
     }
 
@@ -250,6 +250,8 @@ class XmlExtensionDescriptor {
         private PluginEventInterfaceDescriptor eventInterface;
         private List<PluginConfigurationBlockDescriptor> pluginConfigurationBlockDescriptors;
         private List<String> supportedDataTypes;
+        private String customConfigurationController;
+        private List<PluginRegistrationConfiguratorControllerDescriptor> registrationConfigurationControllerDescriptors;
 
         public PluginDescriptor() {
             super();
@@ -344,6 +346,25 @@ class XmlExtensionDescriptor {
         public void setSupportedDataTypes(List<String> supportedDataTypes) {
             this.supportedDataTypes = supportedDataTypes;
         }
+
+        @XmlElement(name = "custom-configurator", required = false, nillable = false)
+        public String getCustomConfigurationController() {
+            return customConfigurationController;
+        }
+
+        public void setCustomConfigurationController(String customConfigurationController) {
+            this.customConfigurationController = customConfigurationController;
+        }
+
+        @XmlElement(name = "registration-configurator", required = false, nillable = false)
+        public List<PluginRegistrationConfiguratorControllerDescriptor> getRegistrationConfigurationControllerDescriptors() {
+            return registrationConfigurationControllerDescriptors;
+        }
+
+        public void setRegistrationConfigurationControllerDescriptors(
+                List<PluginRegistrationConfiguratorControllerDescriptor> registrationConfiguratorControllerDescriptors) {
+            this.registrationConfigurationControllerDescriptors = registrationConfiguratorControllerDescriptors;
+        }
     }
 
     /**
@@ -381,6 +402,39 @@ class XmlExtensionDescriptor {
 
         public void setOut(boolean out) {
             this.out = out;
+        }
+    }
+
+    /**
+     * The data structure for describing a plugin "registration" configuration
+     * controller
+     * 
+     * @author Pierre-Yves Cloux
+     */
+    public static class PluginRegistrationConfiguratorControllerDescriptor {
+        private String dataType;
+        private String controllerClass;
+
+        public PluginRegistrationConfiguratorControllerDescriptor() {
+            super();
+        }
+
+        @XmlAttribute(name = "data-type", required = true)
+        public String getDataType() {
+            return dataType;
+        }
+
+        public void setDataType(String dataType) {
+            this.dataType = dataType;
+        }
+
+        @XmlValue
+        public String getControllerClass() {
+            return controllerClass;
+        }
+
+        public void setControllerClass(String controllerClass) {
+            this.controllerClass = controllerClass;
         }
     }
 

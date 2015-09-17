@@ -29,6 +29,7 @@ public interface IFrameworkConstants {
     // Permissions constants
     // -------------------------------------------------------------------------------------
     public static final String DEFAULT_PERMISSION_PRIVATE = "DEFAULT_PERMISSION_PRIVATE";
+    public static final String ADMIN_PLUGIN_MANAGER_PERMISSION = "ADMIN_PLUGIN_MANAGER_PERMISSION";
 
     // -------------------------------------------------------------------------------------
     // Preference constants

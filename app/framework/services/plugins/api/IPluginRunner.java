@@ -17,16 +17,28 @@
  */
 package framework.services.plugins.api;
 
+import java.util.Map;
+
 import framework.commons.message.EventMessage;
 
 /**
  * Generic interface for a plugin instance.<br/>
- * A plugin is first "initialized" by calling the "init" method. This is done
- * when the plugin is registered to the container. <b>WARNING : the
- * initialization not allocate any resources (connection to DB for instance). It
- * is mainly to provide the plugin with its context and to notify that its
- * descriptor can be accessed.</b> The plugin will be run within a container
- * associated with up to 3 asynchronous interfaces:
+ * A plugin is initialized automatically.<br/>
+ * A plugin should require to be injected with the {@link IPluginContext}
+ * instance in order to communicate with the container and benefit from various
+ * services.
+ * 
+ * <b>WARNING : the initialization should not allocate any resources (connection
+ * to DB for instance). It is mainly to provide the plugin with its context and
+ * to notify that its descriptor can be accessed.</b> <br/>
+ * 
+ * <p>
+ * The allocation of ressources must happen when the plugin is started (and the
+ * resources must be freed when the plugin is stopped)
+ * </p>
+ * 
+ * The plugin will be run within a container associated with up to 3
+ * asynchronous interfaces:
  * <ul>
  * <li>the lifecycle management interface (associated with the methods start and
  * stop) which notifies the plugin with START and STOP events</li>
@@ -44,27 +56,6 @@ import framework.commons.message.EventMessage;
  * @author Pierre-Yves Cloux
  */
 public interface IPluginRunner {
-    /**
-     * Initialize the plugin.<br/>
-     * This method is called only once in the context of the plugin lifecycle.
-     * <br/>
-     * 
-     * @param pluginContext
-     *            the context of the plugin (access to various plugin services)
-     *            <b>WARNING</b> : the init phase should just ensure that the
-     *            {@link IStaticPluginRunnerDescriptor} is appropriately
-     *            initialized.<br/>
-     *            <b>You must not lead any external resources during this
-     *            phase</b>
-     */
-    public void init(IPluginContext pluginContext) throws PluginException;
-
-    /**
-     * The configurator gathers the dynamic configuration features of the
-     * plugin.
-     */
-    public IPluginRunnerConfigurator getConfigurator();
-
     /**
      * Start the plugin with the specified context.
      * 
@@ -102,4 +93,19 @@ public interface IPluginRunner {
      * @throws PluginException
      */
     public void handleInProvisioningMessage(EventMessage eventMessage) throws PluginException;
+
+    /**
+     * Returns a descriptor of plugin menu entry (giving access to a plugin GUI)
+     * 
+     * @return a plugin menu descriptor
+     */
+    public IPluginMenuDescriptor getMenuDescriptor();
+
+    /**
+     * Returns a map of actions supported by this plugin indexed by their unique
+     * identifier
+     * 
+     * @return a map of actions descriptors
+     */
+    public Map<String, IPluginActionDescriptor> getActionDescriptors();
 }

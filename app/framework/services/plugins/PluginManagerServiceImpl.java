@@ -58,14 +58,15 @@ import framework.commons.message.EventMessage.MessageType;
 import framework.services.account.IPreferenceManagerPlugin;
 import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.database.IDatabaseDependencyService;
-import framework.services.ext.ExtensionManagerException;
 import framework.services.ext.IExtension;
 import framework.services.ext.IExtensionManagerService;
 import framework.services.ext.api.IExtensionDescriptor.IPluginDescriptor;
+import framework.services.plugins.api.AbstractConfiguratorController;
 import framework.services.plugins.api.AbstractRegistrationConfiguratorController;
+import framework.services.plugins.api.IPluginActionDescriptor;
 import framework.services.plugins.api.IPluginContext;
+import framework.services.plugins.api.IPluginMenuDescriptor;
 import framework.services.plugins.api.IPluginRunner;
-import framework.services.plugins.api.IPluginRunnerConfigurator;
 import framework.services.plugins.api.PluginException;
 import framework.services.storage.ISharedStorageService;
 import framework.services.system.ISysAdminUtils;
@@ -394,31 +395,15 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
             IPluginDescriptor pluginDescriptor = getExtensionPlugins().get(pluginIdentifier).getRight();
             IPluginContext pluginContext = new PluginContextImpl(pluginConfiguration, pluginDescriptor, this, this, getSharedStorageService(),
                     getPreferenceManagerPlugin(), getConfiguration());
-            IPluginRunner pluginRunner = getPluginRunnerFromDefinitionIdentifier(pluginIdentifier, pluginConfiguration.id);
+            Triple<IPluginRunner, Object, Map<DataType, Object>> plugin = getExtensionManagerService().loadAndInitPluginInstance(pluginIdentifier,
+                    pluginConfiguration.id, pluginContext);
             log.info(String.format("The class for the plugin %d has been found and instanciated", pluginConfiguration.id));
-
-            // Set the plugin context in the plugin
-            pluginRunner.init(pluginContext);
-
-            // Call init for each of the configurator controllers (if any)
-            if (pluginRunner.getConfigurator() != null) {
-                // Init the custom configurator controller
-                if (pluginRunner.getConfigurator().getCustomConfigurator() != null) {
-                    pluginRunner.getConfigurator().getCustomConfigurator().init(pluginContext);
-                }
-                // Init the data registration configurator controllers
-                if (pluginRunner.getConfigurator().getDataTypesWithRegistration() != null) {
-                    for (AbstractRegistrationConfiguratorController registrationController : pluginRunner.getConfigurator().getDataTypesWithRegistration()
-                            .values()) {
-                        registrationController.init(pluginContext);
-                    }
-                }
-            }
-
-            ActorRef pluginLifeCycleControllingActorRef = getActorSystem().actorOf(Props.create(
-                    new PluginLifeCycleControllingActorCreator(pluginConfiguration.id, pluginRunner, getPluginStatusCallbackActorRef(), getMessagesPlugin())));
+            ActorRef pluginLifeCycleControllingActorRef = getActorSystem()
+                    .actorOf(Props.create(new PluginLifeCycleControllingActorCreator(pluginConfiguration.id, plugin.getLeft(),
+                            getPluginStatusCallbackActorRef(), getMessagesPlugin())));
             log.info(String.format("[END] the plugin %d has been initialized", pluginConfiguration.id));
-            return new PluginRegistrationEntry(pluginConfiguration.id, pluginRunner, pluginDescriptor, pluginLifeCycleControllingActorRef);
+            return new PluginRegistrationEntry(pluginConfiguration.id, plugin.getLeft(), plugin.getMiddle(), plugin.getRight(), pluginDescriptor,
+                    pluginLifeCycleControllingActorRef);
         } catch (Exception e) {
             String message = String.format("Unable to initialize the plugin %d", pluginConfiguration.id);
             log.error(message, e);
@@ -442,25 +427,6 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
             getActorSystem().stop(pluginRegistrationEntry.getLifeCycleControllingRouter());
         } catch (Exception e) {
             log.error(String.format("Unable to uninitialize the plugin %d", pluginRegistrationEntry.getPluginConfigurationId()), e);
-        }
-    }
-
-    /**
-     * Return the {@link IPluginRunner} class associated with the specified
-     * pluginIdentifier and configuration id.<br/>
-     * 
-     * @param pluginIdentifier
-     *            a unique plugin definition identifier
-     * @param pluginConfigurationId
-     *            the id specific to a plugin instance
-     * @return a read to be initialized plugin runner
-     * @throws ClassNotFoundException
-     */
-    private IPluginRunner getPluginRunnerFromDefinitionIdentifier(String pluginIdentifier, Long pluginConfigurationId) throws ClassNotFoundException {
-        try {
-            return getExtensionManagerService().loadPluginInstance(pluginIdentifier, pluginConfigurationId);
-        } catch (ExtensionManagerException e) {
-            throw new ClassNotFoundException("No class for the plugin " + pluginIdentifier, e);
         }
     }
 
@@ -548,12 +514,10 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
         ActorRef actorRef = null;
         EventInterfaceConfiguration eventInterfaceConfiguration = null;
 
-        if (pluginRegistrationEntry.getPluginRunner().getConfigurator() != null) {
-            if (flowType.equals(FlowType.IN)) {
-                eventInterfaceConfiguration = (pluginRegistrationEntry.getDescriptor().hasInMessageInterface() ? new EventInterfaceConfiguration() : null);
-            } else {
-                eventInterfaceConfiguration = (pluginRegistrationEntry.getDescriptor().hasOutMessageInterface() ? new EventInterfaceConfiguration() : null);
-            }
+        if (flowType.equals(FlowType.IN)) {
+            eventInterfaceConfiguration = (pluginRegistrationEntry.getDescriptor().hasInMessageInterface() ? new EventInterfaceConfiguration() : null);
+        } else {
+            eventInterfaceConfiguration = (pluginRegistrationEntry.getDescriptor().hasOutMessageInterface() ? new EventInterfaceConfiguration() : null);
         }
         if (eventInterfaceConfiguration != null) {
             actorRef = getActorSystem().actorOf(
@@ -684,8 +648,8 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
     public List<Triple<Long, String, IPluginInfo>> getPluginSupportingRegistrationForDataType(DataType dataType) {
         List<Triple<Long, String, IPluginInfo>> pluginsSupportingRegistration = new ArrayList<Triple<Long, String, IPluginInfo>>();
         for (PluginRegistrationEntry pluginRegistrationEntry : getPluginByIds().values()) {
-            if (pluginRegistrationEntry.getConfigurator() != null && pluginRegistrationEntry.getConfigurator().getDataTypesWithRegistration() != null) {
-                Set<DataType> supportedDataTypes = pluginRegistrationEntry.getConfigurator().getDataTypesWithRegistration().keySet();
+            if (pluginRegistrationEntry.getDescriptor().getRegistrationConfiguratorControllerClassNames() != null) {
+                Set<DataType> supportedDataTypes = pluginRegistrationEntry.getDescriptor().getRegistrationConfiguratorControllerClassNames().keySet();
                 if (supportedDataTypes != null && supportedDataTypes.contains(dataType)) {
                     pluginsSupportingRegistration.add(Triple.of(pluginRegistrationEntry.getPluginConfigurationId(),
                             PluginConfiguration.getAvailablePluginById(pluginRegistrationEntry.getPluginConfigurationId()).name,
@@ -909,6 +873,10 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
      * managing the interface which controls the life cycle (start, stop) of the
      * plugin</li>
      * <li>pluginRunner : a reference to the plugin itself</li>
+     * <li>getLinkToCustomConfiguration : get a link to the controller which is
+     * managing the custom configuration of the plugin</li>
+     * <li>getLinkToRegistrationConfiguration : get a link to the controller
+     * which is managing a defined object registration</li>
      * </ul>
      */
     public static class PluginRegistrationEntry implements IPluginInfo {
@@ -919,12 +887,16 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
         private ActorRef lifeCycleControllingRouter;
         private IPluginDescriptor descriptor;
         private IPluginRunner pluginRunner;
+        private Object customConfigurationController;
+        private Map<DataType, Object> registrationConfigurationControllers;
 
-        public PluginRegistrationEntry(Long pluginConfigurationId, IPluginRunner pluginRunner, IPluginDescriptor descriptor,
-                ActorRef lifeCycleControllingRouter) {
+        public PluginRegistrationEntry(Long pluginConfigurationId, IPluginRunner pluginRunner, Object customConfigurationController,
+                Map<DataType, Object> registrationConfigurationControllers, IPluginDescriptor descriptor, ActorRef lifeCycleControllingRouter) {
             super();
             this.pluginConfigurationId = pluginConfigurationId;
             this.pluginRunner = pluginRunner;
+            this.customConfigurationController = customConfigurationController;
+            this.registrationConfigurationControllers = registrationConfigurationControllers;
             this.descriptor = descriptor;
             this.lifeCycleControllingRouter = lifeCycleControllingRouter;
             pluginStatus = PluginStatus.STOPPED;
@@ -970,10 +942,6 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
             return descriptor;
         }
 
-        public synchronized IPluginRunnerConfigurator getConfigurator() {
-            return getPluginRunner().getConfigurator();
-        }
-
         public synchronized IPluginRunner getPluginRunner() {
             return pluginRunner;
         }
@@ -983,10 +951,55 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
         }
 
         @Override
+        public synchronized IPluginMenuDescriptor getMenuDescriptor() {
+            return pluginRunner.getMenuDescriptor();
+        }
+
+        @Override
+        public synchronized Map<String, IPluginActionDescriptor> getActionDescriptors() {
+            return pluginRunner.getActionDescriptors();
+        }
+
+        @Override
+        public synchronized String getLinkToCustomConfiguration() {
+            @SuppressWarnings("rawtypes")
+            AbstractConfiguratorController ctrl = (AbstractConfiguratorController) customConfigurationController;
+            if (ctrl == null) {
+                return "";
+            }
+            return ctrl.linkDefault();
+        }
+
+        @Override
+        public synchronized String getLinkToRegistrationConfiguration(DataType dataType, Long objectId) {
+            if (registrationConfigurationControllers == null) {
+                return "";
+            }
+            @SuppressWarnings("rawtypes")
+            AbstractRegistrationConfiguratorController ctrl = (AbstractRegistrationConfiguratorController) registrationConfigurationControllers.get(dataType);
+            if (ctrl == null) {
+                return "";
+            }
+            return ctrl.linkDefault(objectId);
+        }
+
+        @Override
+        public synchronized boolean hasCustomConfigurator() {
+            return customConfigurationController != null;
+        }
+
+        @Override
+        public synchronized boolean isRegistrableWith(DataType dataType) {
+            return registrationConfigurationControllers != null && registrationConfigurationControllers.containsKey(dataType);
+        }
+
+        @Override
         public String toString() {
             return "PluginRegistrationEntry [pluginConfigurationId=" + pluginConfigurationId + ", pluginStatus=" + pluginStatus
                     + ", inEventMessageProcessingActorRef=" + inEventMessageProcessingActorRef + ", outEventMessageProcessingActorRef="
-                    + outEventMessageProcessingActorRef + ", lifeCycleControllingRouter=" + lifeCycleControllingRouter + ", pluginRunner=" + pluginRunner + "]";
+                    + outEventMessageProcessingActorRef + ", lifeCycleControllingRouter=" + lifeCycleControllingRouter + ", descriptor=" + descriptor
+                    + ", pluginRunner=" + pluginRunner + ", customConfigurationController=" + customConfigurationController
+                    + ", registrationConfigurationControllers=" + registrationConfigurationControllers + "]";
         }
     }
 

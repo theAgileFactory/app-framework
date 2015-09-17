@@ -36,12 +36,13 @@ public interface IExtensionDescriptor {
     public String getName();
 
     /**
-     * The list of controllers which are associated with this extension.<br/>
+     * The list of standalone controllers which are associated with this
+     * extension.<br/>
      * Return a list of Java class names.
      * 
      * @return
      */
-    public List<String> getDeclaredControllers();
+    public List<String> getDeclaredStandaloneControllers();
 
     /**
      * The list of plugins which are associated with this extension.<br/>
@@ -120,7 +121,7 @@ public interface IExtensionDescriptor {
         public boolean hasOutMessageInterface();
 
         /**
-         * Returns a map of configuration blocks required by this plugin indexed
+         * Return a map of configuration blocks required by this plugin indexed
          * by their unique identifier
          * 
          * @return a map of configuration blocks
@@ -128,10 +129,23 @@ public interface IExtensionDescriptor {
         public Map<String, IPluginConfigurationBlockDescriptor> getConfigurationBlockDescriptors();
 
         /**
-         * Returns a list of supported data types.<br/>
+         * Return a list of supported data types.<br/>
          * Meaning that this plugin is able to deal with the listed data types
          */
         public List<DataType> getSupportedDataTypes();
+
+        /**
+         * Return the class name for an custom configurator controller
+         */
+        public String getCustomConfiguratorControllerClassName();
+
+        /**
+         * Return a map associating a {@link DataType} with a configurator
+         * controller class name.<br/>
+         * This one is to be used to "register" a named BizDock object (of the
+         * specified data type) with the plugin.
+         */
+        public Map<DataType, String> getRegistrationConfiguratorControllerClassNames();
     }
 
     /**

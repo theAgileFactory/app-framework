@@ -19,8 +19,6 @@ package framework.services.configuration;
 
 import models.framework_models.common.DynamicSingleItemCustomAttributeValue;
 import play.mvc.Call;
-import framework.commons.DataType;
-import framework.services.plugins.PluginConfiguratorController;
 
 /**
  * This is not a real service.<br/>
@@ -71,30 +69,6 @@ public interface IImplementationDefinedObjectService {
      * This URL is used to retrieve an AdPanel asynchronously
      */
     public Call getRouteForAdPanelContent(String page);
-
-    /**
-     * Get the route to the {@link PluginConfiguratorController}
-     * doGetForCustomConfiguratorController method
-     */
-    public Call getRouteForPluginConfiguratorControllerDoGetCustom(Long pluginConfigurationId, String actionId);
-
-    /**
-     * Get the route to the {@link PluginConfiguratorController}
-     * doPostForCustomConfiguratorController method
-     */
-    public Call getRouteForPluginConfiguratorControllerDoPostCustom(Long pluginConfigurationId, String actionId);
-
-    /**
-     * Get the route to the {@link PluginConfiguratorController}
-     * doGetForRegistrationConfiguratorController method
-     */
-    public Call getRouteForPluginConfiguratorControllerDoGetRegistration(Long pluginConfigurationId, DataType dataType, Long objectId, String actionId);
-
-    /**
-     * Get the route to the {@link PluginConfiguratorController}
-     * doPostForRegistrationConfiguratorController method
-     */
-    public Call getRouteForPluginConfiguratorControllerDoPostRegistration(Long pluginConfigurationId, DataType dataType, Long objectId, String actionId);
 
     /**
      * Get the route for switching the perspective.

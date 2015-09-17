@@ -43,6 +43,21 @@ public abstract class AbstractExtensionController extends Controller implements 
     }
 
     /**
+     * Creates a link to the default command
+     * 
+     * @param parameters
+     *            one or more args matching the command parameters
+     * @return a link
+     */
+    public String linkDefault(Object... parameters) {
+        try {
+            return getLinkGenerationService().link(this, WebCommandPath.DEFAULT_COMMAND_ID, parameters);
+        } catch (ExtensionManagerException e) {
+            throw new IllegalArgumentException("Cannot generate link", e);
+        }
+    }
+
+    /**
      * Return the logger for the extensions.<br/>
      * WARNING : no other logger must be used.<br/>
      * Using a logger may prevent the extension to be loaded.

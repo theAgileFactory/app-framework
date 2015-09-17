@@ -9,6 +9,7 @@ import java.util.Map;
 import framework.commons.DataType;
 import framework.services.ext.XmlExtensionDescriptor.PluginConfigurationBlockDescriptor;
 import framework.services.ext.XmlExtensionDescriptor.PluginDescriptor;
+import framework.services.ext.XmlExtensionDescriptor.PluginRegistrationConfiguratorControllerDescriptor;
 import framework.services.ext.api.IExtensionDescriptor;
 
 /**
@@ -31,8 +32,8 @@ public class ReadOnlyExtensionDescriptor implements IExtensionDescriptor {
     }
 
     @Override
-    public List<String> getDeclaredControllers() {
-        return getXmlExtensionDescriptor().getDeclaredControllers();
+    public List<String> getDeclaredStandaloneControllers() {
+        return getXmlExtensionDescriptor().getStandaloneControllers();
     }
 
     @Override
@@ -62,6 +63,7 @@ public class ReadOnlyExtensionDescriptor implements IExtensionDescriptor {
         private PluginDescriptor pluginDescriptor;
         private List<DataType> supportedDataTypes;
         private Map<String, IPluginConfigurationBlockDescriptor> configurationBlockDescriptors;
+        private Map<DataType, String> registrationControllers;
 
         public ReadOnlyPluginDescriptor(PluginDescriptor pluginDescriptor) {
             super();
@@ -116,8 +118,8 @@ public class ReadOnlyExtensionDescriptor implements IExtensionDescriptor {
         @Override
         public Map<String, IPluginConfigurationBlockDescriptor> getConfigurationBlockDescriptors() {
             if (configurationBlockDescriptors == null) {
+                configurationBlockDescriptors = Collections.synchronizedMap(new HashMap<String, IPluginConfigurationBlockDescriptor>());
                 if (getPluginDescriptor().getPluginConfigurationBlockDescriptors() != null) {
-                    configurationBlockDescriptors = Collections.synchronizedMap(new HashMap<String, IPluginConfigurationBlockDescriptor>());
                     for (PluginConfigurationBlockDescriptor desc : getPluginDescriptor().getPluginConfigurationBlockDescriptors()) {
                         configurationBlockDescriptors.put(desc.getIdentifier(), new ReadOnlyPluginConfigurationBlockDescriptor(desc));
                     }
@@ -135,10 +137,30 @@ public class ReadOnlyExtensionDescriptor implements IExtensionDescriptor {
                     for (String supportedDataType : getPluginDescriptor().getSupportedDataTypes()) {
                         supportedDataTypes.add(DataType.getDataType(supportedDataType));
                     }
-                    supportedDataTypes = Collections.unmodifiableList(supportedDataTypes);
                 }
+                supportedDataTypes = Collections.unmodifiableList(supportedDataTypes);
             }
             return supportedDataTypes;
+        }
+
+        @Override
+        public String getCustomConfiguratorControllerClassName() {
+            return getPluginDescriptor().getCustomConfigurationController();
+        }
+
+        @Override
+        public Map<DataType, String> getRegistrationConfiguratorControllerClassNames() {
+            if (registrationControllers == null) {
+                registrationControllers = Collections.synchronizedMap(new HashMap<>());
+                if (getPluginDescriptor().getRegistrationConfigurationControllerDescriptors() != null) {
+                    for (PluginRegistrationConfiguratorControllerDescriptor desc : getPluginDescriptor().getRegistrationConfigurationControllerDescriptors()) {
+                        DataType dataType = DataType.getDataType(desc.getDataType());
+                        registrationControllers.put(dataType, desc.getControllerClass());
+                    }
+                    registrationControllers = Collections.unmodifiableMap(registrationControllers);
+                }
+            }
+            return registrationControllers;
         }
 
         private PluginDescriptor getPluginDescriptor() {

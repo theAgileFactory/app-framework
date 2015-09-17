@@ -21,27 +21,35 @@ import framework.services.ext.ILinkGenerationService;
 import framework.services.ext.api.AbstractExtensionController;
 
 /**
- * The root class for the configurator controllers
+ * The root class for the configurator controllers.<br/>
+ * 
+ * @param
+ *            <P>
+ *            the {@link IPluginRunner} class associated with this controller
  * 
  * @author Pierre-Yves Cloux
  */
-public abstract class AbstractConfiguratorController extends AbstractExtensionController {
-    /**
-     * The first action call by BizDock on a configuration controller.<br/>
-     * This one displays the initial screen
-     */
-    public static final String INITIAL_ACTION = "_root";
+public abstract class AbstractConfiguratorController<P> extends AbstractExtensionController {
     private IPluginContext pluginContext;
+    private P pluginRunner;
 
-    public AbstractConfiguratorController(ILinkGenerationService linkGenerationService) {
+    @SuppressWarnings("unchecked")
+    public AbstractConfiguratorController(ILinkGenerationService linkGenerationService, IPluginRunner pluginRunner, IPluginContext pluginContext) {
         super(linkGenerationService);
+        this.pluginContext = pluginContext;
+        this.pluginRunner = (P) pluginRunner;
     }
 
-    public void init(IPluginContext pluginContext) {
+    public void init(IPluginContext pluginContext, P pluginRunner) {
         this.pluginContext = pluginContext;
+        this.pluginRunner = pluginRunner;
     }
 
     protected IPluginContext getPluginContext() {
         return pluginContext;
+    }
+
+    protected P getPluginRunner() {
+        return pluginRunner;
     }
 }

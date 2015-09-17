@@ -1,81 +1,38 @@
-/*! LICENSE
- *
- * Copyright (c) 2015, The Agile Factory SA and/or its affiliates. All rights
- * reserved.
- *
- * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; version 2 of the License.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
- * details.
- *
- * You should have received a copy of the GNU General Public License along with
- * this program. If not, see <http://www.gnu.org/licenses/>.
- */
 package framework.services.plugins.api;
 
-import framework.commons.DataType;
-import framework.services.ServiceStaticAccessor;
-import framework.services.configuration.IImplementationDefinedObjectService;
 import framework.services.ext.ILinkGenerationService;
-import framework.services.plugins.api.IPluginContext.HttpMethod;
-import play.mvc.Call;
+import play.libs.F.Promise;
 import play.mvc.Result;
 
 /**
- * The class to be extended by the plugin controllers which are managing
- * configuration actions for the registration. See
- * {@link IPluginRegistrationConfigurator}
+ * The controller to be extended by the plugins registration controllers (=
+ * attached to a specified object id).
  * 
  * @author Pierre-Yves Cloux
  */
-public abstract class AbstractRegistrationConfiguratorController extends AbstractConfiguratorController {
-    public AbstractRegistrationConfiguratorController(ILinkGenerationService linkGenerationService) {
-        super(linkGenerationService);
+public abstract class AbstractRegistrationConfiguratorController<P> extends AbstractConfiguratorController<P> {
+
+    public AbstractRegistrationConfiguratorController(ILinkGenerationService linkGenerationService, IPluginRunner pluginRunner, IPluginContext pluginContext) {
+        super(linkGenerationService, pluginRunner, pluginContext);
     }
 
     /**
-     * Return the route to the registration configurator
+     * This method is the default method for the registration controller.<br/>
+     * WARNING: this method must be marked with
      * 
-     * @param method
-     *            the HTTP method to be used
-     * @param dataType
-     *            the data type for the configurator
+     * <pre>
+     * {@code
+     * 
+     * &#64;WebCommandPath
+     * 
+     * }
+     * </pre>
+     * 
+     * No parameters are required since it must be the default command.
+     * 
      * @param objectId
-     *            the id of the object of the specified {@link DataType}
-     * @param actionId
-     *            the action Id to be passed to the controller
-     * @return
+     *            the object id to be registered with the plugin
+     * @return a result
      */
-    public Call getRouteForRegistrationController(HttpMethod method, DataType dataType, Long objectId, String actionId) {
-        IImplementationDefinedObjectService implementationDefinedObjectService = ServiceStaticAccessor.getImplementationDefinedObjectService();
-        if (method.equals(HttpMethod.GET)) {
-            return implementationDefinedObjectService.getRouteForPluginConfiguratorControllerDoGetRegistration(getPluginContext().getPluginConfigurationId(),
-                    dataType, objectId, actionId);
-        } else {
-            return implementationDefinedObjectService.getRouteForPluginConfiguratorControllerDoPostRegistration(getPluginContext().getPluginConfigurationId(),
-                    dataType, objectId, actionId);
-        }
-    }
-
-    /**
-     * Handle a get request from a configurator screen
-     * 
-     * @return
-     */
-    public Result doGet(Long objectId, String actionId) {
-        return badRequest("No implementation available");
-    }
-
-    /**
-     * Handle a post request from a configuration screen
-     * 
-     * @return
-     */
-    public Result doPost(Long objectId, String actionId) {
-        return badRequest("No implementation available");
-    }
+    public abstract Promise<Result> index(Long objectId);
 }

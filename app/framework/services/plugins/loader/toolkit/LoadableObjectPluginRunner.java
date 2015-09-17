@@ -39,17 +39,12 @@ import framework.commons.DataType;
 import framework.commons.message.EventMessage;
 import framework.commons.message.EventMessage.MessageType;
 import framework.services.ServiceStaticAccessor;
-import framework.services.plugins.api.AbstractCustomConfiguratorController;
-import framework.services.plugins.api.AbstractRegistrationConfiguratorController;
 import framework.services.plugins.api.IPluginActionDescriptor;
 import framework.services.plugins.api.IPluginContext;
 import framework.services.plugins.api.IPluginContext.LogLevel;
-import framework.services.plugins.api.IPluginMenuDescriptor;
 import framework.services.plugins.api.IPluginRunner;
-import framework.services.plugins.api.IPluginRunnerConfigurator;
 import framework.services.plugins.api.PluginException;
 import framework.services.plugins.loader.toolkit.GenericFileLoader.AllowedCharSet;
-import framework.utils.DynamicFormDescriptor;
 import play.Logger;
 import scala.concurrent.duration.Duration;
 import scala.concurrent.duration.FiniteDuration;
@@ -128,11 +123,6 @@ public abstract class LoadableObjectPluginRunner<K extends ILoadableObject> impl
                 }
 
                 @Override
-                public DynamicFormDescriptor getFormDescriptor() {
-                    return null;
-                }
-
-                @Override
                 public Object getPayLoad(Long arg0, Map<String, Object> arg1) {
                     throw new UnsupportedOperationException();
                 }
@@ -156,11 +146,6 @@ public abstract class LoadableObjectPluginRunner<K extends ILoadableObject> impl
 
                 @Override
                 public DataType getDataType() {
-                    return null;
-                }
-
-                @Override
-                public DynamicFormDescriptor getFormDescriptor() {
                     return null;
                 }
 
@@ -214,9 +199,18 @@ public abstract class LoadableObjectPluginRunner<K extends ILoadableObject> impl
 
     /**
      * Default constructor.
+     * 
+     * @param pluginContext
+     *            the plugin context (should be injected)
      */
-    public LoadableObjectPluginRunner() {
+    public LoadableObjectPluginRunner(IPluginContext pluginContext) {
+        this.pluginContext = pluginContext;
         this.loadingStatusHolder = new LoadingStatusHolder();
+    }
+
+    @Override
+    public Map<String, IPluginActionDescriptor> getActionDescriptors() {
+        return pluginActions;
     }
 
     @Override
@@ -238,11 +232,6 @@ public abstract class LoadableObjectPluginRunner<K extends ILoadableObject> impl
             }
 
         }
-    }
-
-    @Override
-    public void init(IPluginContext pluginContext) throws PluginException {
-        this.pluginContext = pluginContext;
     }
 
     /**
@@ -350,31 +339,6 @@ public abstract class LoadableObjectPluginRunner<K extends ILoadableObject> impl
         } catch (Exception e) {
         }
         getPluginContext().log(LogLevel.INFO, getPluginContext().getPluginConfigurationName() + " plugin stopped");
-    }
-
-    @Override
-    public IPluginRunnerConfigurator getConfigurator() {
-        return new IPluginRunnerConfigurator() {
-            @Override
-            public Map<DataType, AbstractRegistrationConfiguratorController> getDataTypesWithRegistration() {
-                return null;
-            }
-
-            @Override
-            public AbstractCustomConfiguratorController getCustomConfigurator() {
-                return null;
-            }
-
-            @Override
-            public Map<String, IPluginActionDescriptor> getActionDescriptors() {
-                return pluginActions;
-            }
-
-            @Override
-            public IPluginMenuDescriptor getMenuDescriptor() {
-                return null;
-            }
-        };
     }
 
     /**
