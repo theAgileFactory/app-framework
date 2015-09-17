@@ -20,10 +20,10 @@ package framework.services.kpi;
 import java.util.Hashtable;
 import java.util.List;
 
+import framework.services.system.ISysAdminUtils;
 import play.Environment;
 import play.mvc.Http.Context;
 import play.mvc.Result;
-import framework.services.system.ISysAdminUtils;
 
 /**
  * The interface for the KPI service.
@@ -32,8 +32,9 @@ import framework.services.system.ISysAdminUtils;
  * 
  */
 public interface IKpiService {
+
     /**
-     * Reload the KPIs
+     * Reload the KPIs.
      */
     public void reload();
 
@@ -106,16 +107,12 @@ public interface IKpiService {
     public List<Kpi> getActiveAndToDisplayKpisOfObjectType(Class<?> objectType);
 
     /**
-     * Return the environment associated with the service
-     * 
-     * @return
+     * Return the environment associated with the service.
      */
     public Environment getEnvironment();
 
     /**
-     * Return the sysadmin utils service
-     * 
-     * @return
+     * Return the sysadmin utils service.
      */
     public ISysAdminUtils getSysAdminUtils();
 }

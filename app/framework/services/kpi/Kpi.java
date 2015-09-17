@@ -28,27 +28,29 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import models.framework_models.kpi.KpiColorRule;
-import models.framework_models.kpi.KpiData;
-import models.framework_models.kpi.KpiDefinition;
-import models.framework_models.kpi.KpiValueDefinition;
-import models.framework_models.kpi.KpiValueDefinition.RenderType;
-
 import org.apache.commons.configuration.PropertiesConfiguration;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.mozilla.javascript.ClassShutter;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
-import play.Logger;
-import scala.concurrent.duration.Duration;
-import scala.concurrent.duration.FiniteDuration;
 import akka.actor.Cancellable;
 import framework.commons.IFrameworkConstants;
+import framework.services.kpi.IKpiObjectsContainer;
 import framework.utils.DefaultSelectableValueHolder;
 import framework.utils.DefaultSelectableValueHolderCollection;
 import framework.utils.ISelectableValueHolderCollection;
+import models.framework_models.kpi.KpiColorRule;
+import models.framework_models.kpi.KpiData;
+import models.framework_models.kpi.KpiDefinition;
+import models.framework_models.kpi.KpiValueDefinition;
+import models.framework_models.kpi.KpiValueDefinition.RenderType;
+import play.Logger;
+import scala.concurrent.duration.Duration;
+import scala.concurrent.duration.FiniteDuration;
 
 /**
  * A KPI is a correctly defined KPI definition that is ready to use.
@@ -70,6 +72,8 @@ public class Kpi {
      * 
      * @param kpiDefinition
      *            the KPI definition
+     * @param kpiService
+     *            the KPI service
      */
     public Kpi(KpiDefinition kpiDefinition, IKpiService kpiService) {
         this.kpiDefinition = kpiDefinition;
@@ -99,15 +103,13 @@ public class Kpi {
                 Logger.error("The computationJsCode for the main value should be given because the KPI in internal and custom");
                 return false;
             }
-            if (kpiDefinition.additional1KpiValueDefinition != null
-                    && (kpiDefinition.additional1KpiValueDefinition.computationJsCode == null || kpiDefinition.additional1KpiValueDefinition.computationJsCode
-                            .equals(""))) {
+            if (kpiDefinition.additional1KpiValueDefinition != null && (kpiDefinition.additional1KpiValueDefinition.computationJsCode == null
+                    || kpiDefinition.additional1KpiValueDefinition.computationJsCode.equals(""))) {
                 Logger.error("The computationJsCode for the additional1 value should be given because the KPI in internal and custom");
                 return false;
             }
-            if (kpiDefinition.additional2KpiValueDefinition != null
-                    && (kpiDefinition.additional2KpiValueDefinition.computationJsCode == null || kpiDefinition.additional2KpiValueDefinition.computationJsCode
-                            .equals(""))) {
+            if (kpiDefinition.additional2KpiValueDefinition != null && (kpiDefinition.additional2KpiValueDefinition.computationJsCode == null
+                    || kpiDefinition.additional2KpiValueDefinition.computationJsCode.equals(""))) {
                 Logger.error("The computationJsCode for the additional2 value should be given because the KPI in internal and custom");
                 return false;
             }
@@ -227,33 +229,40 @@ public class Kpi {
 
         for (IKpiObjectsContainer kpiObject : kpiObjectsContainer.getAllInstancesForKpi()) {
 
-            BigDecimal main = computeValue(kpiObject.getIdForKpi(), DataType.MAIN);
-            BigDecimal additional1 = computeValue(kpiObject.getIdForKpi(), DataType.ADDITIONAL1);
-            BigDecimal additional2 = computeValue(kpiObject.getIdForKpi(), DataType.ADDITIONAL2);
+            Pair<Date, Date> period = this.kpiRunner.getTrendPeriod(this, kpiObject.getIdForKpi());
+            Date today = new Date();
 
-            KpiColorRule colorRule = computeColorRule(main, additional1, additional2);
+            if (period == null || (period.getLeft().before(today) && period.getRight().after(today))) {
 
-            KpiData mainData = new KpiData();
-            mainData.kpiColorRule = colorRule;
-            mainData.kpiValueDefinition = kpiDefinition.mainKpiValueDefinition;
-            mainData.objectId = kpiObject.getIdForKpi();
-            mainData.timestamp = new Date();
-            mainData.value = main;
-            mainData.save();
+                BigDecimal main = computeValue(kpiObject.getIdForKpi(), DataType.MAIN);
+                BigDecimal additional1 = computeValue(kpiObject.getIdForKpi(), DataType.ADDITIONAL1);
+                BigDecimal additional2 = computeValue(kpiObject.getIdForKpi(), DataType.ADDITIONAL2);
 
-            KpiData additional1Data = new KpiData();
-            additional1Data.kpiValueDefinition = kpiDefinition.additional1KpiValueDefinition;
-            additional1Data.objectId = kpiObject.getIdForKpi();
-            additional1Data.timestamp = new Date();
-            additional1Data.value = additional1;
-            additional1Data.save();
+                KpiColorRule colorRule = computeColorRule(main, additional1, additional2);
 
-            KpiData additional2Data = new KpiData();
-            additional2Data.kpiValueDefinition = kpiDefinition.additional2KpiValueDefinition;
-            additional2Data.objectId = kpiObject.getIdForKpi();
-            additional2Data.timestamp = new Date();
-            additional2Data.value = additional2;
-            additional2Data.save();
+                KpiData mainData = new KpiData();
+                mainData.kpiColorRule = colorRule;
+                mainData.kpiValueDefinition = kpiDefinition.mainKpiValueDefinition;
+                mainData.objectId = kpiObject.getIdForKpi();
+                mainData.timestamp = new Date();
+                mainData.value = main;
+                mainData.save();
+
+                KpiData additional1Data = new KpiData();
+                additional1Data.kpiValueDefinition = kpiDefinition.additional1KpiValueDefinition;
+                additional1Data.objectId = kpiObject.getIdForKpi();
+                additional1Data.timestamp = new Date();
+                additional1Data.value = additional1;
+                additional1Data.save();
+
+                KpiData additional2Data = new KpiData();
+                additional2Data.kpiValueDefinition = kpiDefinition.additional2KpiValueDefinition;
+                additional2Data.objectId = kpiObject.getIdForKpi();
+                additional2Data.timestamp = new Date();
+                additional2Data.value = additional2;
+                additional2Data.save();
+
+            }
 
         }
 
@@ -478,8 +487,30 @@ public class Kpi {
      * @param objectId
      *            the object id
      */
-    public List<KpiData> getTrendData(Long objectId) {
-        return KpiData.getOfLast3MonthsForKpiValueDefinitionAndObjectId(kpiDefinition.mainKpiValueDefinition.id, objectId);
+    public Triple<List<KpiData>, List<KpiData>, List<KpiData>> getTrendData(Long objectId) {
+        return Triple.of(getKpiData(objectId, this.kpiDefinition.mainKpiValueDefinition),
+                getKpiData(objectId, this.kpiDefinition.additional1KpiValueDefinition),
+                getKpiData(objectId, this.kpiDefinition.additional2KpiValueDefinition));
+    }
+
+    /**
+     * Get the KPI data of a value definition.
+     * 
+     * @param objectId
+     *            the object id
+     * @param kpiValueDefinition
+     *            the KPI value definition
+     */
+    private List<KpiData> getKpiData(Long objectId, KpiValueDefinition kpiValueDefinition) {
+        if (kpiValueDefinition.isTrendDisplayed) {
+            Pair<Date, Date> period = this.kpiRunner.getTrendPeriod(this, objectId);
+            if (period != null) {
+                return KpiData.getKpiDataAsListByPeriod(kpiValueDefinition.id, objectId, period.getLeft(), period.getRight());
+            } else {
+                return KpiData.getOfLast3MonthsForKpiValueDefinitionAndObjectId(kpiValueDefinition.id, objectId);
+            }
+        }
+        return null;
     }
 
     /*
@@ -659,6 +690,9 @@ public class Kpi {
         MAIN, ADDITIONAL1, ADDITIONAL2;
     }
 
+    /**
+     * Get the KPI service.
+     */
     private IKpiService getKpiService() {
         return kpiService;
     }

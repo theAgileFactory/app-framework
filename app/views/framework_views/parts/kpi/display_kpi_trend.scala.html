@@ -17,7 +17,9 @@
  *@
 @(
     uid: String,
-    seriesContainer: framework.highcharts.data.SeriesContainer[_]
+    seriesContainer: framework.highcharts.data.SeriesContainer[_],
+    startDate: Date,
+    endDate: Date
 )
 
 @import framework_views.parts
@@ -43,6 +45,8 @@
                         enabled: false
                     },
                     xAxis: {
+                        @if(startDate != null) { min: @startDate.getTime , startOnTick: true, }
+                        @if(endDate != null) { max: @endDate.getTime , endOnTick: true, }
                         minTickInterval: 24 * 3600 * 1000,
                         type: 'datetime',
                         dateTimeLabelFormats: {

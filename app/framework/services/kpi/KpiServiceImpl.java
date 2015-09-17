@@ -27,6 +27,17 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
+
+import framework.highcharts.HighchartsUtils;
+import framework.highcharts.data.SeriesContainer;
+import framework.highcharts.data.TimeValueItem;
+import framework.services.configuration.II18nMessagesPlugin;
+import framework.services.configuration.IImplementationDefinedObjectService;
+import framework.services.database.IDatabaseDependencyService;
+import framework.services.kpi.Kpi.DataType;
+import framework.services.system.ISysAdminUtils;
 import models.framework_models.kpi.KpiData;
 import models.framework_models.kpi.KpiDefinition;
 import play.Configuration;
@@ -37,14 +48,6 @@ import play.libs.F.Promise;
 import play.mvc.Controller;
 import play.mvc.Http.Context;
 import play.mvc.Result;
-import framework.highcharts.HighchartsUtils;
-import framework.highcharts.data.SeriesContainer;
-import framework.highcharts.data.TimeValueItem;
-import framework.services.configuration.II18nMessagesPlugin;
-import framework.services.configuration.IImplementationDefinedObjectService;
-import framework.services.database.IDatabaseDependencyService;
-import framework.services.kpi.Kpi.DataType;
-import framework.services.system.ISysAdminUtils;
 
 /**
  * The KPI service.
@@ -62,7 +65,7 @@ public class KpiServiceImpl implements IKpiService {
     private II18nMessagesPlugin messagesPlugin;
 
     /**
-     * Create a new KpiServiceImpl
+     * Create a new KpiServiceImpl.
      * 
      * @param lifecycle
      *            the play application lifecycle listener
@@ -73,16 +76,19 @@ public class KpiServiceImpl implements IKpiService {
      * @param implementationDefinedObjectService
      *            the implementation time service (depends on the application in
      *            which the framework is implemented)
-     * @param messagesPlugin service for i18n
+     * @param messagesPlugin
+     *            service for i18n
      * @param databaseDependencyService
+     *            the database dependency service
      * @param sysAdminUtils
+     *            the system admin utils service
      */
     @Inject
     public KpiServiceImpl(ApplicationLifecycle lifecycle, Environment environment, Configuration configuration,
-            IImplementationDefinedObjectService implementationDefinedObjectService, II18nMessagesPlugin messagesPlugin,IDatabaseDependencyService databaseDependencyService,
-            ISysAdminUtils sysAdminUtils) {
+            IImplementationDefinedObjectService implementationDefinedObjectService, II18nMessagesPlugin messagesPlugin,
+            IDatabaseDependencyService databaseDependencyService, ISysAdminUtils sysAdminUtils) {
         log.info("SERVICE>>> KpiServiceImpl starting...");
-        this.messagesPlugin=messagesPlugin;
+        this.messagesPlugin = messagesPlugin;
         this.environment = environment;
         this.sysAdminUtils = sysAdminUtils;
         this.defaultCurrencyCode = implementationDefinedObjectService.getDefaultCurrencyCode();
@@ -96,6 +102,9 @@ public class KpiServiceImpl implements IKpiService {
         log.info("SERVICE>>> KpiServiceImpl started");
     }
 
+    /**
+     * Initialize the service.
+     */
     public void init() {
 
         kpis = new Hashtable<String, Kpi>();
@@ -109,6 +118,9 @@ public class KpiServiceImpl implements IKpiService {
         log.info("********END init KPI********");
     }
 
+    /**
+     * Cancel the service.
+     */
     public void cancel() {
 
         log.info("********START cancel KPI********");
@@ -193,30 +205,79 @@ public class KpiServiceImpl implements IKpiService {
 
         Kpi kpi = getKpi(uid);
 
-        List<KpiData> datas = kpi.getTrendData(objectId);
+        Date startDate = null;
+        Date endDate = null;
+
+        Triple<List<KpiData>, List<KpiData>, List<KpiData>> datas = kpi.getTrendData(objectId);
+        Pair<String, List<KpiData>> staticTrendLine = kpi.getKpiRunner().getStaticTrendLine(kpi, objectId);
 
         SeriesContainer<TimeValueItem> seriesContainer = null;
 
-        if (datas != null && datas.size() > 0) {
+        if (staticTrendLine != null || (datas.getLeft() != null && datas.getLeft().size() > 0) || (datas.getMiddle() != null && datas.getMiddle().size() > 0)
+                || (datas.getRight() != null && datas.getRight().size() > 0)) {
 
             seriesContainer = new SeriesContainer<TimeValueItem>();
-            framework.highcharts.data.Serie<TimeValueItem> timeSerie = new framework.highcharts.data.Serie<TimeValueItem>(getMessagesPlugin().get(kpi
-                    .getValueName(DataType.MAIN)));
-            seriesContainer.addSerie(timeSerie);
 
-            // if a day contains many values, we get the last
-            Map<Date, Double> cleanValues = new LinkedHashMap<Date, Double>();
-            for (KpiData kpiData : datas) {
-                cleanValues.put(HighchartsUtils.convertToUTCAndClean(kpiData.timestamp), kpiData.value.doubleValue());
+            if (datas.getLeft() != null && datas.getLeft().size() > 0) {
+                addTrendSerieAndValues(seriesContainer, kpi, DataType.MAIN, datas.getLeft());
             }
 
-            for (Map.Entry<Date, Double> entry : cleanValues.entrySet()) {
-                timeSerie.add(new TimeValueItem(entry.getKey(), entry.getValue()));
+            if (datas.getMiddle() != null && datas.getMiddle().size() > 0) {
+                addTrendSerieAndValues(seriesContainer, kpi, DataType.ADDITIONAL1, datas.getMiddle());
+            }
+
+            if (datas.getRight() != null && datas.getRight().size() > 0) {
+                addTrendSerieAndValues(seriesContainer, kpi, DataType.ADDITIONAL2, datas.getRight());
+            }
+
+            if (staticTrendLine != null) {
+                framework.highcharts.data.Serie<TimeValueItem> timeSerie = new framework.highcharts.data.Serie<TimeValueItem>(
+                        getMessagesPlugin().get(staticTrendLine.getLeft()));
+                seriesContainer.addSerie(timeSerie);
+                for (KpiData kpiData : staticTrendLine.getRight()) {
+                    timeSerie.add(new TimeValueItem(HighchartsUtils.convertToUTCAndClean(kpiData.timestamp), kpiData.value.doubleValue()));
+                }
+
+            }
+
+            Pair<Date, Date> period = kpi.getKpiRunner().getTrendPeriod(kpi, objectId);
+            if (period != null) {
+                startDate = period.getLeft();
+                endDate = period.getRight();
             }
 
         }
 
-        return Controller.ok(views.html.framework_views.parts.kpi.display_kpi_trend.render(uid, seriesContainer));
+        return Controller.ok(views.html.framework_views.parts.kpi.display_kpi_trend.render(uid, seriesContainer, startDate, endDate));
+    }
+
+    /**
+     * Add a serie (to a serie container) for a trend.
+     * 
+     * @param seriesContainer
+     *            the serie container
+     * @param kpi
+     *            the KPI
+     * @param dataType
+     *            the data type
+     * @param datas
+     *            the datas (values)
+     */
+    private void addTrendSerieAndValues(SeriesContainer<TimeValueItem> seriesContainer, Kpi kpi, DataType dataType, List<KpiData> datas) {
+
+        framework.highcharts.data.Serie<TimeValueItem> timeSerie = new framework.highcharts.data.Serie<TimeValueItem>(
+                getMessagesPlugin().get(kpi.getValueName(dataType)));
+        seriesContainer.addSerie(timeSerie);
+
+        // if a day contains many values, we get the last
+        Map<Date, Double> cleanValues = new LinkedHashMap<Date, Double>();
+        for (KpiData kpiData : datas) {
+            cleanValues.put(HighchartsUtils.convertToUTCAndClean(kpiData.timestamp), kpiData.value.doubleValue());
+        }
+
+        for (Map.Entry<Date, Double> entry : cleanValues.entrySet()) {
+            timeSerie.add(new TimeValueItem(entry.getKey(), entry.getValue()));
+        }
     }
 
     @Override
@@ -277,6 +338,9 @@ public class KpiServiceImpl implements IKpiService {
         return sysAdminUtils;
     }
 
+    /**
+     * Get the messages service.
+     */
     private II18nMessagesPlugin getMessagesPlugin() {
         return messagesPlugin;
     }

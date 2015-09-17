@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 
 import framework.services.account.IAccountManagerPlugin;
 import framework.services.configuration.II18nMessagesPlugin;
+import framework.services.kpi.IKpiService;
 import framework.services.session.IUserSessionManagerPlugin;
 import framework.services.storage.IAttachmentManagerPlugin;
 import play.Configuration;
@@ -33,6 +34,8 @@ public abstract class AbstractRequestHandler extends DefaultHttpRequestHandler {
     private CacheApi cacheApi;
     @Inject(optional = true)
     private IAccountManagerPlugin accountManagerPlugin;
+    @Inject(optional = true)
+    private IKpiService kpiService;
 
     /**
      * This method injects the commonly used services in the {@link Context}.
@@ -44,5 +47,6 @@ public abstract class AbstractRequestHandler extends DefaultHttpRequestHandler {
     protected void injectCommonServicesIncontext(Http.Context context) {
         ContextArgsInjector.injectCommonServicesIncontext(context, configuration, messagesPlugin, userSessionManagerPlugin, attachmentManagerPlugin,
                 accountManagerPlugin, cacheApi);
+        context.args.put(IKpiService.class.getName(), kpiService);
     }
 }

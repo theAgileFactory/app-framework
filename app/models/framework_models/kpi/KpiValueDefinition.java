@@ -27,11 +27,11 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Version;
 
-import models.framework_models.parent.IModelConstants;
-
 import com.avaje.ebean.Model;
 import com.avaje.ebean.annotation.EnumMapping;
 import com.avaje.ebean.annotation.Where;
+
+import models.framework_models.parent.IModelConstants;
 
 /**
  * A KPI definition value describes how to render a KPI value.
@@ -41,14 +41,14 @@ import com.avaje.ebean.annotation.Where;
 @Entity
 public class KpiValueDefinition extends Model {
 
-    private static final long serialVersionUID = 638555493756L;
-
     public static Finder<Long, KpiValueDefinition> find = new Finder<Long, KpiValueDefinition>(KpiValueDefinition.class);
 
     @Id
     public Long id;
 
     public boolean deleted = false;
+
+    public boolean isTrendDisplayed;
 
     @Version
     public Timestamp lastUpdate;
