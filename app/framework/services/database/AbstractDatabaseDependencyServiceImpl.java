@@ -68,17 +68,14 @@ public abstract class AbstractDatabaseDependencyServiceImpl implements IDatabase
      * Initialize the database (by running patches if required)
      */
     private void init(Configuration configuration, EbeanConfig ebeanConfig) {
+        // Register the Ebean server as the default one
+        Ebean.register(EbeanServerFactory.create(ebeanConfig.serverConfigs().get(EBEAN_SERVER_DEFAULT_NAME)), true);
         if (isPatcheable(configuration)) {
             log.info("Running the patch for the release " + getRelease());
-            patchBeforeEbean(log);
-            // Register the Ebean server as the default one
-            Ebean.register(EbeanServerFactory.create(ebeanConfig.serverConfigs().get(EBEAN_SERVER_DEFAULT_NAME)), true);
-            patchAfterEbean(log);
+            patch(log);
             updateRelease();
         } else {
             log.info("The application is up to date, no patch to run");
-            // Register the Ebean server as the default one
-            Ebean.register(EbeanServerFactory.create(ebeanConfig.serverConfigs().get(EBEAN_SERVER_DEFAULT_NAME)), true);
         }
     }
 
@@ -176,18 +173,9 @@ public abstract class AbstractDatabaseDependencyServiceImpl implements IDatabase
     public abstract String getRelease();
 
     /**
-     * Perform a patching of the database if required before the Ebean server is
-     * activated
+     * Perform a patching of the database
      * 
      * @param log
      */
-    public abstract void patchBeforeEbean(Logger.ALogger log);
-
-    /**
-     * Perform a patching of the database if required after the Ebean server is
-     * activated
-     * 
-     * @param log
-     */
-    public abstract void patchAfterEbean(Logger.ALogger log);
+    public abstract void patch(Logger.ALogger log);
 }
