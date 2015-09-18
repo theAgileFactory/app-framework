@@ -411,7 +411,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             if (plugin.getRight().getCustomConfigurationController() != null) {
                 try {
                     log.info("Found a custom configuration controller, registering as web command...");
-                    addExtensionController(plugin.getRight().getCustomConfigurationController(), pluginConfigurationId + "/custom/",
+                    addExtensionController(plugin.getRight().getCustomConfigurationController(), "/" + pluginConfigurationId + "/custom",
                             IFrameworkConstants.ADMIN_PLUGIN_MANAGER_PERMISSION);
                     log.info("Custom configuration controller registered !");
                 } catch (ExtensionManagerException e) {
@@ -425,7 +425,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                     try {
                         Object registrationController = plugin.getRight().getRegistrationConfigurationControllers().get(dataType);
                         log.info("Found a registration configuration controller for DataType " + dataType + " ...");
-                        addExtensionController(registrationController, pluginConfigurationId + "/register/" + dataType.getDataName().toLowerCase() + "/",
+                        addExtensionController(registrationController, "/" + pluginConfigurationId + "/register" + dataType.getDataName().toLowerCase(),
                                 IFrameworkConstants.ADMIN_PLUGIN_MANAGER_PERMISSION);
                         log.info("Custom registration configuration controller loaded !");
                     } catch (ExtensionManagerException e) {
@@ -656,10 +656,11 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             if (!StringUtils.isBlank(controllerAnnotation.path())) {
                 try {
                     // Parse the controller to discover its interface
-                    Method[] methods = controllerClass.getDeclaredMethods();
+                    Method[] methods = controllerClass.getMethods();
                     if (methods != null) {
                         for (Method method : methods) {
-                            if (method.isAnnotationPresent(WebCommandPath.class) && method.getReturnType().equals(Result.class)) {
+                            if (method.isAnnotationPresent(WebCommandPath.class)
+                                    && (method.getReturnType().equals(Result.class) || method.getReturnType().equals(Promise.class))) {
                                 WebCommandPath methodAnnotation = method.getAnnotation(WebCommandPath.class);
                                 if (!StringUtils.isBlank(methodAnnotation.path())) {
                                     HashSet<String> permissions = new HashSet<String>();
@@ -706,7 +707,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             return;
         }
         for (WebCommand webCommand : getExtensionControllers().get(controllerInstance).values()) {
-            log.info("Unloading web command " + webCommand.getId());
+            log.info("Unloading web command " + webCommand);
             getWebCommands().remove(webCommand);
         }
         getExtensionControllers().remove(controllerInstance);
@@ -912,6 +913,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             }
             PluginResources pluginResources = new PluginResources(pluginIdentifier, pluginConfigurationId, customConfiguratorController,
                     registrationConfiguratorControllers);
+            getPluginResources().put(pluginResources.getUniquePluginResourceKey(), pluginResources);
             return Pair.of(pluginRunner, pluginResources);
         }
 
@@ -1143,11 +1145,11 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             private Map<DataType, Object> registrationConfigurationControllers;
 
             public PluginResources(String pluginIdentifier, Long pluginConfigurationId, Object customConfigurationController,
-                    Map<DataType, Object> registrationConfigurationController) {
+                    Map<DataType, Object> registrationConfigurationControllers) {
                 super();
                 this.uniquePluginResourceKey = createUniqueResourceKey(pluginIdentifier, pluginConfigurationId);
                 this.customConfigurationController = customConfigurationController;
-                this.registrationConfigurationControllers = registrationConfigurationController;
+                this.registrationConfigurationControllers = registrationConfigurationControllers;
             }
 
             public Object getCustomConfigurationController() {

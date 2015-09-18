@@ -33,7 +33,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface WebCommandPath {
     public static final String DEFAULT_COMMAND_ID = "_root";
-    public static final String DEFAULT_COMMAND_PATH = "index";
+    public static final String DEFAULT_COMMAND_PATH = "/index";
 
     /**
      * The methods supported by a WebCommandPath

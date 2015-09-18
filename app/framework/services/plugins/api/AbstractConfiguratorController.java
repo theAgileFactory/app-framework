@@ -19,6 +19,9 @@ package framework.services.plugins.api;
 
 import framework.services.ext.ILinkGenerationService;
 import framework.services.ext.api.AbstractExtensionController;
+import framework.services.ext.api.WebCommandPath;
+import play.libs.F.Promise;
+import play.mvc.Result;
 
 /**
  * The root class for the configurator controllers.<br/>
@@ -40,10 +43,26 @@ public abstract class AbstractConfiguratorController<P> extends AbstractExtensio
         this.pluginRunner = (P) pluginRunner;
     }
 
-    public void init(IPluginContext pluginContext, P pluginRunner) {
-        this.pluginContext = pluginContext;
-        this.pluginRunner = pluginRunner;
+    @WebCommandPath()
+    public Promise<Result> index() {
+        return configure();
     }
+
+    /**
+     * This method is called by the default method associated with the
+     * configuration controller.<br/>
+     * <b>No need to mark it with</b>:
+     * 
+     * <pre>
+     * {@code
+     * &#64;WebCommandPath
+     * }
+     * 
+     * </pre>
+     * 
+     * @return a result
+     */
+    public abstract Promise<Result> configure();
 
     protected IPluginContext getPluginContext() {
         return pluginContext;
