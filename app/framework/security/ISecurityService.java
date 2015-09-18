@@ -30,6 +30,33 @@ public interface ISecurityService {
     public IUserAccount getCurrentUser() throws AccountManagementException;
 
     /**
+     * Return the used associated with the specified uid
+     * 
+     * @param uid
+     *            a unique user id (the user login)
+     * @return a user account
+     */
+    public IUserAccount getUserFromUid(String uid) throws AccountManagementException;
+
+    /**
+     * Return the user associated with the specified object id
+     * 
+     * @param id
+     *            a unique id (the BizDock object id)
+     * @return a user account
+     */
+    public IUserAccount getUserFromId(Long id) throws AccountManagementException;
+
+    /**
+     * Return the user associated with the specified mail
+     * 
+     * @param mail
+     *            the mail from the user
+     * @return a user account
+     */
+    public IUserAccount getUserFromEmail(String mail) throws AccountManagementException;
+
+    /**
      * Check if there is a subject in the current session.<br/>
      * <ul>
      * <li>If YES : return a promise of Result using the function passed as a

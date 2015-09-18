@@ -97,6 +97,21 @@ public abstract class AbstractSecurityServiceImpl implements HandlerCache, ISecu
     }
 
     @Override
+    public IUserAccount getUserFromUid(String uid) throws AccountManagementException {
+        return getAccountManagerPlugin().getUserAccountFromUid(uid);
+    }
+
+    @Override
+    public IUserAccount getUserFromId(Long id) throws AccountManagementException {
+        return getAccountManagerPlugin().getUserAccountFromMafUid(id);
+    }
+
+    @Override
+    public IUserAccount getUserFromEmail(String mail) throws AccountManagementException {
+        return getAccountManagerPlugin().getUserAccountFromEmail(mail);
+    }
+
+    @Override
     public Promise<Result> checkHasSubject(Function0<Promise<Result>> resultIfHasSubject) {
         Optional<Subject> subjectOption = get().getSubject(Http.Context.current()).get(DEFAULT_TIMEOUT);
         if (subjectOption.isPresent()) {
