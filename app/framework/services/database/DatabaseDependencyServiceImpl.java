@@ -26,12 +26,12 @@ import play.libs.F.Promise;
  * @author Pierre-Yves Cloux
  */
 @Singleton
-public class DatabaseDependencyServiceImpl implements IDatabaseDependencyService {
+public abstract class DatabaseDependencyServiceImpl implements IDatabaseDependencyService {
     public static final String EBEAN_SERVER_DEFAULT_NAME = "default";
-    private static Logger.ALogger log = Logger.of(DatabaseDependencyServiceImpl.class);
+    private static Logger.ALogger log = Logger.of(AbstractDatabaseDependencyServiceImpl.class);
 
     /**
-     * Create a new DatabaseDependencyServiceImpl
+     * Create a new AbstractDatabaseDependencyServiceImpl
      * 
      * @param lifecycle
      *            the play application lifecycle listener
@@ -44,18 +44,18 @@ public class DatabaseDependencyServiceImpl implements IDatabaseDependencyService
      */
     @Inject
     public DatabaseDependencyServiceImpl(ApplicationLifecycle lifecycle, Environment environment, Configuration configuration, EbeanConfig ebeanConfig) {
-        log.info("SERVICE>>> DatabaseDependencyServiceImpl starting...");
+        log.info("SERVICE>>> AbstractDatabaseDependencyServiceImpl starting...");
         // Register the Ebean server as the default one
         Ebean.register(EbeanServerFactory.create(ebeanConfig.serverConfigs().get(EBEAN_SERVER_DEFAULT_NAME)), true);
         lifecycle.addStopHook(() -> {
-            log.info("SERVICE>>> DatabaseDependencyServiceImpl stopping...");
+            log.info("SERVICE>>> AbstractDatabaseDependencyServiceImpl stopping...");
             if (environment.isDev()) {
                 shutdownDbResources();
             }
-            log.info("SERVICE>>> DatabaseDependencyServiceImpl stopped");
+            log.info("SERVICE>>> AbstractDatabaseDependencyServiceImpl stopped");
             return Promise.pure(null);
         });
-        log.info("SERVICE>>> DatabaseDependencyServiceImpl started");
+        log.info("SERVICE>>> AbstractDatabaseDependencyServiceImpl started");
     }
 
     /**
@@ -85,4 +85,11 @@ public class DatabaseDependencyServiceImpl implements IDatabaseDependencyService
         }
         log.info(">>>>>>>>>>>>>>>> database resources closed");
     }
+
+    /**
+     * Perform a patching of the database if required
+     * 
+     * @param log
+     */
+    public abstract void patch(Logger.ALogger log);
 }
