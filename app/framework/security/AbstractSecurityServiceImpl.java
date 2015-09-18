@@ -97,10 +97,14 @@ public abstract class AbstractSecurityServiceImpl implements HandlerCache, ISecu
     }
 
     @Override
-    public Promise<Result> checkHasSubject(Function0<Result> resultIfHasSubject) {
+    public Promise<Result> checkHasSubject(Function0<Promise<Result>> resultIfHasSubject) {
         Optional<Subject> subjectOption = get().getSubject(Http.Context.current()).get(DEFAULT_TIMEOUT);
         if (subjectOption.isPresent()) {
-            return Promise.promise(() -> resultIfHasSubject.apply());
+            try {
+                return resultIfHasSubject.apply();
+            } catch (Throwable e) {
+                log.error("Error while checking the subject", e);
+            }
         }
         return get().onAuthFailure(Http.Context.current(), null);
     }

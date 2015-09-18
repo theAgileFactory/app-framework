@@ -12,6 +12,7 @@ import play.mvc.Result;
 
 /**
  * A service which implements various security related features
+ * 
  * @author Pierre-Yves Cloux
  */
 public interface ISecurityService {
@@ -20,13 +21,14 @@ public interface ISecurityService {
      * restrictions
      */
     public static long DEFAULT_TIMEOUT = 5000l;
-    
+
     /**
      * Return the currently logged user
+     * 
      * @return a user account
      */
-    public IUserAccount getCurrentUser()throws AccountManagementException;
-    
+    public IUserAccount getCurrentUser() throws AccountManagementException;
+
     /**
      * Check if there is a subject in the current session.<br/>
      * <ul>
@@ -39,7 +41,7 @@ public interface ISecurityService {
      *            a function to be used to compute a Promise of result
      * @return a promise of result
      */
-    public Promise<Result> checkHasSubject(Function0<Result> resultIfHasSubject);
+    public Promise<Result> checkHasSubject(Function0<Promise<Result>> resultIfHasSubject);
 
     /**
      * Define if the current context (id) is allowed for a dynamic permission.
@@ -50,7 +52,7 @@ public interface ISecurityService {
      *            the meta, can be empty
      */
     public boolean dynamic(String name, String meta);
-    
+
     /**
      * Define if the current context (id) is allowed for a dynamic permission.
      * 
@@ -62,7 +64,6 @@ public interface ISecurityService {
      *            the id of an object
      */
     public boolean dynamic(String name, String meta, Long id);
-
 
     /**
      * Return true if the specified roles are part of the current user profile.
@@ -113,7 +114,7 @@ public interface ISecurityService {
      * @return true iff the subject has the role represented by the role name
      */
     public boolean restrict(final String roleName, final Subject subject);
-    
+
     /**
      * Check if the specified subject has all the roles
      * 
@@ -124,7 +125,7 @@ public interface ISecurityService {
      * @return true if the user has all the specified roles
      */
     public boolean restrict(final String[] roleNames, final Subject subject);
-    
+
     /**
      * Check if the current user has the given role.
      *
@@ -132,9 +133,8 @@ public interface ISecurityService {
      *            the name of the role
      * @return true iff the subject has the role represented by the role name
      */
-    public boolean restrict(String roleName)throws AccountManagementException;
+    public boolean restrict(String roleName) throws AccountManagementException;
 
-    
     /**
      * Check if the current user has all the roles
      * 
@@ -142,6 +142,6 @@ public interface ISecurityService {
      *            an array of role names
      * @return true if the user has all the specified roles
      */
-    public boolean restrict(String[] roleNames)throws AccountManagementException;
+    public boolean restrict(String[] roleNames) throws AccountManagementException;
 
 }

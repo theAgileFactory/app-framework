@@ -26,6 +26,7 @@ import framework.commons.DataType;
 import framework.services.plugins.api.IPluginContext;
 import framework.services.plugins.api.IPluginRunner;
 import framework.services.router.IRequestListener;
+import play.libs.F.Promise;
 import play.mvc.Http.Context;
 import play.mvc.Result;
 
@@ -118,7 +119,7 @@ public interface IExtensionManagerService extends IRequestListener, ILinkGenerat
      *            the Play context
      * @return a Result
      */
-    public Result execute(String path, Context ctx);
+    public Promise<Result> execute(String path, Context ctx);
 
     /**
      * Get the size (bytes) of the extensions folder.

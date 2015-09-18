@@ -288,23 +288,23 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
     @Override
     public Promise<Result> notifyRequest(final Context ctx) {
         final String path = StringUtils.removeStart(ctx.request().path(), PATH_PREFIX);
-        return getSecurityService().checkHasSubject(new Function0<Result>() {
+        return getSecurityService().checkHasSubject(new Function0<Promise<Result>>() {
             @Override
-            public Result apply() throws Throwable {
+            public Promise<Result> apply() throws Throwable {
                 return execute(path, ctx);
             }
         });
     }
 
     @Override
-    public Result execute(String path, Context ctx) {
+    public Promise<Result> execute(String path, Context ctx) {
         for (WebCommand webCommand : webCommands) {
             if (webCommand.isCompatible(path, ctx)) {
                 try {
                     return webCommand.call(path, ctx);
                 } catch (Exception e) {
                     log.error("Error while calling the web command", e);
-                    return Controller.badRequest();
+                    return Promise.promise(() -> Controller.badRequest());
                 }
             }
         }
@@ -312,7 +312,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         if (log.isDebugEnabled()) {
             log.debug("No compatible command found for path " + path);
         }
-        return Controller.badRequest();
+        return Promise.promise(() -> Controller.badRequest());
     }
 
     @Override
@@ -970,7 +970,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
          *            the play environment used to get the play classloader
          * @throws ExtensionManagerException
          */
-        private void init(File jarFile, Environment environment) throws ExtensionManagerException {
+        private synchronized void init(File jarFile, Environment environment) throws ExtensionManagerException {
             try {
                 // Reading the descriptor
                 log.info("Loading extension " + jarFile);
@@ -1302,7 +1302,8 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
          * @return a Result instance
          * @throws ExtensionManagerException
          */
-        public Result call(String path, Context ctx) throws ExtensionManagerException {
+        @SuppressWarnings("unchecked")
+        public Promise<Result> call(String path, Context ctx) throws ExtensionManagerException {
             try {
                 // Check the permissions
                 ArrayList<String[]> perms = new ArrayList<String[]>();
@@ -1311,7 +1312,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                     if (log.isDebugEnabled()) {
                         log.debug("Call to path " + path + " but permissions are not sufficient");
                     }
-                    return getSecurityServiceConfiguration().displayAccessForbidden();
+                    return Promise.promise(() -> getSecurityServiceConfiguration().displayAccessForbidden());
                 }
 
                 // Execute
@@ -1333,13 +1334,16 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                 }
                 Object result = getCommand().invoke(getControllerInstance(), args);
                 if (result instanceof Result) {
-                    return Result.class.cast(result);
+                    return Promise.promise(() -> Result.class.cast(result));
+                }
+                if (result instanceof Promise) {
+                    return (Promise<Result>) result;
                 }
                 log.error("Invalid return type, Result is expected but was " + result);
             } catch (Exception e) {
                 log.error("Unable to call the command with path " + path, e);
             }
-            return Controller.badRequest();
+            return Promise.promise(() -> Controller.badRequest());
         }
 
         /**
