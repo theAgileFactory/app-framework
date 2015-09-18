@@ -4,7 +4,7 @@
 	<groupId>com.agifac.lib</groupId>
 	<artifactId>app-framework</artifactId>
 	<version>7.0.1-SNAPSHOT</version>
-	<name>Component "app-framework", of scope "com.agifac.lib"</name>
+	<name>tAF application framework</name>
 	<description>This is the common library which contains the web application framework from tAF</description>
 	<packaging>play2</packaging>
 	<url>https://prod.the-agile-factory.net/site/${project.groupId}/${project.artifactId}-${project.version}</url>
