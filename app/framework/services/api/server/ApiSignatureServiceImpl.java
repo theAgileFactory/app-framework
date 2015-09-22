@@ -161,6 +161,7 @@ public class ApiSignatureServiceImpl implements IApiSignatureService {
             apiRegistration.name = applicationName;
             apiRegistration.description = description;
             apiRegistration.testable = testable;
+            apiRegistration.isDisplayed = isDisplayed;
             apiRegistration.applicationKey = apiAppConfig.getSignatureGenerator().getApplicationKey();
             apiRegistration.sharedSecret = apiAppConfig.getSignatureGenerator().getSharedSecret();
             apiRegistration.apiAuthorization = apiAuthorization.getBytes();
@@ -236,10 +237,11 @@ public class ApiSignatureServiceImpl implements IApiSignatureService {
 
     @Override
     public List<IApiApplicationConfiguration> listAuthorizedAndTestableApplications() throws ApiSignatureException {
-        List<IApiApplicationConfiguration> list = listAuthorizedApplications();
-        for (IApiApplicationConfiguration appConfig : list) {
-            if (!appConfig.isTestable()) {
-                list.remove(appConfig);
+        List<IApiApplicationConfiguration> list = new ArrayList<>();
+
+        for (IApiApplicationConfiguration appConfig : listAuthorizedApplications()) {
+            if (appConfig.isTestable()) {
+                list.add(appConfig);
             }
         }
         return list;
