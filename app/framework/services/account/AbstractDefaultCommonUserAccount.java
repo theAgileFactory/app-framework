@@ -22,12 +22,12 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import models.framework_models.account.Credential;
-import models.framework_models.account.SystemLevelRoleType;
-import models.framework_models.account.SystemPermission;
 import be.objectify.deadbolt.core.models.Permission;
 import be.objectify.deadbolt.core.models.Role;
 import framework.commons.IFrameworkConstants;
+import models.framework_models.account.Credential;
+import models.framework_models.account.SystemLevelRoleType;
+import models.framework_models.account.SystemPermission;
 
 public abstract class AbstractDefaultCommonUserAccount implements ICommonUserAccount {
     protected Long mafUid;
@@ -118,12 +118,6 @@ public abstract class AbstractDefaultCommonUserAccount implements ICommonUserAcc
      */
     @Override
     public List<? extends Role> getRoles() {
-        Collections.sort(this.roles, new Comparator<Role>() {
-            @Override
-            public int compare(Role role1, Role role2) {
-                return role1.getName().compareTo(role2.getName());
-            }
-        });
         return this.roles;
     }
 
@@ -133,13 +127,14 @@ public abstract class AbstractDefaultCommonUserAccount implements ICommonUserAcc
      */
     @Override
     public List<? extends Role> getSelectableRoles() {
-        Collections.sort(this.selectableRoles, new Comparator<Role>() {
+        List<? extends Role> sorterRoles = Collections.synchronizedList(new ArrayList<>(this.selectableRoles));
+        Collections.sort(sorterRoles, new Comparator<Role>() {
             @Override
             public int compare(Role role1, Role role2) {
                 return role1.getName().compareTo(role2.getName());
             }
         });
-        return this.selectableRoles;
+        return sorterRoles;
     }
 
     /**
