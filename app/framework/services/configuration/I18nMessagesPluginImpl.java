@@ -40,8 +40,8 @@ import framework.utils.DefaultSelectableValueHolderCollection;
 import play.Configuration;
 import play.Environment;
 import play.Logger;
-import play.i18n.MessagesApi;
 import play.i18n.Lang;
+import play.i18n.MessagesApi;
 import play.inject.ApplicationLifecycle;
 import play.libs.F.Promise;
 import play.mvc.Http;
@@ -96,15 +96,11 @@ public class I18nMessagesPluginImpl implements II18nMessagesPlugin {
      *            the service which secure the availability of the database
      */
     @Inject
-    public I18nMessagesPluginImpl(
-            ApplicationLifecycle lifecycle, 
-            Configuration configuration, 
-            Environment environment,
-            MessagesApi messagesApi,
+    public I18nMessagesPluginImpl(ApplicationLifecycle lifecycle, Configuration configuration, Environment environment, MessagesApi messagesApi,
             IDatabaseDependencyService databaseDependencyService) {
         log.info("SERVICE>>> I18nMessagesPluginImpl starting...");
         this.configuration = configuration;
-        this.messagesApi=messagesApi;
+        this.messagesApi = messagesApi;
         initOnce();
         reload(true);
         lifecycle.addStopHook(() -> {
@@ -181,7 +177,7 @@ public class I18nMessagesPluginImpl implements II18nMessagesPlugin {
         if (key.endsWith("_content")) {
             return getI18nContent(key, lang.code());
         }
-        if (getMessagesApi().isDefinedAt(lang,key)) {
+        if (getMessagesApi().isDefinedAt(lang, key)) {
             return getMessagesApi().get(lang, key, args);
         }
         Hashtable<Object, Object> messages = getI18nMessagesStore().get(lang.code());
@@ -262,7 +258,7 @@ public class I18nMessagesPluginImpl implements II18nMessagesPlugin {
                     i18Messages = new Hashtable<Object, Object>();
                 }
                 i18Messages.put(key, value);
-                getI18nMessagesStore().put(languageCode, i18Messages);
+                i18nMessagesStore.put(languageCode, i18Messages);
             }
         } catch (Exception e) {
             throw new IllegalArgumentException("Error while adding the i18n key : " + key, e);
@@ -287,7 +283,7 @@ public class I18nMessagesPluginImpl implements II18nMessagesPlugin {
                     i18Messages = new Hashtable<Object, Object>();
                 }
                 i18Messages.remove(key);
-                getI18nMessagesStore().put(languageCode, i18Messages);
+                i18nMessagesStore.put(languageCode, i18Messages);
             }
 
         } catch (Exception e) {

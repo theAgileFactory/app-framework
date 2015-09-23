@@ -21,6 +21,4 @@ object commons extends framework.handlers.ViewsInjector{
 	 	}
 	 	isConstraintsRequired;
 	}
-	
-	val _kpiService=play.mvc.Http.Context.current().args.get(classOf[framework.services.kpi.IKpiService].getName).asInstanceOf[framework.services.kpi.IKpiService]
 }

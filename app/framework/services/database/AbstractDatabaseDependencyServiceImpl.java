@@ -1,12 +1,10 @@
 package framework.services.database;
 
 import java.sql.Connection;
-import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -14,13 +12,12 @@ import javax.inject.Singleton;
 
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.EbeanServerFactory;
-import com.avaje.ebeaninternal.server.lib.ShutdownManager;
-import com.mysql.jdbc.AbandonedConnectionCleanupThread;
 
 import models.framework_models.patcher.Patch;
 import play.Configuration;
 import play.Environment;
 import play.Logger;
+import play.db.DBApi;
 import play.db.ebean.EbeanConfig;
 import play.inject.ApplicationLifecycle;
 import play.libs.F.Promise;
@@ -47,17 +44,17 @@ public abstract class AbstractDatabaseDependencyServiceImpl implements IDatabase
      *            the play application configuration
      * @param ebeanConfig
      *            the Ebean configuration as loaded by the play plugin
+     * @param dbApi
+     *            the play database API (this must prevent the database API to
+     *            be closed before this service is stopped)
      */
     @Inject
-    public AbstractDatabaseDependencyServiceImpl(ApplicationLifecycle lifecycle, Environment environment, Configuration configuration,
-            EbeanConfig ebeanConfig) {
+    public AbstractDatabaseDependencyServiceImpl(ApplicationLifecycle lifecycle, Environment environment, Configuration configuration, EbeanConfig ebeanConfig,
+            DBApi dbApi) {
         log.info("SERVICE>>> AbstractDatabaseDependencyServiceImpl starting...");
         init(configuration, ebeanConfig);
         lifecycle.addStopHook(() -> {
             log.info("SERVICE>>> AbstractDatabaseDependencyServiceImpl stopping...");
-            if (environment.isDev()) {
-                shutdownDbResources();
-            }
             log.info("SERVICE>>> AbstractDatabaseDependencyServiceImpl stopped");
             return Promise.pure(null);
         });
@@ -77,34 +74,6 @@ public abstract class AbstractDatabaseDependencyServiceImpl implements IDatabase
         } else {
             log.info("The application is up to date, no patch to run");
         }
-    }
-
-    /**
-     * Shutdown database connections.
-     */
-    @SuppressWarnings("deprecation")
-    private void shutdownDbResources() {
-        log.info(">>>>>>>>>>>>>>>> Shutting down the database resources...");
-        try {
-            ShutdownManager.shutdown();
-            // Unregister the JDBC drivers
-            Enumeration<Driver> drivers = DriverManager.getDrivers();
-            while (drivers.hasMoreElements()) {
-                Driver driver = drivers.nextElement();
-                DriverManager.deregisterDriver(driver);
-            }
-            // Kill the JDBC cleanup thread
-            AbandonedConnectionCleanupThread.shutdown();
-            // Kill the remaining Timer threads
-            for (Thread t : Thread.getAllStackTraces().keySet()) {
-                if (t.getName().startsWith("Timer-")) {
-                    t.stop();
-                }
-            }
-        } catch (Exception e) {
-            log.debug("Exception while shutting down the database connections", e);
-        }
-        log.info(">>>>>>>>>>>>>>>> database resources closed");
     }
 
     /**

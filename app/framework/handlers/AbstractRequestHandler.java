@@ -8,6 +8,7 @@ import framework.services.kpi.IKpiService;
 import framework.services.session.IUserSessionManagerPlugin;
 import framework.services.storage.IAttachmentManagerPlugin;
 import play.Configuration;
+import play.Logger;
 import play.cache.CacheApi;
 import play.http.DefaultHttpRequestHandler;
 import play.mvc.Http;
@@ -22,6 +23,8 @@ import play.mvc.Http.Context;
  *
  */
 public abstract class AbstractRequestHandler extends DefaultHttpRequestHandler {
+    private static Logger.ALogger log = Logger.of(AbstractRequestHandler.class);
+
     @Inject(optional = true)
     private Configuration configuration;
     @Inject(optional = true)
@@ -37,6 +40,11 @@ public abstract class AbstractRequestHandler extends DefaultHttpRequestHandler {
     @Inject(optional = true)
     private IKpiService kpiService;
 
+    public AbstractRequestHandler() {
+        super();
+        log.info("AbstractRequestHandler initialized");
+    }
+
     /**
      * This method injects the commonly used services in the {@link Context}.
      * These common services can then be access from the "args" variable of the
@@ -46,7 +54,6 @@ public abstract class AbstractRequestHandler extends DefaultHttpRequestHandler {
      */
     protected void injectCommonServicesIncontext(Http.Context context) {
         ContextArgsInjector.injectCommonServicesIncontext(context, configuration, messagesPlugin, userSessionManagerPlugin, attachmentManagerPlugin,
-                accountManagerPlugin, cacheApi);
-        context.args.put(IKpiService.class.getName(), kpiService);
+                accountManagerPlugin, cacheApi, kpiService);
     }
 }
