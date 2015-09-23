@@ -235,6 +235,10 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                 log.error("Failure while loading the extension " + extensionFile);
             }
         }
+
+        // Customize the menu if required
+        customizeMenu();
+
         if (isAutoRefreshMode()) {
             startAutoRefresh();
         }
@@ -473,26 +477,18 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         return null;
     }
 
-    /*
-     * @Override public synchronized IPluginRunner createPluginInstance(String
-     * pluginIdentifier) throws ExtensionManagerException { try { String
-     * pluginRunnerClassName =
-     * getDescriptor().getDeclaredPlugins().get(pluginIdentifier).getClazz();
-     * JclObjectFactory factory = JclObjectFactory.getInstance(); return
-     * (IPluginRunner) createInstanceOfClass(pluginRunnerClassName, factory); }
-     * catch (Exception e) { throw new ExtensionManagerException(
-     * "Unable to create an instance for the specified plugin " +
-     * pluginIdentifier, e); } }
-     */
-
     @Override
     public synchronized boolean customizeMenu() {
-        getImplementationDefinedObjectService().resetTopMenuBar();
-        for (IExtension extension : getExtensions()) {
+        boolean menuReseted = false;
+        for (Extension extension : getExtensions()) {
             if (extension.getDescriptor().isMenuCustomized()) {
+                if (!menuReseted) {
+                    menuReseted = true;
+                    log.info("Reseting the toolbar before adding menu customizations");
+                    getImplementationDefinedObjectService().resetTopMenuBar();
+                }
                 log.info("Loading menu customization for extension " + extension.getDescriptor().getName());
-                XmlExtensionDescriptor xmlExtensionDescriptor = (XmlExtensionDescriptor) extension.getDescriptor();
-                return updateTopMenu(xmlExtensionDescriptor.getMenuCustomizationDescriptor());
+                return updateTopMenu(extension.getDescriptorInternal().getXmlExtensionDescriptor().getMenuCustomizationDescriptor());
             }
         }
         return false;
