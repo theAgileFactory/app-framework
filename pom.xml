@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.agifac.lib</groupId>
 	<artifactId>app-framework</artifactId>
-	<version>7.0.1-SNAPSHOT</version>
+	<version>8.0.0</version>
 	<name>Component "app-framework", of scope "com.agifac.lib"</name>
 	<description>This is the common library which contains the web application framework from tAF</description>
 	<packaging>play2</packaging>
@@ -554,7 +554,7 @@
 						<phase>package</phase>
 						<configuration>
 							<target>
-								<unzip src="${project.build.directory}/${project.build.finalName}.zip" dest="${project.build.directory}"/>
+								<unzip src="${project.build.directory}/${project.build.finalName}.zip" dest="${project.build.directory}" />
 								<zip destfile="${project.build.directory}/${project.build.finalName}.temp">
 									<zipgroupfileset dir="${project.build.directory}" includes="${project.build.finalName}.jar" />
 									<zipgroupfileset dir="${project.build.directory}/${project.artifactId}-dist/lib/" includes="*-assets.jar" />
