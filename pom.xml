@@ -56,7 +56,7 @@
         <jcl-core.version>2.6</jcl-core.version>
         <mysql-connector-java.version>5.1.36</mysql-connector-java.version>
         <qrgen.version>1.2</qrgen.version>
-        <play-pac4j-java.version>1.5.1-SNAPSHOT</play-pac4j-java.version>
+        <play-pac4j-java.version>1.5.0</play-pac4j-java.version>
         <pac4j-http.version>1.7.0</pac4j-http.version>
         <pac4j-cas.version>1.7.0</pac4j-cas.version>
         <pac4j-core.version>1.7.0</pac4j-core.version>
