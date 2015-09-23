@@ -119,7 +119,7 @@ public class EmailUtils {
                     message.addRecipient(Message.RecipientType.TO, InternetAddress.parse(recipient)[0]);
                 }
                 message.setSubject(subject);
-                message.setContent(body, "text/html");
+                message.setContent(body, "text/html; charset=utf-8");
                 Transport.send(message);
                 if (log.isDebugEnabled()) {
                     log.debug(String.format("Email sent to %s with body %s", (to != null && to.length != 00) ? to[0] : "null", body));
