@@ -571,7 +571,7 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
                                     eventInterfaceConfiguration.getRetryDuration(), pluginRegistrationEntry.getPluginConfigurationId()))
                     .props(Props.create(new EventMessageProcessingActorCreator(pluginRegistrationEntry.getPluginConfigurationId(),
                             pluginRegistrationEntry.getPluginRunner(), FlowType.OUT))),
-                    flowType.getRouterPrefix() + pluginRegistrationEntry.getPluginConfigurationId());
+                    flowType.getRouterPrefix() + pluginRegistrationEntry.getPluginConfigurationId() + "-" + UUID.randomUUID().toString());
             String message = "The %s interface for the plugin %d has been started";
             log.info(String.format(message, flowType.name(), pluginRegistrationEntry.getPluginConfigurationId()));
             return actorRef;
