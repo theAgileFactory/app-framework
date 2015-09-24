@@ -123,8 +123,8 @@ public class ReadOnlyExtensionDescriptor implements IExtensionDescriptor {
                     for (PluginConfigurationBlockDescriptor desc : getPluginDescriptor().getPluginConfigurationBlockDescriptors()) {
                         configurationBlockDescriptors.put(desc.getIdentifier(), new ReadOnlyPluginConfigurationBlockDescriptor(desc));
                     }
+                    configurationBlockDescriptors = Collections.unmodifiableMap(configurationBlockDescriptors);
                 }
-                configurationBlockDescriptors = Collections.unmodifiableMap(configurationBlockDescriptors);
             }
             return configurationBlockDescriptors;
         }

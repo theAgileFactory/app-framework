@@ -52,6 +52,9 @@ import org.apache.commons.lang3.tuple.Triple;
 import org.xeustechnologies.jcl.JarClassLoader;
 import org.xeustechnologies.jcl.JclObjectFactory;
 
+import com.avaje.ebean.Ebean;
+import com.avaje.ebean.TxIsolation;
+
 import akka.actor.Cancellable;
 import framework.commons.DataType;
 import framework.commons.IFrameworkConstants;
@@ -238,6 +241,10 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                 log.error("Failure while loading the extension " + extensionFile);
             }
         }
+
+        // Customize the menu if required
+        customizeMenu();
+
         if (isAutoRefreshMode()) {
             startAutoRefresh();
         }
@@ -361,26 +368,34 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             }
 
             // Unloading the i18 resources
-            if (extensionObject.getDescriptorInternal().getXmlExtensionDescriptor().getI18nMessages() != null) {
-                for (I18nMessage i18nMessage : extensionObject.getDescriptorInternal().getXmlExtensionDescriptor().getI18nMessages()) {
-                    if (getiI18nMessagesPlugin().isLanguageValid(i18nMessage.getLanguage())) {
-                        Properties properties = new Properties();
-                        try {
-                            properties.load(new StringReader(i18nMessage.getMessages()));
-                            for (String key : properties.stringPropertyNames()) {
-                                getiI18nMessagesPlugin().delete(key, i18nMessage.getLanguage());
+            Ebean.beginTransaction(TxIsolation.SERIALIZABLE);
+            try {
+                if (extensionObject.getDescriptorInternal().getXmlExtensionDescriptor().getI18nMessages() != null) {
+                    for (I18nMessage i18nMessage : extensionObject.getDescriptorInternal().getXmlExtensionDescriptor().getI18nMessages()) {
+                        if (getiI18nMessagesPlugin().isLanguageValid(i18nMessage.getLanguage())) {
+                            Properties properties = new Properties();
+                            try {
+                                properties.load(new StringReader(i18nMessage.getMessages()));
+                                for (String key : properties.stringPropertyNames()) {
+                                    getiI18nMessagesPlugin().delete(key, i18nMessage.getLanguage());
+                                }
+                                log.info("Unloaded i18n keys [" + i18nMessage.getLanguage() + "] for the extension" + extension.getDescriptor().getName());
+                            } catch (IOException e) {
+                                log.error("Unable to unload the i18n keys [" + i18nMessage.getLanguage() + "] for the extension"
+                                        + extension.getDescriptor().getName(), e);
                             }
-                            log.info("Unloaded i18n keys [" + i18nMessage.getLanguage() + "] for the extension" + extension.getDescriptor().getName());
-                        } catch (IOException e) {
-                            log.error("Unable to unload the i18n keys [" + i18nMessage.getLanguage() + "] for the extension"
-                                    + extension.getDescriptor().getName(), e);
                         }
                     }
                 }
+                Ebean.commitTransaction();
+            } catch (Exception e) {
+                log.error("Error while unloading the i18n keys of the extensions");
+                Ebean.rollbackTransaction();
+            } finally {
+                Ebean.endTransaction();
             }
 
             getExtensions().remove(extension);
-
             log.info("Extension " + extension.getDescriptor().getName() + " unloaded");
         }
     }
@@ -491,26 +506,18 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         return null;
     }
 
-    /*
-     * @Override public synchronized IPluginRunner createPluginInstance(String
-     * pluginIdentifier) throws ExtensionManagerException { try { String
-     * pluginRunnerClassName =
-     * getDescriptor().getDeclaredPlugins().get(pluginIdentifier).getClazz();
-     * JclObjectFactory factory = JclObjectFactory.getInstance(); return
-     * (IPluginRunner) createInstanceOfClass(pluginRunnerClassName, factory); }
-     * catch (Exception e) { throw new ExtensionManagerException(
-     * "Unable to create an instance for the specified plugin " +
-     * pluginIdentifier, e); } }
-     */
-
     @Override
     public synchronized boolean customizeMenu() {
-        getImplementationDefinedObjectService().resetTopMenuBar();
-        for (IExtension extension : getExtensions()) {
+        boolean menuReseted = false;
+        for (Extension extension : getExtensions()) {
             if (extension.getDescriptor().isMenuCustomized()) {
+                if (!menuReseted) {
+                    menuReseted = true;
+                    log.info("Reseting the toolbar before adding menu customizations");
+                    getImplementationDefinedObjectService().resetTopMenuBar();
+                }
                 log.info("Loading menu customization for extension " + extension.getDescriptor().getName());
-                XmlExtensionDescriptor xmlExtensionDescriptor = (XmlExtensionDescriptor) extension.getDescriptor();
-                return updateTopMenu(xmlExtensionDescriptor.getMenuCustomizationDescriptor());
+                return updateTopMenu(extension.getDescriptorInternal().getXmlExtensionDescriptor().getMenuCustomizationDescriptor());
             }
         }
         return false;
@@ -610,22 +617,32 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         }
 
         // Load the i18n keys into
-        if (extension.getDescriptorInternal().getXmlExtensionDescriptor().getI18nMessages() != null) {
-            for (I18nMessage i18nMessage : extension.getDescriptorInternal().getXmlExtensionDescriptor().getI18nMessages()) {
-                if (getiI18nMessagesPlugin().isLanguageValid(i18nMessage.getLanguage())) {
-                    Properties properties = new Properties();
-                    try {
-                        properties.load(new StringReader(i18nMessage.getMessages()));
-                        for (String key : properties.stringPropertyNames()) {
-                            getiI18nMessagesPlugin().add(key, properties.getProperty(key), i18nMessage.getLanguage());
+        Ebean.beginTransaction(TxIsolation.SERIALIZABLE);
+        try {
+            if (extension.getDescriptorInternal().getXmlExtensionDescriptor().getI18nMessages() != null) {
+                for (I18nMessage i18nMessage : extension.getDescriptorInternal().getXmlExtensionDescriptor().getI18nMessages()) {
+                    if (getiI18nMessagesPlugin().isLanguageValid(i18nMessage.getLanguage())) {
+                        Properties properties = new Properties();
+                        try {
+                            properties.load(new StringReader(i18nMessage.getMessages()));
+                            for (String key : properties.stringPropertyNames()) {
+                                getiI18nMessagesPlugin().add(key, properties.getProperty(key), i18nMessage.getLanguage());
+                            }
+                            log.info("Loaded i18n keys [" + i18nMessage.getLanguage() + "] for the extension" + extension.getDescriptor().getName());
+                        } catch (IOException e) {
+                            log.error(
+                                    "Unable to load the i18n keys [" + i18nMessage.getLanguage() + "] for the extension" + extension.getDescriptor().getName(),
+                                    e);
                         }
-                        log.info("Loaded i18n keys [" + i18nMessage.getLanguage() + "] for the extension" + extension.getDescriptor().getName());
-                    } catch (IOException e) {
-                        log.error("Unable to load the i18n keys [" + i18nMessage.getLanguage() + "] for the extension" + extension.getDescriptor().getName(),
-                                e);
                     }
                 }
             }
+            Ebean.commitTransaction();
+        } catch (Exception e) {
+            log.error("Error while adding the i18n keys of the extensions");
+            Ebean.rollbackTransaction();
+        } finally {
+            Ebean.endTransaction();
         }
 
         getExtensions().add(extension);

@@ -14,4 +14,5 @@ trait ViewsInjector{
 	val _usession=play.mvc.Http.Context.current().args.get(classOf[framework.services.session.IUserSessionManagerPlugin].getName).asInstanceOf[framework.services.session.IUserSessionManagerPlugin]
 	val _accmngr=play.mvc.Http.Context.current().args.get(classOf[framework.services.account.IAccountManagerPlugin].getName).asInstanceOf[framework.services.account.IAccountManagerPlugin]
 	val _cache=play.mvc.Http.Context.current().args.get(classOf[play.cache.CacheApi].getName).asInstanceOf[play.cache.CacheApi]
+	val _kpiService=play.mvc.Http.Context.current().args.get(classOf[framework.services.kpi.IKpiService].getName).asInstanceOf[framework.services.kpi.IKpiService]
 }

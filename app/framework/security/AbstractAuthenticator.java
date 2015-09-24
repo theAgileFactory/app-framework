@@ -328,7 +328,8 @@ public abstract class AbstractAuthenticator extends SecureController implements 
      */
     private void initSAMLv2SingleSignOn() throws MalformedURLException {
         log.info(">>>>>>>>>>>>>>>> Initialize SAMLv2 SSO");
-        final Saml2Client saml2Client = new Saml2Client(getConfiguration().getString("maf.public.url"));
+        final Saml2Client saml2Client = new Saml2Client(
+                preferenceManagerPlugin.getPreferenceElseConfigurationValue(IFrameworkConstants.PUBLIC_URL_PREFERENCE, "maf.public.url"));
         File samlConfigFile = new File(getConfiguration().getString("saml.sso.config"));
         if (!samlConfigFile.exists() || samlConfigFile.isDirectory()) {
             throw new IllegalArgumentException("The authentication mode is FEDERATED but the SAML config file does not exists " + samlConfigFile);

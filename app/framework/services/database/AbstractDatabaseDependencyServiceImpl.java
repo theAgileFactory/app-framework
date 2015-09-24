@@ -1,12 +1,10 @@
 package framework.services.database;
 
 import java.sql.Connection;
-import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -14,13 +12,14 @@ import javax.inject.Singleton;
 
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.EbeanServerFactory;
-import com.avaje.ebeaninternal.server.lib.ShutdownManager;
-import com.mysql.jdbc.AbandonedConnectionCleanupThread;
+import com.avaje.ebean.config.ServerConfig;
+import com.avaje.ebeaninternal.server.lib.BizDockEbeanShutdownManager;
 
 import models.framework_models.patcher.Patch;
 import play.Configuration;
 import play.Environment;
 import play.Logger;
+import play.db.DBApi;
 import play.db.ebean.EbeanConfig;
 import play.inject.ApplicationLifecycle;
 import play.libs.F.Promise;
@@ -33,6 +32,14 @@ import play.libs.F.Promise;
  */
 @Singleton
 public abstract class AbstractDatabaseDependencyServiceImpl implements IDatabaseDependencyService {
+    /**
+     * How many threads to manage the cache in Ebean
+     */
+    public static final int EBEAN_CACHE_THREAD_POOL_SIZE = 5;
+    /**
+     * How many seconds should Ebean cache wait before stopping
+     */
+    public static final int EBEAN_CACHE_SHUTDOWN_DELAY = 30;
     public static final String EBEAN_SERVER_DEFAULT_NAME = "default";
     private static Logger.ALogger log = Logger.of(AbstractDatabaseDependencyServiceImpl.class);
 
@@ -47,17 +54,18 @@ public abstract class AbstractDatabaseDependencyServiceImpl implements IDatabase
      *            the play application configuration
      * @param ebeanConfig
      *            the Ebean configuration as loaded by the play plugin
+     * @param dbApi
+     *            the play database API (this must prevent the database API to
+     *            be closed before this service is stopped)
      */
     @Inject
-    public AbstractDatabaseDependencyServiceImpl(ApplicationLifecycle lifecycle, Environment environment, Configuration configuration,
-            EbeanConfig ebeanConfig) {
+    public AbstractDatabaseDependencyServiceImpl(ApplicationLifecycle lifecycle, Environment environment, Configuration configuration, EbeanConfig ebeanConfig,
+            DBApi dbApi) {
         log.info("SERVICE>>> AbstractDatabaseDependencyServiceImpl starting...");
         init(configuration, ebeanConfig);
         lifecycle.addStopHook(() -> {
             log.info("SERVICE>>> AbstractDatabaseDependencyServiceImpl stopping...");
-            if (environment.isDev()) {
-                shutdownDbResources();
-            }
+            Ebean.getServer(EBEAN_SERVER_DEFAULT_NAME).shutdown(false, true);
             log.info("SERVICE>>> AbstractDatabaseDependencyServiceImpl stopped");
             return Promise.pure(null);
         });
@@ -69,7 +77,14 @@ public abstract class AbstractDatabaseDependencyServiceImpl implements IDatabase
      */
     private void init(Configuration configuration, EbeanConfig ebeanConfig) {
         // Register the Ebean server as the default one
-        Ebean.register(EbeanServerFactory.create(ebeanConfig.serverConfigs().get(EBEAN_SERVER_DEFAULT_NAME)), true);
+        ServerConfig serverConfig = ebeanConfig.serverConfigs().get(EBEAN_SERVER_DEFAULT_NAME);
+        serverConfig.setBackgroundExecutorShutdownSecs(EBEAN_CACHE_SHUTDOWN_DELAY);
+        serverConfig.setBackgroundExecutorCorePoolSize(EBEAN_CACHE_THREAD_POOL_SIZE);
+        Ebean.register(EbeanServerFactory.create(serverConfig), true);
+
+        // Unregister ebean from the Runtime (Shutdown hooks are bad !)
+        BizDockEbeanShutdownManager.killThisBloodyShutdownHook();
+
         if (isPatcheable(configuration)) {
             log.info("Running the patch for the release " + getRelease());
             patch(log);
@@ -77,34 +92,6 @@ public abstract class AbstractDatabaseDependencyServiceImpl implements IDatabase
         } else {
             log.info("The application is up to date, no patch to run");
         }
-    }
-
-    /**
-     * Shutdown database connections.
-     */
-    @SuppressWarnings("deprecation")
-    private void shutdownDbResources() {
-        log.info(">>>>>>>>>>>>>>>> Shutting down the database resources...");
-        try {
-            ShutdownManager.shutdown();
-            // Unregister the JDBC drivers
-            Enumeration<Driver> drivers = DriverManager.getDrivers();
-            while (drivers.hasMoreElements()) {
-                Driver driver = drivers.nextElement();
-                DriverManager.deregisterDriver(driver);
-            }
-            // Kill the JDBC cleanup thread
-            AbandonedConnectionCleanupThread.shutdown();
-            // Kill the remaining Timer threads
-            for (Thread t : Thread.getAllStackTraces().keySet()) {
-                if (t.getName().startsWith("Timer-")) {
-                    t.stop();
-                }
-            }
-        } catch (Exception e) {
-            log.debug("Exception while shutting down the database connections", e);
-        }
-        log.info(">>>>>>>>>>>>>>>> database resources closed");
     }
 
     /**
@@ -178,4 +165,5 @@ public abstract class AbstractDatabaseDependencyServiceImpl implements IDatabase
      * @param log
      */
     public abstract void patch(Logger.ALogger log);
+
 }
