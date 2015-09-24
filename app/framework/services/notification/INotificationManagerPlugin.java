@@ -21,7 +21,6 @@ import java.util.List;
 
 import com.avaje.ebean.ExpressionList;
 
-import framework.services.actor.IActorServiceLifecycleHook;
 import models.framework_models.account.Notification;
 import models.framework_models.account.NotificationCategory;
 import models.framework_models.account.Principal;
@@ -39,7 +38,7 @@ import models.framework_models.account.Principal;
  * 
  * @author Pierre-Yves Cloux
  */
-public interface INotificationManagerPlugin extends IActorServiceLifecycleHook {
+public interface INotificationManagerPlugin {
 
     /**
      * Return true if the sending system is INTERNAL.

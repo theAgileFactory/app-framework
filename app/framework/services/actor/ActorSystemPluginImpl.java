@@ -18,26 +18,20 @@
 package framework.services.actor;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.List;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import play.Configuration;
-import play.Logger;
-import play.inject.ApplicationLifecycle;
-import play.libs.F.Promise;
+import com.typesafe.config.ConfigFactory;
+
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.DeadLetter;
 import akka.actor.Props;
-
-import com.typesafe.config.ConfigFactory;
-
-import framework.services.database.IDatabaseDependencyService;
-import framework.services.notification.INotificationManagerPlugin;
-import framework.services.plugins.IPluginManagerService;
+import play.Configuration;
+import play.Logger;
+import play.inject.ApplicationLifecycle;
+import play.libs.F.Promise;
 
 /**
  * The default implementation for the {@link ActorSystem}.<br/>
@@ -66,7 +60,6 @@ public class ActorSystemPluginImpl implements IActorSystemPlugin {
      * case the re-processing failed)
      */
     private File reprocessedDeadLetters;
-    private List<IActorServiceLifecycleHook> actorLifeCycleHooks;
 
     public enum Config {
         ACTOR_SYSTEM_NAME("maf.actor.system"), DEAD_LETTERS_FOLDER("maf.actor.deadletters.folder"), DEAD_LETTERS_REPROCESSING_FOLDER(
@@ -90,23 +83,15 @@ public class ActorSystemPluginImpl implements IActorSystemPlugin {
      *            the play application lifecycle listener
      * @param configuration
      *            the play application configuration
-     * @param notificationManager
-     *            the notification manager service
-     * @param pluginManager
-     *            the plugin manager service
-     * @param databaseDependencyService
      * @param actorSystem
      * @throws ActorSystemPluginException
      */
     @Inject
-    public ActorSystemPluginImpl(ApplicationLifecycle lifecycle, Configuration configuration, INotificationManagerPlugin notificationManager,
-            IPluginManagerService pluginManager, IDatabaseDependencyService databaseDependencyService, ActorSystem actorSystem)
-            throws ActorSystemPluginException {
+    public ActorSystemPluginImpl(ApplicationLifecycle lifecycle, Configuration configuration, ActorSystem actorSystem) throws ActorSystemPluginException {
         log.info("SERVICE>>> ActorSystemPluginImpl starting...");
         this.actorSystemName = configuration.getString(Config.ACTOR_SYSTEM_NAME.getConfigurationKey());
         this.deadLetterFileSystem = new File(configuration.getString(Config.DEAD_LETTERS_FOLDER.getConfigurationKey()));
         this.reprocessedDeadLetters = new File(configuration.getString(Config.DEAD_LETTERS_REPROCESSING_FOLDER.getConfigurationKey()));
-        this.actorLifeCycleHooks = Arrays.asList(new IActorServiceLifecycleHook[] { notificationManager, pluginManager });
         lifecycle.addStopHook(() -> {
             log.info("SERVICE>>> ActorSystemPluginImpl stopping...");
             shutdown();
@@ -127,25 +112,12 @@ public class ActorSystemPluginImpl implements IActorSystemPlugin {
         getActorSystem().eventStream().subscribe(actor, DeadLetter.class);
     }
 
-    /**
-     * Start the actors registered with this plugin
-     * 
-     * @param actorLifeCycleHooks
-     *            a list of services implemented as actors
-     * @throws ActorSystemPluginException
-     */
-    private void startActors(List<IActorServiceLifecycleHook> actorLifeCycleHooks) throws ActorSystemPluginException {
-        for (IActorServiceLifecycleHook hook : actorLifeCycleHooks) {
-            hook.createActors(getActorSystem());
-        }
-    }
-
     @Override
-    public ActorSystem getActorSystem() throws ActorSystemPluginException {
+    public ActorSystem getActorSystem() {
         if (this.actorSystem != null && !this.actorSystem.isTerminated()) {
             return this.actorSystem;
         }
-        throw new ActorSystemPluginException("Actor system is not initialized or terminated");
+        throw new IllegalStateException("Actor system is not initialized or terminated");
     }
 
     @Override
@@ -162,9 +134,6 @@ public class ActorSystemPluginImpl implements IActorSystemPlugin {
             this.actorSystem.shutdown();
             throw new ActorSystemPluginException(e);
         }
-
-        // Starting the actors
-        startActors(getActorLifeCycleHooks());
     }
 
     @Override
@@ -189,9 +158,5 @@ public class ActorSystemPluginImpl implements IActorSystemPlugin {
 
     private File getReprocessedDeadLetters() {
         return reprocessedDeadLetters;
-    }
-
-    private List<IActorServiceLifecycleHook> getActorLifeCycleHooks() {
-        return actorLifeCycleHooks;
     }
 }

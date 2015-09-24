@@ -47,5 +47,5 @@ public interface IActorSystemPlugin {
      * 
      * @return an actor system
      */
-    public ActorSystem getActorSystem() throws ActorSystemPluginException;
+    public ActorSystem getActorSystem();
 }

@@ -26,7 +26,6 @@ import org.apache.commons.lang3.tuple.Triple;
 
 import framework.commons.DataType;
 import framework.commons.message.EventMessage;
-import framework.services.actor.IActorServiceLifecycleHook;
 import framework.services.ext.api.IExtensionDescriptor.IPluginDescriptor;
 import framework.services.plugins.api.IPluginRunnerConfigurator;
 import framework.services.plugins.api.PluginException;
@@ -37,7 +36,7 @@ import framework.services.plugins.api.PluginException;
  * 
  * @author Pierre-Yves Cloux
  */
-public interface IPluginManagerService extends IActorServiceLifecycleHook {
+public interface IPluginManagerService {
 
     /**
      * The various status for plugin

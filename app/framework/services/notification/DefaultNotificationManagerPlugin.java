@@ -43,6 +43,7 @@ import framework.commons.IFrameworkConstants;
 import framework.services.account.IAccountManagerPlugin;
 import framework.services.account.IPreferenceManagerPlugin;
 import framework.services.account.IUserAccount;
+import framework.services.actor.IActorSystemPlugin;
 import framework.utils.EmailUtils;
 import framework.utils.Utilities;
 import models.framework_models.account.Notification;
@@ -139,6 +140,8 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
      *            the play application lifecycle listener
      * @param configuration
      *            the play application configuration
+     * @param actorSystemPlugin
+     *            the service which is managing the BizDock actor system
      * @param preferenceManagerPlugin
      *            the preference manager service
      * @param accountManagerPlugin
@@ -146,8 +149,8 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
      * 
      */
     @Inject
-    public DefaultNotificationManagerPlugin(ApplicationLifecycle lifecycle, Configuration configuration, IPreferenceManagerPlugin preferenceManagerPlugin,
-            IAccountManagerPlugin accountManagerPlugin) {
+    public DefaultNotificationManagerPlugin(ApplicationLifecycle lifecycle, Configuration configuration, IActorSystemPlugin actorSystemPlugin,
+            IPreferenceManagerPlugin preferenceManagerPlugin, IAccountManagerPlugin accountManagerPlugin) {
         log.info("SERVICE>>> DefaultNotificationManagerPlugin starting...");
         this.poolSize = configuration.getInt(Config.NOTIFICATION_POOL_SIZE.getConfigurationKey());
         this.notificationRetryDuration = configuration.getString(Config.RETRY_DURATION.getConfigurationKey());
@@ -155,6 +158,7 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
         this.configuration = configuration;
         this.preferenceManagerPlugin = preferenceManagerPlugin;
         this.accountManagerPlugin = accountManagerPlugin;
+        createActors(actorSystemPlugin.getActorSystem());
         lifecycle.addStopHook(() -> {
             log.info("SERVICE>>> DefaultNotificationManagerPlugin stopping...");
             log.info("SERVICE>>> DefaultNotificationManagerPlugin stopped");
@@ -173,8 +177,7 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
         return SendingSystem.getByKey(getPreferenceManagerPlugin().getPreferenceValueAsString(IFrameworkConstants.NOTIFICATION_SENDING_SYSTEM_PREFERENCE));
     }
 
-    @Override
-    public void createActors(ActorSystem actorSystem) {
+    private void createActors(ActorSystem actorSystem) {
         SupervisorStrategy strategy = getSupervisorStrategy(getNotificationRetryNumber(), getNotificationRetryDuration());
         this.supervisorActor = actorSystem.actorOf((new RoundRobinPool(getPoolSize())).withSupervisorStrategy(strategy)
                 .props(Props.create(new NotificationMessageProcessingActorCreator(getConfiguration(), getPreferenceManagerPlugin()))), SUPERVISOR_ACTOR_NAME);

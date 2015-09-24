@@ -56,6 +56,7 @@ import framework.commons.IFrameworkConstants;
 import framework.commons.message.EventMessage;
 import framework.commons.message.EventMessage.MessageType;
 import framework.services.account.IPreferenceManagerPlugin;
+import framework.services.actor.IActorSystemPlugin;
 import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.database.IDatabaseDependencyService;
 import framework.services.ext.ExtensionManagerException;
@@ -128,6 +129,8 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
      * 
      * @param lifecycle
      *            the play application lifecycle listener
+     * @param actorSystemPlugin
+     *            the actor system service
      * @param sysAdminUtils
      *            scheduler which may be used by some plugins
      * @param messagesPlugin
@@ -146,9 +149,9 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
      *            the play configuration
      */
     @Inject
-    public PluginManagerServiceImpl(ApplicationLifecycle lifecycle, ISysAdminUtils sysAdminUtils, II18nMessagesPlugin messagesPlugin,
-            IDatabaseDependencyService databaseDependencyService, ISharedStorageService sharedStorageService, IExtensionManagerService extensionManagerService,
-            IPreferenceManagerPlugin preferenceManagerPlugin, Configuration configuration) {
+    public PluginManagerServiceImpl(ApplicationLifecycle lifecycle, IActorSystemPlugin actorSystemPlugin, ISysAdminUtils sysAdminUtils,
+            II18nMessagesPlugin messagesPlugin, IDatabaseDependencyService databaseDependencyService, ISharedStorageService sharedStorageService,
+            IExtensionManagerService extensionManagerService, IPreferenceManagerPlugin preferenceManagerPlugin, Configuration configuration) {
         log.info("SERVICE>>> PluginManagerServiceImpl starting...");
         this.messagesPlugin = messagesPlugin;
         this.sharedStorageService = sharedStorageService;
@@ -156,6 +159,7 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
         this.preferenceManagerPlugin = preferenceManagerPlugin;
         this.configuration = configuration;
         pluginByIds = Collections.synchronizedMap(new HashMap<Long, PluginRegistrationEntry>());
+        createActors(actorSystemPlugin.getActorSystem());
         lifecycle.addStopHook(() -> {
             log.info("SERVICE>>> PluginManagerServiceImpl stopping...");
             shutdown();
@@ -249,9 +253,12 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
         return extensionPluginRecord.getRight();
     }
 
-    @Override
-    public void createActors(ActorSystem actorSystem) {
+    private void createActors(ActorSystem actorSystem) {
         this.actorSystem = actorSystem;
+
+        if (log.isDebugEnabled()) {
+            log.debug("Actor system is created " + actorSystem != null ? actorSystem.name() : null);
+        }
 
         // Check the plugin definitions before starting
         try {
@@ -310,16 +317,18 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
     }
 
     public void shutdown() {
+        if (log.isDebugEnabled()) {
+            log.debug("Attempt to shutdown the plugin manager");
+        }
         if (isActorSystemReady()) {
             try {
                 stopAll();
             } catch (Exception e) {
                 log.error("Exception while stopping all the plugins at shutdown");
             }
-            try {
-                getActorSystem().stop(getPluginStatusCallbackActorRef());
-            } catch (Exception e) {
-                log.error("Exception stopping the status callback actor");
+        } else {
+            if (log.isDebugEnabled()) {
+                log.debug("The actor system is not ready, can't stop the plugins");
             }
         }
     }
@@ -597,6 +606,7 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
      * @throws PluginException
      */
     private void stopPluginRunner(Long pluginConfigurationId) {
+        log.info(String.format("Request to stop the plugin %d", pluginConfigurationId));
         PluginRegistrationEntry pluginRegistrationEntry = getPluginByIds().get(pluginConfigurationId);
         if (pluginRegistrationEntry == null) {
             log.error(String.format("Attempt to start an unknown or unregistered plugin %d", pluginConfigurationId));
