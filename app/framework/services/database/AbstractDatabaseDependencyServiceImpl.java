@@ -12,6 +12,7 @@ import javax.inject.Singleton;
 
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.EbeanServerFactory;
+import com.avaje.ebean.config.ServerConfig;
 
 import models.framework_models.patcher.Patch;
 import play.Configuration;
@@ -30,6 +31,14 @@ import play.libs.F.Promise;
  */
 @Singleton
 public abstract class AbstractDatabaseDependencyServiceImpl implements IDatabaseDependencyService {
+    /**
+     * How many threads to manage the cache in Ebean
+     */
+    public static final int EBEAN_CACHE_THREAD_POOL_SIZE = 5;
+    /**
+     * How many seconds should Ebean cache wait before stopping
+     */
+    public static final int EBEAN_CACHE_SHUTDOWN_DELAY = 30;
     public static final String EBEAN_SERVER_DEFAULT_NAME = "default";
     private static Logger.ALogger log = Logger.of(AbstractDatabaseDependencyServiceImpl.class);
 
@@ -66,7 +75,10 @@ public abstract class AbstractDatabaseDependencyServiceImpl implements IDatabase
      */
     private void init(Configuration configuration, EbeanConfig ebeanConfig) {
         // Register the Ebean server as the default one
-        Ebean.register(EbeanServerFactory.create(ebeanConfig.serverConfigs().get(EBEAN_SERVER_DEFAULT_NAME)), true);
+        ServerConfig serverConfig = ebeanConfig.serverConfigs().get(EBEAN_SERVER_DEFAULT_NAME);
+        serverConfig.setBackgroundExecutorShutdownSecs(EBEAN_CACHE_SHUTDOWN_DELAY);
+        serverConfig.setBackgroundExecutorCorePoolSize(EBEAN_CACHE_THREAD_POOL_SIZE);
+        Ebean.register(EbeanServerFactory.create(serverConfig), true);
         if (isPatcheable(configuration)) {
             log.info("Running the patch for the release " + getRelease());
             patch(log);
