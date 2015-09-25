@@ -24,12 +24,12 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Version;
 
-import models.framework_models.parent.IModelConstants;
-import play.Play;
-
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.Model;
 import com.avaje.ebean.SqlUpdate;
+
+import models.framework_models.parent.IModelConstants;
+import play.Configuration;
 
 /**
  * An object which stores the status of an exclusive scheduled action. Exclusive
@@ -72,9 +72,12 @@ public class SchedulerState extends Model {
     /**
      * Flush the scheduler states which are older than 24 hours.<br/>
      * If the process is running it is removed from the database anyway.
+     * 
+     * @param configuration
+     *            the application configuration
      */
-    public static int flushOldStates() {
-        int hours = Play.application().configuration().getInt("maf.flush.scheduler.states.interval");
+    public static int flushOldStates(Configuration configuration) {
+        int hours = configuration.getInt("maf.flush.scheduler.states.interval");
         String sql = "delete from scheduler_state where last_update > DATE_SUB(NOW(), INTERVAL " + hours + " HOUR)";
         SqlUpdate update = Ebean.createSqlUpdate(sql);
         return Ebean.execute(update);

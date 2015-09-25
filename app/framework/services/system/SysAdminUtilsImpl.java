@@ -85,7 +85,6 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
         this.actorSystem = actorSystem;
         this.configuration = configuration;
         flushAllSchedulerStates();
-        // initAutomatedSystemStatus();
         lifecycle.addStopHook(() -> {
             log.info("SERVICE>>> SysAdminUtilsImpl stopping...");
             if (automaticSystemStatus != null) {
@@ -101,50 +100,62 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
         log.info("SERVICE>>> SysAdminUtilsImpl started");
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see framework.services.system.ISysAdminUtils#scheduleOnce(boolean,
-     * java.lang.String, scala.concurrent.duration.FiniteDuration,
-     * java.lang.Runnable)
-     */
     @Override
     public Cancellable scheduleOnce(final boolean exclusive, final String scheduledActionUuid, FiniteDuration initialDelay, final Runnable runnable) {
+        if (log.isDebugEnabled()) {
+            log.debug("Request " + (exclusive ? "EXCLUSIVE" : "STANDARD") + " " + scheduledActionUuid);
+        }
         return getActorSystem().scheduler().scheduleOnce(initialDelay, new Runnable() {
             @Override
             public void run() {
                 String transactionId = Utilities.getRandomID();
                 dumpSystemStatus("ASYNC ACTION START for " + scheduledActionUuid + " and transaction " + transactionId);
-                if (!exclusive || checkRunAuthorization(transactionId, scheduledActionUuid)) {
+                if (!exclusive) {
+                    log.debug("Not exclusive " + scheduledActionUuid);
                     runnable.run();
-                }
-                if (exclusive) {
-                    markAsCompleted(transactionId, scheduledActionUuid);
+                } else {
+                    if (checkRunAuthorization(transactionId, scheduledActionUuid)) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Exclusive but no other running instance for " + scheduledActionUuid);
+                        }
+                        runnable.run();
+                        markAsCompleted(transactionId, scheduledActionUuid);
+                    } else {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Conflict, job will not run " + scheduledActionUuid);
+                        }
+                    }
                 }
                 dumpSystemStatus("ASYNC ACTION STOP for " + scheduledActionUuid + " and transaction " + transactionId);
             }
         }, getActorSystem().dispatcher());
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see framework.services.system.ISysAdminUtils#scheduleRecurring(boolean,
-     * java.lang.String, scala.concurrent.duration.FiniteDuration,
-     * scala.concurrent.duration.FiniteDuration, java.lang.Runnable, boolean)
-     */
     @Override
     public Cancellable scheduleRecurring(final boolean exclusive, final String scheduledActionUuid, FiniteDuration initialDelay, FiniteDuration interval,
             final Runnable runnable, final boolean logInDebug) {
+        if (log.isDebugEnabled()) {
+            log.debug("Request " + (exclusive ? "EXCLUSIVE" : "STANDARD") + " " + scheduledActionUuid);
+        }
         return getActorSystem().scheduler().schedule(initialDelay, interval, new Runnable() {
             @Override
             public void run() {
                 String transactionId = Utilities.getRandomID();
                 dumpSystemStatus("SCHEDULER START for " + scheduledActionUuid + " and transaction " + transactionId, logInDebug);
-                if (!exclusive || checkRunAuthorization(transactionId, scheduledActionUuid)) {
+                if (!exclusive) {
+                    log.debug("Not exclusive " + scheduledActionUuid);
                     runnable.run();
-                    if (exclusive) {
+                } else {
+                    if (checkRunAuthorization(transactionId, scheduledActionUuid)) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Exclusive but no other running instance for " + scheduledActionUuid);
+                        }
+                        runnable.run();
                         markAsCompleted(transactionId, scheduledActionUuid);
+                    } else {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Conflict, job will not run " + scheduledActionUuid);
+                        }
                     }
                 }
                 dumpSystemStatus("SCHEDULER STOP for " + scheduledActionUuid + " and transaction " + transactionId, logInDebug);
@@ -152,30 +163,20 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
         }, getActorSystem().dispatcher());
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see framework.services.system.ISysAdminUtils#scheduleRecurring(boolean,
-     * java.lang.String, scala.concurrent.duration.FiniteDuration,
-     * scala.concurrent.duration.FiniteDuration, java.lang.Runnable)
-     */
     @Override
     public Cancellable scheduleRecurring(final boolean exclusive, final String scheduledActionUuid, FiniteDuration initialDelay, FiniteDuration interval,
             final Runnable runnable) {
         return scheduleRecurring(exclusive, scheduledActionUuid, initialDelay, interval, runnable, false);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see framework.services.system.ISysAdminUtils#flushAllSchedulerStates()
-     */
     @Override
     public void flushAllSchedulerStates() {
         try {
+            log.info("Flushing the scheduler state...");
             Ebean.beginTransaction(TxIsolation.SERIALIZABLE);
             SchedulerState.flushAllStates();
             Ebean.commitTransaction();
+            log.info("...flushed");
         } catch (Exception e) {
             log.error("Failed to flush the scheduler states", e);
             rollbackTransactionSilent();
@@ -196,9 +197,15 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
      */
     private boolean checkRunAuthorization(String transactionId, String scheduledActionUuid) {
         try {
+            if (log.isDebugEnabled()) {
+                log.debug("Check the authorization for the scheduled action " + scheduledActionUuid);
+            }
             Ebean.beginTransaction(TxIsolation.SERIALIZABLE);
             SchedulerState schedulerState = SchedulerState.getRunningSchedulerStateFromActionUuid(scheduledActionUuid);
             if (schedulerState == null) {
+                if (log.isDebugEnabled()) {
+                    log.debug("No scheduler state found for " + scheduledActionUuid);
+                }
                 schedulerState = new SchedulerState();
                 schedulerState.actionUuid = scheduledActionUuid;
                 schedulerState.isRunning = true;
@@ -207,6 +214,9 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
                 Ebean.commitTransaction();
                 return true;
             } else {
+                if (log.isDebugEnabled()) {
+                    log.debug("As scheduler state was found for " + scheduledActionUuid);
+                }
                 Timestamp lastUpdate = schedulerState.lastUpdate;
                 int numberOfMinutes = this.getConfiguration().getInt("maf.test.old.running.process");
                 Date currentMinus24Hours = new Date(System.currentTimeMillis() - (numberOfMinutes * 60 * 1000));
@@ -219,7 +229,9 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
                 }
             }
         } catch (Exception e) {
-            log.debug("Failed to update the scheduler state", e);
+            if (log.isDebugEnabled()) {
+                log.debug("Failed to update the scheduler state for " + scheduledActionUuid, e);
+            }
             rollbackTransactionSilent();
         } finally {
             endTransactionSilent();
@@ -247,10 +259,10 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
             } else {
                 schedulerState.isRunning = false;
                 schedulerState.save();
-                log.info(String.format("Scheduled action for %s with transaction id %s completed, scheduler state flushed", scheduledActionUuid,
-                        transactionId));
+                log.info(
+                        String.format("Scheduled action for %s with transaction id %s completed, scheduler state flushed", scheduledActionUuid, transactionId));
             }
-            SchedulerState.flushOldStates();
+            SchedulerState.flushOldStates(getConfiguration());
             Ebean.commitTransaction();
         } catch (Exception e) {
             log.debug("Failed to mark as complete and flush the scheduler state", e);
@@ -260,33 +272,16 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see framework.services.system.ISysAdminUtils#dumpSystemConfiguration()
-     */
     @Override
     public void dumpSystemConfiguration() {
         log.info("INITIAL CONFIGURATION " + ArrayUtils.toString(getMaxSystemParameters()));
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see framework.services.system.ISysAdminUtils#dumpSystemStatus(java.lang.
-     * String )
-     */
     @Override
     public void dumpSystemStatus(String eventName) {
         dumpSystemStatus(eventName, false);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see framework.services.system.ISysAdminUtils#dumpSystemStatus(java.lang.
-     * String , boolean)
-     */
     @Override
     public void dumpSystemStatus(String eventName, boolean logAsDebug) {
         if (logAsDebug) {
@@ -296,11 +291,6 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see framework.services.system.ISysAdminUtils#getMaxSystemParameters()
-     */
     @Override
     public long[] getMaxSystemParameters() {
         long[] systemData = new long[3];
@@ -319,11 +309,6 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
         return systemData;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see framework.services.system.ISysAdminUtils#getSystemStatus()
-     */
     @Override
     public long[] getSystemStatus() {
         long[] systemData = new long[4];
