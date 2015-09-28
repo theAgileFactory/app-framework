@@ -30,9 +30,6 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 
-import models.framework_models.parent.IModel;
-import models.framework_models.parent.IModelConstants;
-
 import com.avaje.ebean.ExpressionList;
 import com.avaje.ebean.Model;
 
@@ -42,6 +39,9 @@ import framework.services.account.IUserAccount;
 import framework.services.account.IUserAccount.AccountType;
 import framework.utils.Utilities;
 import framework.utils.formats.DateType;
+import models.framework_models.parent.IModel;
+import models.framework_models.parent.IModelConstants;
+import models.framework_models.workspace.WorkspaceMember;
 
 /**
  * This entity represents an user of the system.<br/>
@@ -190,6 +190,9 @@ public class Principal extends Model implements IModel {
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "principal")
     public List<Notification> notifications;
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "principal")
+    public List<WorkspaceMember> workspaces;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "senderPrincipal")
     public List<Notification> sentNotifications;
@@ -422,15 +425,16 @@ public class Principal extends Model implements IModel {
     }
 
     /**
-     * Return the "not deleted" and not read messages associated with this user.<br/>
+     * Return the "not deleted" and not read messages associated with this user.
+     * <br/>
      * Sort these messages from the most recent to the oldest.<br/>
      * Returns at max 5 entries.
      * 
      * @return list of {@link Notification}
      */
     public List<Notification> getNotReadMessages() {
-        return Notification.find.where().eq("deleted", false).eq("isMessage", true).eq("isRead", false).eq("principal.id", this.id)
-                .orderBy("creationDate desc").setMaxRows(5).findList();
+        return Notification.find.where().eq("deleted", false).eq("isMessage", true).eq("isRead", false).eq("principal.id", this.id).orderBy("creationDate desc")
+                .setMaxRows(5).findList();
     }
 
     /**
