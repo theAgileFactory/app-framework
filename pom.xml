@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.agifac.lib</groupId>
 	<artifactId>app-framework</artifactId>
-	<version>8.0.2-SNAPSHOT</version>
+	<version>8.0.2</version>
 	<name>Component "app-framework", of scope "com.agifac.lib"</name>
 	<description>This is the common library which contains the web application framework from tAF</description>
 	<packaging>play2</packaging>
