@@ -52,7 +52,35 @@ public class AbstractErrorHandler extends DefaultHttpErrorHandler {
      * @param context
      */
     protected void injectCommonServicesIncontext(Http.Context context) {
-        ContextArgsInjector.injectCommonServicesIncontext(context, configuration, messagesPlugin, userSessionManagerPlugin, attachmentManagerPlugin,
-                accountManagerPlugin, cacheApi, kpiService);
+        ContextArgsInjector.injectCommonServicesIncontext(context, getConfiguration(), getMessagesPlugin(), getUserSessionManagerPlugin(),
+                getAttachmentManagerPlugin(), getAccountManagerPlugin(), getCacheApi(), getKpiService());
+    }
+
+    protected Configuration getConfiguration() {
+        return configuration;
+    }
+
+    protected II18nMessagesPlugin getMessagesPlugin() {
+        return messagesPlugin;
+    }
+
+    protected IUserSessionManagerPlugin getUserSessionManagerPlugin() {
+        return userSessionManagerPlugin;
+    }
+
+    protected IAttachmentManagerPlugin getAttachmentManagerPlugin() {
+        return attachmentManagerPlugin;
+    }
+
+    protected CacheApi getCacheApi() {
+        return cacheApi;
+    }
+
+    protected IAccountManagerPlugin getAccountManagerPlugin() {
+        return accountManagerPlugin;
+    }
+
+    protected IKpiService getKpiService() {
+        return kpiService;
     }
 }
