@@ -112,13 +112,21 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
                 dumpSystemStatus("ASYNC ACTION START for " + scheduledActionUuid + " and transaction " + transactionId);
                 if (!exclusive) {
                     log.debug("Not exclusive " + scheduledActionUuid);
-                    runnable.run();
+                    try {
+                        runnable.run();
+                    } catch (Exception e) {
+                        log.error("The job " + scheduledActionUuid + " raised an exception within the transaction " + transactionId, e);
+                    }
                 } else {
                     if (checkRunAuthorization(transactionId, scheduledActionUuid)) {
                         if (log.isDebugEnabled()) {
                             log.debug("Exclusive but no other running instance for " + scheduledActionUuid);
                         }
-                        runnable.run();
+                        try {
+                            runnable.run();
+                        } catch (Exception e) {
+                            log.error("The job " + scheduledActionUuid + " raised an exception within the transaction " + transactionId, e);
+                        }
                         markAsCompleted(transactionId, scheduledActionUuid);
                     } else {
                         if (log.isDebugEnabled()) {
@@ -144,13 +152,21 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
                 dumpSystemStatus("SCHEDULER START for " + scheduledActionUuid + " and transaction " + transactionId, logInDebug);
                 if (!exclusive) {
                     log.debug("Not exclusive " + scheduledActionUuid);
-                    runnable.run();
+                    try {
+                        runnable.run();
+                    } catch (Exception e) {
+                        log.error("The job " + scheduledActionUuid + " raised an exception within the transaction " + transactionId, e);
+                    }
                 } else {
                     if (checkRunAuthorization(transactionId, scheduledActionUuid)) {
                         if (log.isDebugEnabled()) {
                             log.debug("Exclusive but no other running instance for " + scheduledActionUuid);
                         }
-                        runnable.run();
+                        try {
+                            runnable.run();
+                        } catch (Exception e) {
+                            log.error("The job " + scheduledActionUuid + " raised an exception within the transaction " + transactionId, e);
+                        }
                         markAsCompleted(transactionId, scheduledActionUuid);
                     } else {
                         if (log.isDebugEnabled()) {
