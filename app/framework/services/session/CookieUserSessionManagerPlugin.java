@@ -79,10 +79,11 @@ public class CookieUserSessionManagerPlugin implements IUserSessionManagerPlugin
                 }
 
                 if (log.isDebugEnabled()) {
-                    log.debug(String.valueOf(profile.getAttributes() != null ? profile.getAttributes().getClass() + " : " + profile.getAttributes()
-                            : "NO ATTRIBUTES"));
-                    log.debug(String.valueOf(profile.getAttribute(getProfileAttributeName()) != null ? profile.getAttribute(getProfileAttributeName())
-                            .getClass() + " : " + profile.getAttribute(getProfileAttributeName()) : "NO VALUE"));
+                    log.debug(String
+                            .valueOf(profile.getAttributes() != null ? profile.getAttributes().getClass() + " : " + profile.getAttributes() : "NO ATTRIBUTES"));
+                    log.debug(String.valueOf(profile.getAttribute(getProfileAttributeName()) != null
+                            ? profile.getAttribute(getProfileAttributeName()).getClass() + " : " + profile.getAttribute(getProfileAttributeName())
+                            : "NO VALUE"));
                 }
 
                 if (profile.getAttribute(getProfileAttributeName()) != null) {
@@ -99,6 +100,15 @@ public class CookieUserSessionManagerPlugin implements IUserSessionManagerPlugin
             }
         }
         return null;
+    }
+
+    @Override
+    public void clearUserSession(Context ctx) {
+        final String sessionId = ctx.session().get(Pac4jConstants.SESSION_ID);
+        if (sessionId != null) {
+            StorageHelper.removeProfile(sessionId);
+        }
+        ctx.session().remove(Pac4jConstants.SESSION_ID);
     }
 
     private boolean isCustomProfileAttributeName() {

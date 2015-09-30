@@ -45,7 +45,7 @@ import models.framework_models.account.SystemLevelRoleType;
 import models.framework_models.account.SystemPermission;
 import play.Configuration;
 import play.Logger;
-import play.cache.Cache;
+import play.cache.CacheApi;
 import play.inject.ApplicationLifecycle;
 import play.libs.F.Promise;
 
@@ -85,6 +85,7 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
     private IAuthenticationAccountWriterPlugin authenticationAccountWriterPlugin;
     private IAuthenticationAccountReaderPlugin authenticationAccountReaderPlugin;
     private IEventBroadcastingService eventBroadcastingService;
+    private CacheApi cacheApi;
     private int validationKeyValidity;
     private int userAccountCacheDurationInSeconds;
     private Class<?> commonUserAccountClass;
@@ -126,12 +127,14 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
             @Named("UserAccountClassName") String commonUserAccountClassName,
             @Named("AuthenticationRepositoryMasterMode") Boolean authenticationRepositoryMasterMode,
             IAuthenticationAccountWriterPlugin authenticationAccountWriterPlugin, IAuthenticationAccountReaderPlugin authenticationAccountReaderPlugin,
-            IEventBroadcastingService eventBroadcastingService, IDatabaseDependencyService databaseDependencyService) throws ClassNotFoundException {
+            IEventBroadcastingService eventBroadcastingService, IDatabaseDependencyService databaseDependencyService, CacheApi cacheApi)
+                    throws ClassNotFoundException {
         log.info("SERVICE>>> AccountManagerPluginImpl starting...");
         this.authenticationRepositoryMasterMode = authenticationRepositoryMasterMode;
         this.userAccountCacheDurationInSeconds = configuration.getInt(Config.ACCOUNT_CACHE_DURATION.getConfigurationKey());
         this.selfMailUpdateAllowed = configuration.getBoolean(Config.SELF_MAIL_UPDATE_ALLOWED.getConfigurationKey());
         this.validationKeyValidity = configuration.getInt(Config.VALIDATION_KEY_VALIDITY.getConfigurationKey());
+        this.cacheApi = cacheApi;
 
         log.info("LDAP master mode is " + authenticationRepositoryMasterMode);
         log.info("Loading the user account class " + commonUserAccountClassName);
@@ -585,10 +588,16 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
         }
         if (userAuthenticationAccount == null) {
             // Consistency check
+            if (log.isDebugEnabled()) {
+                log.debug("No user account found in AccountReader, perform a consistency check with the database");
+            }
             checkPrincipalExistsInDatabase(uid);
             return null;
         }
         ICommonUserAccount userAccount = createUserAccountFromAuthenticationAccount(userAuthenticationAccount);
+        if (log.isDebugEnabled()) {
+            log.debug("Attempt to create a user account from the authentication account : " + userAccount);
+        }
         return userAccount;
     }
 
@@ -662,7 +671,7 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
 
     @Override
     public void invalidateUserAccountCache(String uid) {
-        Cache.remove(IFrameworkConstants.USER_ACCOUNT_CACHE_PREFIX + uid);
+        getCacheApi().remove(IFrameworkConstants.USER_ACCOUNT_CACHE_PREFIX + uid);
         if (log.isDebugEnabled()) {
             log.debug("Cache invalidated for user " + uid);
         }
@@ -732,10 +741,10 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
      */
     private ICommonUserAccount createUserAccountFromAuthenticationAccount(IUserAuthenticationAccount userAuthenticationAccount) {
         // Get user Account from cache if available
-        ICommonUserAccount cachedUserAccount = (ICommonUserAccount) Cache
+        ICommonUserAccount cachedUserAccount = (ICommonUserAccount) getCacheApi()
                 .get(IFrameworkConstants.USER_ACCOUNT_CACHE_PREFIX + userAuthenticationAccount.getUid());
         if (log.isDebugEnabled()) {
-            log.debug("Look for user account associated with uid " + userAuthenticationAccount.getUid() + " "
+            log.debug("Look for a cached user account associated with uid " + userAuthenticationAccount.getUid() + " "
                     + (cachedUserAccount != null ? "FOUND" : "NOT FOUND)"));
         }
         if (cachedUserAccount != null) {
@@ -789,7 +798,8 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
             if (log.isDebugEnabled()) {
                 log.debug("Set user account " + userAuthenticationAccount.getUid() + " in cache");
             }
-            Cache.set(IFrameworkConstants.USER_ACCOUNT_CACHE_PREFIX + userAuthenticationAccount.getUid(), userAccount, getUserAccountCacheDurationInSeconds());
+            getCacheApi().set(IFrameworkConstants.USER_ACCOUNT_CACHE_PREFIX + userAuthenticationAccount.getUid(), userAccount,
+                    getUserAccountCacheDurationInSeconds());
         }
 
         return userAccount;
@@ -831,6 +841,9 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
             log.debug("Look for principal associated with uid : " + uid);
         }
         Principal userPrincipal = Principal.getPrincipalFromUid(uid);
+        if (log.isDebugEnabled()) {
+            log.debug("Look for principal associated with uid : " + uid + " found " + userPrincipal);
+        }
         return userPrincipal;
     }
 
@@ -901,5 +914,9 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
 
     private Class<?> getCommonUserAccountClass() {
         return commonUserAccountClass;
+    }
+
+    private CacheApi getCacheApi() {
+        return cacheApi;
     }
 }

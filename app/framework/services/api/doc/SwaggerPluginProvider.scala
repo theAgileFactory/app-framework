@@ -11,6 +11,8 @@ import play.api.inject.ApplicationLifecycle
 import play.api.{Logger, Application}
 import play.api.routing.Router
 import scala.concurrent.ExecutionContext.Implicits.global
+import framework.services.account.IPreferenceManagerPlugin
+import framework.commons.IFrameworkConstants
 
 import scala.concurrent.Future
 
@@ -23,6 +25,9 @@ class SwaggerPluginProvider extends Provider[SwaggerPlugin] {
 
   @Inject
   private var app: Application = _
+  
+  @Inject
+  private var preferences: IPreferenceManagerPlugin = _
   
   //Ensure that the documentation service is called before the plugin
   @Inject
@@ -48,7 +53,9 @@ class SwaggerPluginProvider extends Provider[SwaggerPlugin] {
       case Some(value) => value
     }
 
-    val basePath = config.getString("swagger.api.basepath")
+    val cfgBasePath=Option(preferences.getPreferenceElseConfigurationValue(IFrameworkConstants.SWAGGER_API_BASEPATH_PREFERENCE,
+                "swagger.api.basepath"))
+    val basePath = cfgBasePath
         .filter(path => !path.isEmpty)
         .map(getPathUrl(_))
         .getOrElse("http://localhost:9000")
@@ -87,7 +94,7 @@ class SwaggerPluginProvider extends Provider[SwaggerPlugin] {
   def getPathUrl(path: String): String = {
     try {
       val basePathUrl = new URL(path)
-      logger.info(s"Basepath configured as:$path")
+      logger.info(s"Basepath configured as: $path")
       path
     } catch {
       case ex: Exception =>

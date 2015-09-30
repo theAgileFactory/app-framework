@@ -3,10 +3,7 @@ package framework.services.api.doc;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import com.wordnik.swagger.config.ConfigFactory;
 import com.wordnik.swagger.converter.ModelConverters;
-import com.wordnik.swagger.jaxrs.listing.ApiListingCache;
-import com.wordnik.swagger.model.ApiListing;
 
 import framework.commons.IFrameworkConstants;
 import framework.services.account.IPreferenceManagerPlugin;
@@ -51,12 +48,7 @@ public class ApiDocumentationServiceImpl implements IApiDocumentationService {
         if (log.isDebugEnabled()) {
             log.debug("Registering the ModelConverter with swagger");
         }
+        log.info("Setting the swagger base path to : " + swaggerBasePath);
         ModelConverters.addConverter(new ClassSchemaDocumentationConverter(), true);
-        if (log.isDebugEnabled()) {
-            log.debug("Setting the swagger base path to : " + swaggerBasePath);
-        }
-        ConfigFactory.config().setBasePath(swaggerBasePath);
-        scala.Option<scala.collection.immutable.Map<String, ApiListing>> x = scala.Option.apply(null);
-        ApiListingCache._cache_$eq(x);
     }
 }

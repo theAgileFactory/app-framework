@@ -34,7 +34,6 @@ import framework.utils.Utilities;
 import models.framework_models.parent.IModel;
 import play.Configuration;
 import play.Logger;
-import play.Play;
 import play.inject.ApplicationLifecycle;
 import play.libs.F.Promise;
 import play.mvc.Http;
@@ -58,6 +57,7 @@ public class AuditLoggerServiceImpl implements IAuditLoggerService {
     private static final String SYSTEM = "_SYSTEM";
     private String auditableEntitiesFilePath;
     private IUserSessionManagerPlugin userSessionManager;
+    private Configuration configuration;
     private static Logger.ALogger log = Logger.of(AuditLoggerServiceImpl.class);
     private Map<String, Boolean> auditableEntities = Collections.synchronizedMap(new HashMap<String, Boolean>());
 
@@ -93,6 +93,7 @@ public class AuditLoggerServiceImpl implements IAuditLoggerService {
     @Inject
     public AuditLoggerServiceImpl(ApplicationLifecycle lifecycle, Configuration configuration, IUserSessionManagerPlugin userSessionManager) {
         log.info("SERVICE>>> AuditLoggerServiceImpl starting...");
+        this.configuration = configuration;
         this.userSessionManager = userSessionManager;
         this.auditableEntitiesFilePath = configuration.getString(Config.AUDITABLE_ENTITIES_FILE.getConfigurationKey());
         log.info("Activating audit log with audit log file " + this.auditableEntitiesFilePath);
@@ -236,7 +237,7 @@ public class AuditLoggerServiceImpl implements IAuditLoggerService {
         synchronized (auditableEntities) {
             this.auditableEntities.put(auditable.objectClass, auditable.isAuditable);
             try {
-                String auditableEntitiesFilePath = Play.application().configuration().getString("maf.auditable.entities.file");
+                String auditableEntitiesFilePath = getConfiguration().getString("maf.auditable.entities.file");
                 File auditableEntitiesFile = new File(auditableEntitiesFilePath);
                 FileUtils.writeByteArrayToFile(auditableEntitiesFile, Utilities.marshallObject(auditableEntities));
             } catch (Exception e) {
@@ -257,7 +258,7 @@ public class AuditLoggerServiceImpl implements IAuditLoggerService {
         synchronized (auditableEntities) {
             this.auditableEntities.remove(objectClass);
             try {
-                String auditableEntitiesFilePath = Play.application().configuration().getString("maf.auditable.entities.file");
+                String auditableEntitiesFilePath = getConfiguration().getString("maf.auditable.entities.file");
                 File auditableEntitiesFile = new File(auditableEntitiesFilePath);
                 FileUtils.writeByteArrayToFile(auditableEntitiesFile, Utilities.marshallObject(auditableEntities));
             } catch (Exception e) {
@@ -276,5 +277,9 @@ public class AuditLoggerServiceImpl implements IAuditLoggerService {
 
     private String getAuditableEntitiesFilePath() {
         return auditableEntitiesFilePath;
+    }
+
+    private Configuration getConfiguration() {
+        return configuration;
     }
 }

@@ -201,11 +201,19 @@ public abstract class AbstractAuthenticator extends SecureController implements 
      */
     private Result loginCode(String redirectUrl) {
         try {
-            IUserAccount userAccount = getAccountManagerPlugin().getUserAccountFromUid(getUserSessionManagerPlugin().getUserSessionId(ctx()));
+            String uid = getUserSessionManagerPlugin().getUserSessionId(ctx());
+            if (log.isDebugEnabled()) {
+                log.debug("Here is the user session uid found " + uid);
+            }
+            IUserAccount userAccount = getAccountManagerPlugin().getUserAccountFromUid(uid);
 
             // User is not found
             if (userAccount == null) {
-                return badRequest();
+                if (log.isDebugEnabled()) {
+                    log.debug("The account associated with " + uid + " was not found by the account manager, instance is not accessible");
+                }
+                getUserSessionManagerPlugin().clearUserSession(ctx());
+                return redirect(getLocalRoutes().getNoFederatedAccount());
             }
 
             // event: success login
@@ -229,6 +237,15 @@ public abstract class AbstractAuthenticator extends SecureController implements 
     }
 
     /**
+     * Call back for the SAML implementation
+     * 
+     * @return
+     */
+    public Promise<Result> samlCallback() {
+        return customCallback();
+    }
+
+    /**
      * Clear the user session and logout the user.<br/>
      * The user is then redirected to the login page.
      */
@@ -243,7 +260,7 @@ public abstract class AbstractAuthenticator extends SecureController implements 
         }
 
         if (log.isDebugEnabled()) {
-            log.debug("Received call back from CAS server : " + ctx().request().toString());
+            log.debug("Received call back : " + ctx().request().toString());
         }
         return callback();
     }
@@ -269,13 +286,6 @@ public abstract class AbstractAuthenticator extends SecureController implements 
     }
 
     /**
-     * Display a screen after the federated logout
-     * 
-     * @return
-     */
-    public abstract Result getFederatedLogoutDisplay();
-
-    /**
      * Initialize the SSO according to the configured authentication mode.
      * 
      * @param authenticationMode
@@ -299,6 +309,28 @@ public abstract class AbstractAuthenticator extends SecureController implements 
             break;
         }
     }
+
+    /**
+     * Display a screen after the federated logout
+     * 
+     * @return
+     */
+    public abstract Result getFederatedLogoutDisplay();
+
+    /**
+     * Display a "not accessible" page when the user has no remaining license.
+     * 
+     * @return
+     */
+    public abstract Result notAccessible();
+
+    /**
+     * This page is displayed in principle in CAS or FEDRATED mode when a
+     * session is found but no corresponding user account.
+     * 
+     * @return
+     */
+    public abstract Result noFederatedAccount();
 
     /**
      * Initialize the BizDock SSO module based on CAS.
@@ -355,7 +387,7 @@ public abstract class AbstractAuthenticator extends SecureController implements 
             saml2Client.setKeystorePassword(cfg.getString("maf.saml.keystore.password"));
             saml2Client.setPrivateKeyPassword(cfg.getString("maf.saml.privatekey.password"));
             saml2Client.setIdpMetadataPath(new File(configurationDirectory, cfg.getString("maf.saml.idpmetadata")).getAbsolutePath());
-            saml2Client.setCallbackUrl(publicUrl + getLocalRoutes().getCallbackRoute().url() + SAML_CLIENT_ID_EXTENTION);
+            saml2Client.setCallbackUrl(publicUrl + getLocalRoutes().getSamlCallbackRoute().url() + SAML_CLIENT_ID_EXTENTION);
             saml2Client.setMaximumAuthenticationLifetime(cfg.getInt("maf.saml.maximum.authentication.lifetime"));
 
             // Write the client meta data to the file system
@@ -363,7 +395,7 @@ public abstract class AbstractAuthenticator extends SecureController implements 
             FileUtils.write(new File(configurationDirectory, spMetaDataFileName), saml2Client.printClientMetadata());
             log.info("Service Provider meta-data written to the file system in " + spMetaDataFileName);
 
-            final Clients clients = new Clients(publicUrl + getLocalRoutes().getCallbackRoute().url(), saml2Client);
+            final Clients clients = new Clients(publicUrl + getLocalRoutes().getSamlCallbackRoute().url(), saml2Client);
             clients.init();
             Config.setClients(clients);
             if (cfg.containsKey("maf.saml.logout.url")) {
@@ -676,7 +708,8 @@ public abstract class AbstractAuthenticator extends SecureController implements 
 
         /**
          * The route to the {@link AbstractAuthenticator} action implemented by
-         * the method "customCallback".
+         * the method "customCallback".<br/>
+         * Such route is used for CAS and STANDALONE authentication callbacks.
          * 
          * Here is an example of routes configuration (assuming that
          * "Authenticator" is the controller extending
@@ -693,6 +726,27 @@ public abstract class AbstractAuthenticator extends SecureController implements 
          * @return
          */
         public Call getCallbackRoute();
+
+        /**
+         * The route to the {@link AbstractAuthenticator} action implemented by
+         * the method "samlCallback".<br/>
+         * Such route is used for FEDERATED authentication callbacks.
+         * 
+         * Here is an example of routes configuration (assuming that
+         * "Authenticator" is the controller extending
+         * {@link AbstractAuthenticator}:
+         * 
+         * <pre>
+         * GET     /samlCallback                   controllers.sso.Authenticator.samlCallback()
+         * POST    /samlCallback                   controllers.sso.Authenticator.samlCallback()
+         * </pre>
+         * 
+         * <b>IMPORTANT</b> : a GET and POST routes are required since some
+         * {@link AuthenticationMode} can support both methods.
+         * 
+         * @return
+         */
+        public Call getSamlCallbackRoute();
 
         /**
          * The route to the {@link AbstractAuthenticator} action implemented by
@@ -738,6 +792,21 @@ public abstract class AbstractAuthenticator extends SecureController implements 
          * @return
          */
         public Call getNotAccessibleRoute();
+
+        /**
+         * The route to the {@link AbstractAuthenticator} action implemented by
+         * the method "noFederatedAccount".
+         * 
+         * Here is an example of route (assuming that "Authenticator" is the
+         * controller extending {@link AbstractAuthenticator}:
+         * 
+         * <pre>
+         * GET     /no-account             controllers.sso.Authenticator.noFederatedAccount()
+         * </pre>
+         * 
+         * @return
+         */
+        public Call getNoFederatedAccount();
 
         /**
          * The only route which is not provided by the
