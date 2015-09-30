@@ -19,9 +19,9 @@
 
 @import framework_views.parts.Msg
 
-<link href="@(assetsRootLocation)framework/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+@framework_bootstrap_css_includes(assetsRootLocation)
 <link href="@(assetsRootLocation)framework/lib/bootstrap-jasny/css/jasny-bootstrap.min.css" rel="stylesheet">
-<script src="@(assetsRootLocation)framework/lib/jquery/jquery-1.11.1.min.js"></script>
+@framework_jquery_includes(assetsRootLocation)
 <script src="@(assetsRootLocation)framework/lib/bootstrap/js/bootstrap.min.js"></script>
 <script src="@(assetsRootLocation)framework/lib/bootstrap-jasny/js/jasny-bootstrap.min.js"></script>
 <script src="@(assetsRootLocation)framework/lib/datepicker/js/bootstrap-datepicker.js"></script>
@@ -37,24 +37,18 @@
 <script src="@(assetsRootLocation)framework/lib/jquery-gantt/js/jquery.fn.gantt.transl.js"></script>
 <link rel="stylesheet" media="screen" href="@(assetsRootLocation)framework/lib/jquery-taf-tree/css/taf-tree.css">
 <script src="@(assetsRootLocation)framework/lib/jquery-taf-tree/js/taf-tree.js"></script>
-
 <link rel="stylesheet" href="@(assetsRootLocation)framework/lib/bootstrap-calendar/css/calendar.min.css">
 <script type="text/javascript" src="@(assetsRootLocation)framework/lib/bootstrap-calendar/components/underscore/underscore-min.js"></script>
 <script type="text/javascript" src="@(assetsRootLocation)framework/lib/bootstrap-calendar/components/jstimezonedetect/jstz.min.js"></script>
 <script type="text/javascript" src="@(assetsRootLocation)framework/lib/bootstrap-calendar/js/language/fr.js"></script>
 <script type="text/javascript" src="@(assetsRootLocation)framework/lib/bootstrap-calendar/js/language/de.js"></script>
 <script type="text/javascript" src="@(assetsRootLocation)framework/lib/bootstrap-calendar/js/calendar.js"></script>
-
 <script type="text/javascript" src="@(assetsRootLocation)framework/lib/highcharts/highcharts.js"></script>
-
-<link href='//fonts.googleapis.com/css?family=Open+Sans:400italic,600italic,700italic,400,600,700' rel='stylesheet' type='text/css'>
-
+@framework_fonts_includes(assetsRootLocation)
 <script type="text/javascript" src="@(assetsRootLocation)framework/lib/bootstrap-tour/js/bootstrap-tour.min.js"></script>
 <link href="@(assetsRootLocation)framework/lib/bootstrap-tour/css/bootstrap-tour.min.css" rel="stylesheet">
-
 <script src="@framework.utils.AssetsProvider.local(assetsRootLocation, "framework/javascripts/main.min.js")"></script>
 <link href="@framework.utils.AssetsProvider.local(assetsRootLocation, "framework/stylesheets/main.css")" type="text/css" rel="stylesheet">
-
 <script>
     var _maf_translations = {
         unchecked : "@Msg("js.unchecked")",
