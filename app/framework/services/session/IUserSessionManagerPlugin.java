@@ -18,6 +18,7 @@
 package framework.services.session;
 
 import play.mvc.Http;
+import play.mvc.Http.Context;
 
 /**
  * The interface to be implemented by the plugin that manages the user session
@@ -34,6 +35,13 @@ public interface IUserSessionManagerPlugin {
      * @return a String or null if no session can be found
      */
     public String getUserSessionId(Http.Context ctx);
+
+    /**
+     * Clear the current user session
+     * 
+     * @param ctx
+     */
+    public void clearUserSession(Context ctx);
 
     /**
      * Set the name of the attribute to be used to retrieve the uid of the user

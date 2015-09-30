@@ -203,6 +203,9 @@ public class Preference extends Model implements IModel {
     }
 
     public static Preference getPreferenceFromUuid(String uuid) {
+        if (log.isDebugEnabled()) {
+            log.debug("Search for preference " + uuid);
+        }
         return find.where().eq("uuid", uuid).eq("deleted", false).findUnique();
     }
 
