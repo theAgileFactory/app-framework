@@ -161,6 +161,17 @@ public class ApiControllerUtilsServiceImpl implements IApiControllerUtilsService
         return Controller.status(code, w.toString());
     }
 
+    @Override
+    public String convertAsJsonString(Object obj) {
+        StringWriter w = new StringWriter();
+        try {
+            getMapper().writeValue(w, obj);
+        } catch (Exception e) {
+            log.error("Cannot serialize the specified object", e);
+        }
+        return w.toString();
+    }
+
     /**
      * Return the mapper to be used for JSON serialization/deserialization
      *

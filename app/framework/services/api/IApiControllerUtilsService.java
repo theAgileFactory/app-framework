@@ -105,4 +105,12 @@ public interface IApiControllerUtilsService {
      * @return a JSON structure
      */
     public Result getJsonResponse(Object obj, int code, Response response);
+
+    /**
+     * Convert the specified object as a Json String
+     * 
+     * @param obj
+     *            a serializable object
+     */
+    public String convertAsJsonString(Object obj);
 }
