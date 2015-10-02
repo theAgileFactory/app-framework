@@ -386,13 +386,13 @@ function maf_filter_sort_url(columnId, filterConfig, callbackRefreshTable){
 /**
 * Update the filter container
 */
-function maf_filter_updateFilterContainer(filterContainerId, filterSelectorId, filterConfig, callbackRefreshTable){
+function maf_filter_updateFilterContainer(filterContainerId, filterSelectorId, filterConfig, callbackRefreshTable, forceRemove){
     var filterComponentPrefix="_filter_cp_";
     //Remove the filterContainer once updated
     $('#'+filterContainerId+' li').each(function(index){
         var columnId=$(this).attr('id');
         columnId=columnId.substring(filterComponentPrefix.length);
-        if(!filterConfig.userColumnConfiguration[columnId].isFiltered){
+        if(forceRemove || !filterConfig.userColumnConfiguration[columnId].isFiltered){
             $(this).remove();
         }
     });
@@ -571,7 +571,7 @@ function maf_filter_prepareColumnsSelector(filterContainerId, columnSelectorId, 
                 $('#'+filterSelectorId).editable('disable');
                 $('#'+filterSelectorId).hide();
             }
-            maf_filter_updateFilterContainer(filterContainerId, filterSelectorId, filterConfig, callbackRefreshTable);
+            maf_filter_updateFilterContainer(filterContainerId, filterSelectorId, filterConfig, callbackRefreshTable, true);
             callbackRefreshTable.apply();
         }
     });
@@ -605,7 +605,7 @@ function maf_filter_prepareFiltersSelector(filterContainerId, filterSelectorId, 
                 }
             }
             filterConfig.currentPage = 0;
-            maf_filter_updateFilterContainer(filterContainerId, filterSelectorId, filterConfig, callbackRefreshTable);
+            maf_filter_updateFilterContainer(filterContainerId, filterSelectorId, filterConfig, callbackRefreshTable, true);
             callbackRefreshTable.apply();
         }
     });
@@ -702,7 +702,7 @@ function maf_filter_addCheckboxField(parentId, columnId, filterSelectorId, field
     if(fieldConfig.defaultValue){
         value[0]=1;
     }
-    $('#'+columnId).editable({
+    $('#' + parentId).find('#'+columnId).editable({
         title : fieldConfig.label,
         type : 'checklist',
         emptytext : _maf_translations.unchecked,
@@ -732,7 +732,7 @@ function maf_filter_addTextField(parentId, columnId, filterSelectorId, fieldConf
     var field = $('<a/>', {"href" : '#',"id" : columnId});  
     li.append(field);   
     $('#'+parentId).append(li);
-    $('#'+columnId).editable({
+    $('#' + parentId).find('#'+columnId).editable({
         title : fieldConfig.label,
         emptytext : _maf_translations.empty,
         type : 'text',
@@ -760,7 +760,7 @@ function maf_filter_addNumericField(parentId, columnId, filterSelectorId, fieldC
     li.append(field);
     $('#'+parentId).append(li);
     
-    $('#'+columnId).editable({
+    $('#' + parentId).find('#'+columnId).editable({
         title : fieldConfig.label,
         emptytext : _maf_translations.empty,
         type : 'text',
@@ -776,7 +776,7 @@ function maf_filter_addNumericField(parentId, columnId, filterSelectorId, fieldC
     });
     
     var source=["=" , "<>", ">", ">=", "<", "<="];
-    $('#'+columnId + "Comparator").editable({
+    $('#' + parentId).find('#'+columnId + "Comparator").editable({
         title : fieldConfig.label,
         type : 'select',
         value: fieldConfig.defaultComparator,
@@ -804,6 +804,7 @@ function maf_filter_addNumericField(parentId, columnId, filterSelectorId, fieldC
 * }
 */
 function maf_filter_addDateRangeField(parentId, columnId, filterSelectorId, fieldConfig, filterConfig, callbackRefreshTable){
+
     var li = maf_filter_construct_field_header(columnId, fieldConfig);
     li.append('<br/>' + _maf_translations.from + '&nbsp;');
     var fieldFrom = $('<a/>', {"href" : '#',"id" : columnId+"From"});  
@@ -812,7 +813,7 @@ function maf_filter_addDateRangeField(parentId, columnId, filterSelectorId, fiel
     var fieldTo = $('<a/>', {"href" : '#',"id" : columnId+"To"});  
     li.append(fieldTo);
     $('#'+parentId).append(li);
-    $('#'+columnId+"From").editable({
+    $('#' + parentId).find('#'+columnId+"From").editable({
         placement: 'bottom',
         type: 'date',
         clear: false,
@@ -829,7 +830,7 @@ function maf_filter_addDateRangeField(parentId, columnId, filterSelectorId, fiel
             callbackRefreshTable.apply();
         }
     });
-    $('#'+columnId+"To").editable({
+    $('#' + parentId).find('#'+columnId+"To").editable({
         placement: 'bottom',
         type: 'date',
         clear: false,
@@ -861,58 +862,45 @@ function maf_filter_addDateRangeField(parentId, columnId, filterSelectorId, fiel
 * }
 */
 function maf_filter_addSelect(parentId, columnId, filterSelectorId, fieldConfig, filterConfig, callbackRefreshTable){
+    
     var li = maf_filter_construct_field_header(columnId, fieldConfig);
     li.append('<br/>');
     var field = $('<a/>', {"href" : '#',"id" : columnId});  
     li.append(field);
     $('#'+parentId).append(li);
-    var source=[];
-
-    source[0]={}; 
-    source[0].value = 0;
-    source[0].text = "";
-
-    var value = 0;
-    var count = 1;
+    
+    var source = [];
+    var values = [];
+    var valuesIndex = 0;
+    var count = 0;
 
     for(key in fieldConfig.values){
         source[count]={};
-        source[count].value=count;
+        source[count].value=fieldConfig.values[key].value;
         source[count].text=fieldConfig.values[key].name;
         source[count].order=fieldConfig.values[key].order;
-        if(fieldConfig.values[key].value==fieldConfig.defaultValue){
-            value=count;
+        if (fieldConfig.defaultValue.indexOf(fieldConfig.values[key].value) >= 0) {
+            values[valuesIndex] = fieldConfig.values[key].value;
+            valuesIndex++;
         }
         count++;
     }
     
     source.sort(maf_orderSort);
-    
-    $('#'+columnId).editable({
-        title : fieldConfig.label,
-        type : 'select',
-        value: fieldConfig.defaultValue,
-        value: value,
+
+    $('#' + parentId).find('#'+columnId).editable({
+        title: fieldConfig.label,
+        type: 'checklist',
+        placement: 'bottom',
+        value: values,
         source: source,
         success: function(response, newValue) {
-            var index=parseInt(newValue);
-            if (index == 0) {
-                filterConfig.userColumnConfiguration[columnId].filterValue=0;
-                filterConfig.currentPage = 0;
-                callbackRefreshTable.apply();
-            } else {
-                var count=1;
-                for(key in fieldConfig.values){
-                    if(index==count){
-                        filterConfig.userColumnConfiguration[columnId].filterValue=key;
-                        filterConfig.currentPage = 0;
-                        callbackRefreshTable.apply();
-                    }
-                    count++;
-                }
-            }
+            filterConfig.userColumnConfiguration[columnId].filterValue=newValue;
+            filterConfig.currentPage = 0;
+            callbackRefreshTable.apply();
         }
     });
+
     maf_filter_add_remove_event(parentId, columnId, filterSelectorId, filterConfig, callbackRefreshTable);
 }
 
@@ -940,11 +928,11 @@ function maf_filter_addAutocomplete(parentId, columnId, filterSelectorId, fieldC
 
     $('#'+parentId).append(li);
 
-    $("#_"+columnId+"_clear_editable").click(function(e) {
+    $('#' + parentId).find("#_"+columnId+"_clear_editable").click(function(e) {
         e.preventDefault();
-        $('#_'+columnId+'_editable').editable('setValue', null);
-        $('#'+columnId).val(null);
-        $('#'+columnId+"_content").val("");
+        $('#' + parentId).find('#_'+columnId+'_editable').editable('setValue', null);
+        $('#' + parentId).find('#'+columnId).val(null);
+        $('#' + parentId).find('#'+columnId+"_content").val("");
         filterConfig.userColumnConfiguration[columnId].filterValue={"value" : null, "content" : ""};
         filterConfig.currentPage = 0;
         callbackRefreshTable.apply();
@@ -956,6 +944,7 @@ function maf_filter_addAutocomplete(parentId, columnId, filterSelectorId, fieldC
     }
     maf_activateEditable_for_autocomplete(
             window[columnId+"_editableCache"],
+            parentId,
             columnId, 
             fieldConfig.defaultValue.value, 
             "", 
@@ -987,7 +976,8 @@ function maf_filter_construct_field_header(columnId, fieldConfig) {
  * create the remove event for removing a filter
  */
 function maf_filter_add_remove_event(parentId, columnId, filterSelectorId, filterConfig, callbackRefreshTable) {
-    $('#_filter_remove_'+columnId).click(function(event) {
+
+    $('#' + parentId).find('#_filter_remove_'+columnId).click(function(event) {
 
         event.preventDefault(); 
 
@@ -1000,7 +990,7 @@ function maf_filter_add_remove_event(parentId, columnId, filterSelectorId, filte
 
         //update the filters container
         filterConfig.currentPage = 0;
-        maf_filter_updateFilterContainer(parentId, filterSelectorId, filterConfig, callbackRefreshTable);
+        maf_filter_updateFilterContainer(parentId, filterSelectorId, filterConfig, callbackRefreshTable, false);
 
         //update the table
         callbackRefreshTable.apply();
@@ -1021,19 +1011,26 @@ function maf_filter_add_remove_event(parentId, columnId, filterSelectorId, filte
  * @param url an URL (see autocomplete.scala.html for the parameters)
  * @param contextQueryString a context query string (see autocomplete.scala.html)
  */
-function maf_activateEditable_for_autocomplete(editableCache,fieldId, fieldValue, fieldLabel, url,contextQueryString, callbackMethod){
+function maf_activateEditable_for_autocomplete(editableCache,container,fieldId, fieldValue, fieldLabel, url,contextQueryString, callbackMethod){
+	
+	var jContainer;
+	if (container == "") {
+		jContainer = $('html');
+	} else {
+		jContainer = $('#' + container);
+	}
 
     if(editableCache[fieldValue]){
-        $('#'+fieldId).val(fieldValue);
-        $('#'+fieldId+"_content").val(editableCache[fieldValue].name);
+    	jContainer.find('#'+fieldId).val(fieldValue);
+    	jContainer.find('#'+fieldId+"_content").val(editableCache[fieldValue].name);
     }
 
-    $('#_'+fieldId+'_editable').editable({
+    jContainer.find('#_'+fieldId+'_editable').editable({
         title: 'fieldLabel',
         mode: 'inline',
         type: 'typeaheadjs',
         onblur: 'submit',
-        value: $('#'+fieldId+"_content").val(),
+        value: jContainer.find('#'+fieldId+"_content").val(),
         valueKey: 'name',
         typeahead: {
              remote: {
@@ -1057,14 +1054,14 @@ function maf_activateEditable_for_autocomplete(editableCache,fieldId, fieldValue
                  }
              }
              if(!isValid){
-                 return {newValue: $('#'+fieldId+"_content").val()};
+                 return {newValue: jContainer.find('#'+fieldId+"_content").val()};
              }
         },
          success: function(response, newValue) {
              for(value in editableCache){
                  if(editableCache[value].name==newValue){
-                     $('#'+fieldId).val(value);
-                     $('#'+fieldId+"_content").val(newValue);
+                     jContainer.find('#'+fieldId).val(value);
+                     jContainer.find('#'+fieldId+"_content").val(newValue);
                      if(callbackMethod){
                          callbackMethod.apply(this, new Array(value, newValue));
                      }

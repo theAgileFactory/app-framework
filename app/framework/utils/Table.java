@@ -25,15 +25,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import models.framework_models.common.CustomAttributeDefinition;
-import models.framework_models.common.ICustomAttributeValue;
-
 import org.apache.commons.beanutils.MethodUtils;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
-
-import play.Logger;
-import scala.Option;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -46,6 +40,10 @@ import framework.services.kpi.Kpi.DataType;
 import framework.utils.Table.ColumnDef.SorterType;
 import framework.utils.formats.CustomAttributeColumnFormatter;
 import framework.utils.formats.KpiColumnFormatter;
+import models.framework_models.common.CustomAttributeDefinition;
+import models.framework_models.common.ICustomAttributeValue;
+import play.Logger;
+import scala.Option;
 
 /**
  * This class is to be used with the {@link views.html.parts.tableview} and
@@ -428,7 +426,8 @@ public class Table<T> {
     }
 
     /**
-     * Return a list of rows using the list of values passed as a parameter.<br/>
+     * Return a list of rows using the list of values passed as a parameter.
+     * <br/>
      * A formatting is applied according to FieldDef
      * 
      * @param values
@@ -444,7 +443,8 @@ public class Table<T> {
     }
 
     /**
-     * Return a list of rows using the list of values passed as a parameter.<br/>
+     * Return a list of rows using the list of values passed as a parameter.
+     * <br/>
      * NO formatting is applied.
      * 
      * @param values
@@ -621,7 +621,7 @@ public class Table<T> {
      * Here is an example of usage in a Scala template :
      * 
      * <pre>
-     * @table.setColumnFormatter("mail", {(anObject: models.sample.Person, mail: Option[String])   =>  {
+     * &#64;table.setColumnFormatter("mail", {(anObject: models.sample.Person, mail: Option[String])   =>  {
      *  if(mail.isEmpty){
      *          ""
      *          }else{
@@ -661,7 +661,8 @@ public class Table<T> {
          * </ul>
          */
         public enum SorterType {
-            NONE(null), STRING_SORTER("maf_stringSort"), DATE_SORTER("maf_dateSort"), NUMBER_SORTER("maf_numberSort"), DATE_TIME_SORTER("maf_dateAndTimeSort");
+            NONE(null), STRING_SORTER("maf_stringSort"), DATE_SORTER("maf_dateSort"), NUMBER_SORTER("maf_numberSort"), DATE_TIME_SORTER(
+                    "maf_dateAndTimeSort");
             private String jsFunction;
 
             private SorterType(String jsFunction) {
@@ -831,7 +832,8 @@ public class Table<T> {
      * A Row contains:
      * <ul>
      * <li>A list of formatted cell values (basically a List of String)</li>
-     * <li>An Id to be used to identify uniquely the row (this one is optional)</li>
+     * <li>An Id to be used to identify uniquely the row (this one is optional)
+     * </li>
      * </ul>
      * 
      * @author Pierre-Yves Cloux
@@ -895,8 +897,10 @@ public class Table<T> {
      * applied).<br/>
      * A Row contains:
      * <ul>
-     * <li>A list of NOT formatted cell values (basically a List of Objects)</li>
-     * <li>An Id to be used to identify uniquely the row (this one is optional)</li>
+     * <li>A list of NOT formatted cell values (basically a List of Objects)
+     * </li>
+     * <li>An Id to be used to identify uniquely the row (this one is optional)
+     * </li>
      * </ul>
      * 
      * @author Pierre-Yves Cloux

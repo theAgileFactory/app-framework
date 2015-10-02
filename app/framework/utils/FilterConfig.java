@@ -29,12 +29,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import models.framework_models.common.CustomAttributeDefinition;
-import models.framework_models.common.ICustomAttributeValue.AttributeType;
-import play.Logger;
-import play.libs.Json;
-import play.mvc.Http.Request;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.avaje.ebean.Expr;
 import com.avaje.ebean.Expression;
@@ -50,6 +46,13 @@ import framework.services.ServiceStaticAccessor;
 import framework.services.kpi.IKpiService;
 import framework.services.kpi.Kpi;
 import framework.services.kpi.Kpi.DataType;
+import models.framework_models.account.Principal;
+import models.framework_models.common.CustomAttributeDefinition;
+import models.framework_models.common.FilterConfiguration;
+import models.framework_models.common.ICustomAttributeValue.AttributeType;
+import play.Logger;
+import play.libs.Json;
+import play.mvc.Http.Request;
 
 /**
  * A data structure which contains the configuration for managing advanced table
@@ -183,7 +186,12 @@ public class FilterConfig<T> {
     private List<String> selectedRows;
 
     /**
-     * Creates a filter configuration
+     * The selected filter configuration (for the select list).
+     */
+    private FilterConfiguration selectedFilterConfiguration;
+
+    /**
+     * Creates a filter configuration.
      */
     public FilterConfig() {
         this.selectableColumns = new HashMap<String, FilterConfig.SelectableColumn>();
@@ -193,9 +201,16 @@ public class FilterConfig<T> {
 
     /**
      * Creates a filter configuration by copying the information from the
-     * specified one
+     * specified one.
+     * 
+     * @param template
+     *            the filter config template
+     * @param selectedFilterConfiguration
+     *            the selected filter configuration
+     * @param deepCopy
+     *            true for a deep copy
      */
-    private FilterConfig(FilterConfig<T> template, boolean deepCopy) {
+    private FilterConfig(FilterConfig<T> template, FilterConfiguration selectedFilterConfiguration, boolean deepCopy) {
         if (deepCopy) {
             this.selectableColumns = new HashMap<String, FilterConfig.SelectableColumn>(template.getSelectableColumns());
         } else {
@@ -206,30 +221,246 @@ public class FilterConfig<T> {
             this.userColumnConfigurations.put(userColumnConfig.getColumnId(), userColumnConfig.copy());
         }
         this.selectedRows = null;
-    }
-
-    /**
-     * Creates a copy of the current FilterConfig
-     */
-    public synchronized FilterConfig<T> copy() {
-        return new FilterConfig<T>(this, true);
+        this.selectedFilterConfiguration = selectedFilterConfiguration;
     }
 
     /**
      * Create a new FilterConfig instance from the current one and load it with
-     * the JSON structure received from the javascript client
+     * the JSON structure received from the javascript client.
      * 
      * @param json
      *            a JSON structure
+     * @param selectedFilterConfiguration
+     *            the selected filter configuration
      */
-    public synchronized FilterConfig<T> parseResponse(JsonNode json) throws FilterConfigException {
-        FilterConfig<T> temp = new FilterConfig<T>(this, false);
+    private synchronized FilterConfig<T> parseResponse(JsonNode json, FilterConfiguration selectedFilterConfiguration) throws FilterConfigException {
+        FilterConfig<T> temp = new FilterConfig<T>(this, selectedFilterConfiguration, false);
         temp.unmarshall(json);
         return temp;
     }
 
     /**
-     * Add a column configuration or modify the one with the same columnId
+     * Get the current filter configuration. This action is called when the page
+     * (with the concerned table) is displayed.
+     * 
+     * @param principalUid
+     *            the principal uid
+     * @param request
+     *            the original request
+     */
+    public synchronized FilterConfig<T> getCurrent(String principalUid, Request request) {
+
+        // get the generic class (data type)
+        final Pattern pattern = Pattern.compile("<(.+?)>");
+        final Matcher matcher = pattern.matcher(getClass().getGenericSuperclass().getTypeName());
+        matcher.find();
+        String dataType = matcher.group(1);
+
+        /*
+         * Get the default filter (it corresponds to the last seen by the user).
+         * It is created with the initial configuration if it doesn't exist.
+         */
+        FilterConfiguration defaultFilter = FilterConfiguration.getDefaultFilterConfiguration(principalUid, dataType);
+        if (defaultFilter == null) {
+            defaultFilter = new FilterConfiguration();
+            defaultFilter.configuration = this.marshall();
+            defaultFilter.dataType = dataType;
+            defaultFilter.isDefault = true;
+            defaultFilter.isSelected = false;
+            defaultFilter.name = "object.filter_configuration.name.default.label";
+            defaultFilter.principal = Principal.getPrincipalFromUid(principalUid);
+            defaultFilter.save();
+        }
+
+        /*
+         * If the request includes a "filterSharedKey" query param, then we
+         * consider a shared filter, else a standard one.
+         */
+        if (request.getQueryString("filterSharedKey") != null && !request.getQueryString("filterSharedKey").equals("")) {
+
+            // get the shared filter
+            FilterConfiguration sharedFilter = FilterConfiguration.getFilterConfigurationBySharedKey(request.getQueryString("filterSharedKey"), dataType);
+
+            // if it doesn't exist (bad key or deleted by owner) then we get the
+            // default filter.
+            if (sharedFilter == null) {
+                sharedFilter = defaultFilter;
+                sharedFilter.sharedNotExisting = true;
+            }
+
+            // convert the JSON string to a JSON node.
+            JsonNode json = null;
+            try {
+
+                ObjectMapper mapper = new ObjectMapper();
+                json = mapper.readTree(sharedFilter.configuration);
+
+            } catch (Exception e) {
+
+                // should not occurred
+                Logger.error("impossible to get the filter configuration", e);
+                return null;
+
+            }
+
+            // parse the configuration
+            try {
+
+                return parseResponse(json, sharedFilter);
+            } catch (Exception e) {
+
+                /*
+                 * the filter is no more compatible with the current table
+                 * configuration, then we display an warning message and get the
+                 * initial configuration.
+                 */
+
+                Logger.warn("the filter is no more compatible", e);
+
+                defaultFilter.isNotCompatible = true;
+
+                try {
+
+                    ObjectMapper mapper = new ObjectMapper();
+                    return parseResponse(mapper.readTree(this.marshall()), defaultFilter);
+
+                } catch (Exception e2) {
+
+                    // should not occurred
+                    Logger.error("impossible to get the filter configuration", e);
+                    return null;
+
+                }
+            }
+
+        } else {
+
+            // Get the selected filter configuration (it could be the default
+            // filter).
+            FilterConfiguration selectedFilter = FilterConfiguration.getSelectedFilterConfiguration(principalUid, dataType);
+
+            // convert the JSON string to a JSON node.
+            JsonNode json = null;
+            try {
+
+                ObjectMapper mapper = new ObjectMapper();
+                json = mapper.readTree(defaultFilter.configuration);
+
+            } catch (Exception e) {
+
+                // should not occurred
+                Logger.error("impossible to get the filter configuration", e);
+                return null;
+
+            }
+
+            // parse the configuration
+            try {
+
+                return parseResponse(json, selectedFilter);
+
+            } catch (Exception e) {
+
+                /*
+                 * the filter is no more compatible with the current table
+                 * configuration, then we store the initial configuration in the
+                 * default filter and return it (a warning message is
+                 * displayed).
+                 */
+
+                Logger.warn("the filter is no more compatible", e);
+
+                defaultFilter.isNotCompatible = true;
+                defaultFilter.configuration = this.marshall();
+                defaultFilter.save();
+
+                try {
+
+                    ObjectMapper mapper = new ObjectMapper();
+                    return parseResponse(mapper.readTree(defaultFilter.configuration), defaultFilter);
+
+                } catch (Exception e2) {
+
+                    // should not occurred
+                    Logger.error("impossible to get the filter configuration", e);
+                    return null;
+
+                }
+
+            }
+
+        }
+
+    }
+
+    /**
+     * Persist the current configuration in the default filter. This action is
+     * called after each action (edit a filter, change page, add columns...) on
+     * a table or when the user change the selected filter.
+     * 
+     * This method returns null if the selected filter is no more compatible
+     * with the table configuration (this case should be treated by the caller).
+     * 
+     * @param principalUid
+     *            the principal uid
+     * @param request
+     *            the original request
+     */
+    public synchronized FilterConfig<T> persistCurrentInDefault(String principalUid, Request request) {
+
+        // get the generic class (data type)
+        final Pattern pattern = Pattern.compile("<(.+?)>");
+        final Matcher matcher = pattern.matcher(getClass().getGenericSuperclass().getTypeName());
+        matcher.find();
+        String dataType = matcher.group(1);
+
+        // get the json form the request
+        JsonNode json = request.body().asJson();
+
+        // get the default filter
+        FilterConfiguration defaultFilter = FilterConfiguration.getDefaultFilterConfiguration(principalUid, dataType);
+
+        // store the request configuration in the default filter.
+        defaultFilter.configuration = json.toString();
+        defaultFilter.save();
+
+        // parse the configuration
+        try {
+
+            // the selectedFilterConfiguration is settled to null because it is
+            // not
+            // used by the answer
+            return parseResponse(json, null);
+
+        } catch (Exception e) {
+
+            /*
+             * the filter is no more compatible with the current table
+             * configuration (this case can occur only when the user has changed
+             * the selected filter), then we store the initial configuration in
+             * the default filter and return null (the caller must treat this
+             * case).
+             */
+
+            Logger.warn("the filter is no more compatible", e);
+
+            defaultFilter.configuration = this.marshall();
+            defaultFilter.save();
+
+            return null;
+
+        }
+    }
+
+    /**
+     * Return the selected filter configuration.
+     */
+    public FilterConfiguration getSelectedFilterConfiguration() {
+        return this.selectedFilterConfiguration;
+    }
+
+    /**
+     * Add a column configuration or modify the one with the same columnId.
      * 
      * @param columnId
      *            the ID of the column
@@ -242,20 +473,23 @@ public class FilterConfig<T> {
      * @param filterComponent
      *            the component
      * @param isDisplayed
+     *            true if the attribute if displayed by default
      * @param isFiltered
+     *            true if the attribute is filtered by default
      * @param sortStatusType
+     *            the attribute sort
      */
     public synchronized void addColumnConfiguration(String columnId, String fieldName, String columnLabel, IFilterComponent filterComponent,
             boolean isDisplayed, boolean isFiltered, SortStatusType sortStatusType) {
         SelectableColumn selectableColumn = new SelectableColumn(columnId, fieldName, columnLabel, filterComponent);
         getSelectableColumns().put(columnId, selectableColumn);
-        UserColumnConfiguration userColumnConfiguration = new UserColumnConfiguration(columnId, sortStatusType, isDisplayed, isFiltered, selectableColumn
-                .getFilterComponent().getDefaultFilterValueAsObject());
+        UserColumnConfiguration userColumnConfiguration = new UserColumnConfiguration(columnId, sortStatusType, isDisplayed, isFiltered,
+                selectableColumn.getFilterComponent().getDefaultFilterValueAsObject());
         getUserColumnConfigurations().put(columnId, userColumnConfiguration);
     }
 
     /**
-     * Add a column configuration for a column not displayed by default
+     * Add a column configuration for a column not displayed by default.
      * 
      * @param columnId
      *            the ID of the column
@@ -273,7 +507,7 @@ public class FilterConfig<T> {
     }
 
     /**
-     * Add a column configuration for a column not displayed by default
+     * Add a column configuration for a column not displayed by default.
      * 
      * @param columnId
      *            the ID of the column
@@ -302,6 +536,7 @@ public class FilterConfig<T> {
      * @param columnLabel
      *            the label for this column
      * @param isDisplayed
+     *            true if the attribute is displayed by default
      */
     public synchronized void addNonFilterableColumnConfiguration(String columnId, String fieldName, String columnLabel, boolean isDisplayed) {
         this.addColumnConfiguration(columnId, fieldName, columnLabel, new NoneFilterComponent(), isDisplayed, false, SortStatusType.NONE);
@@ -322,12 +557,12 @@ public class FilterConfig<T> {
             switch (AttributeType.valueOf(customAttributeDefinition.attributeType)) {
             case INTEGER:
                 addColumnConfiguration(customAttributeDefinition.uuid, tableIdFieldName, customAttributeDefinition.name,
-                        new IntegerCustomAttributeFilterComponent("0", customAttributeDefinition), customAttributeDefinition.isDisplayed, false,
+                        new IntegerCustomAttributeFilterComponent("0", "=", customAttributeDefinition), customAttributeDefinition.isDisplayed, false,
                         SortStatusType.UNSORTED);
                 break;
             case DECIMAL:
                 addColumnConfiguration(customAttributeDefinition.uuid, tableIdFieldName, customAttributeDefinition.name,
-                        new DecimalCustomAttributeFilterComponent("0.0", customAttributeDefinition), customAttributeDefinition.isDisplayed, false,
+                        new DecimalCustomAttributeFilterComponent("0.0", "=", customAttributeDefinition), customAttributeDefinition.isDisplayed, false,
                         SortStatusType.UNSORTED);
                 break;
             case BOOLEAN:
@@ -347,12 +582,12 @@ public class FilterConfig<T> {
                 break;
             case SINGLE_ITEM:
                 addColumnConfiguration(customAttributeDefinition.uuid, tableIdFieldName, customAttributeDefinition.name,
-                        new SingleItemCustomAttributeFilterComponent(0L, customAttributeDefinition), customAttributeDefinition.isDisplayed, false,
+                        new SingleItemCustomAttributeFilterComponent(customAttributeDefinition), customAttributeDefinition.isDisplayed, false,
                         SortStatusType.UNSORTED);
                 break;
             case MULTI_ITEM:
                 addColumnConfiguration(customAttributeDefinition.uuid, tableIdFieldName, customAttributeDefinition.name,
-                        new MultiItemCustomAttributeFilterComponent(0L, customAttributeDefinition), customAttributeDefinition.isDisplayed, false,
+                        new MultiItemCustomAttributeFilterComponent(customAttributeDefinition), customAttributeDefinition.isDisplayed, false,
                         SortStatusType.NONE);
                 break;
             case DYNAMIC_SINGLE_ITEM:
@@ -426,11 +661,12 @@ public class FilterConfig<T> {
     }
 
     /**
-     * Update the expression with the right SQL instructions
+     * Update the expression with the right SQL instructions.
      * 
+     * @param <K>
+     *            the corresponding model object
      * @param expression
      *            an SQL expression
-     * @return an updated SQL expression
      */
     public synchronized <K> ExpressionList<K> updateWithSearchExpression(ExpressionList<K> expression) {
         for (String columnId : getUserColumnConfigurations().keySet()) {
@@ -476,13 +712,12 @@ public class FilterConfig<T> {
     }
 
     /**
-     * Update the expression with the right SQL instructions
+     * Update the expression with the right SQL instructions.
      * 
-     * @param json
-     *            a JSO structure received from a POST request
-     * @param query
+     * @param <K>
+     *            the corresponding model object
+     * @param expression
      *            an SQL expression
-     * @return an updated SQL expression
      */
     public synchronized <K> void updateWithSortExpression(ExpressionList<K> expression) {
         OrderBy<K> orderby = expression.orderBy();
@@ -498,9 +733,10 @@ public class FilterConfig<T> {
     }
 
     /**
-     * Return an order by computed from the various available sort component
+     * Return an order by computed from the various available sort component.
      * 
-     * @return an order by
+     * @param <K>
+     *            the corresponding model object
      */
     public synchronized <K> OrderBy<K> getSortExpression() {
         OrderBy<K> orderby = new OrderBy<K>();
@@ -569,6 +805,9 @@ public class FilterConfig<T> {
         return Json.stringify(asJson);
     }
 
+    /**
+     * Get the user column configurations.
+     */
     public synchronized Map<String, UserColumnConfiguration> getUserColumnConfigurations() {
         return userColumnConfigurations;
     }
@@ -576,6 +815,9 @@ public class FilterConfig<T> {
     /**
      * Update the content of this object with a JSON structure.<br/>
      * NB: selectableColumns are never updated
+     * 
+     * @param json
+     *            the json node to unmarshall
      */
     private void unmarshall(JsonNode json) throws FilterConfigException {
         JsonNode currentPageNode = json.get(JSON_CURRENT_PAGE_FIELD);
@@ -614,18 +856,33 @@ public class FilterConfig<T> {
         }
     }
 
+    /**
+     * Get the selectable columns.
+     */
     private Map<String, SelectableColumn> getSelectableColumns() {
         return selectableColumns;
     }
 
+    /**
+     * Get the current page.
+     */
     public synchronized int getCurrentPage() {
         return currentPage;
     }
 
+    /**
+     * Set the current page.
+     * 
+     * @param currentPage
+     *            the current page to set
+     */
     public synchronized void setCurrentPage(int currentPage) {
         this.currentPage = currentPage;
     }
 
+    /**
+     * Get the selected rows.
+     */
     public synchronized List<String> getSelectedRows() {
         return selectedRows;
     }
@@ -711,7 +968,7 @@ public class FilterConfig<T> {
         private IFilterComponent filterComponent;
 
         /**
-         * Creates a new column for the filter configuration
+         * Creates a new column for the filter configuration.
          * 
          * @param columnId
          *            the name of the table column
@@ -731,24 +988,36 @@ public class FilterConfig<T> {
             this.filterComponent = filterComponent;
         }
 
+        /**
+         * Get the column id.
+         */
         public String getColumnId() {
             return columnId;
         }
 
+        /**
+         * Get the field name.
+         */
         public String getFieldName() {
             return fieldName;
         }
 
+        /**
+         * Get the column label.
+         */
         public String getColumnLabel() {
             return columnLabel;
         }
 
+        /**
+         * Get the filter component.
+         */
         public IFilterComponent getFilterComponent() {
             return filterComponent;
         }
 
         /**
-         * Returns a JSON representation of the specified column
+         * Returns a JSON representation of the specified column.
          * 
          * @return a json structure
          */
@@ -830,9 +1099,7 @@ public class FilterConfig<T> {
         }
 
         /**
-         * Copy the current configuration and store it in a new object
-         * 
-         * @return
+         * Copy the current configuration and store it in a new object.
          */
         public UserColumnConfiguration copy() {
             UserColumnConfiguration newColumnConfig = new UserColumnConfiguration(this.columnId, this.sortStatusType, this.isDisplayed, this.isFiltered,
@@ -840,29 +1107,44 @@ public class FilterConfig<T> {
             return newColumnConfig;
         }
 
+        /**
+         * Get the sort status type.
+         */
         public SortStatusType getSortStatusType() {
             return sortStatusType;
         }
 
+        /**
+         * Return true if it is filtered.
+         */
         public boolean isFiltered() {
             return isFiltered;
         }
 
+        /**
+         * Get the column id.
+         */
         public String getColumnId() {
             return columnId;
         }
 
+        /**
+         * Return true if it is displayed.
+         */
         public boolean isDisplayed() {
             return isDisplayed;
         }
 
+        /**
+         * Get the filter value.
+         */
         public Object getFilterValue() {
             return filterValue;
         }
 
         /**
          * Generates a JSON representation of the column configuration using the
-         * previously stored value for the filter component
+         * previously stored value for the filter component.
          * 
          * @param selectableColumn
          *            the column meta-data
@@ -879,7 +1161,7 @@ public class FilterConfig<T> {
 
         /**
          * Update the state of the filter config with the data provided from the
-         * server
+         * server.
          * 
          * @param selectableColumn
          *            the {@link SelectableColumn} object associated with this
@@ -911,7 +1193,7 @@ public class FilterConfig<T> {
     }
 
     /**
-     * The type of filter components
+     * The type of filter components.
      * 
      * @author Pierre-Yves Cloux
      */
@@ -920,13 +1202,14 @@ public class FilterConfig<T> {
     }
 
     /**
-     * The generic interface for a filter component
+     * The generic interface for a filter component.
      * 
      * @author Pierre-Yves Cloux
      */
     public static interface IFilterComponent {
+
         /**
-         * Convert the meta data for this fiter component into JSON<br/>
+         * Convert the meta data for this fiter component into JSON.<br/>
          * This one contains the static for the filter components to be used by
          * the JavaScript client
          */
@@ -1286,7 +1569,7 @@ public class FilterConfig<T> {
             DateFormat dateFormat = Utilities.getDateFormat(Utilities.JSON_DATE_FORMAT);
             selectableColumnFilterComponentMetaData.put("from", dateFormat.format(getFrom()));
             selectableColumnFilterComponentMetaData.put("to", dateFormat.format(getTo()));
-            if (format == null) {
+            if (getFormat() == null) {
                 selectableColumnFilterComponentMetaData.put("format", Utilities.getDefaultDatePattern().toLowerCase());
             } else {
                 selectableColumnFilterComponentMetaData.put("format", getFormat().toLowerCase());
@@ -1386,13 +1669,17 @@ public class FilterConfig<T> {
     }
 
     public static class SelectFilterComponent implements IFilterComponent {
-        private String defaultValue;
+        private List<String> defaultValue;
         private ISelectableValueHolderCollection<String> values;
         private String[] fieldsSort;
 
         public SelectFilterComponent(Long defaultValue, ISelectableValueHolderCollection<Long> values) {
             super();
-            this.defaultValue = String.valueOf(defaultValue);
+
+            this.defaultValue = new ArrayList<>();
+            if (defaultValue != null) {
+                this.defaultValue.add(String.valueOf(defaultValue));
+            }
             this.values = new DefaultSelectableValueHolderCollection<String>();
             int order = 0;
             for (ISelectableValueHolder<Long> value : values.getSortedValues()) {
@@ -1412,7 +1699,10 @@ public class FilterConfig<T> {
 
         public SelectFilterComponent(String defaultValue, ISelectableValueHolderCollection<String> values) {
             super();
-            this.defaultValue = defaultValue;
+            this.defaultValue = new ArrayList<>();
+            if (defaultValue != null) {
+                this.defaultValue.add(defaultValue);
+            }
             this.values = values;
             this.fieldsSort = null;
         }
@@ -1422,10 +1712,6 @@ public class FilterConfig<T> {
             this.fieldsSort = fieldsSort;
         }
 
-        public String getDefaultValue() {
-            return defaultValue;
-        }
-
         public ISelectableValueHolderCollection<String> getValues() {
             return values;
         }
@@ -1433,30 +1719,47 @@ public class FilterConfig<T> {
         @Override
         public void marshallMetaData(ObjectNode selectableColumnFilterComponentMetaData) {
             selectableColumnFilterComponentMetaData.put(SelectableColumn.JSON_TYPE_FIELD, FilterComponentType.SELECT.name());
-            selectableColumnFilterComponentMetaData.put("defaultValue", getDefaultValue());
+
+            ObjectMapper mapper = new ObjectMapper();
+            ArrayNode array = mapper.valueToTree(this.defaultValue);
+            selectableColumnFilterComponentMetaData.putArray("defaultValue").addAll(array);
+
             selectableColumnFilterComponentMetaData.set("values", Utilities.marshallAsJson(getValues().getSortedValues()));
         }
 
         @Override
         public void marshallFilterValue(ObjectNode userColumnConfiguration, Object filterValue) {
-            if (!(filterValue instanceof String)) {
-                userColumnConfiguration.put(UserColumnConfiguration.JSON_FILTERVALUE_FIELD, getDefaultValue());
+
+            ObjectMapper mapper = new ObjectMapper();
+
+            if (!(filterValue instanceof List)) {
+
+                ArrayNode array = mapper.valueToTree(this.defaultValue);
+                userColumnConfiguration.putArray(UserColumnConfiguration.JSON_FILTERVALUE_FIELD).addAll(array);
+
                 log.error("The value " + filterValue + " returned for this filter component " + this + " is invalid, use default one instead");
             } else {
-                userColumnConfiguration.put(UserColumnConfiguration.JSON_FILTERVALUE_FIELD, (String) filterValue);
+
+                ArrayNode array = mapper.valueToTree(filterValue);
+                userColumnConfiguration.putArray(UserColumnConfiguration.JSON_FILTERVALUE_FIELD).addAll(array);
+
             }
         }
 
         @Override
         public Expression getEBeanSearchExpression(Object filterValue, String fieldName) {
+
             if (filterValue != null) {
 
-                String stringValue = (String) filterValue;
-                if (filterValue.equals("0")) {
-                    return Expr.isNull(fieldName);
+                @SuppressWarnings("unchecked")
+                List<String> listValue = (List<String>) filterValue;
+
+                if (listValue.size() > 0) {
+                    return Expr.in(fieldName, listValue);
                 } else {
-                    return Expr.eq(fieldName, stringValue);
+                    return Expr.isNull(fieldName);
                 }
+
             }
             return null;
         }
@@ -1485,12 +1788,19 @@ public class FilterConfig<T> {
 
         @Override
         public Object getFilterValueFromJson(JsonNode json) {
-            return json.asText();
+
+            List<String> r = new ArrayList<>();
+
+            for (JsonNode elem : json) {
+                r.add(elem.asText());
+            }
+
+            return r;
         }
 
         @Override
         public Object getDefaultFilterValueAsObject() {
-            return getDefaultValue();
+            return this.defaultValue;
         }
 
         @Override
@@ -1669,8 +1979,8 @@ public class FilterConfig<T> {
                             " like '" + value + "'");
                     return Expr.raw(sql);
                 } else {
-                    String sql = String.format(SEARCH_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id, "='"
-                            + value + "'");
+                    String sql = String.format(SEARCH_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id,
+                            "='" + value + "'");
                     return Expr.raw(sql);
                 }
             }
@@ -1724,8 +2034,8 @@ public class FilterConfig<T> {
                             " like '" + value + "'");
                     return Expr.raw(sql);
                 } else {
-                    String sql = String.format(SEARCH_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id, "='"
-                            + value + "'");
+                    String sql = String.format(SEARCH_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id,
+                            "='" + value + "'");
                     return Expr.raw(sql);
                 }
             }
@@ -1826,8 +2136,8 @@ public class FilterConfig<T> {
             if (filterValue != null) {
                 Date from = ((Date[]) filterValue)[0];
                 Date to = ((Date[]) filterValue)[1];
-                String sql = String.format(SEARCH_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id, Utilities
-                        .getDateFormat(MYSQL_DATETIME_FROM).format(from), Utilities.getDateFormat(MYSQL_DATETIME_TO).format(to));
+                String sql = String.format(SEARCH_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id,
+                        Utilities.getDateFormat(MYSQL_DATETIME_FROM).format(from), Utilities.getDateFormat(MYSQL_DATETIME_TO).format(to));
                 return Expr.raw(sql);
             }
             return null;
@@ -1855,34 +2165,37 @@ public class FilterConfig<T> {
      * 
      * @author Pierre-Yves Cloux
      */
-    public static class IntegerCustomAttributeFilterComponent extends TextFieldFilterComponent {
+    public static class IntegerCustomAttributeFilterComponent extends NumericFieldFilterComponent {
         private static final String SEARCH_EXPRESSION_TEMPLATE = "(select count(*) from integer_custom_attribute_value as cust%2$s "
                 + "where cust%2$s.deleted=0 and cust%2$s.object_type='%1$s' and cust%2$s.object_id=t0.id and cust%2$s.custom_attribute_definition_id=%2$s "
-                + "and cust%2$s.value=%3$s)<>0";
+                + "and cust%2$s.value %4$s %3$s)<>0";
         private static final String SORT_EXPRESSION_TEMPLATE = "(select sortcust%2$s.value from integer_custom_attribute_value as sortcust%2$s "
                 + "where sortcust%2$s.deleted=0 and sortcust%2$s.object_type='%1$s' and sortcust%2$s.object_id=t0.id "
                 + "and sortcust%2$s.custom_attribute_definition_id=%2$s)";
         private CustomAttributeDefinition customAttributeDefinition;
 
-        public IntegerCustomAttributeFilterComponent(String defaultValue, CustomAttributeDefinition customAttributeDefinition) {
-            super(defaultValue);
+        public IntegerCustomAttributeFilterComponent(String defaultValue, String defaultComparator, CustomAttributeDefinition customAttributeDefinition) {
+            super(defaultValue, defaultComparator);
             this.customAttributeDefinition = customAttributeDefinition;
         }
 
         @Override
         public Expression getEBeanSearchExpression(Object filterValue, String fieldName) {
             if (filterValue != null) {
-                int value = 0;
+
+                BigDecimal value = new BigDecimal(0);
+                String comparator = ((String[]) filterValue)[1];
                 try {
-                    value = Integer.parseInt((String) filterValue);
+                    value = new BigDecimal(((String[]) filterValue)[0]);
                 } catch (Exception NumberFormatException) {
-                    Logger.warn("impossible to convert '" + filterValue + "' to an Integer");
+                    Logger.warn("impossible to convert '" + filterValue + "' to a BigDecimal");
                 }
                 String sql = String.format(SEARCH_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id,
-                        String.valueOf(value));
+                        value.toPlainString(), comparator);
                 return Expr.raw(sql);
             }
             return null;
+
         }
 
         @Override
@@ -1907,34 +2220,38 @@ public class FilterConfig<T> {
      * 
      * @author Pierre-Yves Cloux
      */
-    public static class DecimalCustomAttributeFilterComponent extends TextFieldFilterComponent {
+    public static class DecimalCustomAttributeFilterComponent extends NumericFieldFilterComponent {
         private static final String SEARCH_EXPRESSION_TEMPLATE = "(select count(*) from decimal_custom_attribute_value as cust%2$s "
                 + "where cust%2$s.deleted=0 and cust%2$s.object_type='%1$s' and cust%2$s.object_id=t0.id and cust%2$s.custom_attribute_definition_id=%2$s "
-                + "and cust%2$s.value=%3$s)<>0";
+                + "and cust%2$s.value %4$s %3$s)<>0";
         private static final String SORT_EXPRESSION_TEMPLATE = "(select sortcust%2$s.value from decimal_custom_attribute_value as sortcust%2$s "
                 + "where sortcust%2$s.deleted=0 and sortcust%2$s.object_type='%1$s' and sortcust%2$s.object_id=t0.id "
                 + "and sortcust%2$s.custom_attribute_definition_id=%2$s)";
         private CustomAttributeDefinition customAttributeDefinition;
 
-        public DecimalCustomAttributeFilterComponent(String defaultValue, CustomAttributeDefinition customAttributeDefinition) {
-            super(defaultValue);
+        public DecimalCustomAttributeFilterComponent(String defaultValue, String defaultComparator, CustomAttributeDefinition customAttributeDefinition) {
+            super(defaultValue, defaultComparator);
             this.customAttributeDefinition = customAttributeDefinition;
         }
 
         @Override
         public Expression getEBeanSearchExpression(Object filterValue, String fieldName) {
+
             if (filterValue != null) {
+
                 BigDecimal value = new BigDecimal(0);
+                String comparator = ((String[]) filterValue)[1];
                 try {
-                    value = new BigDecimal((String) filterValue);
+                    value = new BigDecimal(((String[]) filterValue)[0]);
                 } catch (Exception NumberFormatException) {
                     Logger.warn("impossible to convert '" + filterValue + "' to a BigDecimal");
                 }
                 String sql = String.format(SEARCH_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id,
-                        value.toPlainString());
+                        value.toPlainString(), comparator);
                 return Expr.raw(sql);
             }
             return null;
+
         }
 
         @Override
@@ -1962,7 +2279,7 @@ public class FilterConfig<T> {
     public static class SingleItemCustomAttributeFilterComponent extends SelectFilterComponent {
         private static final String SEARCH_EXPRESSION_TEMPLATE = "(select count(*) from single_item_custom_attribute_value as cust%2$s "
                 + "where cust%2$s.deleted=0 and cust%2$s.object_type='%1$s' and cust%2$s.object_id=t0.id and cust%2$s.custom_attribute_definition_id=%2$s "
-                + "and cust%2$s.value_id=%3$s)<>0";
+                + "and cust%2$s.value_id IN %3$s)<>0";
 
         private static final String SEARCH_EXPRESSION_NULL_CASE_TEMPLATE = "(select count(*) from single_item_custom_attribute_value as cust%2$s "
                 + "where cust%2$s.deleted=0 and cust%2$s.object_type='%1$s' and cust%2$s.object_id=t0.id and cust%2$s.custom_attribute_definition_id=%2$s "
@@ -1975,8 +2292,8 @@ public class FilterConfig<T> {
 
         private CustomAttributeDefinition customAttributeDefinition;
 
-        public SingleItemCustomAttributeFilterComponent(Long defaultValue, CustomAttributeDefinition customAttributeDefinition) {
-            super(defaultValue, customAttributeDefinition.getValueHoldersCollectionForSingleItemCustomAttribute());
+        public SingleItemCustomAttributeFilterComponent(CustomAttributeDefinition customAttributeDefinition) {
+            super(null, customAttributeDefinition.getValueHoldersCollectionForSingleItemCustomAttribute());
             this.customAttributeDefinition = customAttributeDefinition;
         }
 
@@ -1985,14 +2302,16 @@ public class FilterConfig<T> {
 
             if (filterValue != null) {
 
-                String value = (String) filterValue;
+                @SuppressWarnings("unchecked")
+                List<String> listValue = (List<String>) filterValue;
+
                 String sql = null;
 
-                if (value.equals("0")) {
-                    sql = String.format(SEARCH_EXPRESSION_NULL_CASE_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id,
-                            value);
-                } else {
+                if (listValue.size() > 0) {
+                    String value = "(" + String.join(",", listValue) + ")";
                     sql = String.format(SEARCH_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id, value);
+                } else {
+                    sql = String.format(SEARCH_EXPRESSION_NULL_CASE_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id);
                 }
 
                 return Expr.raw(sql);
@@ -2029,22 +2348,35 @@ public class FilterConfig<T> {
                 + " JOIN multi_item_custom_attribute_value ca_value%2$s ON ca_value_item%2$s.multi_item_custom_attribute_value_id=ca_value%2$s.id"
                 + " WHERE ca_value%2$s.deleted=0 AND ca_value%2$s.object_type='%1$s'"
                 + " AND ca_value%2$s.object_id=t0.id AND ca_value%2$s.custom_attribute_definition_id=%2$s"
-                + " AND ca_value_item%2$s.custom_attribute_multi_item_option_id=%3$s)<>0";
+                + " AND ca_value_item%2$s.custom_attribute_multi_item_option_id IN %3$s)<>0";
 
         private CustomAttributeDefinition customAttributeDefinition;
 
-        public MultiItemCustomAttributeFilterComponent(Long defaultValue, CustomAttributeDefinition customAttributeDefinition) {
-            super(defaultValue, customAttributeDefinition.getValueHoldersCollectionForMultiItemCustomAttribute());
+        public MultiItemCustomAttributeFilterComponent(CustomAttributeDefinition customAttributeDefinition) {
+            super(null, customAttributeDefinition.getValueHoldersCollectionForMultiItemCustomAttribute());
             this.customAttributeDefinition = customAttributeDefinition;
         }
 
         @Override
         public Expression getEBeanSearchExpression(Object filterValue, String fieldName) {
+
             if (filterValue != null) {
-                String value = (String) filterValue;
-                String sql = String.format(SEARCH_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id, value);
+
+                @SuppressWarnings("unchecked")
+                List<String> listValue = (List<String>) filterValue;
+
+                String sql = null;
+
+                if (listValue.size() > 0) {
+                    String value = "(" + String.join(",", listValue) + ")";
+                    sql = String.format(SEARCH_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id, value);
+                } else {
+                    sql = "0=1";
+                }
+
                 return Expr.raw(sql);
             }
+
             return null;
         }
 
@@ -2130,7 +2462,7 @@ public class FilterConfig<T> {
                 + " WHERE kdata%1$s.deleted = 0 AND kvd%1$s.deleted = 0 AND kd%1$s.deleted = 0 AND"
                 + " kdata%1$s.timestamp = (SELECT MAX(kdata_i%1$s.timestamp) FROM kpi_data kdata_i%1$s"
                 + " WHERE kdata_i%1$s.kpi_value_definition_id = kvd%1$s.id AND kdata_i%1$s.object_id = kdata%1$s.object_id)"
-                + " AND kd%1$s.uid = '%1$s' AND kdata%1$s.object_id = t0.id AND kdata%1$s.kpi_color_rule_id = %2$s)<>0";
+                + " AND kd%1$s.uid = '%1$s' AND kdata%1$s.object_id = t0.id AND kdata%1$s.kpi_color_rule_id IN %2$s)<>0";
 
         private static final String SORT_EXPRESSION_TEMPLATE = "(SELECT kdatasort%1$s.kpi_color_rule_id from kpi_data kdatasort%1$s"
                 + " JOIN kpi_value_definition kvdsort%1$s ON kdatasort%1$s.kpi_value_definition_id = kvdsort%1$s.id"
@@ -2149,9 +2481,32 @@ public class FilterConfig<T> {
 
         @Override
         public Expression getEBeanSearchExpression(Object filterValue, String fieldName) {
+
             if (filterValue != null) {
-                String value = (String) filterValue;
-                String sql = String.format(SEARCH_EXPRESSION_TEMPLATE, getKpi().getUid(), value);
+
+                @SuppressWarnings("unchecked")
+                List<String> listValue = (List<String>) filterValue;
+
+                // remove the not number elems (occurs when the render type has
+                // changed)
+                List<String> finalListValue = new ArrayList<>();
+                for (String lv : listValue) {
+                    try {
+                        Double.parseDouble(lv);
+                        finalListValue.add(lv);
+                    } catch (NumberFormatException nfe) {
+                    }
+                }
+
+                String sql = null;
+
+                if (finalListValue.size() > 0) {
+                    String value = "(" + String.join(",", finalListValue) + ")";
+                    sql = String.format(SEARCH_EXPRESSION_TEMPLATE, getKpi().getUid(), value);
+                } else {
+                    sql = "1=0";
+                }
+
                 return Expr.raw(sql);
             }
             return null;

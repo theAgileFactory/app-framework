@@ -17,6 +17,8 @@
  */
 package framework.services.configuration;
 
+import framework.commons.DataType;
+import framework.services.plugins.PluginConfiguratorController;
 import models.framework_models.common.DynamicSingleItemCustomAttributeValue;
 import play.mvc.Call;
 
@@ -77,6 +79,41 @@ public interface IImplementationDefinedObjectService {
      *            the top menu bar perspective key
      */
     public Call getRouteForSwitchingTopMenuBarPerspective(String key);
+
+    /**
+     * Get the route for the create action of filter configuration.
+     */
+    public Call getRouteForFilterConfigurationCreate();
+
+    /**
+     * Get the route for the save action of filter configuration.
+     */
+    public Call getRouteForFilterConfigurationSave();
+
+    /**
+     * Get the route for the change action of filter configuration.
+     */
+    public Call getRouteForFilterConfigurationChange();
+
+    /**
+     * Get the route for the edit action of filter configuration.
+     */
+    public Call getRouteForFilterConfigurationEdit();
+
+    /**
+     * Get the route for the delete action of filter configuration.
+     */
+    public Call getRouteForFilterConfigurationDelete();
+
+    /**
+     * Get the route for the share action of filter configuration.
+     */
+    public Call getRouteForFilterConfigurationShare();
+
+    /**
+     * Get the route for the search principal action of filter configuration.
+     */
+    public Call getRouteForFilterConfigurationSearchPrincipal();
 
     /**
      * Reset the top menu bar to defaults

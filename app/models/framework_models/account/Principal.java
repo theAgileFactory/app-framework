@@ -39,9 +39,9 @@ import framework.services.account.IUserAccount;
 import framework.services.account.IUserAccount.AccountType;
 import framework.utils.Utilities;
 import framework.utils.formats.DateType;
+import models.framework_models.common.FilterConfiguration;
 import models.framework_models.parent.IModel;
 import models.framework_models.parent.IModelConstants;
-import models.framework_models.workspace.WorkspaceMember;
 
 /**
  * This entity represents an user of the system.<br/>
@@ -196,6 +196,9 @@ public class Principal extends Model implements IModel {
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "senderPrincipal")
     public List<Notification> sentNotifications;
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "principal")
+    public List<FilterConfiguration> filterConfigurations;
 
     public Boolean isActive;
 
@@ -421,7 +424,8 @@ public class Principal extends Model implements IModel {
      * @return list of {@link Notification}
      */
     public List<Notification> getMessages() {
-        return Notification.find.where().eq("deleted", false).eq("isMessage", true).eq("principal.id", this.id).orderBy("isRead, creationDate desc").findList();
+        return Notification.find.where().eq("deleted", false).eq("isMessage", true).eq("principal.id", this.id).orderBy("isRead, creationDate desc")
+                .findList();
     }
 
     /**

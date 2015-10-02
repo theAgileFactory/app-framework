@@ -39,10 +39,10 @@ import org.mozilla.javascript.ScriptableObject;
 
 import akka.actor.Cancellable;
 import framework.commons.IFrameworkConstants;
-import framework.services.kpi.IKpiObjectsContainer;
 import framework.utils.DefaultSelectableValueHolder;
 import framework.utils.DefaultSelectableValueHolderCollection;
 import framework.utils.ISelectableValueHolderCollection;
+import framework.utils.Msg;
 import models.framework_models.kpi.KpiColorRule;
 import models.framework_models.kpi.KpiData;
 import models.framework_models.kpi.KpiDefinition;
@@ -658,7 +658,7 @@ public class Kpi {
             switch (kpiValueDefinition.renderType) {
             case LABEL:
                 if (colorRule != null && colorRule.renderLabel != null && !colorRule.renderLabel.equals("")) {
-                    return colorRule.renderLabel;
+                    return Msg.get(colorRule.renderLabel);
                 } else {
                     return IFrameworkConstants.DEFAULT_VALUE_EMPTY_DATA;
                 }

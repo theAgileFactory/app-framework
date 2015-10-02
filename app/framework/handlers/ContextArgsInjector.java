@@ -2,6 +2,7 @@ package framework.handlers;
 
 import framework.services.account.IAccountManagerPlugin;
 import framework.services.configuration.II18nMessagesPlugin;
+import framework.services.configuration.IImplementationDefinedObjectService;
 import framework.services.kpi.IKpiService;
 import framework.services.session.IUserSessionManagerPlugin;
 import framework.services.storage.IAttachmentManagerPlugin;
@@ -35,7 +36,7 @@ abstract class ContextArgsInjector {
      */
     public static void injectCommonServicesIncontext(Http.Context context, Configuration configuration, II18nMessagesPlugin messagesPlugin,
             IUserSessionManagerPlugin userSessionManagerPlugin, IAttachmentManagerPlugin attachmentManagerPlugin, IAccountManagerPlugin accountManagerPlugin,
-            CacheApi cacheApi, IKpiService kpiService) {
+            CacheApi cacheApi, IKpiService kpiService, IImplementationDefinedObjectService implementationDefinedObjectService) {
         if (context == null) {
             return;
         }
@@ -59,6 +60,9 @@ abstract class ContextArgsInjector {
         }
         if (kpiService != null) {
             context.args.put(IKpiService.class.getName(), kpiService);
+        }
+        if (implementationDefinedObjectService != null) {
+            context.args.put(IImplementationDefinedObjectService.class.getName(), implementationDefinedObjectService);
         }
     }
 }

@@ -24,25 +24,35 @@
 @import framework_views.parts
 
 @if(table.getValues()!=null){
+
+@if(filterConfig.getSelectedFilterConfiguration.isNotCompatible) {
+    <div class="alert alert-warning">@parts.Msg("object.filter_configuration.no_more_compatible.page_load")</div>
+}
+
+@if(filterConfig.getSelectedFilterConfiguration.sharedNotExisting) {
+    <div class="alert alert-warning">@parts.Msg("object.filter_configuration.shared_filter.not_found")</div>
+}
+
 <div class="row">
   <div class="col-md-9">
       <a id="_@table.getId()_filterContainerCollapse" data-toggle="button" href="#"><i class="glyphicons glyphicons-circle-minus"></i>&nbsp;<small>@parts.Msg("filter.togglebutton.label")</small></a>
     <ul id="_@table.getId()_filterContainer" class="list-inline">
     </ul>
   </div>
-  <div class="col-md-2">
-    <p class="text-right">
+  <div class="col-md-3">
+    <div style="margin-bottom: 10px;" class=" text-right" id="_@table.getId()_filterConfiguration">
+      @filter_configuration_selector(table.getId(), request.uri, filterConfig.getSelectedFilterConfiguration)
+    </div>
+    <div class="row">
+      <div class="col-md-8 text-right" id="_@table.getId()_currentFilterConfiguration">
         <span id="_@table.getId()_ajax_wait"></span>
-        <a href="#" class="btn btn-primary" id="_@table.getId()_columnsSelector"><i class="glyphicons glyphicons-cogwheel"></i></a>
-        <a href="#" class="btn btn-primary" id="_@table.getId()_filterSelector"><i class="glyphicons glyphicons-filter"></i></a>
-    </p>
-  </div>
-  <div class="col-md-1">
-      <p class="text-right">
-          @if(exportAsExcelUrl!=null){
-              <a href="#" class="btn btn-primary" id="_@table.getId()_exportAsExcel"><i class="glyphicons glyphicons-disk-save"></i></a>
-          }
-      </p>
+      </div>
+      <div class="col-md-4 text-right">
+        @if(exportAsExcelUrl!=null){
+          <a href="#" class="btn btn-primary" id="_@table.getId()_exportAsExcel"><i class="glyphicons glyphicons-disk-save"></i></a>
+        }
+      </div>
+    </div>
   </div>
 </div>
 }
@@ -53,6 +63,7 @@
 </div>
 <script type="text/javascript">
 var _@table.getId()_filterConfig=@Html(filterConfig.marshall());
+var _@table.getId()_currentFilterConfigurationIndex = 0;
 
 $(document).ready(function(){
     $('#_@table.getId()_filterContainerCollapse').click(function(){
@@ -65,9 +76,8 @@ $(document).ready(function(){
     });
     
     maf_filter_prepareSortableColumns('_@table.getId()_ajax_content', '@table.getId()', _@table.getId()_filterConfig, _@table.getId()_refreshTable);
-    maf_filter_prepareColumnsSelector('_@table.getId()_filterContainer','_@table.getId()_columnsSelector','_@table.getId()_filterSelector', _@table.getId()_filterConfig, _@table.getId()_refreshTable);
-    maf_filter_prepareFiltersSelector('_@table.getId()_filterContainer','_@table.getId()_filterSelector', _@table.getId()_filterConfig, _@table.getId()_refreshTable);
-    maf_filter_updateFilterContainer('_@table.getId()_filterContainer', '_@table.getId()_filterSelector', _@table.getId()_filterConfig, _@table.getId()_refreshTable);
+    _@table.getId()_drawCurrentFilterConfiguration();
+    
     _@table.getId()_indexPaginationLinks();
     @if(exportAsExcelUrl!=null){
         $('#_@table.getId()_exportAsExcel').click(function(){
@@ -89,6 +99,33 @@ $(document).ready(function(){
         });
     }
 });
+
+function _@table.getId()_drawCurrentFilterConfiguration() {
+
+    var currentIndex = _@table.getId()_currentFilterConfigurationIndex;
+    var newIndex = _@table.getId()_currentFilterConfigurationIndex + 1;
+    
+    // unbind x-editable from current selectors (if it exists)
+    $("#_@table.getId()_filterSelector" + currentIndex).off();
+    $("#_@table.getId()_columnsSelector" + currentIndex).off();
+    
+    // remove current selectors (if it exists)
+    $("#_@table.getId()_filterSelector" + currentIndex).remove();
+    $("#_@table.getId()_columnsSelector" + currentIndex).remove();
+
+    // draw the new icons
+    $("#_@table.getId()_currentFilterConfiguration").append('<a href="#" class="btn btn-primary" id="_@table.getId()_columnsSelector' + newIndex + '"><i class="glyphicons glyphicons-cogwheel"></i></a>');
+    $("#_@table.getId()_currentFilterConfiguration").append(' ');
+    $("#_@table.getId()_currentFilterConfiguration").append('<a href="#" class="btn btn-primary" id="_@table.getId()_filterSelector' + newIndex + '"><i class="glyphicons glyphicons-filter"></i></a>');
+
+    // bind new x-editable 
+    maf_filter_prepareColumnsSelector('_@table.getId()_filterContainer','_@table.getId()_columnsSelector' + newIndex,'_@table.getId()_filterSelector' + newIndex, _@table.getId()_filterConfig, _@table.getId()_refreshTable);
+    maf_filter_prepareFiltersSelector('_@table.getId()_filterContainer','_@table.getId()_filterSelector' + newIndex, _@table.getId()_filterConfig, _@table.getId()_refreshTable);
+    maf_filter_updateFilterContainer('_@table.getId()_filterContainer', '_@table.getId()_filterSelector' + newIndex, _@table.getId()_filterConfig, _@table.getId()_refreshTable, true);
+    
+    // store the new index
+    _@table.getId()_currentFilterConfigurationIndex = newIndex;
+}
 
 function _@table.getId()_refreshTable(){
 
@@ -130,7 +167,8 @@ function _@table.getId()_getData(){
     return {
         "userColumnConfiguration" : _@table.getId()_filterConfig.userColumnConfiguration,
         "currentPage"  : _@table.getId()_filterConfig.currentPage,
-        "selectedRows" : _@table.getId()_filterConfig.selectedRows
+        "selectedRows" : _@table.getId()_filterConfig.selectedRows,
+        "selectableColumns" : _@table.getId()_filterConfig.selectableColumns
     };
 }
 

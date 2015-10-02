@@ -21,10 +21,10 @@ var _@{field_id}_editable_cache={};
 if('@field_value'!=''){
     $.get("@{url}?value=@field_value@Html(contextQueryString)", function( data ) {
         _@{field_id}_editable_cache[data.value]=data;
-        maf_activateEditable_for_autocomplete(_@{field_id}_editable_cache,"@{field_id}", "@{field_value}", "@fieldLabel", "@url","@Html(contextQueryString)");
+        maf_activateEditable_for_autocomplete(_@{field_id}_editable_cache, "", "@{field_id}", "@{field_value}", "@fieldLabel", "@url","@Html(contextQueryString)");
     });
 }else{
-    maf_activateEditable_for_autocomplete(_@{field_id}_editable_cache,"@{field_id}", "@{field_value}", "@fieldLabel", "@url","@Html(contextQueryString)");
+    maf_activateEditable_for_autocomplete(_@{field_id}_editable_cache, "", "@{field_id}", "@{field_value}", "@fieldLabel", "@url","@Html(contextQueryString)");
 }
 </script>
 @*********************************************************
