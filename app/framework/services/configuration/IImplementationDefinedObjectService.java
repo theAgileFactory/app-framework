@@ -79,6 +79,13 @@ public interface IImplementationDefinedObjectService {
     public Call getRouteForSwitchingTopMenuBarPerspective(String key);
 
     /**
+     * Return true if the save capability is active for the filter config tables
+     * (the corresponding "getRouteForFilterConfiguration" should return the
+     * filterConfigController actions).
+     */
+    public boolean isFilterConfigurationActive();
+
+    /**
      * Get the route for the create action of filter configuration.
      */
     public Call getRouteForFilterConfigurationCreate();

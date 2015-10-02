@@ -20,8 +20,11 @@
     pagination: framework.utils.Pagination[_],
     filterConfig: framework.utils.FilterConfig[_],
     filterUrl: String,
-    exportAsExcelUrl: String=null)
+    exportAsExcelUrl: String=null
+)
+
 @import framework_views.parts
+@import framework_views.parts.commons._
 
 @if(table.getValues()!=null){
 
@@ -40,9 +43,11 @@
     </ul>
   </div>
   <div class="col-md-3">
-    <div style="margin-bottom: 10px;" class=" text-right" id="_@table.getId()_filterConfiguration">
-      @filter_configuration_selector(table.getId(), request.uri, filterConfig.getSelectedFilterConfiguration)
-    </div>
+    @if(_implementationDefinedObjectService.isFilterConfigurationActive) {
+      <div style="margin-bottom: 10px;" class=" text-right" id="_@table.getId()_filterConfiguration">
+        @filter_configuration_selector(table.getId(), request.uri, filterConfig.getSelectedFilterConfiguration)
+      </div>
+    }
     <div class="row">
       <div class="col-md-8 text-right" id="_@table.getId()_currentFilterConfiguration">
         <span id="_@table.getId()_ajax_wait"></span>
