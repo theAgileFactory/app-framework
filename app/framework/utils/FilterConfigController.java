@@ -331,7 +331,9 @@ public class FilterConfigController extends Controller {
 
         if (query != null) {
 
-            query = "%" + query.trim() + "%";
+            if (!query.equals("*")) {
+                query = "*" + query.trim() + "*";
+            }
 
             try {
 
