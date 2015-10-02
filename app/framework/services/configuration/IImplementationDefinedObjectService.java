@@ -17,8 +17,6 @@
  */
 package framework.services.configuration;
 
-import framework.commons.DataType;
-import framework.services.plugins.PluginConfiguratorController;
 import models.framework_models.common.DynamicSingleItemCustomAttributeValue;
 import play.mvc.Call;
 

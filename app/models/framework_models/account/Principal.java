@@ -42,6 +42,7 @@ import framework.utils.formats.DateType;
 import models.framework_models.common.FilterConfiguration;
 import models.framework_models.parent.IModel;
 import models.framework_models.parent.IModelConstants;
+import models.framework_models.workspace.WorkspaceMember;
 
 /**
  * This entity represents an user of the system.<br/>
@@ -437,8 +438,8 @@ public class Principal extends Model implements IModel {
      * @return list of {@link Notification}
      */
     public List<Notification> getNotReadMessages() {
-        return Notification.find.where().eq("deleted", false).eq("isMessage", true).eq("isRead", false).eq("principal.id", this.id).orderBy("creationDate desc")
-                .setMaxRows(5).findList();
+        return Notification.find.where().eq("deleted", false).eq("isMessage", true).eq("isRead", false).eq("principal.id", this.id)
+                .orderBy("creationDate desc").setMaxRows(5).findList();
     }
 
     /**
