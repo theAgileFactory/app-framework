@@ -1,0 +1,335 @@
+@* LICENSE
+ *
+ * Copyright (c) 2015, The Agile Factory SA and/or its affiliates. All rights
+ * reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ *@
+
+@(
+  tableId: String,
+  route: String,
+  filterConfiguration: models.framework_models.common.FilterConfiguration
+)
+
+@import framework_views.parts
+@import framework_views.parts.commons._
+
+@availableFilterConfigurations=@{
+    models.framework_models.common.FilterConfiguration.getAvailableFilterConfiguration(filterConfiguration.principal.uid, filterConfiguration.dataType)
+}
+
+@if(filterConfiguration.isShared) {
+    @parts.Msg("object.filter_configuration.shared_filter.title", filterConfiguration.name, filterConfiguration.principal.uid)
+} else {
+
+<form>
+    <div class="input-group">
+        <select class="form-control input-sm" id="_@(tableId)_filter_configuration_selector">
+          @for(availableFilterConfiguration <- availableFilterConfigurations) {
+            <option data-isdefault="@availableFilterConfiguration.isDefault" @if(availableFilterConfiguration.id.equals(filterConfiguration.id)) { selected } value="@availableFilterConfiguration.id">@parts.Msg(availableFilterConfiguration.name)</option>
+          }
+        </select>
+        
+        <span class="input-group-btn">
+            <a href="#" class="btn btn-light btn-sm" id="_@(tableId)_filter_configuration_save"><i class="glyphicons glyphicons-floppy-saved"></i></a>
+            @if(!filterConfiguration.isDefault) {
+              <a href="#" class="btn btn-light btn-sm" id="_@(tableId)_filter_configuration_reload"><i class="glyphicons glyphicons-refresh"></i></a>
+              <a href="#" class="btn btn-light btn-sm" id="_@(tableId)_filter_configuration_edit"><i class="glyphicons glyphicons-edit"></i></a>
+              <a href="#" class="btn btn-light btn-sm" id="_@(tableId)_filter_configuration_delete"><i class="glyphicons glyphicons-bin"></i></a>
+              <a href="#" class="btn btn-light btn-sm" id="_@(tableId)_filter_configuration_share"><i class="glyphicons glyphicons-share-alt"></i></a>
+            }
+        </span>
+    </div>
+</form>
+
+@* the modal for the share action *@
+<div id="_@(tableId)_filter_configuration_share_popup" class="modal fade text-left" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">X</button>
+                <h4 class="modal-title">@parts.Msg("object.filter_configuration.share.title")</h4>
+            </div>
+            <div class="modal-body">
+            
+                <p>@parts.Msg("object.filter_configuration.share.header")</p>
+
+                <form id="_@(tableId)_filter_configuration_share_popup_form" method="POST" action="#">
+                
+                    <div class="form-group">
+                        <label class="control-label" for="_@(tableId)_filter_configuration_share_popup_recipient">
+                           @parts.Msg("object.filter_configuration.share.recipient")
+                        </label>
+                        <p>
+                            <a href="#" id="__@(tableId)_filter_configuration_share_popup_recipient_editable"></a>
+                        </p>
+                        <input type="hidden" id="_@(tableId)_filter_configuration_share_popup_recipient" name="_@(tableId)_filter_configuration_share_popup_recipient" value=""/>
+                        <input type="hidden" id="_@(tableId)_filter_configuration_share_popup_recipient_content" name="_@(tableId)_filter_configuration_share_popup_recipient_content" value=""/>
+                        <span class="help-block"><strong id="_@(tableId)_filter_configuration_share_popup_recipient_error"></strong></span>
+                    </div>
+                    @parts.autocomplete_javascript(
+                        Some(""), 
+                        "_"+tableId+"_filter_configuration_share_popup_recipient", 
+                        parts.Msg.asString("object.filter_configuration.share.recipient"), 
+                        _implementationDefinedObjectService.getRouteForFilterConfigurationSearchPrincipal.url, 
+                        ""
+                    )
+                    <input type="submit" class="btn btn-primary" value="@parts.Msg("button.share")">
+            
+                </form>
+                
+                <br/>
+                <p><strong id="_@(tableId)_filter_configuration_share_popup_recipient_success"></strong></p>
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    @* store in a JS array all available configuration, the index represent the ids *@
+    var _@(tableId)_filterConfigurations = new Array();
+    @for(availableFilterConfiguration <- availableFilterConfigurations) {
+        _@(tableId)_filterConfigurations[@availableFilterConfiguration.id] = @Html(availableFilterConfiguration.configuration);
+    }
+    
+    @* call when the user changes the selected filter in the list *@
+    $("#_@(tableId)_filter_configuration_selector").change(function() {
+
+        var id = $(this).val();
+
+        //set waiting icon
+        $("#_@(tableId)_filterConfiguration").html('<img src="@framework.utils.Utilities.getAjaxWaitImageUrl()"/>');
+
+        $.ajax({
+            type: 'POST',
+            contentType: "application/json; charset=utf-8",
+            url: '@_implementationDefinedObjectService.getRouteForFilterConfigurationChange.url',
+            data: JSON.stringify({ 'tableId' : '@(tableId)', 'route' : "@route", 'filterConfigurationId' : id }),
+            cache : false,
+            error: function(jqXHR, textStatus, errorThrown) {
+                alert("@parts.Msg("filter.table.ajax.error.message")");
+            }
+        }).done(function(result) {
+            @* the action return the new filter area *@
+            $("#_@(tableId)_filterConfiguration").html(result);
+            
+            @* reload the table with the new configuration *@
+            _@(tableId)_filterConfig=_@(tableId)_filterConfigurations[id];
+            _@(tableId)_fullRefresh();
+        });
+
+    })
+
+    @* add editable event to the save button, it is triggered only when the current selected filter is the default and
+       if the user clicks on the button *@
+    $("#_@(tableId)_filter_configuration_save").editable({
+        title : "@parts.Msg("object.filter_configuration.name.title")",
+        type : 'text',
+        placement : 'left',
+        toggle: 'manual',
+        validate: function(value) {
+            if($.trim(value) == '') {
+                return "@parts.Msg("object.filter_configuration.name.error")";
+            }
+        },
+        success: function(response, name) {
+            
+            //set waiting icon
+            $("#_@(tableId)_filterConfiguration").html('<img src="@framework.utils.Utilities.getAjaxWaitImageUrl()"/>');
+
+            $.ajax({
+                type: 'POST',
+                contentType: "application/json; charset=utf-8",
+                url: '@_implementationDefinedObjectService.getRouteForFilterConfigurationCreate.url',
+                data: JSON.stringify({ 'dataType' : '@(filterConfiguration.dataType)', 'tableId' : '@(tableId)', 'route' : "@route",  'name' : name }),
+                cache : false,
+                error: function(jqXHR, textStatus, errorThrown) {
+                    alert("@parts.Msg("filter.table.ajax.error.message")");
+                }
+            }).done(function(result) {
+                @* the action return the new filter area *@
+                $("#_@(tableId)_filterConfiguration").html(result);
+            });
+
+        }
+    });
+
+    @* call when the user clicks on the save button *@
+    $("#_@(tableId)_filter_configuration_save").click(function(event) {
+        
+        event.preventDefault();
+        event.stopPropagation();
+        
+        var id = $("#_@(tableId)_filter_configuration_selector").val();
+        var isDefault = $("#_@(tableId)_filter_configuration_selector").find(':selected').data('isdefault');
+        
+        if (isDefault) {
+            $("#_@(tableId)_filter_configuration_save").editable('toggle');
+        } else {
+            
+            //set waiting icon
+            $("#_@(tableId)_filterConfiguration").html('<img src="@framework.utils.Utilities.getAjaxWaitImageUrl()"/>');
+
+            $.ajax({
+                type: 'POST',
+                contentType: "application/json; charset=utf-8",
+                url: '@_implementationDefinedObjectService.getRouteForFilterConfigurationSave.url',
+                data: JSON.stringify({ 'tableId' : '@(tableId)', 'route' : "@route", 'filterConfigurationId' : id }),
+                cache : false,
+                error: function(jqXHR, textStatus, errorThrown) {
+                    alert("@parts.Msg("filter.table.ajax.error.message")");
+                }
+            }).done(function(result) {
+                @* the action return the new filter area *@
+                $("#_@(tableId)_filterConfiguration").html(result);
+            });
+
+        }
+    })
+    
+    @* call when the user clicks on the reload button *@
+    $("#_@(tableId)_filter_configuration_reload").click(function(event) {
+        
+        event.preventDefault();
+        event.stopPropagation();
+
+        _@(tableId)_filterConfig=@Html(filterConfiguration.configuration);
+        _@(tableId)_fullRefresh();
+
+    })
+    
+    @* add editable event to the edit button, it is triggered if the user clicks on the button *@
+    $("#_@(tableId)_filter_configuration_edit").editable({
+        title : "@parts.Msg("object.filter_configuration.name.title")",
+        type : 'text',
+        placement : 'left',
+        toggle: 'manual',
+        defaultValue: "@filterConfiguration.name",
+        validate: function(value) {
+            if($.trim(value) == '') {
+                return "@parts.Msg("object.filter_configuration.name.error")";
+            }
+        },
+        success: function(response, name) {
+            
+            //set waiting icon
+            $("#_@(tableId)_filterConfiguration").html('<img src="@framework.utils.Utilities.getAjaxWaitImageUrl()"/>');
+
+            $.ajax({
+                type: 'POST',
+                contentType: "application/json; charset=utf-8",
+                url: '@_implementationDefinedObjectService.getRouteForFilterConfigurationEdit.url',
+                data: JSON.stringify({ 'filterConfigurationId' : @filterConfiguration.id, 'tableId' : '@(tableId)', 'route' : "@route", 'name' : name }),
+                cache : false,
+                error: function(jqXHR, textStatus, errorThrown) {
+                    alert("@parts.Msg("filter.table.ajax.error.message")");
+                }
+            }).done(function(result) {
+                @* the action return the new filter area *@
+                $("#_@(tableId)_filterConfiguration").html(result);
+            });
+
+        }
+    });
+    
+    @* call when the user clicks on the edit button *@
+    $("#_@(tableId)_filter_configuration_edit").click(function(event) {
+        
+        event.preventDefault();
+        event.stopPropagation();
+        
+        $("#_@(tableId)_filter_configuration_edit").editable('toggle');
+        
+    });
+    
+    @* call when the user clicks on the delete button *@
+    $("#_@(tableId)_filter_configuration_delete").click(function(event) {
+        
+        event.preventDefault();
+        event.stopPropagation();
+        
+        if(confirm("@parts.Msg("object.filter_configuration.delete.confirmation")")) {
+            
+            //set waiting icon
+            $("#_@(tableId)_filterConfiguration").html('<img src="@framework.utils.Utilities.getAjaxWaitImageUrl()"/>');
+
+            $.ajax({
+                type: 'POST',
+                contentType: "application/json; charset=utf-8",
+                url: '@_implementationDefinedObjectService.getRouteForFilterConfigurationDelete.url',
+                data: JSON.stringify({ 'tableId' : '@(tableId)', 'route' : "@route", 'filterConfigurationId' : @filterConfiguration.id }),
+                cache : false,
+                error: function(jqXHR, textStatus, errorThrown) {
+                    alert("@parts.Msg("filter.table.ajax.error.message")");
+                }
+            }).done(function(result) {
+                @* the action return the new filter area *@
+                $("#_@(tableId)_filterConfiguration").html(result);
+            });
+        }
+    });
+    
+    @* call when the user clicks on the share button *@
+    $("#_@(tableId)_filter_configuration_share").click(function(event) {
+        
+        event.preventDefault();
+        event.stopPropagation();
+        
+        $("#_@(tableId)_filter_configuration_share_popup_recipient_error").html('');
+        $("#_@(tableId)_filter_configuration_share_popup_recipient_success").html('');
+        
+        $('#_@(tableId)_filter_configuration_share_popup').modal('show');
+        
+    });
+    
+    @* call when the share form is submitted by the user *@
+    $( "#_@(tableId)_filter_configuration_share_popup_form" ).submit(function( event ) {
+
+        event.preventDefault();
+        event.stopPropagation();
+        
+        if($("#_@(tableId)_filter_configuration_share_popup_recipient").val() != '') {
+            
+            $("#_@(tableId)_filter_configuration_share_popup_recipient_error").html('');
+            
+             $.ajax({
+                 type: 'POST',
+                 contentType: "application/json; charset=utf-8",
+                 url: '@_implementationDefinedObjectService.getRouteForFilterConfigurationShare.url',
+                 data: JSON.stringify({ 'filterConfigurationId' : @filterConfiguration.id, 'recipient' : $("#_@(tableId)_filter_configuration_share_popup_recipient").val(), 'route' : "@route" }),
+                 cache : false,
+                 error: function(jqXHR, textStatus, errorThrown) {
+                     alert("@parts.Msg("filter.table.ajax.error.message")");
+                 }
+             }).done(function(result) {
+                $("#_@(tableId)_filter_configuration_share_popup_recipient_success").html("@parts.Msg("object.filter_configuration.share.successful")");
+             });
+
+
+        } else {
+            $("#_@(tableId)_filter_configuration_share_popup_recipient_error").html("@parts.Msg("error.required")");
+        }
+        
+    });
+    
+    function _@(tableId)_fullRefresh() {
+        _@(tableId)_drawCurrentFilterConfiguration();
+        _@(tableId)_refreshTable(); 
+    }
+
+</script>
+
+}
