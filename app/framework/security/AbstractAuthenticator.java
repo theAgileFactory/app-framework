@@ -419,7 +419,7 @@ public abstract class AbstractAuthenticator extends SecureController implements 
                 + getLocalRoutes().getCallbackRoute().url();
         final FormClient formClient = new FormClient(getLocalRoutes().getDisplayStandaloneLoginFormRoute().url(),
                 new LightAuthenticationUserPasswordAuthenticator(getAuthenticationAccountReader()), new UsernameProfileCreator());
-        formClient.setUsernameParameter("uid");
+        formClient.setUsernameParameter("username");
         formClient.setPasswordParameter("password");
         final Clients clients = new Clients(casCallbackUrl, formClient);
         Config.setClients(clients);
