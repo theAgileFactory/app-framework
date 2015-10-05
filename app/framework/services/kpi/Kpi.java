@@ -189,6 +189,14 @@ public class Kpi {
      */
     private void initScheduler() {
 
+        // run at start the computation of values
+        getKpiService().getSysAdminUtils().scheduleOnce(false, "INITIAL_" + getUid(), Duration.create(1, TimeUnit.MINUTES), new Runnable() {
+            @Override
+            public void run() {
+                storeValues();
+            }
+        });
+
         String time = kpiDefinition.schedulerStartTime;
         Date today = new Date();
         Calendar calendar = Calendar.getInstance();
@@ -204,8 +212,8 @@ public class Kpi {
 
         FiniteDuration frequency = FiniteDuration.create(kpiDefinition.schedulerFrequency, TimeUnit.MINUTES);
 
-        scheduler = getKpiService().getSysAdminUtils().scheduleRecurring(true, "KPI " + getUid(),
-                Duration.create(howMuchMinutesUntilStartTime, TimeUnit.MINUTES), frequency, new Runnable() {
+        scheduler = getKpiService().getSysAdminUtils().scheduleRecurring(false, getUid(), Duration.create(howMuchMinutesUntilStartTime, TimeUnit.MINUTES),
+                frequency, new Runnable() {
                     @Override
                     public void run() {
                         storeValues();
