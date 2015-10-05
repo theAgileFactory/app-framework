@@ -141,7 +141,7 @@ public class AbstractApiController extends Controller implements IApiConstants {
         return getApiControllerUtilsService().getJsonResponse(obj, code, response());
     }
 
-    private IApiControllerUtilsService getApiControllerUtilsService() {
+    protected IApiControllerUtilsService getApiControllerUtilsService() {
         return apiControllerUtilsService;
     }
 }
