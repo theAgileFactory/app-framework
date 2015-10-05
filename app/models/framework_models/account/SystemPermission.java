@@ -163,8 +163,6 @@ public class SystemPermission extends Model implements ISelectableValueHolder<Lo
      * the class (as a static final variable).<br/>
      * This is required in order to avoid inconsistencies between the code and
      * the database content.
-     * 
-     * @return a boolean
      */
     public static boolean checkPermissions(Class<?> permissionClass) {
         List<SystemPermission> systemPermissions = find.where().eq("deleted", false).findList();
