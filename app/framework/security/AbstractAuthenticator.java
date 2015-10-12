@@ -23,6 +23,9 @@ import org.pac4j.saml.credentials.Saml2Credentials;
 import be.objectify.deadbolt.java.actions.SubjectPresent;
 import framework.commons.IFrameworkConstants;
 import framework.commons.IFrameworkConstants.AuthenticationMode;
+import framework.security.bizdock_sso.BizDockSSOAuthenticatorImpl;
+import framework.security.bizdock_sso.BizDockSSOClient;
+import framework.security.bizdock_sso.BizDockSSOProfileCreator;
 import framework.services.ServiceStaticAccessor;
 import framework.services.account.IAccountManagerPlugin;
 import framework.services.account.IAuthenticationAccountReaderPlugin;
@@ -35,6 +38,7 @@ import framework.services.session.IUserSessionManagerPlugin;
 import framework.utils.Utilities;
 import play.Configuration;
 import play.Logger;
+import play.cache.CacheApi;
 import play.libs.F.Function0;
 import play.libs.F.Promise;
 import play.mvc.Call;
@@ -46,6 +50,7 @@ public abstract class AbstractAuthenticator extends SecureController implements 
     public static final String REDIRECT_URL_COOKIE_NAME = "bzr";
     private static Logger.ALogger log = Logger.of(AbstractAuthenticator.class);
     private Configuration configuration;
+    private CacheApi cache;
     private IUserSessionManagerPlugin userSessionManagerPlugin;
     private IAccountManagerPlugin accountManagerPlugin;
     private AuthenticationMode authenticationMode;
@@ -68,12 +73,13 @@ public abstract class AbstractAuthenticator extends SecureController implements 
      * @param authenticationMode
      * @throws MalformedURLException
      */
-    public AbstractAuthenticator(Configuration configuration, IUserSessionManagerPlugin userSessionManagerPlugin, IAccountManagerPlugin accountManagerPlugin,
-            IAuthenticationAccountReaderPlugin authenticationAccountReader, IInstanceAccessSupervisor instanceAccessSupervisor,
-            IPreferenceManagerPlugin preferenceManagerPlugin, II18nMessagesPlugin i18nMessagesPlugin, AuthenticationMode authenticationMode,
-            IAuthenticationLocalRoutes localRoutes) throws MalformedURLException {
+    public AbstractAuthenticator(Configuration configuration, CacheApi cache, IUserSessionManagerPlugin userSessionManagerPlugin,
+            IAccountManagerPlugin accountManagerPlugin, IAuthenticationAccountReaderPlugin authenticationAccountReader,
+            IInstanceAccessSupervisor instanceAccessSupervisor, IPreferenceManagerPlugin preferenceManagerPlugin, II18nMessagesPlugin i18nMessagesPlugin,
+            AuthenticationMode authenticationMode, IAuthenticationLocalRoutes localRoutes) throws MalformedURLException {
         super();
         this.configuration = configuration;
+        this.cache = cache;
         this.authenticationMode = authenticationMode;
         this.userSessionManagerPlugin = userSessionManagerPlugin;
         this.accountManagerPlugin = accountManagerPlugin;
@@ -414,17 +420,32 @@ public abstract class AbstractAuthenticator extends SecureController implements 
      */
     private void initStandaloneAuthentication() {
         log.info(">>>>>>>>>>>>>>>> Initialize Standalone Authentication mode");
-        getPreferenceManagerPlugin().getPreferenceValueAsString(IFrameworkConstants.PUBLIC_URL_PREFERENCE);
-        String casCallbackUrl = getPreferenceManagerPlugin().getPreferenceElseConfigurationValue(IFrameworkConstants.PUBLIC_URL_PREFERENCE, "maf.public.url")
-                + getLocalRoutes().getCallbackRoute().url();
+
         final FormClient formClient = new FormClient(getLocalRoutes().getDisplayStandaloneLoginFormRoute().url(),
                 new LightAuthenticationUserPasswordAuthenticator(getAuthenticationAccountReader()), new UsernameProfileCreator());
         formClient.setUsernameParameter("username");
         formClient.setPasswordParameter("password");
-        final Clients clients = new Clients(casCallbackUrl, formClient);
+
+        BizDockSSOClient bizDockSSOClient = null;
+        if (getConfiguration().getBoolean("maf.authentication.bizdock_sso.is_active")) {
+            bizDockSSOClient = new BizDockSSOClient(this.cache, getLocalRoutes().getDisplayStandaloneLoginFormRoute().url(),
+                    new BizDockSSOAuthenticatorImpl(), new BizDockSSOProfileCreator());
+        }
+
+        String casCallbackUrl = getPreferenceManagerPlugin().getPreferenceElseConfigurationValue(IFrameworkConstants.PUBLIC_URL_PREFERENCE, "maf.public.url")
+                + getLocalRoutes().getCallbackRoute().url();
+
+        Clients clients = null;
+        if (bizDockSSOClient != null) {
+            clients = new Clients(casCallbackUrl, formClient, bizDockSSOClient);
+        } else {
+            clients = new Clients(casCallbackUrl, formClient);
+        }
+
         Config.setClients(clients);
         Config.setProfileTimeout(getConfiguration().getInt("standalone.sso.profile.timeout"));
         Config.setDefaultSuccessUrl(getLocalRoutes().getRedirectToThePreviouslySavedUrl().url());
+
         log.info(">>>>>>>>>>>>>>>> Initialize Standalone Authentication mode (end)");
     }
 
