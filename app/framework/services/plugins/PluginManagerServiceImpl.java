@@ -55,10 +55,10 @@ import framework.commons.DataType;
 import framework.commons.IFrameworkConstants;
 import framework.commons.message.EventMessage;
 import framework.commons.message.EventMessage.MessageType;
-import framework.services.account.IPreferenceManagerPlugin;
 import framework.services.actor.IActorSystemPlugin;
 import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.database.IDatabaseDependencyService;
+import framework.services.email.IEmailService;
 import framework.services.ext.IExtension;
 import framework.services.ext.IExtensionManagerService;
 import framework.services.ext.api.IExtensionDescriptor.IPluginDescriptor;
@@ -96,7 +96,7 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
     private II18nMessagesPlugin messagesPlugin;
     private ISharedStorageService sharedStorageService;
     private IExtensionManagerService extensionManagerService;
-    private IPreferenceManagerPlugin preferenceManagerPlugin;
+    private IEmailService emailService;
     private Configuration configuration;
 
     /**
@@ -144,21 +144,21 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
      * @param extensionManagerService
      *            the extension manager to be used to "load" the plugin
      *            instances
-     * @param preferenceManagerPlugin
-     *            the plugin which is managing preferences
      * @param configuration
      *            the play configuration
+     * @param emailService
+     *            the email service
      */
     @Inject
     public PluginManagerServiceImpl(ApplicationLifecycle lifecycle, IActorSystemPlugin actorSystemPlugin, ISysAdminUtils sysAdminUtils,
             II18nMessagesPlugin messagesPlugin, IDatabaseDependencyService databaseDependencyService, ISharedStorageService sharedStorageService,
-            IExtensionManagerService extensionManagerService, IPreferenceManagerPlugin preferenceManagerPlugin, Configuration configuration) {
+            IExtensionManagerService extensionManagerService, Configuration configuration, IEmailService emailService) {
         log.info("SERVICE>>> PluginManagerServiceImpl starting...");
         this.messagesPlugin = messagesPlugin;
         this.sharedStorageService = sharedStorageService;
         this.extensionManagerService = extensionManagerService;
-        this.preferenceManagerPlugin = preferenceManagerPlugin;
         this.configuration = configuration;
+        this.emailService = emailService;
         pluginByIds = Collections.synchronizedMap(new HashMap<Long, PluginRegistrationEntry>());
         createActors(actorSystemPlugin.getActorSystem());
         lifecycle.addStopHook(() -> {
@@ -403,7 +403,7 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
             String pluginIdentifier = pluginConfiguration.pluginDefinition.identifier;
             IPluginDescriptor pluginDescriptor = getExtensionPlugins().get(pluginIdentifier).getRight();
             IPluginContext pluginContext = new PluginContextImpl(pluginConfiguration, pluginDescriptor, this, this, getSharedStorageService(),
-                    getPreferenceManagerPlugin(), getConfiguration());
+                    getConfiguration(), getEmailService());
             Triple<IPluginRunner, Object, Map<DataType, Object>> plugin = getExtensionManagerService().loadAndInitPluginInstance(pluginIdentifier,
                     pluginConfiguration.id, pluginContext);
             log.info(String.format("The class for the plugin %d has been found and instanciated", pluginConfiguration.id));
@@ -799,12 +799,12 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
         return extensionManagerService;
     }
 
-    private IPreferenceManagerPlugin getPreferenceManagerPlugin() {
-        return preferenceManagerPlugin;
-    }
-
     private Configuration getConfiguration() {
         return configuration;
+    }
+    
+    private IEmailService getEmailService() {
+        return emailService;
     }
 
     /**

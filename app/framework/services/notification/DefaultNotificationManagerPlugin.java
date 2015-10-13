@@ -44,7 +44,7 @@ import framework.services.account.IAccountManagerPlugin;
 import framework.services.account.IPreferenceManagerPlugin;
 import framework.services.account.IUserAccount;
 import framework.services.actor.IActorSystemPlugin;
-import framework.utils.EmailUtils;
+import framework.services.email.IEmailService;
 import framework.utils.Utilities;
 import models.framework_models.account.Notification;
 import models.framework_models.account.NotificationCategory;
@@ -101,6 +101,8 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
     private IPreferenceManagerPlugin preferenceManagerPlugin;
 
     private IAccountManagerPlugin accountManagerPlugin;
+    
+    private IEmailService emailService;
 
     private ActorRef supervisorActor;
 
@@ -146,11 +148,13 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
      *            the preference manager service
      * @param accountManagerPlugin
      *            the account manager service
+     * @param emailService
+     *            the email service
      * 
      */
     @Inject
     public DefaultNotificationManagerPlugin(ApplicationLifecycle lifecycle, Configuration configuration, IActorSystemPlugin actorSystemPlugin,
-            IPreferenceManagerPlugin preferenceManagerPlugin, IAccountManagerPlugin accountManagerPlugin) {
+            IPreferenceManagerPlugin preferenceManagerPlugin, IAccountManagerPlugin accountManagerPlugin, IEmailService emailService) {
         log.info("SERVICE>>> DefaultNotificationManagerPlugin starting...");
         this.poolSize = configuration.getInt(Config.NOTIFICATION_POOL_SIZE.getConfigurationKey());
         this.notificationRetryDuration = configuration.getString(Config.RETRY_DURATION.getConfigurationKey());
@@ -158,6 +162,7 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
         this.configuration = configuration;
         this.preferenceManagerPlugin = preferenceManagerPlugin;
         this.accountManagerPlugin = accountManagerPlugin;
+        this.emailService = emailService;
         createActors(actorSystemPlugin.getActorSystem());
         lifecycle.addStopHook(() -> {
             log.info("SERVICE>>> DefaultNotificationManagerPlugin stopping...");
@@ -180,7 +185,7 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
     private void createActors(ActorSystem actorSystem) {
         SupervisorStrategy strategy = getSupervisorStrategy(getNotificationRetryNumber(), getNotificationRetryDuration());
         this.supervisorActor = actorSystem.actorOf((new RoundRobinPool(getPoolSize())).withSupervisorStrategy(strategy)
-                .props(Props.create(new NotificationMessageProcessingActorCreator(getConfiguration(), getPreferenceManagerPlugin()))), SUPERVISOR_ACTOR_NAME);
+                .props(Props.create(new NotificationMessageProcessingActorCreator(getConfiguration(), getPreferenceManagerPlugin(), getEmailService()))), SUPERVISOR_ACTOR_NAME);
         log.info("Actor based notification system is started");
     }
 
@@ -385,6 +390,11 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
     private Configuration getConfiguration() {
         return configuration;
     }
+    
+    private IEmailService getEmailService() {
+        return emailService;
+    }
+   
 
     /**
      * A creator class for the actor {@link NotificationMessageProcessingActor}
@@ -395,15 +405,17 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
         private static final long serialVersionUID = 4075638451954038626L;
         private IPreferenceManagerPlugin preferenceManagerPlugin;
         private Configuration configuration;
+        private IEmailService emailService;
 
-        public NotificationMessageProcessingActorCreator(Configuration configuration, IPreferenceManagerPlugin preferenceManagerPlugin) {
+        public NotificationMessageProcessingActorCreator(Configuration configuration, IPreferenceManagerPlugin preferenceManagerPlugin, IEmailService emailService) {
             this.configuration = configuration;
             this.preferenceManagerPlugin = preferenceManagerPlugin;
+            this.emailService = emailService;
         }
 
         @Override
         public NotificationMessageProcessingActor create() throws Exception {
-            return new NotificationMessageProcessingActor(getConfiguration(), getPreferenceManagerPlugin());
+            return new NotificationMessageProcessingActor(getConfiguration(), getPreferenceManagerPlugin(), getEmailService());
         }
 
         private IPreferenceManagerPlugin getPreferenceManagerPlugin() {
@@ -413,6 +425,11 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
         private Configuration getConfiguration() {
             return configuration;
         }
+        
+        private IEmailService getEmailService() {
+            return emailService;
+        }
+        
     }
 
     /**
@@ -425,10 +442,12 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
     public static class NotificationMessageProcessingActor extends UntypedActor {
         private Configuration configuration;
         private IPreferenceManagerPlugin preferenceManagerPlugin;
+        private IEmailService emailService;
 
-        public NotificationMessageProcessingActor(Configuration configuration, IPreferenceManagerPlugin preferenceManagerPlugin) {
+        public NotificationMessageProcessingActor(Configuration configuration, IPreferenceManagerPlugin preferenceManagerPlugin, IEmailService emailService) {
             this.configuration = configuration;
             this.preferenceManagerPlugin = preferenceManagerPlugin;
+            this.emailService = emailService;
         }
 
         @Override
@@ -468,7 +487,7 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
                             }
                         }
 
-                        EmailUtils.sendEmail(getPreferenceManagerPlugin(), "BizDock - " + notificationToSend.getTitle(),
+                         getEmailService().sendEmail("BizDock - " + notificationToSend.getTitle(),
                                 getConfiguration().getString("maf.email.from"),
                                 Utilities.renderFullViewI18n("views.html.framework_views.parts.mail.notification_html", userAccount.getFirstName(),
                                         notificationToSend.getMessage(), link).body(),
@@ -513,6 +532,11 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
         private Configuration getConfiguration() {
             return configuration;
         }
+        
+        private IEmailService getEmailService() {
+            return emailService;
+        }
+        
     }
 
     /**
