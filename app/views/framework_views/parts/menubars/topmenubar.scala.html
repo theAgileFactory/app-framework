@@ -72,7 +72,7 @@
                             @if(menuItem.restrict()){
                                 @if(menuItem.hasSubMenuItems()){
                                     <li class="dropdown" id="topmenubar-item-@index">
-                                      <a href="#" class="text-center dropdown-toggle" style="padding-bottom: 5px; padding-top: 6px;" data-toggle="dropdown">
+                                      <a href="#" class="text-center dropdown-toggle @if(menuItem.isImportant()) {bg-success}" style="padding-bottom: 5px; padding-top: 6px;" data-toggle="dropdown">
                                         <i class="@menuItem.getCssIcon" style="font-size:1.3em;"></i>&nbsp;<b class="caret"></b><br/><small>@parts.Msg(menuItem.getLabel())</small>
                                       </a>
                                       <ul class="dropdown-menu">
@@ -100,7 +100,7 @@
                                     </li>
                                 }else{
                                     @if(!menuItem.isSeparator()){
-                                        <li id="topmenubar-item-@index"><a class="text-center" style="padding-bottom: 5px; padding-top: 6px;" id="topmenubar-@menuItem.getUuid()" href="@menuItem.getActionUrl()">
+                                        <li id="topmenubar-item-@index"><a class="text-center @if(menuItem.isImportant()) {bg-success}" style="padding-bottom: 5px; padding-top: 6px;" id="topmenubar-@menuItem.getUuid()" href="@menuItem.getActionUrl()">
                                             <i class="@menuItem.getCssIcon" style="font-size:1.3em;"></i><br/><small>@parts.Msg(menuItem.getLabel())</small>
                                         </a></li>
                                     }else{
