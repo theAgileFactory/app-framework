@@ -17,7 +17,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import framework.services.account.IPreferenceManagerPlugin;
 import framework.services.database.IDatabaseDependencyService;
 import framework.services.system.ISysAdminUtils;
-import framework.utils.EmailUtils;
 import play.Configuration;
 import play.Logger;
 import play.inject.ApplicationLifecycle;
@@ -31,7 +30,7 @@ public class EmailServiceImpl implements IEmailService {
     private IPreferenceManagerPlugin preferenceManagerPlugin;
     private ISysAdminUtils sysAdminUtils;
     private boolean simulateEmailSending;
-    
+
     /**
      * Create a new EmailServiceImpl
      * 
@@ -43,20 +42,22 @@ public class EmailServiceImpl implements IEmailService {
      *            the service which secure the availability of the database
      */
     @Inject
-    public EmailServiceImpl(ApplicationLifecycle lifecycle, Configuration configuration, IDatabaseDependencyService databaseDependencyService, IPreferenceManagerPlugin preferenceManagerPlugin, ISysAdminUtils sysAdminUtils){
-    	log.info("SERVICE>>> EmailServiceImpl starting...");
-    	this.configuration = configuration;
-    	this.preferenceManagerPlugin = preferenceManagerPlugin;
-    	this.sysAdminUtils = sysAdminUtils;
-    	this.simulateEmailSending = getConfiguration().getBoolean("maf.email.simulation");
+    public EmailServiceImpl(ApplicationLifecycle lifecycle, Configuration configuration, IDatabaseDependencyService databaseDependencyService,
+            IPreferenceManagerPlugin preferenceManagerPlugin, ISysAdminUtils sysAdminUtils) {
+        log.info("SERVICE>>> EmailServiceImpl starting...");
+        this.configuration = configuration;
+        this.preferenceManagerPlugin = preferenceManagerPlugin;
+        this.sysAdminUtils = sysAdminUtils;
+        this.simulateEmailSending = getConfiguration().getBoolean("maf.email.simulation");
         lifecycle.addStopHook(() -> {
             log.info("SERVICE>>> SysAdminUtilsImpl stopping...");
             log.info("SERVICE>>> SysAdminUtilsImpl stopped");
-            return Promise.pure(null);});
+            return Promise.pure(null);
+        });
         log.info("SERVICE>>> EmailServiceImpl started...");
     }
 
-	public void sendEmail(final String subject, final String from, final String body, final String... to) {
+    public void sendEmail(final String subject, final String from, final String body, final String... to) {
         getSysAdminUtils().scheduleOnce(false, "SEND_MAIL", Duration.create(0, TimeUnit.MILLISECONDS), new Runnable() {
             @Override
             public void run() {
@@ -64,8 +65,7 @@ public class EmailServiceImpl implements IEmailService {
             }
         });
     }
-	
-	
+
     /**
      * Send an e-mail
      * 
@@ -83,8 +83,8 @@ public class EmailServiceImpl implements IEmailService {
             try {
                 // Send a real e-mail
                 Properties props = new Properties();
-                props.put("mail.smtp.host",
-                		getPreferenceManagerPlugin().getPreferenceElseConfigurationValue(framework.commons.IFrameworkConstants.SMTP_HOST_PREFERENCE, "smtp.host"));
+                props.put("mail.smtp.host", getPreferenceManagerPlugin()
+                        .getPreferenceElseConfigurationValue(framework.commons.IFrameworkConstants.SMTP_HOST_PREFERENCE, "smtp.host"));
                 props.put("mail.smtp.port", getPreferenceManagerPlugin()
                         .getPreferenceElseConfigurationValueAsInteger(framework.commons.IFrameworkConstants.SMTP_PORT_PREFERENCE, "smtp.port"));
                 props.put("mail.smtp.starttls.enable", getPreferenceManagerPlugin()
@@ -98,10 +98,10 @@ public class EmailServiceImpl implements IEmailService {
                 Session session = Session.getInstance(props, new javax.mail.Authenticator() {
                     protected PasswordAuthentication getPasswordAuthentication() {
                         return new PasswordAuthentication(
-                        		getPreferenceManagerPlugin().getPreferenceElseConfigurationValue(framework.commons.IFrameworkConstants.SMTP_USER_PREFERENCE,
+                                getPreferenceManagerPlugin().getPreferenceElseConfigurationValue(framework.commons.IFrameworkConstants.SMTP_USER_PREFERENCE,
                                         "smtp.user"),
-                        		getPreferenceManagerPlugin().getPreferenceElseConfigurationValue(framework.commons.IFrameworkConstants.SMTP_PASSWORD_PREFERENCE,
-                                        "smtp.password"));
+                                getPreferenceManagerPlugin().getPreferenceElseConfigurationValue(
+                                        framework.commons.IFrameworkConstants.SMTP_PASSWORD_PREFERENCE, "smtp.password"));
                     }
                 });
                 Message message = new MimeMessage(session);
@@ -131,17 +131,17 @@ public class EmailServiceImpl implements IEmailService {
             log.info(sb.toString());
         }
     }
-    
+
     private Configuration getConfiguration() {
         return this.configuration;
     }
-    
+
     private IPreferenceManagerPlugin getPreferenceManagerPlugin() {
-    	return this.preferenceManagerPlugin;
+        return this.preferenceManagerPlugin;
     }
-    
+
     private ISysAdminUtils getSysAdminUtils() {
-    	return this.sysAdminUtils;
+        return this.sysAdminUtils;
     }
 
 }
