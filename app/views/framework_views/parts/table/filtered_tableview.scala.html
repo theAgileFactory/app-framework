@@ -37,26 +37,31 @@
 }
 
 <div class="row">
-  <div class="col-md-9">
+  <div class="col-md-7">
       <a id="_@table.getId()_filterContainerCollapse" data-toggle="button" href="#"><i class="glyphicons glyphicons-circle-minus"></i>&nbsp;<small>@parts.Msg("filter.togglebutton.label")</small></a>
     <ul id="_@table.getId()_filterContainer" class="list-inline">
     </ul>
   </div>
-  <div class="col-md-3">
-    @if(_implementationDefinedObjectService.isFilterConfigurationActive) {
-      <div style="margin-bottom: 10px;" class=" text-right" id="_@table.getId()_filterConfiguration">
-        @filter_configuration_selector(table.getId(), request.uri, filterConfig.getSelectedFilterConfiguration)
-      </div>
-    }
-    <div class="row">
-      <div class="col-md-8 text-right" id="_@table.getId()_currentFilterConfiguration">
-        <span id="_@table.getId()_ajax_wait"></span>
-      </div>
-      <div class="col-md-4 text-right">
-        @if(exportAsExcelUrl!=null){
-          <a href="#" class="btn btn-primary" id="_@table.getId()_exportAsExcel"><i class="glyphicons glyphicons-disk-save"></i></a>
-        }
-      </div>
+  <div class="col-md-5">
+  
+      <div class="row">
+      
+        <div class="col-md-6 text-right" id="_@table.getId()_filterConfiguration">
+          @if(_implementationDefinedObjectService.isFilterConfigurationActive) {
+            @filter_configuration_selector(table.getId(), request.uri, filterConfig.getSelectedFilterConfiguration)
+          }
+        </div>
+  
+        <div class="col-md-4 text-right" id="_@table.getId()_currentFilterConfiguration">
+          <span id="_@table.getId()_ajax_wait"></span>
+        </div>
+        
+        <div class="col-md-2 text-right">
+          @if(exportAsExcelUrl!=null){
+            <a href="#" class="btn btn-primary" id="_@table.getId()_exportAsExcel"><i class="glyphicons glyphicons-disk-save"></i></a>
+          }
+        </div>
+
     </div>
   </div>
 </div>

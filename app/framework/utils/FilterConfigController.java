@@ -76,6 +76,12 @@ public class FilterConfigController extends Controller {
 
         try {
 
+            FilterConfiguration selectedFilter = FilterConfiguration.getSelectedFilterConfiguration(uid, dataType);
+            if (selectedFilter != null) {
+                selectedFilter.isSelected = false;
+                selectedFilter.save();
+            }
+
             FilterConfiguration defaultFilter = FilterConfiguration.getDefaultFilterConfiguration(uid, dataType);
 
             FilterConfiguration newFilter = new FilterConfiguration();

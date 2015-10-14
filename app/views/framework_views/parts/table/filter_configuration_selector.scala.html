@@ -24,6 +24,7 @@
 
 @import framework_views.parts
 @import framework_views.parts.commons._
+@import java.lang.Boolean; var isFirstLoop=true
 
 @availableFilterConfigurations=@{
     models.framework_models.common.FilterConfiguration.getAvailableFilterConfiguration(filterConfiguration.principal.uid, filterConfiguration.dataType)
@@ -33,25 +34,40 @@
     @parts.Msg("object.filter_configuration.shared_filter.title", filterConfiguration.name, filterConfiguration.principal.uid)
 } else {
 
-<form>
-    <div class="input-group">
-        <select class="form-control input-sm" id="_@(tableId)_filter_configuration_selector">
-          @for(availableFilterConfiguration <- availableFilterConfigurations) {
-            <option data-isdefault="@availableFilterConfiguration.isDefault" @if(availableFilterConfiguration.id.equals(filterConfiguration.id)) { selected } value="@availableFilterConfiguration.id">@parts.Msg(availableFilterConfiguration.name)</option>
-          }
-        </select>
-        
-        <span class="input-group-btn">
-            <a href="#" class="btn btn-light btn-sm" id="_@(tableId)_filter_configuration_save"><i class="glyphicons glyphicons-floppy-saved"></i></a>
-            @if(!filterConfiguration.isDefault) {
-              <a href="#" class="btn btn-light btn-sm" id="_@(tableId)_filter_configuration_reload"><i class="glyphicons glyphicons-refresh"></i></a>
-              <a href="#" class="btn btn-light btn-sm" id="_@(tableId)_filter_configuration_edit"><i class="glyphicons glyphicons-edit"></i></a>
-              <a href="#" class="btn btn-light btn-sm" id="_@(tableId)_filter_configuration_delete"><i class="glyphicons glyphicons-bin"></i></a>
-              <a href="#" class="btn btn-light btn-sm" id="_@(tableId)_filter_configuration_share"><i class="glyphicons glyphicons-share-alt"></i></a>
+
+<div class="btn-group text-left pull-right">
+  <button id="_@(tableId)_filter_configuration_dropdown" class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+    <span style="white-space:normal !important;word-break: normal">@parts.Msg(filterConfiguration.name)</span>
+    <span class="caret"></span>
+  </button>
+  <ul class="dropdown-menu">
+    
+
+    @if(!filterConfiguration.isDefault) {
+        <li><a href="#" id="_@(tableId)_filter_configuration_reload"><i class="glyphicons glyphicons-refresh"></i>&nbsp; @parts.Msg("object.filter_configuration.action.reload")</a></li>
+        <li><a href="#" id="_@(tableId)_filter_configuration_save"><i class="glyphicons glyphicons-floppy-saved"></i>&nbsp; @parts.Msg("object.filter_configuration.action.save")</a></li>
+    }
+    <li><a href="#" id="_@(tableId)_filter_configuration_save_as"><i class="glyphicons glyphicons-floppy-save"></i>&nbsp; @parts.Msg("object.filter_configuration.action.save_as")</a></li>
+    @if(!filterConfiguration.isDefault) {
+        <li><a href="#" id="_@(tableId)_filter_configuration_edit"><i class="glyphicons glyphicons-edit"></i>&nbsp; @parts.Msg("object.filter_configuration.action.edit")</a></li>
+        <li><a href="#" id="_@(tableId)_filter_configuration_share"><i class="glyphicons glyphicons-share-alt"></i>&nbsp; @parts.Msg("object.filter_configuration.action.share")</a></li>
+        <li><a href="#" id="_@(tableId)_filter_configuration_delete"><i class="glyphicons glyphicons-bin"></i>&nbsp; @parts.Msg("object.filter_configuration.action.delete")</a></li>
+    }
+
+    @for(availableFilterConfiguration <- availableFilterConfigurations) {
+        @if(!availableFilterConfiguration.isDefault && !availableFilterConfiguration.id.equals(filterConfiguration.id)) {
+            @if(isFirstLoop) {
+                <li role="separator" class="divider"></li>
+                <li class="dropdown-header">@parts.Msg("object.filter_configuration.stored_filters")</li>
+                @{isFirstLoop=false}
             }
-        </span>
-    </div>
-</form>
+            <li><a class="_@(tableId)_filter_configuration_item" data-id="@availableFilterConfiguration.id" href="#">@parts.Msg(availableFilterConfiguration.name)</a></li>
+        }
+    }
+  </ul>
+</div>
+<div id="_@(tableId)_filter_configuration_save_as_editable" class="pull-right" style="height: 30px;"></div>
+<div id="_@(tableId)_filter_configuration_edit_editable" class="pull-right" style="height: 30px;"></div>
 
 @* the modal for the share action *@
 <div id="_@(tableId)_filter_configuration_share_popup" class="modal fade text-left" tabindex="-1">
@@ -106,9 +122,14 @@
     }
     
     @* call when the user changes the selected filter in the list *@
-    $("#_@(tableId)_filter_configuration_selector").change(function() {
-
-        var id = $(this).val();
+    $("._@(tableId)_filter_configuration_item").click(function(event) {
+        
+        event.preventDefault();
+        event.stopPropagation();
+        
+        $("#_@(tableId)_filter_configuration_dropdown").dropdown("toggle");
+        
+        var id = $(this).data('id');
 
         //set waiting icon
         $("#_@(tableId)_filterConfiguration").html('<img src="@framework.utils.Utilities.getAjaxWaitImageUrl()"/>');
@@ -133,13 +154,40 @@
 
     })
 
-    @* add editable event to the save button, it is triggered only when the current selected filter is the default and
-       if the user clicks on the button *@
-    $("#_@(tableId)_filter_configuration_save").editable({
+    @* call when the user clicks on the save button *@
+    $("#_@(tableId)_filter_configuration_save").click(function(event) {
+        
+        event.preventDefault();
+        event.stopPropagation();
+        
+        $("#_@(tableId)_filter_configuration_dropdown").dropdown("toggle");
+
+        //set waiting icon
+        $("#_@(tableId)_filterConfiguration").html('<img src="@framework.utils.Utilities.getAjaxWaitImageUrl()"/>');
+
+        $.ajax({
+            type: 'POST',
+            contentType: "application/json; charset=utf-8",
+            url: '@_implementationDefinedObjectService.getRouteForFilterConfigurationSave.url',
+            data: JSON.stringify({ 'tableId' : '@(tableId)', 'route' : "@route", 'filterConfigurationId' : @filterConfiguration.id }),
+            cache : false,
+            error: function(jqXHR, textStatus, errorThrown) {
+                alert("@parts.Msg("filter.table.ajax.error.message")");
+            }
+        }).done(function(result) {
+            @* the action return the new filter area *@
+            $("#_@(tableId)_filterConfiguration").html(result);
+        });
+
+    })
+
+    @* add editable event to the save as button *@
+    $("#_@(tableId)_filter_configuration_save_as_editable").editable({
         title : "@parts.Msg("object.filter_configuration.name.title")",
         type : 'text',
         placement : 'left',
         toggle: 'manual',
+        emptytext: '',
         validate: function(value) {
             if($.trim(value) == '') {
                 return "@parts.Msg("object.filter_configuration.name.error")";
@@ -149,7 +197,7 @@
             
             //set waiting icon
             $("#_@(tableId)_filterConfiguration").html('<img src="@framework.utils.Utilities.getAjaxWaitImageUrl()"/>');
-
+   
             $.ajax({
                 type: 'POST',
                 contentType: "application/json; charset=utf-8",
@@ -163,60 +211,42 @@
                 @* the action return the new filter area *@
                 $("#_@(tableId)_filterConfiguration").html(result);
             });
-
+   
         }
     });
 
-    @* call when the user clicks on the save button *@
-    $("#_@(tableId)_filter_configuration_save").click(function(event) {
+    @* call when the user clicks on the save as button *@
+    $("#_@(tableId)_filter_configuration_save_as").click(function(event) {
         
         event.preventDefault();
         event.stopPropagation();
         
-        var id = $("#_@(tableId)_filter_configuration_selector").val();
-        var isDefault = $("#_@(tableId)_filter_configuration_selector").find(':selected').data('isdefault');
+        $("#_@(tableId)_filter_configuration_dropdown").dropdown("toggle");
         
-        if (isDefault) {
-            $("#_@(tableId)_filter_configuration_save").editable('toggle');
-        } else {
-            
-            //set waiting icon
-            $("#_@(tableId)_filterConfiguration").html('<img src="@framework.utils.Utilities.getAjaxWaitImageUrl()"/>');
-
-            $.ajax({
-                type: 'POST',
-                contentType: "application/json; charset=utf-8",
-                url: '@_implementationDefinedObjectService.getRouteForFilterConfigurationSave.url',
-                data: JSON.stringify({ 'tableId' : '@(tableId)', 'route' : "@route", 'filterConfigurationId' : id }),
-                cache : false,
-                error: function(jqXHR, textStatus, errorThrown) {
-                    alert("@parts.Msg("filter.table.ajax.error.message")");
-                }
-            }).done(function(result) {
-                @* the action return the new filter area *@
-                $("#_@(tableId)_filterConfiguration").html(result);
-            });
-
-        }
+        $("#_@(tableId)_filter_configuration_save_as_editable").editable('toggle');
     })
+    
     
     @* call when the user clicks on the reload button *@
     $("#_@(tableId)_filter_configuration_reload").click(function(event) {
         
         event.preventDefault();
         event.stopPropagation();
+        
+        $("#_@(tableId)_filter_configuration_dropdown").dropdown("toggle");
 
         _@(tableId)_filterConfig=@Html(filterConfiguration.configuration);
         _@(tableId)_fullRefresh();
 
     })
     
-    @* add editable event to the edit button, it is triggered if the user clicks on the button *@
-    $("#_@(tableId)_filter_configuration_edit").editable({
+    @* add editable event to the edit button *@
+    $("#_@(tableId)_filter_configuration_edit_editable").editable({
         title : "@parts.Msg("object.filter_configuration.name.title")",
         type : 'text',
         placement : 'left',
         toggle: 'manual',
+        emptytext: '',
         defaultValue: "@filterConfiguration.name",
         validate: function(value) {
             if($.trim(value) == '') {
@@ -251,7 +281,9 @@
         event.preventDefault();
         event.stopPropagation();
         
-        $("#_@(tableId)_filter_configuration_edit").editable('toggle');
+        $("#_@(tableId)_filter_configuration_dropdown").dropdown("toggle");
+        
+        $("#_@(tableId)_filter_configuration_edit_editable").editable('toggle');
         
     });
     
@@ -260,6 +292,8 @@
         
         event.preventDefault();
         event.stopPropagation();
+        
+        $("#_@(tableId)_filter_configuration_dropdown").dropdown("toggle");
         
         if(confirm("@parts.Msg("object.filter_configuration.delete.confirmation")")) {
             
@@ -287,6 +321,8 @@
         
         event.preventDefault();
         event.stopPropagation();
+        
+        $("#_@(tableId)_filter_configuration_dropdown").dropdown("toggle");
         
         $("#_@(tableId)_filter_configuration_share_popup_recipient_error").html('');
         $("#_@(tableId)_filter_configuration_share_popup_recipient_success").html('');
