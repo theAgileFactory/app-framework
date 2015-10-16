@@ -68,6 +68,7 @@ public class I18nMessagesPluginImpl implements II18nMessagesPlugin {
     private Configuration configuration;
     private Environment environment;
     private MessagesApi messagesApi;
+    private I18nMessages i18nMessages;
 
     public enum Config {
         LANGUAGE_LIST("play.i18n.langs");
@@ -97,10 +98,11 @@ public class I18nMessagesPluginImpl implements II18nMessagesPlugin {
      */
     @Inject
     public I18nMessagesPluginImpl(ApplicationLifecycle lifecycle, Configuration configuration, Environment environment, MessagesApi messagesApi,
-            IDatabaseDependencyService databaseDependencyService) {
+            I18nMessages i18nMessages, IDatabaseDependencyService databaseDependencyService) {
         log.info("SERVICE>>> I18nMessagesPluginImpl starting...");
         this.configuration = configuration;
         this.messagesApi = messagesApi;
+        this.i18nMessages = i18nMessages;
         initOnce();
         reload(true);
         lifecycle.addStopHook(() -> {
@@ -177,9 +179,7 @@ public class I18nMessagesPluginImpl implements II18nMessagesPlugin {
         if (key.endsWith("_content")) {
             return getI18nContent(key, lang.code());
         }
-        if (getMessagesApi().isDefinedAt(lang, key)) {
-            return getMessagesApi().get(lang, key, args);
-        }
+
         Hashtable<Object, Object> messages = getI18nMessagesStore().get(lang.code());
         if (messages == null) {
             if (log.isDebugEnabled()) {
@@ -188,14 +188,19 @@ public class I18nMessagesPluginImpl implements II18nMessagesPlugin {
             return key;
         }
 
-        String value = null;
-        if (args.length != 0 && messages.containsKey(key)) {
-            value = MessageFormat.format((String) messages.get(key), args);
-        } else {
-            value = messages.containsKey(key) ? (String) messages.get(key) : key;
+        if (messages.containsKey(key)) {
+            if (args.length != 0) {
+                return MessageFormat.format((String) messages.get(key), args);
+            } else {
+                return (String) messages.get(key);
+            }
         }
 
-        return value;
+        if (getMessagesApi().isDefinedAt(lang, key)) {
+            return getMessagesApi().get(lang, key, args);
+        }
+
+        return key;
 
     }
 
@@ -347,6 +352,25 @@ public class I18nMessagesPluginImpl implements II18nMessagesPlugin {
     @Override
     public boolean isLanguageValid(String code) {
         return getValidLanguageMap().containsKey(code);
+    }
+
+    @Override
+    public List<String> findAuthorizedKeys(String keywords) {
+
+        List<String> r = new ArrayList<>();
+
+        for (String key : this.i18nMessages.getAuthorizedKeys()) {
+            if (this.get(key).trim().toLowerCase().contains(keywords.trim().toLowerCase())) {
+                r.add(key);
+            }
+        }
+
+        return r;
+    }
+
+    @Override
+    public boolean isAuthorizedKey(String key) {
+        return this.i18nMessages.getAuthorizedKeys().contains(key);
     }
 
     /**

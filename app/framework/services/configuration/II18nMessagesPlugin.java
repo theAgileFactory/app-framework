@@ -20,12 +20,13 @@ package framework.services.configuration;
 import java.util.List;
 import java.util.Map;
 
+import framework.utils.DefaultSelectableValueHolderCollection;
 import play.i18n.Lang;
 import play.i18n.Messages;
-import framework.utils.DefaultSelectableValueHolderCollection;
 
 /**
- * Interface to be implemented by the service which manages the I18Messages.<br/>
+ * Interface to be implemented by the service which manages the I18Messages.
+ * <br/>
  * This plugin is to replace and extends the standard play {@link Messages}
  * class There are two sources of I18n messages:
  * <ul>
@@ -171,4 +172,20 @@ public interface II18nMessagesPlugin {
      *            the language code
      */
     public boolean isLanguageValid(String code);
+
+    /**
+     * Find authorized keys to updated according to keywords.
+     * 
+     * @param keywords
+     *            the keywords
+     */
+    public List<String> findAuthorizedKeys(String keywords);
+
+    /**
+     * Return true if the key is authorized for an update.
+     * 
+     * @param key
+     *            the key
+     */
+    public boolean isAuthorizedKey(String key);
 }
