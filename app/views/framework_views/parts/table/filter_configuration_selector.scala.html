@@ -30,11 +30,6 @@
     models.framework_models.common.FilterConfiguration.getAvailableFilterConfiguration(filterConfiguration.principal.uid, filterConfiguration.dataType)
 }
 
-@if(filterConfiguration.isShared) {
-    @parts.Msg("object.filter_configuration.shared_filter.title", filterConfiguration.name, filterConfiguration.principal.uid)
-} else {
-
-
 <div class="btn-group text-left pull-right">
   <button id="_@(tableId)_filter_configuration_dropdown" class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
     <span style="white-space:normal !important;word-break: normal">@parts.Msg(filterConfiguration.name)</span>
@@ -70,8 +65,9 @@
 <div id="_@(tableId)_filter_configuration_edit_editable" class="pull-right" style="height: 30px;"></div>
 
 @* the modal for the share action *@
+@if(!filterConfiguration.isDefault) {
 <div id="_@(tableId)_filter_configuration_share_popup" class="modal fade text-left" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog" style="width: 700px;">
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal">X</button>
@@ -79,39 +75,59 @@
             </div>
             <div class="modal-body">
             
-                <p>@parts.Msg("object.filter_configuration.share.header")</p>
-
-                <form id="_@(tableId)_filter_configuration_share_popup_form" method="POST" action="#">
-                
-                    <div class="form-group">
-                        <label class="control-label" for="_@(tableId)_filter_configuration_share_popup_recipient">
-                           @parts.Msg("object.filter_configuration.share.recipient")
-                        </label>
-                        <p>
-                            <a href="#" id="__@(tableId)_filter_configuration_share_popup_recipient_editable"></a>
-                        </p>
-                        <input type="hidden" id="_@(tableId)_filter_configuration_share_popup_recipient" name="_@(tableId)_filter_configuration_share_popup_recipient" value=""/>
-                        <input type="hidden" id="_@(tableId)_filter_configuration_share_popup_recipient_content" name="_@(tableId)_filter_configuration_share_popup_recipient_content" value=""/>
-                        <span class="help-block"><strong id="_@(tableId)_filter_configuration_share_popup_recipient_error"></strong></span>
-                    </div>
-                    @parts.autocomplete_javascript(
-                        Some(""), 
-                        "_"+tableId+"_filter_configuration_share_popup_recipient", 
-                        parts.Msg.asString("object.filter_configuration.share.recipient"), 
-                        _implementationDefinedObjectService.getRouteForFilterConfigurationSearchPrincipal.url, 
-                        ""
-                    )
-                    <input type="submit" class="btn btn-primary" value="@parts.Msg("button.share")">
-            
-                </form>
-                
-                <br/>
                 <p><strong id="_@(tableId)_filter_configuration_share_popup_recipient_success"></strong></p>
+
+                <div class="row">
+                    <div class="col-md-6">  
+                        <div class="panel panel-default">
+                            <div class="panel-heading">@parts.Msg("object.filter_configuration.share.with_notification.title")</div>
+                            <div class="panel-body">
+                                <p>@parts.Msg("object.filter_configuration.share.with_notification.header")</p>
+                                
+                                <form id="_@(tableId)_filter_configuration_share_popup_form" method="POST" action="#">
                 
+                                    <div class="form-group">
+                                        <label class="control-label" for="_@(tableId)_filter_configuration_share_popup_recipient">
+                                           @parts.Msg("object.filter_configuration.share.recipient")
+                                        </label>
+                                        <p>
+                                            <a href="#" id="__@(tableId)_filter_configuration_share_popup_recipient_editable"></a>
+                                        </p>
+                                        <input type="hidden" id="_@(tableId)_filter_configuration_share_popup_recipient" name="_@(tableId)_filter_configuration_share_popup_recipient" value=""/>
+                                        <input type="hidden" id="_@(tableId)_filter_configuration_share_popup_recipient_content" name="_@(tableId)_filter_configuration_share_popup_recipient_content" value=""/>
+                                        <span class="help-block"><strong id="_@(tableId)_filter_configuration_share_popup_recipient_error"></strong></span>
+                                    </div>
+                                    @parts.autocomplete_javascript(
+                                        Some(""), 
+                                        "_"+tableId+"_filter_configuration_share_popup_recipient", 
+                                        parts.Msg.asString("object.filter_configuration.share.recipient"), 
+                                        _implementationDefinedObjectService.getRouteForFilterConfigurationSearchPrincipal.url, 
+                                        ""
+                                    )
+                                    <input type="submit" class="btn btn-primary" value="@parts.Msg("button.share")">
+                            
+                                </form>
+                                
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">  
+                        <div class="panel panel-default">
+                            <div class="panel-heading">@parts.Msg("object.filter_configuration.share.manually.title")</div>
+                            <div class="panel-body">
+                                <p>@parts.Msg("object.filter_configuration.share.manually.header")</p>
+                                
+                                <code style="word-wrap:break-word; white-space: normal;">@(play.Play.application().configuration().getString("maf.public.url"))@(filterConfiguration.getLink(route))</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
 </div>
+}
 
 <script>
 
@@ -367,5 +383,3 @@
     }
 
 </script>
-
-}

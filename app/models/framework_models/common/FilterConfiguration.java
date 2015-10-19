@@ -17,8 +17,14 @@
  */
 package models.framework_models.common;
 
+import java.net.URI;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.sql.Timestamp;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -34,6 +40,7 @@ import framework.utils.ISelectableValueHolder;
 import models.framework_models.account.Principal;
 import models.framework_models.parent.IModel;
 import models.framework_models.parent.IModelConstants;
+import play.Logger;
 
 /**
  * A filter configuration is a stored filter for a user and a data type.
@@ -70,9 +77,6 @@ public class FilterConfiguration extends Model implements IModel, ISelectableVal
 
     @Column(length = 12)
     public String sharedKey;
-
-    @Transient
-    public boolean isShared = false;
 
     @Transient
     public boolean sharedNotExisting = false;
@@ -144,6 +148,45 @@ public class FilterConfiguration extends Model implements IModel, ISelectableVal
     }
 
     /**
+     * Get the link to reach a shared filter.
+     * 
+     * @param route
+     *            the route that contains the filter table
+     */
+    public String getLink(String route) {
+
+        try {
+
+            URI uri = new URI(route);
+
+            Map<String, String> queryPairs = new LinkedHashMap<String, String>();
+            if (uri.getQuery() != null) {
+                String[] pairs = uri.getQuery().split("&");
+                for (String pair : pairs) {
+                    int idx = pair.indexOf("=");
+                    queryPairs.put(URLDecoder.decode(pair.substring(0, idx), "UTF-8"), URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
+                }
+            }
+            queryPairs.put("filterSharedKey", this.sharedKey);
+
+            StringBuilder sb = new StringBuilder();
+            for (Entry<String, String> e : queryPairs.entrySet()) {
+                if (sb.length() > 0) {
+                    sb.append('&');
+                }
+                sb.append(URLEncoder.encode(e.getKey(), "UTF-8")).append('=').append(URLEncoder.encode(e.getValue(), "UTF-8"));
+            }
+
+            return uri.getPath() + "?" + sb.toString();
+
+        } catch (Exception e) {
+            Logger.error("impossible to construct the link for the filter configuration " + this.id, e);
+            return null;
+        }
+
+    }
+
+    /**
      * Get a filter configuration by id.
      * 
      * @param id
@@ -187,17 +230,15 @@ public class FilterConfiguration extends Model implements IModel, ISelectableVal
     /**
      * Get a filter configuration for a shared key.
      * 
+     * The filter could be deleted or not.
+     * 
      * @param sharedKey
      *            the share key
      * @param dataType
      *            the data type
      */
     public static FilterConfiguration getFilterConfigurationBySharedKey(String sharedKey, String dataType) {
-        FilterConfiguration filter = find.where().eq("deleted", false).eq("sharedKey", sharedKey).eq("dataType", dataType).findUnique();
-        if (filter != null) {
-            filter.isShared = true;
-        }
-        return filter;
+        return find.where().eq("sharedKey", sharedKey).eq("dataType", dataType).findUnique();
     }
 
     /**

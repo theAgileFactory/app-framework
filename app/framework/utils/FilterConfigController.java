@@ -285,14 +285,11 @@ public class FilterConfigController extends Controller {
                 return forbidden();
             }
 
-            if (!route.contains("?")) {
-                route += "?";
-            } else {
-                route += "&";
-            }
-            route += "filterSharedKey=" + selectedFilter.sharedKey;
+            // get the current user
+            IUserAccount account = getAccountManagerPlugin().getUserAccountFromUid(uid);
+            String userName = account.getFirstName() + " " + account.getLastName();
 
-            // get the principal
+            // get the principal (recipient)
             Principal principal = Principal.getPrincipalFromUid(recipient);
 
             // send the message
@@ -305,14 +302,15 @@ public class FilterConfigController extends Controller {
                 String message = null;
                 String title = null;
                 if (getMessagesPlugin().isLanguageValid(language.getCode())) {
-                    message = Msg.get(language.getLang(), "object.filter_configuration.share.notification.message");
+                    message = Msg.get(language.getLang(), "object.filter_configuration.share.notification.message", userName);
                     title = Msg.get(language.getLang(), "object.filter_configuration.share.notification.title");
                 } else {
-                    message = Msg.get("object.filter_configuration.share.notification.message");
+                    message = Msg.get("object.filter_configuration.share.notification.message", userName);
                     title = Msg.get("object.filter_configuration.share.notification.title");
                 }
 
-                getNotificationManagerPlugin().sendNotification(recipient, NotificationCategory.getByCode(Code.INFORMATION), title, message, route);
+                getNotificationManagerPlugin().sendNotification(recipient, NotificationCategory.getByCode(Code.INFORMATION), title, message,
+                        selectedFilter.getLink(route));
 
                 return ok();
 

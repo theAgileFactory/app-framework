@@ -273,19 +273,36 @@ public class FilterConfig<T> {
         }
 
         /*
-         * If the request includes a "filterSharedKey" query param, then we
-         * consider a shared filter, else a standard one.
+         * If the request includes a "filterSharedKey" query param, then we try
+         * to get the corresponding filter for the datatype. If no filter is
+         * existing (even deleted) then we ignore the parameter and use standard
+         * mechanism (no error message is displayed). If the filter is existing
+         * (deleted or not) then we consider a "share" filter (an error message
+         * is displayed if the filter has been deleted).
          */
+        boolean isSharedFilter = false;
+        FilterConfiguration sharedFilter = null;
         if (request.getQueryString("filterSharedKey") != null && !request.getQueryString("filterSharedKey").equals("")) {
+            sharedFilter = FilterConfiguration.getFilterConfigurationBySharedKey(request.getQueryString("filterSharedKey"), dataType);
+            if (sharedFilter != null) {
+                isSharedFilter = true;
+            }
+        }
 
-            // get the shared filter
-            FilterConfiguration sharedFilter = FilterConfiguration.getFilterConfigurationBySharedKey(request.getQueryString("filterSharedKey"), dataType);
+        if (isSharedFilter) {
 
-            // if it doesn't exist (bad key or deleted by owner) then we get the
-            // default filter.
-            if (sharedFilter == null) {
-                sharedFilter = defaultFilter;
-                sharedFilter.sharedNotExisting = true;
+            // if the filter has been deleted then we use the default filter and
+            // display an error message
+            if (sharedFilter.deleted) {
+                defaultFilter.sharedNotExisting = true;
+            } else {
+                defaultFilter.configuration = sharedFilter.configuration;
+                defaultFilter.save();
+                FilterConfiguration selectedFilter = FilterConfiguration.getSelectedFilterConfiguration(principalUid, dataType);
+                if (selectedFilter != null) {
+                    selectedFilter.isSelected = false;
+                    selectedFilter.save();
+                }
             }
 
             // convert the JSON string to a JSON node.
@@ -293,7 +310,7 @@ public class FilterConfig<T> {
             try {
 
                 ObjectMapper mapper = new ObjectMapper();
-                json = mapper.readTree(sharedFilter.configuration);
+                json = mapper.readTree(defaultFilter.configuration);
 
             } catch (Exception e) {
 
@@ -306,7 +323,7 @@ public class FilterConfig<T> {
             // parse the configuration
             try {
 
-                return parseResponse(json, sharedFilter);
+                return parseResponse(json, defaultFilter);
             } catch (Exception e) {
 
                 /*
@@ -795,8 +812,8 @@ public class FilterConfig<T> {
         asJson.put("currentPage", getCurrentPage());
 
         // Add selected rows
+        ArrayNode selectableRowsAsJson = asJson.putArray(JSON_SELECTED_ROWS_FIELD);
         if (this.selectedRows != null) {
-            ArrayNode selectableRowsAsJson = asJson.putArray(JSON_SELECTED_ROWS_FIELD);
             for (String id : this.selectedRows) {
                 selectableRowsAsJson.add(id);
             }
