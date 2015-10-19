@@ -74,8 +74,6 @@
                 <h4 class="modal-title">@parts.Msg("object.filter_configuration.share.title")</h4>
             </div>
             <div class="modal-body">
-            
-                <p><strong id="_@(tableId)_filter_configuration_share_popup_recipient_success"></strong></p>
 
                 <div class="row">
                     <div class="col-md-6">  
@@ -341,7 +339,6 @@
         $("#_@(tableId)_filter_configuration_dropdown").dropdown("toggle");
         
         $("#_@(tableId)_filter_configuration_share_popup_recipient_error").html('');
-        $("#_@(tableId)_filter_configuration_share_popup_recipient_success").html('');
         
         $('#_@(tableId)_filter_configuration_share_popup').modal('show');
         
@@ -367,7 +364,7 @@
                      alert("@parts.Msg("filter.table.ajax.error.message")");
                  }
              }).done(function(result) {
-                $("#_@(tableId)_filter_configuration_share_popup_recipient_success").html("@parts.Msg("object.filter_configuration.share.successful")");
+            	 $('#_@(tableId)_filter_configuration_share_popup').modal('hide');
              });
 
 
