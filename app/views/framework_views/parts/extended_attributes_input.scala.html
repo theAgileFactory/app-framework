@@ -16,13 +16,126 @@
  * this program. If not, see <http://www.gnu.org/licenses/>.
  *@
 @(objectForm: Form[_], objectType: Class[_], objectId: Long)
+
 @customAttributeValues=@{
 models.framework_models.common.CustomAttributeDefinition.getOrderedCustomAttributeValues(objectType, objectId);
 }
-@if(customAttributeValues!=null && customAttributeValues.size()!=0){
-	@for(customAttributeValue <- customAttributeValues){
-		@customAttributeValue.renderFormField(objectForm(framework.utils.CustomAttributeFormAndDisplayHandler.getFieldNameFromDefinitionUuid(customAttributeValue.getDefinition().uuid)))
-	}
+
+@if(customAttributeValues!=null && customAttributeValues.size()!=0) {
+
+    @for(customAttributeValue <- customAttributeValues) {
+    
+        @defining(framework.utils.CustomAttributeFormAndDisplayHandler.getFieldNameFromDefinitionUuid(customAttributeValue.getDefinition().uuid)) { fieldId =>
+
+            @customAttributeValue.renderFormField(objectForm(fieldId))
+            
+            @if(customAttributeValue.getDefinition.getConditionalRuleFieldId != null) {
+                <script>
+                    
+                    function _@(fieldId)_hide() {
+                        
+                        var $field = $("#@(fieldId)");
+                        
+                        @models.framework_models.common.ICustomAttributeValue.AttributeType.valueOf(customAttributeValue.getDefinition.attributeType) match {
+                            case models.framework_models.common.ICustomAttributeValue.AttributeType.BOOLEAN => {
+                                $field.prop('checked', false);
+                                $field.closest(".checkbox").hide();
+                            }
+                            case _ => {
+                                $field.val('');
+                                $field.closest(".form-group").hide();
+                            }
+                        }
+            
+                    }
+                    
+                    function _@(fieldId)_show() {
+                        var $field = $("#@(fieldId)");
+                        
+                        @models.framework_models.common.ICustomAttributeValue.AttributeType.valueOf(customAttributeValue.getDefinition.attributeType) match {
+                            case models.framework_models.common.ICustomAttributeValue.AttributeType.BOOLEAN => {
+                                $field.closest(".checkbox").show();
+                            }
+                            case _ => {
+                                $field.closest(".form-group").show();
+                            }
+                        }
+                    }
+                    
+                    $( document ).ready(function() {
+                    
+                        var $dependendField = $("#@(customAttributeValue.getDefinition.getConditionalRuleFieldId)");
+            
+                        // check the dependend field exist
+                        if($dependendField.length > 0) {
+                            
+                            var conditionalRuleValue = @Html(customAttributeValue.getDefinition.getConditionalRuleValueAsJson);
+                            var tagName = $dependendField.prop("tagName").toLowerCase();
+                            
+                            if (tagName == "input") {
+                                var inputType = $dependendField.prop("type").toLowerCase();
+                                var isPrimitive = $dependendField.data("primitive");
+                                
+                                //input text primitive (string, numeric)
+                                if (inputType == "text" && isPrimitive != null && isPrimitive) {
+            
+                                    $dependendField.change(function() {
+                                        
+                                        var dependendValue = $(this).val().toLowerCase();
+                                        
+                                        if ($.inArray(dependendValue, conditionalRuleValue) == -1) {
+                                            _@(fieldId)_hide();
+                                        } else {
+                                            _@(fieldId)_show();
+                                        }
+            
+                                    });
+             
+                                }
+                                
+                                //input checkbox
+                                if (inputType == "checkbox") {
+            
+                                    $dependendField.change(function() {
+                                        
+                                        var dependendValue = $(this).prop("checked");
+             
+                                        if (dependendValue != (conditionalRuleValue[0] === 'true')) {
+                                            _@(fieldId)_hide();
+                                        } else {
+                                            _@(fieldId)_show();
+                                        }
+            
+                                    });
+                                }
+                            }
+                            
+                            //select
+                            if (tagName == "select") {
+                                
+                                $dependendField.change(function() {
+                                    
+                                    var dependendValue = $(this).val();
+                                    
+                                    if ($.inArray(dependendValue, conditionalRuleValue) == -1) {
+                                        _@(fieldId)_hide();
+                                    } else {
+                                        _@(fieldId)_show();
+                                    }
+                                    
+                                });
+                            }
+            
+                        }
+                        
+                        $dependendField.trigger("change");
+            
+                    });
+                </script>
+            }
+            
+        }
+    }
 }
 
 @*********************************************************

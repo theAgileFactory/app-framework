@@ -35,18 +35,15 @@ import javax.persistence.Lob;
 import javax.persistence.OneToMany;
 import javax.persistence.Version;
 
-import models.framework_models.common.ICustomAttributeValue.AttributeType;
-import models.framework_models.parent.IModel;
-import models.framework_models.parent.IModelConstants;
-
 import org.apache.commons.lang3.StringUtils;
-
-import play.Logger;
 
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.Model;
 import com.avaje.ebean.SqlQuery;
 import com.avaje.ebean.SqlRow;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 
 import framework.services.ServiceStaticAccessor;
 import framework.utils.DefaultSelectableValueHolder;
@@ -55,6 +52,10 @@ import framework.utils.ISelectableValueHolderCollection;
 import framework.utils.Msg;
 import framework.utils.PropertiesLoader;
 import framework.utils.Utilities;
+import models.framework_models.common.ICustomAttributeValue.AttributeType;
+import models.framework_models.parent.IModel;
+import models.framework_models.parent.IModelConstants;
+import play.Logger;
 
 /**
  * The definition for a set of {@link BooleanCustomAttributeValue}.<br/>
@@ -75,7 +76,6 @@ import framework.utils.Utilities;
  */
 @Entity
 public class CustomAttributeDefinition extends Model implements IModel {
-    private static final long serialVersionUID = -7483752055757734199L;
 
     /*
      * A set of properties fields to be used to retrieve the configuration
@@ -84,6 +84,7 @@ public class CustomAttributeDefinition extends Model implements IModel {
      * play
      */
     public static final String DEFAULT_VALUE_PROP = "default.value";
+    public static final String CONDITIONAL_RULE_PROP = "conditional_rule";
     public static final String CONSTRAINT_REQUIRED_PROP = "constraint.required";
     public static final String CONSTRAINT_REQUIRED_MSG_PROP = "constraint.required.message";
     public static final String CONSTRAINT_MAX_PROP = "constraint.max";
@@ -174,7 +175,8 @@ public class CustomAttributeDefinition extends Model implements IModel {
     public List<CustomAttributeItemOption> customAttributeItemOption;
 
     /**
-     * Return the properties associated with this custom attribute definition.<br/>
+     * Return the properties associated with this custom attribute definition.
+     * <br/>
      * The properties might define some specific configuration attributes
      * 
      * @return a properties object
@@ -211,39 +213,151 @@ public class CustomAttributeDefinition extends Model implements IModel {
         return uuid;
     }
 
+    /**
+     * Get the name label.
+     */
     public String getNameLabel() {
         return Msg.get(name);
     }
 
     /*
-     * --------------------------------------------------------------------------
-     * ----- --------------- Constraints & properties management
-     * ---------------------------
-     * ----------------------------------------------
-     * ---------------------------------
+     * Constraints & properties management-
+     */
+
+    /**
+     * Get the default value as a string.
      */
     public String getDefaultValueAsString() {
         return getProperties().getProperty(DEFAULT_VALUE_PROP);
     }
 
+    /**
+     * Get the default value as an array of string.
+     */
     public String[] getDefaultValueAsArrayOfString() {
         String commaSeparatedDefaultValues = getProperties().getProperty(DEFAULT_VALUE_PROP);
-        if (commaSeparatedDefaultValues == null)
+        if (commaSeparatedDefaultValues == null) {
             return new String[] {};
+        }
         return StringUtils.split(commaSeparatedDefaultValues, ",");
     }
 
+    /**
+     * Return true if the custom attribute is required.
+     */
     public boolean isRequired() {
-        return !StringUtils.isBlank(getProperties().getProperty(CONSTRAINT_REQUIRED_PROP));
+        return !hasValidConditionalRule() && !StringUtils.isBlank(getProperties().getProperty(CONSTRAINT_REQUIRED_PROP));
     }
 
+    /**
+     * Return the error message for the required constraint.
+     */
     public String getRequiredMessage() {
         return getProperties().getProperty(CONSTRAINT_REQUIRED_MSG_PROP, "error.required");
     }
 
     /*
-     * --------------- Integer and Decimal properties
-     * ---------------------------
+     * Condition rule property.
+     */
+
+    /**
+     * Return true if the custom attribute has a valid conditional rule.
+     */
+    private boolean hasValidConditionalRule() {
+
+        if (!StringUtils.isBlank(getProperties().getProperty(CONDITIONAL_RULE_PROP))) {
+
+            String[] conditionalRule = getProperties().getProperty(CONDITIONAL_RULE_PROP).split("=");
+
+            if (conditionalRule.length == 2) {
+                return true;
+            }
+        }
+        return false;
+
+    }
+
+    /**
+     * Get the conditional rule field id.
+     * 
+     * Return null if there is no conditional rule or if the rule is not well
+     * formated.
+     */
+    public String getConditionalRuleFieldId() {
+        if (hasValidConditionalRule()) {
+            String[] conditionalRule = getProperties().getProperty(CONDITIONAL_RULE_PROP).split("=");
+            return conditionalRule[0];
+        }
+        return null;
+    }
+
+    /**
+     * Get the conditional rule value as a JSON string.
+     * 
+     * Return null if there is no condition rule or if the rule is not well
+     * formated.
+     */
+    public String getConditionalRuleValueAsJson() {
+
+        if (hasValidConditionalRule()) {
+
+            String[] conditionalRule = getProperties().getProperty(CONDITIONAL_RULE_PROP).split("=");
+
+            String conditionalValue = conditionalRule[1];
+
+            String[] conditionalValues = conditionalValue.split(",");
+            List<String> ids = new ArrayList<>();
+            for (int i = 0; i < conditionalValues.length; i++) {
+                ids.add(conditionalValues[i].toLowerCase());
+            }
+
+            ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+            try {
+                return ow.writeValueAsString(ids);
+            } catch (JsonProcessingException e) {
+                Logger.error("Impossible to convert the conditional rule value to a JSON string for the custom attribute " + this.uuid + ".", e);
+            }
+        }
+
+        return null;
+
+    }
+
+    public boolean isDisplayedForConditionalRule(String dependendValue) {
+        /*
+         * if (this.hasValidConditionalRule()) {
+         * 
+         * String[] conditionalRule =
+         * getProperties().getProperty(CONDITIONAL_RULE_PROP).split("=");
+         * 
+         * String conditionalValue = conditionalRule[1];
+         * 
+         * switch (AttributeType.valueOf(this.attributeType)) {
+         * 
+         * case INTEGER: case DECIMAL: return
+         * Double.parseDouble(conditionalValue);
+         * 
+         * case BOOLEAN: if ("true".equals(conditionalValue.toLowerCase())) {
+         * return true; } else { return false; }
+         * 
+         * case STRING: return conditionalValue;
+         * 
+         * case SINGLE_ITEM: case DYNAMIC_SINGLE_ITEM: case MULTI_ITEM: String[]
+         * conditionalValues = conditionalValue.split(","); List<Long> ids = new
+         * ArrayList<>(); for (int i = 0; i < conditionalValues.length; i++) {
+         * ids.add(Long.parseLong(conditionalValues[i])); } return ids;
+         * 
+         * default: break; } }
+         */
+        return true;
+    }
+
+    /*
+     * Integer and Decimal properties.
+     */
+
+    /**
+     * Get the max value.
      */
     public int maxBoundary() {
         if (!StringUtils.isBlank(getProperties().getProperty(CONSTRAINT_MAX_PROP))) {
@@ -255,10 +369,16 @@ public class CustomAttributeDefinition extends Model implements IModel {
         return Integer.MAX_VALUE;
     }
 
+    /**
+     * Get the error message for the max value constraint.
+     */
     public String getMaxBoundaryMessage() {
         return getProperties().getProperty(CONSTRAINT_MAX_MSG_PROP, "error.max");
     }
 
+    /**
+     * Get the min value.
+     */
     public int minBoundary() {
         if (!StringUtils.isBlank(getProperties().getProperty(CONSTRAINT_MIN_PROP))) {
             try {
@@ -269,6 +389,9 @@ public class CustomAttributeDefinition extends Model implements IModel {
         return Integer.MIN_VALUE;
     }
 
+    /**
+     * Get the error message for the min value constraint.
+     */
     public String getMinBoundaryMessage() {
         return getProperties().getProperty(CONSTRAINT_MIN_MSG_PROP, "error.min");
     }
@@ -554,8 +677,8 @@ public class CustomAttributeDefinition extends Model implements IModel {
     }
 
     /*
-     * --------------------------------------------------------------------------
-     * ----- --------------- Constraints & properties management (end)
+     * -------------------------------------------------------------------------
+     * - ----- --------------- Constraints & properties management (end)
      * ---------------------
      * ----------------------------------------------------
      * ---------------------------
@@ -805,7 +928,8 @@ public class CustomAttributeDefinition extends Model implements IModel {
      *            the definition of a custom attribute
      * @return an custom attribute instance
      */
-    private static ICustomAttributeValue getOrCreateCustomAttributeValue(Class<?> objectType, Long objectId, CustomAttributeDefinition customAttributeDefinition) {
+    private static ICustomAttributeValue getOrCreateCustomAttributeValue(Class<?> objectType, Long objectId,
+            CustomAttributeDefinition customAttributeDefinition) {
         return getOrCreateCustomAttributeValue(objectType, null, objectId, customAttributeDefinition);
     }
 

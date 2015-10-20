@@ -28,17 +28,15 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Transient;
 import javax.persistence.Version;
 
-import models.framework_models.parent.IModel;
-import models.framework_models.parent.IModelConstants;
-
 import org.apache.commons.lang3.StringUtils;
-
-import play.api.data.Field;
-import play.twirl.api.Html;
 
 import com.avaje.ebean.Model;
 
 import framework.utils.Msg;
+import models.framework_models.parent.IModel;
+import models.framework_models.parent.IModelConstants;
+import play.api.data.Field;
+import play.twirl.api.Html;
 
 /**
  * The value for an attribute which can be added to any object in the system.
@@ -52,7 +50,6 @@ import framework.utils.Msg;
  */
 @Entity
 public class BooleanCustomAttributeValue extends Model implements IModel, ICustomAttributeValue {
-    private static final long serialVersionUID = -676104249012732234L;
 
     public static Finder<Long, BooleanCustomAttributeValue> find = new Finder<Long, BooleanCustomAttributeValue>(BooleanCustomAttributeValue.class);
 
@@ -77,6 +74,9 @@ public class BooleanCustomAttributeValue extends Model implements IModel, ICusto
     @Transient
     private boolean isNotReadFromDb = false;
 
+    /**
+     * Default constructor.
+     */
     public BooleanCustomAttributeValue() {
     }
 
