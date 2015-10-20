@@ -42,6 +42,7 @@ import com.avaje.ebean.Model;
 import com.avaje.ebean.SqlQuery;
 import com.avaje.ebean.SqlRow;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
@@ -263,13 +264,17 @@ public class CustomAttributeDefinition extends Model implements IModel {
     /**
      * Return true if the custom attribute has a valid conditional rule.
      */
-    private boolean hasValidConditionalRule() {
+    public boolean hasValidConditionalRule() {
 
         if (!StringUtils.isBlank(getProperties().getProperty(CONDITIONAL_RULE_PROP))) {
 
             String[] conditionalRule = getProperties().getProperty(CONDITIONAL_RULE_PROP).split("=");
 
             if (conditionalRule.length == 2) {
+
+                // TODO maybe here a list of authorized CA that support
+                // conditional rule
+
                 return true;
             }
         }
@@ -292,12 +297,12 @@ public class CustomAttributeDefinition extends Model implements IModel {
     }
 
     /**
-     * Get the conditional rule value as a JSON string.
+     * Get the conditional rule value as a list of string.
      * 
      * Return null if there is no condition rule or if the rule is not well
      * formated.
      */
-    public String getConditionalRuleValueAsJson() {
+    public List<String> getConditionalRuleValueAsList() {
 
         if (hasValidConditionalRule()) {
 
@@ -306,14 +311,33 @@ public class CustomAttributeDefinition extends Model implements IModel {
             String conditionalValue = conditionalRule[1];
 
             String[] conditionalValues = conditionalValue.split(",");
-            List<String> ids = new ArrayList<>();
+            List<String> values = new ArrayList<>();
             for (int i = 0; i < conditionalValues.length; i++) {
-                ids.add(conditionalValues[i].toLowerCase());
+                values.add(conditionalValues[i].trim().toLowerCase());
             }
 
+            return values;
+
+        }
+
+        return null;
+
+    }
+
+    /**
+     * Get the conditional rule value as a JSON string.
+     * 
+     * Return null if there is no condition rule or if the rule is not well
+     * formated.
+     */
+    public String getConditionalRuleValueAsJson() {
+
+        List<String> values = this.getConditionalRuleValueAsList();
+
+        if (values != null) {
             ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
             try {
-                return ow.writeValueAsString(ids);
+                return ow.writeValueAsString(values);
             } catch (JsonProcessingException e) {
                 Logger.error("Impossible to convert the conditional rule value to a JSON string for the custom attribute " + this.uuid + ".", e);
             }
@@ -323,33 +347,52 @@ public class CustomAttributeDefinition extends Model implements IModel {
 
     }
 
-    public boolean isDisplayedForConditionalRule(String dependendValue) {
-        /*
-         * if (this.hasValidConditionalRule()) {
-         * 
-         * String[] conditionalRule =
-         * getProperties().getProperty(CONDITIONAL_RULE_PROP).split("=");
-         * 
-         * String conditionalValue = conditionalRule[1];
-         * 
-         * switch (AttributeType.valueOf(this.attributeType)) {
-         * 
-         * case INTEGER: case DECIMAL: return
-         * Double.parseDouble(conditionalValue);
-         * 
-         * case BOOLEAN: if ("true".equals(conditionalValue.toLowerCase())) {
-         * return true; } else { return false; }
-         * 
-         * case STRING: return conditionalValue;
-         * 
-         * case SINGLE_ITEM: case DYNAMIC_SINGLE_ITEM: case MULTI_ITEM: String[]
-         * conditionalValues = conditionalValue.split(","); List<Long> ids = new
-         * ArrayList<>(); for (int i = 0; i < conditionalValues.length; i++) {
-         * ids.add(Long.parseLong(conditionalValues[i])); } return ids;
-         * 
-         * default: break; } }
-         */
+    /**
+     * Return true if the value for the given object id should be displayed.
+     * 
+     * @param formDataObject
+     *            the filled object used to display the form when editing the
+     *            corresponding object type
+     * @param objectId
+     *            the object id
+     */
+    public boolean isDisplayedForConditionalRule(Object formDataObject, Long objectId) {
+
+        if (formDataObject != null && this.hasValidConditionalRule()) {
+
+            String dependingFieldId = this.getConditionalRuleFieldId();
+
+            JsonNode node = new ObjectMapper().valueToTree(formDataObject);
+            JsonNode dependingDirectAttribute = node.get(dependingFieldId);
+
+            ICustomAttributeValue dependingCustomAttribute = null;
+            try {
+                dependingCustomAttribute = CustomAttributeDefinition.getCustomAttributeValue(dependingFieldId, Class.forName(this.objectType), objectId);
+            } catch (Exception e) {
+                Logger.debug("impossible to find a custom attribute for the uuid " + dependingFieldId);
+            }
+
+            String dependingValue = null;
+
+            if (dependingDirectAttribute != null) {
+                dependingValue = dependingDirectAttribute.asText();
+            } else if (dependingCustomAttribute != null) {
+                dependingValue = String.valueOf(dependingCustomAttribute.getValueAsObject());
+            }
+
+            if (dependingValue != null) {
+                String cleanValue = dependingValue.toLowerCase().trim();
+                for (String str : this.getConditionalRuleValueAsList()) {
+                    if (str.trim().equals(cleanValue)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+        }
+
         return true;
+
     }
 
     /*

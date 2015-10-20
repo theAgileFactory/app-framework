@@ -29,7 +29,7 @@ models.framework_models.common.CustomAttributeDefinition.getOrderedCustomAttribu
 
             @customAttributeValue.renderFormField(objectForm(fieldId))
             
-            @if(customAttributeValue.getDefinition.getConditionalRuleFieldId != null) {
+            @if(customAttributeValue.getDefinition.hasValidConditionalRule) {
                 <script>
                     
                     function _@(fieldId)_hide() {
@@ -64,26 +64,26 @@ models.framework_models.common.CustomAttributeDefinition.getOrderedCustomAttribu
                     
                     $( document ).ready(function() {
                     
-                        var $dependendField = $("#@(customAttributeValue.getDefinition.getConditionalRuleFieldId)");
+                        var $dependingField = $("#@(customAttributeValue.getDefinition.getConditionalRuleFieldId)");
             
-                        // check the dependend field exist
-                        if($dependendField.length > 0) {
+                        // check the depending field exist
+                        if($dependingField.length > 0) {
                             
                             var conditionalRuleValue = @Html(customAttributeValue.getDefinition.getConditionalRuleValueAsJson);
-                            var tagName = $dependendField.prop("tagName").toLowerCase();
+                            var tagName = $dependingField.prop("tagName").toLowerCase();
                             
                             if (tagName == "input") {
-                                var inputType = $dependendField.prop("type").toLowerCase();
-                                var isPrimitive = $dependendField.data("primitive");
+                                var inputType = $dependingField.prop("type").toLowerCase();
+                                var isPrimitive = $dependingField.data("primitive");
                                 
                                 //input text primitive (string, numeric)
                                 if (inputType == "text" && isPrimitive != null && isPrimitive) {
             
-                                    $dependendField.change(function() {
+                                    $dependingField.change(function() {
                                         
-                                        var dependendValue = $(this).val().toLowerCase();
+                                        var dependingValue = $(this).val().toLowerCase().trim();
                                         
-                                        if ($.inArray(dependendValue, conditionalRuleValue) == -1) {
+                                        if ($.inArray(dependingValue, conditionalRuleValue) == -1) {
                                             _@(fieldId)_hide();
                                         } else {
                                             _@(fieldId)_show();
@@ -96,11 +96,11 @@ models.framework_models.common.CustomAttributeDefinition.getOrderedCustomAttribu
                                 //input checkbox
                                 if (inputType == "checkbox") {
             
-                                    $dependendField.change(function() {
+                                    $dependingField.change(function() {
                                         
-                                        var dependendValue = $(this).prop("checked");
+                                        var dependingValue = $(this).prop("checked");
              
-                                        if (dependendValue != (conditionalRuleValue[0] === 'true')) {
+                                        if (dependingValue != (conditionalRuleValue[0] === 'true')) {
                                             _@(fieldId)_hide();
                                         } else {
                                             _@(fieldId)_show();
@@ -113,11 +113,11 @@ models.framework_models.common.CustomAttributeDefinition.getOrderedCustomAttribu
                             //select
                             if (tagName == "select") {
                                 
-                                $dependendField.change(function() {
+                                $dependingField.change(function() {
                                     
-                                    var dependendValue = $(this).val();
+                                    var dependingValue = $(this).val();
                                     
-                                    if ($.inArray(dependendValue, conditionalRuleValue) == -1) {
+                                    if ($.inArray(dependingValue, conditionalRuleValue) == -1) {
                                         _@(fieldId)_hide();
                                     } else {
                                         _@(fieldId)_show();
@@ -128,7 +128,7 @@ models.framework_models.common.CustomAttributeDefinition.getOrderedCustomAttribu
             
                         }
                         
-                        $dependendField.trigger("change");
+                        $dependingField.trigger("change");
             
                     });
                 </script>
@@ -137,8 +137,3 @@ models.framework_models.common.CustomAttributeDefinition.getOrderedCustomAttribu
         }
     }
 }
-
-@*********************************************************
- * Display (if any) the input fields for the extended
- * attributes associated with the specified object reference
- *********************************************************@

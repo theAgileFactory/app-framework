@@ -15,13 +15,14 @@
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  *@
-@(objectType: Class[_], objectId: Long)
+@(objectType: Class[_], objectId: Long, formDataObject: Object = null)
 
 @import framework_views.parts
 
 @customAttributeValues=@{
 models.framework_models.common.CustomAttributeDefinition.getOrderedCustomAttributeValues(objectType, objectId);
 }
+
 @if(customAttributeValues!=null && customAttributeValues.size()!=0){
     <table class="table table-condensed table-hover">
         <colgroup>
@@ -30,20 +31,17 @@ models.framework_models.common.CustomAttributeDefinition.getOrderedCustomAttribu
         </colgroup>
         <tbody>
             @for(customAttributeValue <- customAttributeValues){
-                <tr>
-                    <th>
-                        @parts.Msg(customAttributeValue.getDefinition().name)
-                    </th>
-                    <td>
-                        @customAttributeValue.renderDisplay()
-                    </td>
-                </tr>
+                @if(customAttributeValue.getDefinition.isDisplayedForConditionalRule(formDataObject, objectId)) {
+                    <tr>
+                        <th>
+                            @parts.Msg(customAttributeValue.getDefinition().name)
+                        </th>
+                        <td>
+                            @customAttributeValue.renderDisplay()
+                        </td>
+                    </tr>
+                }
             }
         </tbody>
     </table>
 }
-
-@*********************************************************
- * Display (if any) the readonly display for the extended
- * attributes associated with the specified object reference
- *********************************************************@
