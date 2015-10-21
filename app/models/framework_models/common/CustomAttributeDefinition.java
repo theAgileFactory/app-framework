@@ -22,6 +22,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -46,7 +47,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
+import framework.commons.DataType;
 import framework.services.ServiceStaticAccessor;
+import framework.utils.CustomAttributeFormAndDisplayHandler;
 import framework.utils.DefaultSelectableValueHolder;
 import framework.utils.DefaultSelectableValueHolderCollection;
 import framework.utils.ISelectableValueHolderCollection;
@@ -85,7 +88,6 @@ public class CustomAttributeDefinition extends Model implements IModel {
      * play
      */
     public static final String DEFAULT_VALUE_PROP = "default.value";
-    public static final String CONDITIONAL_RULE_PROP = "conditional_rule";
     public static final String CONSTRAINT_REQUIRED_PROP = "constraint.required";
     public static final String CONSTRAINT_REQUIRED_MSG_PROP = "constraint.required.message";
     public static final String CONSTRAINT_MAX_PROP = "constraint.max";
@@ -138,6 +140,9 @@ public class CustomAttributeDefinition extends Model implements IModel {
 
     @Column(length = IModelConstants.LARGE_STRING)
     public String objectType;
+
+    @Column(length = IModelConstants.VLARGE_STRING)
+    public String conditionalRule;
 
     @Lob
     public byte[] configuration;
@@ -266,20 +271,48 @@ public class CustomAttributeDefinition extends Model implements IModel {
      */
     public boolean hasValidConditionalRule() {
 
-        if (!StringUtils.isBlank(getProperties().getProperty(CONDITIONAL_RULE_PROP))) {
+        if (this.conditionalRule != null) {
 
-            String[] conditionalRule = getProperties().getProperty(CONDITIONAL_RULE_PROP).split("=");
+            String[] conditionalRule = this.conditionalRule.split("=");
 
             if (conditionalRule.length == 2) {
 
-                // TODO maybe here a list of authorized CA that support
-                // conditional rule
+                if (this.isAuthorizedAttributeTypeForConditionalRule()) {
+                    return true;
+                }
 
-                return true;
             }
         }
         return false;
 
+    }
+
+    /**
+     * Return true if the custom attribute type supports the conditional rule
+     * (meaning we can add a conditional rule for it).
+     */
+    public boolean isAuthorizedAttributeTypeForConditionalRule() {
+        AttributeType attributeType = AttributeType.valueOf(this.attributeType);
+
+        return attributeType.equals(AttributeType.INTEGER) || attributeType.equals(AttributeType.DECIMAL) || attributeType.equals(AttributeType.BOOLEAN)
+                || attributeType.equals(AttributeType.DATE) || attributeType.equals(AttributeType.STRING) || attributeType.equals(AttributeType.TEXT)
+                || attributeType.equals(AttributeType.URL) || attributeType.equals(AttributeType.SINGLE_ITEM)
+                || attributeType.equals(AttributeType.DYNAMIC_SINGLE_ITEM);
+    }
+
+    /**
+     * Return true if the custom attribute type is supported to be a depending
+     * field in a conditional rule (meaning it is the "fieldId" of a conditional
+     * rule).
+     * 
+     * @return
+     */
+    public boolean isAuthorizedAttributeTypeForDependingFieldInConditionalRule() {
+
+        AttributeType attributeType = AttributeType.valueOf(this.attributeType);
+
+        return attributeType.equals(AttributeType.STRING) || attributeType.equals(AttributeType.INTEGER) || attributeType.equals(AttributeType.DECIMAL)
+                || attributeType.equals(AttributeType.BOOLEAN) || attributeType.equals(AttributeType.SINGLE_ITEM);
     }
 
     /**
@@ -290,8 +323,43 @@ public class CustomAttributeDefinition extends Model implements IModel {
      */
     public String getConditionalRuleFieldId() {
         if (hasValidConditionalRule()) {
-            String[] conditionalRule = getProperties().getProperty(CONDITIONAL_RULE_PROP).split("=");
+            String[] conditionalRule = this.conditionalRule.split("=");
             return conditionalRule[0];
+        }
+        return null;
+    }
+
+    /**
+     * Get the conditional rule field id for a managing form (because it doesn't
+     * exactly correspond to the field id when it is a depending custom
+     * attribute).
+     * 
+     * Return null if there is no conditional rule or if the rule is not well
+     * formated.
+     */
+    public String getConditionalRuleFieldIdForManagingForm() {
+        String fieldId = this.getConditionalRuleFieldId();
+        if (fieldId != null) {
+            DataType dataType = DataType.getDataTypeFromClassName(this.objectType);
+            if (dataType.getConditionalRuleAuthorizedFields().containsKey(fieldId)) {
+                return fieldId;
+            } else {
+                return CustomAttributeFormAndDisplayHandler.CUSTOM_ATTRIBUTE_FORM_FIELD_NAME_EXTENSION + fieldId;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get the conditional rule value.
+     * 
+     * Return null if there is no conditional rule or if the rule is not well
+     * formated.
+     */
+    public String getConditionalRuleValue() {
+        if (hasValidConditionalRule()) {
+            String[] conditionalRule = this.conditionalRule.split("=");
+            return conditionalRule[1];
         }
         return null;
     }
@@ -306,7 +374,7 @@ public class CustomAttributeDefinition extends Model implements IModel {
 
         if (hasValidConditionalRule()) {
 
-            String[] conditionalRule = getProperties().getProperty(CONDITIONAL_RULE_PROP).split("=");
+            String[] conditionalRule = this.conditionalRule.split("=");
 
             String conditionalValue = conditionalRule[1];
 
@@ -957,6 +1025,38 @@ public class CustomAttributeDefinition extends Model implements IModel {
         CustomAttributeDefinition customAttributeDefinition = find.where().eq("deleted", false).eq("objectType", objectType.getName() + ":" + filter)
                 .eq("uuid", attributeDefinitionUuid).findUnique();
         return getOrCreateCustomAttributeValue(objectType, filter, objectId, customAttributeDefinition);
+    }
+
+    /**
+     * Get all authorized fields for conditional rules depending of an object
+     * type.
+     * 
+     * @param objectType
+     *            the object type
+     * @param currentUuid
+     *            the uuid of the custom attribute wished to add a conditional
+     *            rule (in order to exclude it from the list)
+     */
+    public static Map<String, String> getConditionalRuleAuthorizedFields(Class<?> objectType, String currentUuid) {
+
+        DataType dataType = DataType.getDataTypeFromClassName(objectType.getName());
+
+        Map<String, String> authorizedFields = new LinkedHashMap<>();
+
+        for (Map.Entry<String, String> entry : dataType.getConditionalRuleAuthorizedFields().entrySet()) {
+            authorizedFields.put(entry.getKey(), entry.getValue());
+        }
+
+        List<CustomAttributeDefinition> customAttributeDefinitions = CustomAttributeDefinition.getOrderedCustomAttributeDefinitions(objectType);
+        for (CustomAttributeDefinition customAttributeDefinition : customAttributeDefinitions) {
+            if ((currentUuid == null || !customAttributeDefinition.uuid.equals(currentUuid))
+                    && customAttributeDefinition.isAuthorizedAttributeTypeForDependingFieldInConditionalRule()) {
+                authorizedFields.put(customAttributeDefinition.uuid, customAttributeDefinition.name);
+            }
+        }
+
+        return authorizedFields;
+
     }
 
     /**

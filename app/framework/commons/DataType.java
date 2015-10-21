@@ -36,6 +36,16 @@ public class DataType {
     private boolean isCustomAttribute;
 
     /**
+     * A custom attribute could have a displaying conditional rule depending of
+     * the value of another direct attribute or another custom attribute of the
+     * corresponding object. The map conditionalRuleAuthorizedFields contains
+     * all authorized direct attributes. Each entry is represented by a field id
+     * (as the key) and a i18n key (as the value). The field id is simply the
+     * attribute's name used in the managing form.
+     */
+    private Map<String, String> conditionalRuleAuthorizedFields;
+
+    /**
      * Return a data type associated with the specified name
      * 
      * @param dataTypeName
@@ -55,22 +65,28 @@ public class DataType {
      * @param isCustomAttribute
      */
     public static void add(String dataName, String dataTypeClassName, boolean isAuditable, boolean isCustomAttribute) {
+        add(dataName, dataTypeClassName, isAuditable, isCustomAttribute, new HashMap<String, String>());
+    }
+
+    public static void add(String dataName, String dataTypeClassName, boolean isAuditable, boolean isCustomAttribute,
+            Map<String, String> conditionalRuleAuthorizedFields) {
         if (!dataTypes.containsKey(dataName) && dataTypes.containsKey(dataName.toLowerCase())) {
             throw new IllegalArgumentException(
                     "WARNING: ambiguous data name attempt to register " + dataName + " while " + dataName.toLowerCase() + " is already registered");
         }
-        dataTypes.put(dataName, new DataType(dataName, dataTypeClassName, isAuditable, isCustomAttribute));
+        dataTypes.put(dataName, new DataType(dataName, dataTypeClassName, isAuditable, isCustomAttribute, conditionalRuleAuthorizedFields));
     }
 
     public DataType() {
     }
 
-    public DataType(String dataName, String dataTypeClassName, boolean isAuditable, boolean isCustomAttribute) {
-        super();
+    public DataType(String dataName, String dataTypeClassName, boolean isAuditable, boolean isCustomAttribute,
+            Map<String, String> conditionalRuleAuthorizedFields) {
         this.dataName = dataName;
         this.dataTypeClassName = dataTypeClassName;
         this.isAuditable = isAuditable;
         this.isCustomAttribute = isCustomAttribute;
+        this.conditionalRuleAuthorizedFields = conditionalRuleAuthorizedFields;
     }
 
     public String getDataName() {
@@ -87,6 +103,10 @@ public class DataType {
 
     public boolean isCustomAttribute() {
         return isCustomAttribute;
+    }
+
+    public Map<String, String> getConditionalRuleAuthorizedFields() {
+        return this.conditionalRuleAuthorizedFields;
     }
 
     public String getLabel() {
