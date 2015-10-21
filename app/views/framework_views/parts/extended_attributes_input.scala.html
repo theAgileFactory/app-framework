@@ -77,7 +77,7 @@ models.framework_models.common.CustomAttributeDefinition.getOrderedCustomAttribu
                                 var isPrimitive = $dependingField.data("primitive");
                                 
                                 //input text primitive (string, numeric)
-                                if (inputType == "text" && isPrimitive != null && isPrimitive) {
+                                if ((inputType == "text" || inputType == "hidden") && isPrimitive != null && isPrimitive) {
             
                                     $dependingField.change(function() {
                                         
