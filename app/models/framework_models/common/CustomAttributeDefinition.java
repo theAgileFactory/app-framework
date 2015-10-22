@@ -445,13 +445,19 @@ public class CustomAttributeDefinition extends Model implements IModel {
             if (dependingDirectAttribute != null) {
                 dependingValue = dependingDirectAttribute.asText();
             } else if (dependingCustomAttribute != null) {
-                dependingValue = String.valueOf(dependingCustomAttribute.getValueAsObject());
+                Object dependingValueAsObject = dependingCustomAttribute.getValueAsObject();
+                if (dependingValueAsObject instanceof CustomAttributeItemOption) {
+                    CustomAttributeItemOption customAttributeItemOption = (CustomAttributeItemOption) dependingValueAsObject;
+                    dependingValue = String.valueOf(customAttributeItemOption.id);
+                } else {
+                    dependingValue = String.valueOf(dependingValueAsObject);
+                }
             }
 
             if (dependingValue != null) {
                 String cleanValue = dependingValue.toLowerCase().trim();
                 for (String str : this.getConditionalRuleValueAsList()) {
-                    if (str.trim().equals(cleanValue)) {
+                    if (str.equals(cleanValue)) {
                         return true;
                     }
                 }

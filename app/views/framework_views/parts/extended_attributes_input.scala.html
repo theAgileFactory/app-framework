@@ -115,7 +115,7 @@ models.framework_models.common.CustomAttributeDefinition.getOrderedCustomAttribu
                                 
                                 $dependingField.change(function() {
                                     
-                                    var dependingValue = $(this).val();
+                                    var dependingValue = $(this).val().toLowerCase().trim();
                                     
                                     if ($.inArray(dependingValue, conditionalRuleValue) == -1) {
                                         _@(fieldId)_hide();
