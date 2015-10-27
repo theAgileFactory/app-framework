@@ -21,11 +21,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import models.framework_models.common.CustomAttributeDefinition;
-import models.framework_models.common.ICustomAttributeValue;
-
 import org.apache.commons.lang3.StringUtils;
 
+import models.framework_models.common.CustomAttributeDefinition;
+import models.framework_models.common.ICustomAttributeValue;
 import play.data.Form;
 
 /**
@@ -84,20 +83,64 @@ public abstract class CustomAttributeFormAndDisplayHandler {
     }
 
     /**
-     * Fill the specified form with the found custom attribute values
+     * Fill the specified form with the found custom attribute values.
      * 
+     * @param <T>
+     *            The class of the form
      * @param form
-     *            a form of a certain class
+     *            The form
      * @param clazz
-     *            the same class
+     *            The class of the custom attribute object
      * @param objectId
-     *            an object Id
+     *            The id of the object
      */
     public static <T> void fillWithValues(Form<T> form, Class<?> clazz, Long objectId) {
-        fillWithValues(form, clazz, null, objectId);
+        fillWithValues(form, clazz, null, objectId, "");
     }
 
+    /**
+     * Fill the specified form with the found custom attribute values.
+     * 
+     * @param <T>
+     *            The class of the form
+     * @param form
+     *            The form
+     * @param clazz
+     *            The class of the custom attribute object
+     * @param filter
+     *            the filter
+     * @param objectId
+     *            The id of the object
+     */
     public static <T> void fillWithValues(Form<T> form, Class<?> clazz, String filter, Long objectId) {
+        fillWithValues(form, clazz, filter, objectId, "");
+    }
+
+    /**
+     * Fill a specific list field the specified form with the found custom
+     * attribute values.
+     * 
+     * @param <T>
+     *            The class of the form
+     * @param form
+     *            The form
+     * @param clazz
+     *            The class of the custom attribute object
+     * @param filter
+     *            the filter
+     * @param listFieldName
+     *            The name of the list field
+     * @param objectIds
+     *            the list of object ids
+     */
+    public static <T> void fillWithValues(Form<T> form, Class<?> clazz, String filter, String listFieldName, List<Long> objectIds) {
+        for (int i = 0; i < objectIds.size(); i++) {
+            fillWithValues(form, clazz, filter, objectIds.get(i), listFieldName + "[" + i + "].");
+        }
+    }
+
+    private static <T> void fillWithValues(Form<T> form, Class<?> clazz, String filter, Long objectId, String prefix) {
+
         List<ICustomAttributeValue> values = null;
         if (filter != null) {
             values = CustomAttributeDefinition.getOrderedCustomAttributeValues(clazz, filter, objectId);
@@ -115,11 +158,11 @@ public abstract class CustomAttributeFormAndDisplayHandler {
                     String[] stringValues = StringUtils.split(value.print(), ',');
                     int count = 0;
                     for (String stringValue : stringValues) {
-                        form.data().put(getFieldNameFromDefinitionUuid(value.getDefinition().uuid) + "[" + count + "]", stringValue);
+                        form.data().put(prefix + getFieldNameFromDefinitionUuid(value.getDefinition().uuid) + "[" + count + "]", stringValue);
                         count++;
                     }
                 } else {
-                    form.data().put(getFieldNameFromDefinitionUuid(value.getDefinition().uuid), value.print());
+                    form.data().put(prefix + getFieldNameFromDefinitionUuid(value.getDefinition().uuid), value.print());
                 }
             }
         }
