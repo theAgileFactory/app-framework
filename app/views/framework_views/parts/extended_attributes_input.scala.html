@@ -108,6 +108,23 @@ models.framework_models.common.CustomAttributeDefinition.getOrderedCustomAttribu
             
                                     });
                                 }
+                                
+                                //input checkbox
+                                if (inputType == "radio") {
+
+                                    $('input[name=@(customAttributeValue.getDefinition.getConditionalRuleFieldIdForManagingForm)]').change(function() {
+                                        
+                                        var dependingValue = $('input[name=@(customAttributeValue.getDefinition.getConditionalRuleFieldIdForManagingForm)]:checked').val();
+                                        
+                                        if ($.inArray(dependingValue, conditionalRuleValue) == -1) {
+                                            _@(fieldId)_hide();
+                                        } else {
+                                            _@(fieldId)_show();
+                                        }
+            
+                                    });
+                                }
+
                             }
                             
                             //select
