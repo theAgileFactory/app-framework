@@ -18,8 +18,12 @@
 package framework.utils;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -131,7 +135,8 @@ public abstract class CustomAttributeFormAndDisplayHandler {
      * @param listFieldName
      *            The name of the list field
      * @param objectIds
-     *            the list of object ids
+     *            the list of object ids, the indexes of the ids should
+     *            correspond to field indexes
      */
     public static <T> void fillWithValues(Form<T> form, Class<?> clazz, String filter, String listFieldName, List<Long> objectIds) {
         for (int i = 0; i < objectIds.size(); i++) {
@@ -179,11 +184,33 @@ public abstract class CustomAttributeFormAndDisplayHandler {
      *            the same class
      */
     public static <T> boolean validateValues(Form<T> form, Class<?> clazz) {
-        return validateOrSaveValues(form, clazz, -1L, false);
+        return validateOrSaveValues(form, clazz, -1L, false, "");
     }
 
     public static <T> boolean validateValues(Form<T> form, Class<?> clazz, String filter) {
-        return validateOrSaveValues(form, clazz, filter, -1L, false);
+        return validateOrSaveValues(form, clazz, filter, -1L, false, "");
+    }
+
+    public static <T> boolean validateValues(Form<T> form, Class<?> clazz, String filter, String listFieldName) {
+
+        // get the indexes to validate
+        Map<String, String> data = form.data();
+        Set<Integer> indexes = new HashSet<>();
+        for (String key : data.keySet()) {
+            if (key.startsWith(listFieldName + "[")) {
+                final Pattern pattern = Pattern.compile(listFieldName + "\\[(.+?)\\](.*)");
+                final Matcher matcher = pattern.matcher(key);
+                matcher.find();
+                indexes.add(Integer.valueOf(matcher.group(1)));
+            }
+        }
+
+        boolean result = false;
+        for (Integer index : indexes) {
+            result = validateOrSaveValues(form, clazz, filter, -1L, false, listFieldName + "[" + index + "].") || result;
+        }
+        return result;
+
     }
 
     /**
@@ -202,11 +229,20 @@ public abstract class CustomAttributeFormAndDisplayHandler {
      *            an object Id
      */
     public static <T> boolean validateAndSaveValues(Form<T> form, Class<?> clazz, Long objectId) {
-        return validateOrSaveValues(form, clazz, objectId, true);
+        return validateOrSaveValues(form, clazz, objectId, true, "");
     }
 
     public static <T> boolean validateAndSaveValues(Form<T> form, Class<?> clazz, String filter, Long objectId) {
-        return validateOrSaveValues(form, clazz, filter, objectId, true);
+        return validateOrSaveValues(form, clazz, filter, objectId, true, "");
+    }
+
+    public static <T> boolean validateAndSaveValues(Form<T> form, Class<?> clazz, String filter, String listFieldName, List<Long> objectIds,
+            boolean saveValues) {
+        boolean result = false;
+        for (int i = 0; i < objectIds.size(); i++) {
+            result = validateOrSaveValues(form, clazz, filter, objectIds.get(i), true, listFieldName + "[" + i + "].") || result;
+        }
+        return result;
     }
 
     /**
@@ -215,11 +251,11 @@ public abstract class CustomAttributeFormAndDisplayHandler {
      * <b>Please wrap this method within a database transaction</b>
      * </p>
      */
-    private static <T> boolean validateOrSaveValues(Form<T> form, Class<?> clazz, Long objectId, boolean saveValues) {
-        return validateOrSaveValues(form, clazz, null, objectId, saveValues);
+    private static <T> boolean validateOrSaveValues(Form<T> form, Class<?> clazz, Long objectId, boolean saveValues, String prefix) {
+        return validateOrSaveValues(form, clazz, null, objectId, saveValues, prefix);
     }
 
-    private static <T> boolean validateOrSaveValues(Form<T> form, Class<?> clazz, String filter, Long objectId, boolean saveValues) {
+    private static <T> boolean validateOrSaveValues(Form<T> form, Class<?> clazz, String filter, Long objectId, boolean saveValues, String prefix) {
         boolean hasErrors = false;
         Map<String, String> data = form.data();
         if (data != null) {
@@ -231,24 +267,24 @@ public abstract class CustomAttributeFormAndDisplayHandler {
             }
             if (customAttributeValues != null) {
                 for (ICustomAttributeValue customAttributeValue : customAttributeValues) {
-                    String fieldName = getFieldNameFromDefinitionUuid(customAttributeValue.getDefinition().uuid);
+                    String fieldName = CustomAttributeFormAndDisplayHandler.getFieldNameFromDefinitionUuid(customAttributeValue.getDefinition().uuid);
                     if (customAttributeValue.getAttributeType().isMultiValued()) {
                         // Find the multiple values and create a comma separated
                         // list of values
                         List<String> stringValues = new ArrayList<String>();
                         for (String key : data.keySet()) {
-                            if (key.startsWith(fieldName + "[")) {
-                                String stringValue = data.get(key);
+                            if (key.startsWith(prefix + fieldName + "[")) {
+                                String stringValue = data.get(prefix + key);
                                 stringValues.add(stringValue);
                             }
                         }
                         customAttributeValue.parse(StringUtils.join(stringValues, ICustomAttributeValue.MULTI_VALUE_SEPARATOR));
                     } else {
-                        customAttributeValue.parse(data.get(fieldName));
+                        customAttributeValue.parse(data.get(prefix + fieldName));
                     }
                     if (customAttributeValue.hasError()) {
                         hasErrors = true;
-                        form.reject(fieldName, customAttributeValue.getErrorMessage());
+                        form.reject(prefix + fieldName, customAttributeValue.getErrorMessage());
                     } else {
                         if (saveValues) {
                             customAttributeValue.performSave();
