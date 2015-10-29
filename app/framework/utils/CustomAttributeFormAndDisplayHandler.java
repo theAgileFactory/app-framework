@@ -236,8 +236,7 @@ public abstract class CustomAttributeFormAndDisplayHandler {
         return validateOrSaveValues(form, clazz, filter, objectId, true, "");
     }
 
-    public static <T> boolean validateAndSaveValues(Form<T> form, Class<?> clazz, String filter, String listFieldName, List<Long> objectIds,
-            boolean saveValues) {
+    public static <T> boolean validateAndSaveValues(Form<T> form, Class<?> clazz, String filter, String listFieldName, List<Long> objectIds) {
         boolean result = false;
         for (int i = 0; i < objectIds.size(); i++) {
             result = validateOrSaveValues(form, clazz, filter, objectIds.get(i), true, listFieldName + "[" + i + "].") || result;
