@@ -17,7 +17,7 @@ trait I18nMessages {
 @Singleton
 class DefaultI18nMessages @Inject() (messagesApi: MessagesApi) extends I18nMessages {
 
-    val authorizedStartPatterns = "maf.color." :: "idzone.messages." :: "idzone.notifications." :: "topmenubar." :: "kpi." :: "report." :: "data_syndication." :: "object." :: "index." :: "messaging." :: "notifications." :: "my." :: "core." :: "admin." :: Nil
+    val authorizedStartPatterns = "idzone.messages." :: "idzone.notifications." :: "topmenubar." :: "kpi." :: "report." :: "object." :: "index." :: "messaging." :: "notifications." :: "my." :: "core." :: "admin." :: Nil
 
     val getAuthorizedKeys = {
         var list:List[String] = Nil
