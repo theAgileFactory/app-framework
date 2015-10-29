@@ -184,14 +184,14 @@ public abstract class CustomAttributeFormAndDisplayHandler {
      *            the same class
      */
     public static <T> boolean validateValues(Form<T> form, Class<?> clazz) {
-        return validateOrSaveValues(form, clazz, -1L, false, "");
+        return validateOrSaveValues(form, clazz, -1L, false, "", false);
     }
 
     public static <T> boolean validateValues(Form<T> form, Class<?> clazz, String filter) {
-        return validateOrSaveValues(form, clazz, filter, -1L, false, "");
+        return validateOrSaveValues(form, clazz, filter, -1L, false, "", false);
     }
 
-    public static <T> boolean validateValues(Form<T> form, Class<?> clazz, String filter, String listFieldName) {
+    public static <T> boolean validateValues(Form<T> form, Class<?> clazz, String filter, String listFieldName, Boolean onlyDisplayedOrRequired) {
 
         // get the indexes to validate
         Map<String, String> data = form.data();
@@ -207,7 +207,7 @@ public abstract class CustomAttributeFormAndDisplayHandler {
 
         boolean result = false;
         for (Integer index : indexes) {
-            result = validateOrSaveValues(form, clazz, filter, -1L, false, listFieldName + "[" + index + "].") || result;
+            result = validateOrSaveValues(form, clazz, filter, -1L, false, listFieldName + "[" + index + "].", onlyDisplayedOrRequired) || result;
         }
         return result;
 
@@ -229,17 +229,18 @@ public abstract class CustomAttributeFormAndDisplayHandler {
      *            an object Id
      */
     public static <T> boolean validateAndSaveValues(Form<T> form, Class<?> clazz, Long objectId) {
-        return validateOrSaveValues(form, clazz, objectId, true, "");
+        return validateOrSaveValues(form, clazz, objectId, true, "", false);
     }
 
     public static <T> boolean validateAndSaveValues(Form<T> form, Class<?> clazz, String filter, Long objectId) {
-        return validateOrSaveValues(form, clazz, filter, objectId, true, "");
+        return validateOrSaveValues(form, clazz, filter, objectId, true, "", false);
     }
 
-    public static <T> boolean validateAndSaveValues(Form<T> form, Class<?> clazz, String filter, String listFieldName, List<Long> objectIds) {
+    public static <T> boolean validateAndSaveValues(Form<T> form, Class<?> clazz, String filter, String listFieldName, List<Long> objectIds,
+            Boolean onlyDisplayedOrRequired) {
         boolean result = false;
         for (int i = 0; i < objectIds.size(); i++) {
-            result = validateOrSaveValues(form, clazz, filter, objectIds.get(i), true, listFieldName + "[" + i + "].") || result;
+            result = validateOrSaveValues(form, clazz, filter, objectIds.get(i), true, listFieldName + "[" + i + "].", onlyDisplayedOrRequired) || result;
         }
         return result;
     }
@@ -250,11 +251,13 @@ public abstract class CustomAttributeFormAndDisplayHandler {
      * <b>Please wrap this method within a database transaction</b>
      * </p>
      */
-    private static <T> boolean validateOrSaveValues(Form<T> form, Class<?> clazz, Long objectId, boolean saveValues, String prefix) {
-        return validateOrSaveValues(form, clazz, null, objectId, saveValues, prefix);
+    private static <T> boolean validateOrSaveValues(Form<T> form, Class<?> clazz, Long objectId, boolean saveValues, String prefix,
+            Boolean onlyDisplayedOrRequired) {
+        return validateOrSaveValues(form, clazz, null, objectId, saveValues, prefix, onlyDisplayedOrRequired);
     }
 
-    private static <T> boolean validateOrSaveValues(Form<T> form, Class<?> clazz, String filter, Long objectId, boolean saveValues, String prefix) {
+    private static <T> boolean validateOrSaveValues(Form<T> form, Class<?> clazz, String filter, Long objectId, boolean saveValues, String prefix,
+            Boolean onlyDisplayedOrRequired) {
         boolean hasErrors = false;
         Map<String, String> data = form.data();
         if (data != null) {
@@ -266,28 +269,34 @@ public abstract class CustomAttributeFormAndDisplayHandler {
             }
             if (customAttributeValues != null) {
                 for (ICustomAttributeValue customAttributeValue : customAttributeValues) {
-                    String fieldName = CustomAttributeFormAndDisplayHandler.getFieldNameFromDefinitionUuid(customAttributeValue.getDefinition().uuid);
-                    if (customAttributeValue.getAttributeType().isMultiValued()) {
-                        // Find the multiple values and create a comma separated
-                        // list of values
-                        List<String> stringValues = new ArrayList<String>();
-                        for (String key : data.keySet()) {
-                            if (key.startsWith(prefix + fieldName + "[")) {
-                                String stringValue = data.get(prefix + key);
-                                stringValues.add(stringValue);
+
+                    if (!onlyDisplayedOrRequired || customAttributeValue.getDefinition().isDisplayed || customAttributeValue.getDefinition().isRequired()) {
+
+                        String fieldName = CustomAttributeFormAndDisplayHandler.getFieldNameFromDefinitionUuid(customAttributeValue.getDefinition().uuid);
+                        if (customAttributeValue.getAttributeType().isMultiValued()) {
+                            // Find the multiple values and create a comma
+                            // separated
+                            // list of values
+                            List<String> stringValues = new ArrayList<String>();
+                            for (String key : data.keySet()) {
+                                if (key.startsWith(prefix + fieldName + "[")) {
+                                    String stringValue = data.get(prefix + key);
+                                    stringValues.add(stringValue);
+                                }
+                            }
+                            customAttributeValue.parse(StringUtils.join(stringValues, ICustomAttributeValue.MULTI_VALUE_SEPARATOR));
+                        } else {
+                            customAttributeValue.parse(data.get(prefix + fieldName));
+                        }
+                        if (customAttributeValue.hasError()) {
+                            hasErrors = true;
+                            form.reject(prefix + fieldName, customAttributeValue.getErrorMessage());
+                        } else {
+                            if (saveValues) {
+                                customAttributeValue.performSave();
                             }
                         }
-                        customAttributeValue.parse(StringUtils.join(stringValues, ICustomAttributeValue.MULTI_VALUE_SEPARATOR));
-                    } else {
-                        customAttributeValue.parse(data.get(prefix + fieldName));
-                    }
-                    if (customAttributeValue.hasError()) {
-                        hasErrors = true;
-                        form.reject(prefix + fieldName, customAttributeValue.getErrorMessage());
-                    } else {
-                        if (saveValues) {
-                            customAttributeValue.performSave();
-                        }
+
                     }
                 }
             }
