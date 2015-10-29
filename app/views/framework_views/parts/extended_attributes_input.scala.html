@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  *@
-@(objectForm: Form[_], objectType: Class[_], objectId: Long, onlyDisplayedOrRequired: Boolean = false)
+@(objectForm: Any, objectType: Class[_], objectId: Long, activeConditionalRule: Boolean = true, onlyDisplayedOrRequired: Boolean = false, displayAsRow: Boolean = false)
 
 @customAttributeValues=@{
 models.framework_models.common.CustomAttributeDefinition.getOrderedCustomAttributeValues(objectType, objectId);
@@ -26,12 +26,14 @@ models.framework_models.common.CustomAttributeDefinition.getOrderedCustomAttribu
     @for(customAttributeValue <- customAttributeValues) {
     
         @if(!onlyDisplayedOrRequired || customAttributeValue.getDefinition.isDisplayed || customAttributeValue.getDefinition.isRequired) {
-    
+
             @defining(framework.utils.CustomAttributeFormAndDisplayHandler.getFieldNameFromDefinitionUuid(customAttributeValue.getDefinition().uuid)) { fieldId =>
                 
-                @customAttributeValue.renderFormField(objectForm(fieldId))
+                @if(displayAsRow) { <td> }
+                    @customAttributeValue.renderFormField(if(objectForm.isInstanceOf[Form[_]]) objectForm.asInstanceOf[Form[_]](fieldId) else objectForm.asInstanceOf[Field](fieldId))
+                @if(displayAsRow) { </td> }
                 
-                @if(!onlyDisplayedOrRequired && customAttributeValue.getDefinition.hasValidConditionalRule) {
+                @if(activeConditionalRule && customAttributeValue.getDefinition.hasValidConditionalRule) {
                     <script>
                         
                         function _@(fieldId)_hide() {
