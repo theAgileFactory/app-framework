@@ -52,7 +52,6 @@ import play.twirl.api.Html;
  */
 @Entity
 public class SingleItemCustomAttributeValue extends Model implements IModel, ICustomAttributeValue {
-    private static final long serialVersionUID = -676104249012732234L;
 
     public static Finder<Long, SingleItemCustomAttributeValue> find = new Finder<Long, SingleItemCustomAttributeValue>(SingleItemCustomAttributeValue.class);
 
@@ -84,6 +83,9 @@ public class SingleItemCustomAttributeValue extends Model implements IModel, ICu
     @Transient
     private boolean isNotReadFromDb = false;
 
+    /**
+     * Default constructor.
+     */
     public SingleItemCustomAttributeValue() {
     }
 
@@ -229,7 +231,7 @@ public class SingleItemCustomAttributeValue extends Model implements IModel, ICu
 
     @Override
     public Html renderDisplay() {
-        return views.html.framework_views.parts.formats.display_value_holder.render(value, true);
+        return views.html.framework_views.parts.formats.display_value_holder.render(value, false);
     }
 
     @Override
