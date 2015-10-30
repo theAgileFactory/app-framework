@@ -31,16 +31,15 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Transient;
 import javax.persistence.Version;
 
-import models.framework_models.parent.IModel;
-import models.framework_models.parent.IModelConstants;
-import play.api.data.Field;
-import play.twirl.api.Html;
-
 import com.avaje.ebean.Model;
 
 import framework.utils.Msg;
 import framework.utils.Utilities;
 import framework.utils.formats.DateType;
+import models.framework_models.parent.IModel;
+import models.framework_models.parent.IModelConstants;
+import play.api.data.Field;
+import play.twirl.api.Html;
 
 /**
  * The value for an attribute which can be added to any object in the system.
@@ -50,7 +49,8 @@ import framework.utils.formats.DateType;
  * <li>default.value : the default value (can be "0" which will set the default
  * value to the current date or "n" where n is a number of days in the future or
  * "-n" where n is a number of days in the past)</li>
- * <li>constraint.required : if set to something, then the field is required</li>
+ * <li>constraint.required : if set to something, then the field is required
+ * </li>
  * <li>constraint.required.message : the message to be displayed if the field is
  * not provided</li>
  * <li>date.after : A date after which the date must be set (can be "0" which
@@ -227,16 +227,12 @@ public class DateCustomAttributeValue extends Model implements IModel, ICustomAt
             }
             this.value = (Date) newValue;
             if (!customAttributeDefinition.isDateAfter(this.value)) {
-                throw new IllegalArgumentException("This custom attribute "
-                        + this.customAttributeDefinition.uuid
-                        + " is invalid : "
+                throw new IllegalArgumentException("This custom attribute " + this.customAttributeDefinition.uuid + " is invalid : "
                         + Msg.get(customAttributeDefinition.getDateAfterMessage(),
                                 Utilities.getDateFormat(null).format(customAttributeDefinition.getDateAfterBoundary())));
             }
             if (!customAttributeDefinition.isDateBefore(this.value)) {
-                throw new IllegalArgumentException("This custom attribute "
-                        + this.customAttributeDefinition.uuid
-                        + " is invalid : "
+                throw new IllegalArgumentException("This custom attribute " + this.customAttributeDefinition.uuid + " is invalid : "
                         + Msg.get(customAttributeDefinition.getDateBeforeMessage(),
                                 Utilities.getDateFormat(null).format(customAttributeDefinition.getDateBeforeBoundary())));
             }
@@ -261,7 +257,8 @@ public class DateCustomAttributeValue extends Model implements IModel, ICustomAt
 
     @Override
     public Html renderFormField(Field field) {
-        return views.html.framework_views.parts.dateinput.render(field, Msg.get(customAttributeDefinition.name), null, customAttributeDefinition.isRequired());
+        return views.html.framework_views.parts.dateinput.render(field, customAttributeDefinition.name, customAttributeDefinition.description, null,
+                customAttributeDefinition.isRequired());
     }
 
     @Override
