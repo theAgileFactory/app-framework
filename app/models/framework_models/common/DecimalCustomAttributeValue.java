@@ -30,17 +30,15 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Transient;
 import javax.persistence.Version;
 
-import models.framework_models.parent.IModel;
-import models.framework_models.parent.IModelConstants;
-
 import org.apache.commons.lang3.StringUtils;
-
-import play.api.data.Field;
-import play.twirl.api.Html;
 
 import com.avaje.ebean.Model;
 
 import framework.utils.Msg;
+import models.framework_models.parent.IModel;
+import models.framework_models.parent.IModelConstants;
+import play.api.data.Field;
+import play.twirl.api.Html;
 
 /**
  * The value for an attribute which can be added to any object in the system.
@@ -48,7 +46,8 @@ import framework.utils.Msg;
  * Here are the properties supported by this attribute:
  * <ul>
  * <li>default.value : a number to be used as a default value</li>
- * <li>constraint.required : if set to something, then the field is required</li>
+ * <li>constraint.required : if set to something, then the field is required
+ * </li>
  * <li>constraint.required.message : the message to be displayed if the field is
  * not provided</li>
  * <li>constraint.max : a number setting the max value for the field</li>
@@ -63,7 +62,6 @@ import framework.utils.Msg;
  */
 @Entity
 public class DecimalCustomAttributeValue extends Model implements IModel, ICustomAttributeValue {
-    private static final long serialVersionUID = -676104249012732234L;
 
     public static Finder<Long, DecimalCustomAttributeValue> find = new Finder<Long, DecimalCustomAttributeValue>(DecimalCustomAttributeValue.class);
 
@@ -95,6 +93,9 @@ public class DecimalCustomAttributeValue extends Model implements IModel, ICusto
     @Transient
     private boolean isNotReadFromDb = false;
 
+    /**
+     * Default constructor.
+     */
     public DecimalCustomAttributeValue() {
     }
 
@@ -235,8 +236,8 @@ public class DecimalCustomAttributeValue extends Model implements IModel, ICusto
             if (newValue instanceof BigDecimal) {
                 this.value = (BigDecimal) newValue;
             } else {
-                throw new IllegalArgumentException("This custom attribute " + this.customAttributeDefinition.uuid + " cannot be updated with the value : "
-                        + newValue);
+                throw new IllegalArgumentException(
+                        "This custom attribute " + this.customAttributeDefinition.uuid + " cannot be updated with the value : " + newValue);
             }
             if (this.value.longValue() > customAttributeDefinition.maxBoundary()) {
                 throw new IllegalArgumentException("This custom attribute " + this.customAttributeDefinition.uuid + " is not valid : "
@@ -267,7 +268,8 @@ public class DecimalCustomAttributeValue extends Model implements IModel, ICusto
 
     @Override
     public Html renderFormField(Field field) {
-        return views.html.framework_views.parts.basic_input_text.render(field, Msg.get(customAttributeDefinition.name), customAttributeDefinition.isRequired());
+        return views.html.framework_views.parts.basic_input_text.render(field, customAttributeDefinition.name, customAttributeDefinition.description,
+                customAttributeDefinition.isRequired());
     }
 
     @Override

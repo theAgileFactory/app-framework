@@ -28,17 +28,15 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Transient;
 import javax.persistence.Version;
 
-import models.framework_models.parent.IModel;
-import models.framework_models.parent.IModelConstants;
-
 import org.apache.commons.lang3.StringUtils;
-
-import play.api.data.Field;
-import play.twirl.api.Html;
 
 import com.avaje.ebean.Model;
 
 import framework.utils.Msg;
+import models.framework_models.parent.IModel;
+import models.framework_models.parent.IModelConstants;
+import play.api.data.Field;
+import play.twirl.api.Html;
 
 /**
  * The value for an attribute which can be added to any object in the system.
@@ -46,7 +44,8 @@ import framework.utils.Msg;
  * Here are the properties supported by this attribute:
  * <ul>
  * <li>default.value : a number to be used as a default value</li>
- * <li>constraint.required : if set to something, then the field is required</li>
+ * <li>constraint.required : if set to something, then the field is required
+ * </li>
  * <li>constraint.required.message : the message to be displayed if the field is
  * not provided</li>
  * <li>constraint.max : a number setting the max value for the field</li>
@@ -244,7 +243,8 @@ public class IntegerCustomAttributeValue extends Model implements IModel, ICusto
 
     @Override
     public Html renderFormField(Field field) {
-        return views.html.framework_views.parts.basic_input_text.render(field, Msg.get(customAttributeDefinition.name), customAttributeDefinition.isRequired());
+        return views.html.framework_views.parts.basic_input_text.render(field, customAttributeDefinition.name, customAttributeDefinition.description,
+                customAttributeDefinition.isRequired());
     }
 
     @Override
