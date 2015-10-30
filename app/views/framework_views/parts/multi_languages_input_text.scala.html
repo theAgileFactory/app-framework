@@ -20,6 +20,16 @@
 @import framework_views.parts
 @import java.math.BigInteger; var count=0
 
+@required=@{
+    var r = false;
+    for((a, b) <- field.constraints) {
+        if (a.equals("form.input.multi_languages_string.required")) {
+            r = true;
+        }
+    }
+    r;
+}
+
 <div class="form-group @if(field.hasErrors) {has-error}">
 
     @if(!field("key").value.isEmpty) {
@@ -27,7 +37,7 @@
     }
 
     <label class="control-label" for="@field.id">
-        @(fieldLabel) @if(isRequired(field)){&nbsp;<i style="color: red;" class="glyphicons glyphicons-asterisk"></i> <small><span style="color: red;">@parts.Msg("form.input.multi_languages_string.required")</span></small>}</label>
+        @(fieldLabel) @if(required){&nbsp;<i style="color: red;" class="glyphicons glyphicons-asterisk"></i> <small><span style="color: red;">@parts.Msg("form.input.multi_languages_string.required")</span></small>}</label>
 
         @helper.repeat(field("values"), min = framework.services.ServiceStaticAccessor.getMessagesPlugin().getValidLanguageList().size) { vField =>
 
