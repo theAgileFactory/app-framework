@@ -18,6 +18,7 @@
 @(field: Field, fieldLabel: String, fieldDescription: String, forceRequired: Boolean)
 @import commons._
 @import framework_views.parts
+
 <div class="form-group @if(field.hasErrors) {has-error}">
     <label class="control-label" for="@field.id">@parts.Msg(fieldLabel)@if(isRequired(field) || forceRequired){&nbsp;<i style="color: red;" class="glyphicons glyphicons-asterisk"></i>}</label>
     <input class="form-control" type="text" id="@field.id" name="@field.name" value="@field.value" data-primitive="true"/>
@@ -26,6 +27,3 @@
         <strong>@{field.error.map { error => parts.Msg(error.message) }}</strong>
     </span>
 </div>
-@***********************************************************
- * A template which encapsulate the default inputText helper
- ***********************************************************@

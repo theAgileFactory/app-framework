@@ -15,17 +15,17 @@
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  *@
-@(field: Field, fieldLabel: String, forceRequired: Boolean=false)
+@(field: Field, fieldLabel: String, fieldDescription: String, forceRequired: Boolean)
 @import commons._
 @import framework_views.parts
 
 <div class="form-group @if(field.hasErrors) {has-error}">
-    <label class="control-label" for="@field.id">@(fieldLabel)@if(isRequired(field) || forceRequired){&nbsp;<i style="color: red;" class="glyphicons glyphicons-asterisk"></i>}</label>
+    <label class="control-label" for="@field.id">@parts.Msg(fieldLabel)@if(isRequired(field) || forceRequired){&nbsp;<i style="color: red;" class="glyphicons glyphicons-asterisk"></i>}</label>
     <div class="">
         <textarea name="@field.name" id="@field.id" class="form-control">@field.value</textarea>
-        <span class="help-block"><strong>@{field.error.map { error => parts.Msg(error.message) }}</strong></span>
+        <span class="help-block">
+            @if(fieldDescription != null && !fieldDescription.equals("")){@parts.Msg(fieldDescription) <br/>}
+            <strong>@{field.error.map { error => parts.Msg(error.message) }}</strong>
+        </span>
     </div>
 </div>
-@***********************************************************
- * A template which encapsulate the default textarea helper
- ***********************************************************@

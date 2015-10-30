@@ -29,17 +29,15 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Transient;
 import javax.persistence.Version;
 
-import models.framework_models.parent.IModel;
-import models.framework_models.parent.IModelConstants;
-
 import org.apache.commons.lang3.StringUtils;
-
-import play.api.data.Field;
-import play.twirl.api.Html;
 
 import com.avaje.ebean.Model;
 
 import framework.utils.Msg;
+import models.framework_models.parent.IModel;
+import models.framework_models.parent.IModelConstants;
+import play.api.data.Field;
+import play.twirl.api.Html;
 
 /**
  * Custom attribute to be used to store large text values (often not displayed
@@ -48,7 +46,8 @@ import framework.utils.Msg;
  * Here are the properties supported by this attribute:
  * <ul>
  * <li>default.value : a number to be used as a default value</li>
- * <li>constraint.required : if set to something, then the field is required</li>
+ * <li>constraint.required : if set to something, then the field is required
+ * </li>
  * <li>constraint.required.message : the message to be displayed if the field is
  * not provided</li>
  * </ul>
@@ -57,8 +56,6 @@ import framework.utils.Msg;
  */
 @Entity
 public class TextCustomAttributeValue extends Model implements IModel, ICustomAttributeValue {
-
-    private static final long serialVersionUID = -676104249055882234L;
 
     public static Finder<Long, TextCustomAttributeValue> find = new Finder<Long, TextCustomAttributeValue>(TextCustomAttributeValue.class);
 
@@ -78,6 +75,9 @@ public class TextCustomAttributeValue extends Model implements IModel, ICustomAt
     @Lob
     private byte[] value;
 
+    /**
+     * Get the value.
+     */
     public String getValue() {
         try {
             return new String(this.value, "UTF-8");
@@ -86,6 +86,12 @@ public class TextCustomAttributeValue extends Model implements IModel, ICustomAt
         }
     }
 
+    /**
+     * Set the value.
+     * 
+     * @param value
+     *            the value to set
+     */
     public void setValue(String value) {
         this.value = value.getBytes();
     }
@@ -102,6 +108,9 @@ public class TextCustomAttributeValue extends Model implements IModel, ICustomAt
     @Transient
     private boolean isNotReadFromDb = false;
 
+    /**
+     * Default constructor.
+     */
     public TextCustomAttributeValue() {
     }
 
@@ -222,7 +231,8 @@ public class TextCustomAttributeValue extends Model implements IModel, ICustomAt
 
     @Override
     public Html renderFormField(Field field) {
-        return views.html.framework_views.parts.textarea.render(field, Msg.get(customAttributeDefinition.name), customAttributeDefinition.isRequired());
+        return views.html.framework_views.parts.textarea.render(field, customAttributeDefinition.name, customAttributeDefinition.description,
+                customAttributeDefinition.isRequired());
     }
 
     @Override

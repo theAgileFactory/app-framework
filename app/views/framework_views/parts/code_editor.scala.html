@@ -15,29 +15,24 @@
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  *@
+
 @(field: Field, fieldLabel: String, syntax: framework.commons.IFrameworkConstants.Syntax,forceRequired: Boolean=false)
 @import commons._
 @import framework_views.parts
 
 <div class="panel panel-default">
   <div class="panel-body">
-@textarea(field, fieldLabel, forceRequired)
+@textarea(field, fieldLabel, "", forceRequired)
   </div>
 </div>
 @if(syntax!=null){
 <script type="text/javascript">
 var @(field.id)_codeEditor;
 $(document).ready(function(){
-	@(field.id)_codeEditor=CodeMirror.fromTextArea(document.getElementById("@field.id"), {
-	    lineNumbers: true,
-	    mode: "@syntax.name().toLowerCase"
-	});
+    @(field.id)_codeEditor=CodeMirror.fromTextArea(document.getElementById("@field.id"), {
+        lineNumbers: true,
+        mode: "@syntax.name().toLowerCase"
+    });
 });
 </script>
 }
-@***********************************************************
- * A template which provide a textarea for code edition
- * A javascript variable named @(field.id)_codeEditor is created
- * in the global context so that it could be manipulated by
- * javascript (see CodeMirror documentation)
- ***********************************************************@
