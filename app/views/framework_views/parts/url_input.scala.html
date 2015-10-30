@@ -15,11 +15,12 @@
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  *@
-@(field: Field, fieldLabel: String, forceRequired: Boolean=false)
+@(field: Field, fieldLabel: String, fieldDescription: String, forceRequired: Boolean)
 @import commons._
 @import framework_views.parts
+
 <div class="form-group @if(field.hasErrors) {has-error}">
-    <label class="control-label" for="@field.id">@(fieldLabel)@if(isRequired(field) || forceRequired){&nbsp;<i style="color: red;" class="glyphicons glyphicons-asterisk"></i>}</label>
+    <label class="control-label" for="@field.id">@parts.Msg(fieldLabel)@if(isRequired(field) || forceRequired){&nbsp;<i style="color: red;" class="glyphicons glyphicons-asterisk"></i>}</label>
     
     <div class="input-group">
         <span class="input-group-addon" id="basic-addon1"><span class="glyphicons glyphicons-link"></span></span>
@@ -27,10 +28,13 @@
     </div>
     
     <span class="help-block">
-        @parts.Msg("form.input.url.help")<br/>
+        @if(fieldDescription != null && !fieldDescription.equals("")){
+            @parts.Msg(fieldDescription)
+        } else {
+            @parts.Msg("form.input.url.help")
+        }
+        <br/>
         <strong>@{field.error.map { error => parts.Msg(error.message) }}</strong>
     </span>
 </div>
-@***********************************************************
- * A template which encapsulate the default inputText helper
- ***********************************************************@
+

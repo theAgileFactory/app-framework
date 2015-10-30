@@ -28,16 +28,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Transient;
 import javax.persistence.Version;
 
-import models.framework_models.parent.IModel;
-import models.framework_models.parent.IModelConstants;
-
 import org.apache.commons.lang3.StringUtils;
-
-import play.api.data.Field;
-import play.libs.Json;
-import play.mvc.Controller;
-import play.mvc.Result;
-import play.twirl.api.Html;
 
 import com.avaje.ebean.Model;
 
@@ -48,6 +39,13 @@ import framework.utils.ISelectableValueHolder;
 import framework.utils.ISelectableValueHolderCollection;
 import framework.utils.Msg;
 import framework.utils.Utilities;
+import models.framework_models.parent.IModel;
+import models.framework_models.parent.IModelConstants;
+import play.api.data.Field;
+import play.libs.Json;
+import play.mvc.Controller;
+import play.mvc.Result;
+import play.twirl.api.Html;
 
 /**
  * The value for an attribute which can be added to any object in the system.
@@ -58,7 +56,8 @@ import framework.utils.Utilities;
  * <li>default.value : the "name" of an option which id must be used as a
  * default value</li>
  * <li>input.field.type : can be "DROPDOWN" or "AUTOCOMPLETE" (default is
- * AUTOCOMPLETE) and defines the type of input component to be used for edition</li>
+ * AUTOCOMPLETE) and defines the type of input component to be used for edition
+ * </li>
  * <li>selection.query : a SQL query<br/>
  * Example : select id as value, name as name from org_unit The query must
  * define two fields "value" and "name" (value is to be the value of the custom
@@ -91,7 +90,6 @@ import framework.utils.Utilities;
  */
 @Entity
 public class DynamicSingleItemCustomAttributeValue extends Model implements IModel, ICustomAttributeValue {
-    private static final long serialVersionUID = -676104249012732234L;
 
     public static Finder<Long, DynamicSingleItemCustomAttributeValue> find = new Finder<Long, DynamicSingleItemCustomAttributeValue>(
             DynamicSingleItemCustomAttributeValue.class);
@@ -123,6 +121,9 @@ public class DynamicSingleItemCustomAttributeValue extends Model implements IMod
     @Transient
     private boolean isNotReadFromDb = false;
 
+    /**
+     * Default constructor.
+     */
     public DynamicSingleItemCustomAttributeValue() {
     }
 
@@ -260,12 +261,13 @@ public class DynamicSingleItemCustomAttributeValue extends Model implements IMod
         if (!customAttributeDefinition.isAutoComplete()) {
             String uid = ServiceStaticAccessor.getUserSessionManagerPlugin().getUserSessionId(Controller.ctx());
             return views.html.framework_views.parts.dropdownlist.render(field, Msg.get(customAttributeDefinition.name),
-                    customAttributeDefinition.getValueHoldersCollectionFromNameForDynamicSingleItemCustomAttribute("%", uid), null, false,
-                    customAttributeDefinition.isRequired());
+                    customAttributeDefinition.getValueHoldersCollectionFromNameForDynamicSingleItemCustomAttribute("%", uid),
+                    Msg.get(customAttributeDefinition.description), true, customAttributeDefinition.isRequired());
         }
         IImplementationDefinedObjectService implementationDefinedObjects = ServiceStaticAccessor.getImplementationDefinedObjectService();
-        return views.html.framework_views.parts.autocomplete.render(field, Msg.get(customAttributeDefinition.name), implementationDefinedObjects
-                .getRouteForDynamicSingleCustomAttributeApi().url(), customAttributeDefinition.getContextParametersForDynamicApi());
+        return views.html.framework_views.parts.autocomplete.render(field, Msg.get(customAttributeDefinition.name),
+                Msg.get(customAttributeDefinition.description), implementationDefinedObjects.getRouteForDynamicSingleCustomAttributeApi().url(),
+                customAttributeDefinition.getContextParametersForDynamicApi());
     }
 
     @Override
@@ -297,8 +299,9 @@ public class DynamicSingleItemCustomAttributeValue extends Model implements IMod
     public static Result jsonQueryApi() {
         // Retrieve the right custom attribute definition
         String customAttributeDefinitionIdAsString = Controller.request().queryString()
-                .get(CustomAttributeDefinition.DYNAMIC_SINGLE_CUSTOM_ATTRIBUTE_DEFINITION_ID_CTX_PARAMETER) != null ? Controller.request().queryString()
-                .get(CustomAttributeDefinition.DYNAMIC_SINGLE_CUSTOM_ATTRIBUTE_DEFINITION_ID_CTX_PARAMETER)[0] : null;
+                .get(CustomAttributeDefinition.DYNAMIC_SINGLE_CUSTOM_ATTRIBUTE_DEFINITION_ID_CTX_PARAMETER) != null
+                        ? Controller.request().queryString().get(CustomAttributeDefinition.DYNAMIC_SINGLE_CUSTOM_ATTRIBUTE_DEFINITION_ID_CTX_PARAMETER)[0]
+                        : null;
         CustomAttributeDefinition customAttributeDefinition = null;
         try {
             if (customAttributeDefinitionIdAsString == null) {

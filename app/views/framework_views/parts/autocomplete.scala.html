@@ -15,9 +15,11 @@
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  *@
-@(field: Field, fieldLabel: String, url: String, contextAttributes: Map[String, String]= null)
+
+@(field: Field, fieldLabel: String, fieldDescription: String, url: String, contextAttributes: Map[String, String]= null)
 @import framework_views.parts
 @import commons._
+
 @contextQueryString=@{
     var qs="";
     if(contextAttributes!=null){
@@ -27,6 +29,7 @@
     }
     qs;
 }
+
 <div class="form-group @if(field.hasErrors) {has-error}">
     <label class="control-label" for="@field.id">
        @if(fieldLabel != null && !fieldLabel.equals("")) {
@@ -38,9 +41,13 @@
     </p>
     <input type="hidden" id="@field.id" name="@field.name" value="@field.value"/>
     <input type="hidden" id="@(field.id)_content" name="@(field.name)_content" value=""/>
-    <span class="help-block"><strong>@{field.error.map { error => parts.Msg(error.message) }}</strong></span>
+    <span class="help-block">
+        @if(fieldDescription != null && !fieldDescription.equals("")){@fieldDescription <br/>}
+        <strong>@{field.error.map { error => parts.Msg(error.message) }}</strong>
+    </span>
 </div>
 @autocomplete_javascript(field.value, field.id, fieldLabel, url, contextQueryString)
+
 @*********************************************************
  * A template which generates an autocomplete field
  * The URL parameter must point to a "GET" URL which expects a querystring with:

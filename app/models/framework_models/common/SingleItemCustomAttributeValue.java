@@ -28,17 +28,15 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Transient;
 import javax.persistence.Version;
 
-import models.framework_models.parent.IModel;
-import models.framework_models.parent.IModelConstants;
-
 import org.apache.commons.lang3.StringUtils;
-
-import play.api.data.Field;
-import play.twirl.api.Html;
 
 import com.avaje.ebean.Model;
 
 import framework.utils.Msg;
+import models.framework_models.parent.IModel;
+import models.framework_models.parent.IModelConstants;
+import play.api.data.Field;
+import play.twirl.api.Html;
 
 /**
  * The value for an attribute which can be added to any object in the system.
@@ -98,8 +96,8 @@ public class SingleItemCustomAttributeValue extends Model implements IModel, ICu
     @Override
     public void defaults() {
         if (customAttributeDefinition != null && customAttributeDefinition.getDefaultValueAsString() != null) {
-            CustomAttributeItemOption customAttributeItemOption = CustomAttributeItemOption.getCustomAttributeItemOptionByName(customAttributeDefinition
-                    .getDefaultValueAsString());
+            CustomAttributeItemOption customAttributeItemOption = CustomAttributeItemOption
+                    .getCustomAttributeItemOptionByName(customAttributeDefinition.getDefaultValueAsString());
             this.value = customAttributeItemOption;
         }
     }
@@ -224,10 +222,9 @@ public class SingleItemCustomAttributeValue extends Model implements IModel, ICu
 
     @Override
     public Html renderFormField(Field field) {
-        return views.html.framework_views.parts.dropdownlist
-                .render(field, Msg.get(customAttributeDefinition.name),
-                        CustomAttributeItemOption.getSelectableValuesForDefinitionId(customAttributeDefinition.id), null, false,
-                        customAttributeDefinition.isRequired());
+        return views.html.framework_views.parts.dropdownlist.render(field, Msg.get(customAttributeDefinition.name),
+                CustomAttributeItemOption.getSelectableValuesForDefinitionId(customAttributeDefinition.id), Msg.get(customAttributeDefinition.description),
+                true, customAttributeDefinition.isRequired());
     }
 
     @Override

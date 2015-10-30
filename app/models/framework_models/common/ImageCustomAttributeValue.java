@@ -59,8 +59,6 @@ import play.twirl.api.Html;
 @Table(name = "string_custom_attribute_value")
 public class ImageCustomAttributeValue extends Model implements IModel, ICustomAttributeValue {
 
-    private static final long serialVersionUID = -676104249555662234L;
-
     public static Finder<Long, ImageCustomAttributeValue> find = new Finder<Long, ImageCustomAttributeValue>(ImageCustomAttributeValue.class);
 
     public static ArrayList<String> authorizedContentType = new ArrayList<String>() {
@@ -101,6 +99,9 @@ public class ImageCustomAttributeValue extends Model implements IModel, ICustomA
     @Transient
     private boolean isNotReadFromDb = false;
 
+    /**
+     * Default constructor.
+     */
     public ImageCustomAttributeValue() {
     }
 
@@ -251,7 +252,8 @@ public class ImageCustomAttributeValue extends Model implements IModel, ICustomA
 
     @Override
     public Html renderFormField(Field field) {
-        return views.html.framework_views.parts.fileupload_field.render(field, Msg.get(customAttributeDefinition.name), null, null);
+        return views.html.framework_views.parts.fileupload_field.render(field, customAttributeDefinition.name, customAttributeDefinition.description, null,
+                null);
     }
 
     @Override

@@ -31,19 +31,17 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Transient;
 import javax.persistence.Version;
 
-import models.framework_models.parent.IModel;
-import models.framework_models.parent.IModelConstants;
-
 import org.apache.commons.lang3.StringUtils;
-
-import play.Logger;
-import play.api.data.Field;
-import play.twirl.api.Html;
 
 import com.avaje.ebean.Model;
 
 import framework.utils.DefaultSelectableValueHolderCollection;
 import framework.utils.Msg;
+import models.framework_models.parent.IModel;
+import models.framework_models.parent.IModelConstants;
+import play.Logger;
+import play.api.data.Field;
+import play.twirl.api.Html;
 
 /**
  * The value for an attribute which can be added to any object in the system.
@@ -54,7 +52,6 @@ import framework.utils.Msg;
  */
 @Entity
 public class MultiItemCustomAttributeValue extends Model implements IModel, ICustomAttributeValue {
-    private static final long serialVersionUID = 5022807192623653146L;
 
     public static Finder<Long, MultiItemCustomAttributeValue> find = new Finder<Long, MultiItemCustomAttributeValue>(MultiItemCustomAttributeValue.class);
 
@@ -89,13 +86,16 @@ public class MultiItemCustomAttributeValue extends Model implements IModel, ICus
     @Transient
     private boolean isNotReadFromDb = false;
 
+    /**
+     * Default constructor.
+     */
     public MultiItemCustomAttributeValue() {
     }
 
     @Override
     public String audit() {
-        return "MultiItemCustomAttributeValue [id=" + id + ", deleted=" + deleted + ", lastUpdate=" + lastUpdate + ", objectType=" + objectType + ", objectId="
-                + objectId + "]";
+        return "MultiItemCustomAttributeValue [id=" + id + ", deleted=" + deleted + ", lastUpdate=" + lastUpdate + ", objectType=" + objectType
+                + ", objectId=" + objectId + "]";
     }
 
     @Override
@@ -216,8 +216,8 @@ public class MultiItemCustomAttributeValue extends Model implements IModel, ICus
         // Long
         if (newValue == null) {
             if (customAttributeDefinition.isRequired()) {
-                throw new IllegalArgumentException("Null is not aCustomAttributeMultiItemOption valid value for this custom attribute "
-                        + this.customAttributeDefinition.uuid);
+                throw new IllegalArgumentException(
+                        "Null is not aCustomAttributeMultiItemOption valid value for this custom attribute " + this.customAttributeDefinition.uuid);
             }
             this.temporaryValues = null;
         } else {
@@ -255,8 +255,8 @@ public class MultiItemCustomAttributeValue extends Model implements IModel, ICus
 
     @Override
     public Html renderFormField(Field field) {
-        return views.html.framework_views.parts.checkboxlist.render(field, Msg.get(customAttributeDefinition.name),
-                CustomAttributeMultiItemOption.getSelectableValuesForDefinitionId(customAttributeDefinition.id), false, true,
+        return views.html.framework_views.parts.checkboxlist.render(field, customAttributeDefinition.name, customAttributeDefinition.description,
+                CustomAttributeMultiItemOption.getSelectableValuesForDefinitionId(customAttributeDefinition.id), true, true,
                 customAttributeDefinition.isRequired());
     }
 

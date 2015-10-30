@@ -31,17 +31,15 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.Version;
 
-import models.framework_models.parent.IModel;
-import models.framework_models.parent.IModelConstants;
-
 import org.apache.commons.lang3.StringUtils;
-
-import play.api.data.Field;
-import play.twirl.api.Html;
 
 import com.avaje.ebean.Model;
 
 import framework.utils.Msg;
+import models.framework_models.parent.IModel;
+import models.framework_models.parent.IModelConstants;
+import play.api.data.Field;
+import play.twirl.api.Html;
 
 /**
  * The url custom attribute value.
@@ -64,8 +62,6 @@ import framework.utils.Msg;
 @Entity
 @Table(name = "string_custom_attribute_value")
 public class UrlCustomAttributeValue extends Model implements IModel, ICustomAttributeValue {
-
-    private static final long serialVersionUID = -4457221547L;
 
     public static Finder<Long, UrlCustomAttributeValue> find = new Finder<Long, UrlCustomAttributeValue>(UrlCustomAttributeValue.class);
 
@@ -97,6 +93,9 @@ public class UrlCustomAttributeValue extends Model implements IModel, ICustomAtt
     @Transient
     private boolean isNotReadFromDb = false;
 
+    /**
+     * Default constructor.
+     */
     public UrlCustomAttributeValue() {
     }
 
@@ -227,7 +226,8 @@ public class UrlCustomAttributeValue extends Model implements IModel, ICustomAtt
 
     @Override
     public Html renderFormField(Field field) {
-        return views.html.framework_views.parts.url_input.render(field, Msg.get(customAttributeDefinition.name), customAttributeDefinition.isRequired());
+        return views.html.framework_views.parts.url_input.render(field, customAttributeDefinition.name, customAttributeDefinition.description,
+                customAttributeDefinition.isRequired());
     }
 
     @Override
