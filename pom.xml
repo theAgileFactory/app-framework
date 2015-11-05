@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.agifac.lib</groupId>
 	<artifactId>app-framework</artifactId>
-	<version>8.0.3-SNAPSHOT</version>
+	<version>9.0.0</version>
 	<name>tAF application framework</name>
 	<description>This is the common library which contains the web application framework from tAF</description>
 	<packaging>play2</packaging>
@@ -18,7 +18,8 @@
 		<connection>scm:git:https://github.com/theAgileFactory/app-framework.git</connection>
 		<developerConnection>scm:git:https://github.com/theAgileFactory/app-framework.git</developerConnection>
 		<url>scm:git:https://github.com/theAgileFactory/app-framework.git</url>
-	</scm>
+	  <tag>app-framework-9.0.0</tag>
+  </scm>
 		
 	<repositories>
 		<repository>
