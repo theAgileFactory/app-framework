@@ -71,7 +71,8 @@ public class PluginContextImpl implements IPluginContext {
     private IEmailService emailService;
 
     public PluginContextImpl(PluginConfiguration pluginConfiguration, IPluginDescriptor pluginDescriptor, IPluginManagerService pluginManagerService,
-            IEventBroadcastingService eventBroadcastingService, ISharedStorageService sharedStorageService, Configuration configuration, IEmailService emailService) {
+            IEventBroadcastingService eventBroadcastingService, ISharedStorageService sharedStorageService, Configuration configuration,
+            IEmailService emailService) {
         this.configuration = configuration;
         this.pluginManagerService = pluginManagerService;
         this.eventBroadcastingService = eventBroadcastingService;
@@ -90,7 +91,7 @@ public class PluginContextImpl implements IPluginContext {
 
     @Override
     public void sendEmail(final String subject, final String body, final String... to) {
-    	getEmailService().sendEmail(subject, getConfiguration().getString("maf.email.from"), body, to);
+        getEmailService().sendEmail(subject, getConfiguration().getString("maf.email.from"), body, to);
     }
 
     @Override
@@ -520,7 +521,7 @@ public class PluginContextImpl implements IPluginContext {
     private Configuration getConfiguration() {
         return configuration;
     }
-    
+
     private IEmailService getEmailService() {
         return emailService;
     }
