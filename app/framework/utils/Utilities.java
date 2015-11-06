@@ -266,6 +266,16 @@ public abstract class Utilities {
     }
 
     /**
+     * Send a warning flash message
+     * 
+     * @param message
+     *            a String
+     */
+    public static void sendWarningFlashMessage(String message) {
+        Controller.flash("warning", message);
+    }
+
+    /**
      * Get the URL to an ajax wait animated gif
      */
     public static String getAjaxWaitImageUrl() {
