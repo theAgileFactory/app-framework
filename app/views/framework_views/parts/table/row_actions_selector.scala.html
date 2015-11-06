@@ -36,7 +36,7 @@
 }
 
 @if(rowActions.size > 1) {
-    <select class="_@(tableId)_rowActionsSelector rowActionsSelector" style="margin-bottom: 5px;">
+    <select class="_@(tableId)_rowActionsSelector rowActionsSelector form-control" style="margin-bottom: 5px;  min-width: 0; width: auto; display: inline;">
         <option value="">@parts.Msg("table.row_action.actions")</option>
         @for(rowAction <- rowActions) {
             <option value="@rowAction.toJson">@(rowAction.getLabel)</option>
