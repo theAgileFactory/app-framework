@@ -225,9 +225,13 @@ public class UrlCustomAttributeValue extends Model implements IModel, ICustomAtt
     }
 
     @Override
-    public Html renderFormField(Field field) {
-        return views.html.framework_views.parts.url_input.render(field, customAttributeDefinition.name, customAttributeDefinition.description,
-                customAttributeDefinition.isRequired());
+    public Html renderFormField(Field field, boolean displayDescription) {
+        String description = "";
+        if (displayDescription) {
+            description = customAttributeDefinition.description;
+        }
+        return views.html.framework_views.parts.url_input.render(field, customAttributeDefinition.name, description, customAttributeDefinition.isRequired(),
+                displayDescription);
     }
 
     @Override

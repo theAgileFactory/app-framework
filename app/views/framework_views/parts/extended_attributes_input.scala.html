@@ -30,7 +30,7 @@ models.framework_models.common.CustomAttributeDefinition.getOrderedCustomAttribu
             @defining(framework.utils.CustomAttributeFormAndDisplayHandler.getFieldNameFromDefinitionUuid(customAttributeValue.getDefinition().uuid)) { fieldId =>
                 
                 @if(displayAsRow) { <td> }
-                    @customAttributeValue.renderFormField(if(objectForm.isInstanceOf[Form[_]]) objectForm.asInstanceOf[Form[_]](fieldId) else objectForm.asInstanceOf[Field](fieldId))
+                    @customAttributeValue.renderFormField(if(objectForm.isInstanceOf[Form[_]]) objectForm.asInstanceOf[Form[_]](fieldId) else objectForm.asInstanceOf[Field](fieldId), !displayAsRow)
                 @if(displayAsRow) { </td> }
                 
                 @if(activeConditionalRule && customAttributeValue.getDefinition.hasValidConditionalRule) {

@@ -179,9 +179,12 @@ public class BooleanCustomAttributeValue extends Model implements IModel, ICusto
     }
 
     @Override
-    public Html renderFormField(Field field) {
-        return views.html.framework_views.parts.checkbox.render(field, Msg.get(customAttributeDefinition.name),
-                Msg.get(customAttributeDefinition.description));
+    public Html renderFormField(Field field, boolean displayDescription) {
+        String description = "";
+        if (displayDescription) {
+            description = Msg.get(customAttributeDefinition.description);
+        }
+        return views.html.framework_views.parts.checkbox.render(field, Msg.get(customAttributeDefinition.name), description);
     }
 
     @Override

@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  *@
-@(field: Field, fieldLabel: String, fieldDescription: String, forceRequired: Boolean)
+@(field: Field, fieldLabel: String, fieldDescription: String, forceRequired: Boolean, displayHelpIfNoDescription: Boolean = true)
 @import commons._
 @import framework_views.parts
 
@@ -29,11 +29,12 @@
     
     <span class="help-block">
         @if(fieldDescription != null && !fieldDescription.equals("")){
-            @parts.Msg(fieldDescription)
+            @parts.Msg(fieldDescription) <br/>
         } else {
-            @parts.Msg("form.input.url.help")
+            @if(displayHelpIfNoDescription) {
+                @parts.Msg("form.input.url.help") <br/>
+            }
         }
-        <br/>
         <strong>@{field.error.map { error => parts.Msg(error.message) }}</strong>
     </span>
 </div>

@@ -230,9 +230,12 @@ public class TextCustomAttributeValue extends Model implements IModel, ICustomAt
     }
 
     @Override
-    public Html renderFormField(Field field) {
-        return views.html.framework_views.parts.textarea.render(field, customAttributeDefinition.name, customAttributeDefinition.description,
-                customAttributeDefinition.isRequired());
+    public Html renderFormField(Field field, boolean displayDescription) {
+        String description = "";
+        if (displayDescription) {
+            description = customAttributeDefinition.description;
+        }
+        return views.html.framework_views.parts.textarea.render(field, customAttributeDefinition.name, description, customAttributeDefinition.isRequired());
     }
 
     @Override

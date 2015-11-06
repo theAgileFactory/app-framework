@@ -21,7 +21,7 @@ models.framework_models.common.CustomAttributeDefinition.getOrderedCustomAttribu
 }
 @if(customAttributeValues!=null && customAttributeValues.size()!=0){
 	@for(customAttributeValue <- customAttributeValues){
-		@customAttributeValue.renderFormField(objectForm(framework.utils.CustomAttributeFormAndDisplayHandler.getFieldNameFromDefinitionUuid(customAttributeValue.getDefinition().uuid)))
+		@customAttributeValue.renderFormField(objectForm(framework.utils.CustomAttributeFormAndDisplayHandler.getFieldNameFromDefinitionUuid(customAttributeValue.getDefinition().uuid)), true)
 	}
 }
 

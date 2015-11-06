@@ -254,8 +254,12 @@ public class MultiItemCustomAttributeValue extends Model implements IModel, ICus
     }
 
     @Override
-    public Html renderFormField(Field field) {
-        return views.html.framework_views.parts.checkboxlist.render(field, customAttributeDefinition.name, customAttributeDefinition.description,
+    public Html renderFormField(Field field, boolean displayDescription) {
+        String description = "";
+        if (displayDescription) {
+            description = customAttributeDefinition.description;
+        }
+        return views.html.framework_views.parts.checkboxlist.render(field, customAttributeDefinition.name, description,
                 CustomAttributeMultiItemOption.getSelectableValuesForDefinitionId(customAttributeDefinition.id), true, true,
                 customAttributeDefinition.isRequired());
     }

@@ -221,8 +221,12 @@ public class StringCustomAttributeValue extends Model implements IModel, ICustom
     }
 
     @Override
-    public Html renderFormField(Field field) {
-        return views.html.framework_views.parts.basic_input_text.render(field, customAttributeDefinition.name, customAttributeDefinition.description,
+    public Html renderFormField(Field field, boolean displayDescription) {
+        String description = "";
+        if (displayDescription) {
+            description = customAttributeDefinition.description;
+        }
+        return views.html.framework_views.parts.basic_input_text.render(field, customAttributeDefinition.name, description,
                 customAttributeDefinition.isRequired());
     }
 

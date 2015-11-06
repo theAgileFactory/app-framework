@@ -251,9 +251,12 @@ public class ImageCustomAttributeValue extends Model implements IModel, ICustomA
     }
 
     @Override
-    public Html renderFormField(Field field) {
-        return views.html.framework_views.parts.fileupload_field.render(field, customAttributeDefinition.name, customAttributeDefinition.description, null,
-                null);
+    public Html renderFormField(Field field, boolean displayDescription) {
+        String description = "";
+        if (displayDescription) {
+            description = customAttributeDefinition.description;
+        }
+        return views.html.framework_views.parts.fileupload_field.render(field, customAttributeDefinition.name, description, null, null);
     }
 
     @Override

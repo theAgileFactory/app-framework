@@ -257,16 +257,22 @@ public class DynamicSingleItemCustomAttributeValue extends Model implements IMod
     }
 
     @Override
-    public Html renderFormField(Field field) {
+    public Html renderFormField(Field field, boolean displayDescription) {
+
+        String description = "";
+        if (displayDescription) {
+            description = Msg.get(customAttributeDefinition.description);
+        }
+
         if (!customAttributeDefinition.isAutoComplete()) {
             String uid = ServiceStaticAccessor.getUserSessionManagerPlugin().getUserSessionId(Controller.ctx());
             return views.html.framework_views.parts.dropdownlist.render(field, Msg.get(customAttributeDefinition.name),
-                    customAttributeDefinition.getValueHoldersCollectionFromNameForDynamicSingleItemCustomAttribute("%", uid),
-                    Msg.get(customAttributeDefinition.description), true, customAttributeDefinition.isRequired());
+                    customAttributeDefinition.getValueHoldersCollectionFromNameForDynamicSingleItemCustomAttribute("%", uid), description, true,
+                    customAttributeDefinition.isRequired());
         }
         IImplementationDefinedObjectService implementationDefinedObjects = ServiceStaticAccessor.getImplementationDefinedObjectService();
-        return views.html.framework_views.parts.autocomplete.render(field, Msg.get(customAttributeDefinition.name),
-                Msg.get(customAttributeDefinition.description), implementationDefinedObjects.getRouteForDynamicSingleCustomAttributeApi().url(),
+        return views.html.framework_views.parts.autocomplete.render(field, Msg.get(customAttributeDefinition.name), description,
+                implementationDefinedObjects.getRouteForDynamicSingleCustomAttributeApi().url(),
                 customAttributeDefinition.getContextParametersForDynamicApi());
     }
 

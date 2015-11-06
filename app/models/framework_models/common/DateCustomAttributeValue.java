@@ -256,8 +256,12 @@ public class DateCustomAttributeValue extends Model implements IModel, ICustomAt
     }
 
     @Override
-    public Html renderFormField(Field field) {
-        return views.html.framework_views.parts.dateinput.render(field, customAttributeDefinition.name, customAttributeDefinition.description, null,
+    public Html renderFormField(Field field, boolean displayDescription) {
+        String description = "";
+        if (displayDescription) {
+            description = customAttributeDefinition.description;
+        }
+        return views.html.framework_views.parts.dateinput.render(field, customAttributeDefinition.name, description, null,
                 customAttributeDefinition.isRequired());
     }
 

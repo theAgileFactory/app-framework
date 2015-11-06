@@ -17,10 +17,10 @@
  */
 package models.framework_models.common;
 
-import play.api.data.Field;
-import play.twirl.api.Html;
 import framework.utils.CustomAttributeFormAndDisplayHandler;
 import framework.utils.Msg;
+import play.api.data.Field;
+import play.twirl.api.Html;
 
 /**
  * Generic interface for each custom attribute object
@@ -116,7 +116,8 @@ public interface ICustomAttributeValue {
     public boolean hasError();
 
     /**
-     * Return the error message associated with the error (if hasError is true).<br/>
+     * Return the error message associated with the error (if hasError is true).
+     * <br/>
      * <b>What is expected is a "rendered" message and not an i18n key</b>
      * 
      * @return a String
@@ -130,23 +131,26 @@ public interface ICustomAttributeValue {
     public void resetError();
 
     /**
-     * Render a form field
+     * Render a form field.
      * 
      * @param field
      *            a form field
+     * @param displayDescription
+     *            true if the field description (help) should be displayed if it
+     *            exists
      * @return an Html display of the form field attached to the specified value
      */
-    public Html renderFormField(Field field);
+    public Html renderFormField(Field field, boolean displayDescription);
 
     /**
-     * Render a display
+     * Render a display.
      * 
      * @return an Html "read-only" display of the value
      */
     public Html renderDisplay();
 
     /**
-     * An enumeration which tells about the type of the attribute
+     * An enumeration which tells about the type of the attribute.
      * 
      * @author Pierre-Yves Cloux
      */
