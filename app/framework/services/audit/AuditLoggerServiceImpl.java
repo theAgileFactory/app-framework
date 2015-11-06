@@ -51,14 +51,14 @@ import play.mvc.Http;
  */
 @Singleton
 public class AuditLoggerServiceImpl implements IAuditLoggerService {
-    /**
-     * User login to be used when no user is logged
-     */
+
     private static final String SYSTEM = "_SYSTEM";
     private String auditableEntitiesFilePath;
     private IUserSessionManagerPlugin userSessionManager;
     private Configuration configuration;
-    private static Logger.ALogger log = Logger.of(AuditLoggerServiceImpl.class);
+    private static Logger.ALogger log = Logger.of(IAuditLoggerService.class);
+    private static Logger.ALogger auditLog = Logger.of(AuditLoggerServiceImpl.class);
+
     private Map<String, Boolean> auditableEntities = Collections.synchronizedMap(new HashMap<String, Boolean>());
 
     public enum AuditedAction {
@@ -140,18 +140,18 @@ public class AuditLoggerServiceImpl implements IAuditLoggerService {
     }
 
     /**
-     * Log a message to the audit log
+     * Log a message to the audit log.
      * 
      * @param action
      *            an auditable action
-     * @param message
-     *            a message
+     * @param entity
+     *            the instance of the concerning entity
      */
     private void log(AuditedAction action, Object entity) {
         if (entity != null && IModel.class.isAssignableFrom(entity.getClass()) && getUserSessionManager() != null) {
             Boolean flag = auditableEntities.get(entity.getClass().getName());
             if (flag != null && flag) {
-                log.info(String.format("%s/%s/%s", action.name(), getCurrentUserLogin(), ((IModel) entity).audit()));
+                auditLog.info(String.format("%s/%s/%s", action.name(), getCurrentUserLogin(), ((IModel) entity).audit()));
             }
         }
     }
