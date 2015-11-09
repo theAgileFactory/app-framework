@@ -23,6 +23,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import framework.services.account.IPreferenceManagerPlugin;
 import models.framework_models.kpi.KpiData;
 
 /**
@@ -36,32 +37,38 @@ public interface IKpiRunner {
     /**
      * Compute the KPI main value and return it (only for internal KPI).
      * 
+     * @param preferenceManagerPlugin
+     *            the preference manager service
      * @param kpi
      *            the KPI
      * @param objectId
      *            the object id
      */
-    public BigDecimal computeMain(Kpi kpi, Long objectId);
+    public BigDecimal computeMain(IPreferenceManagerPlugin preferenceManagerPlugin, Kpi kpi, Long objectId);
 
     /**
      * Compute the KPI additional1 value and return it (only for internal KPI).
      * 
+     * @param preferenceManagerPlugin
+     *            the preference manager service
      * @param kpi
      *            the KPI
      * @param objectId
      *            the object id
      */
-    public BigDecimal computeAdditional1(Kpi kpi, Long objectId);
+    public BigDecimal computeAdditional1(IPreferenceManagerPlugin preferenceManagerPlugin, Kpi kpi, Long objectId);
 
     /**
      * Compute the KPI additional2 value and return it (only for internal KPI).
      * 
+     * @param preferenceManagerPlugin
+     *            the preference manager service
      * @param kpi
      *            the KPI
      * @param objectId
      *            the object id
      */
-    public BigDecimal computeAdditional2(Kpi kpi, Long objectId);
+    public BigDecimal computeAdditional2(IPreferenceManagerPlugin preferenceManagerPlugin, Kpi kpi, Long objectId);
 
     /**
      * It's possible to add a link to the cell/box display, simply return it if
@@ -79,12 +86,14 @@ public interface IKpiRunner {
      * 
      * The return value is composed by a start date and an end date.
      * 
+     * @param preferenceManagerPlugin
+     *            the preference manager service
      * @param kpi
      *            the KPI
      * @param objectId
      *            the object id
      */
-    public Pair<Date, Date> getTrendPeriod(Kpi kpi, Long objectId);
+    public Pair<Date, Date> getTrendPeriod(IPreferenceManagerPlugin preferenceManagerPlugin, Kpi kpi, Long objectId);
 
     /**
      * Draw an additionally static line in the trend.
@@ -93,11 +102,13 @@ public interface IKpiRunner {
      * 
      * The return value is composed by a label and list of values.
      * 
+     * @param preferenceManagerPlugin
+     *            the preference manager service
      * @param kpi
      *            the KPI
      * @param objectId
      *            the object id
      */
-    public Pair<String, List<KpiData>> getStaticTrendLine(Kpi kpi, Long objectId);
+    public Pair<String, List<KpiData>> getStaticTrendLine(IPreferenceManagerPlugin preferenceManagerPlugin, Kpi kpi, Long objectId);
 
 }

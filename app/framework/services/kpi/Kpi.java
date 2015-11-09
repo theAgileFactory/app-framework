@@ -237,7 +237,7 @@ public class Kpi {
 
         for (IKpiObjectsContainer kpiObject : kpiObjectsContainer.getAllInstancesForKpi()) {
 
-            Pair<Date, Date> period = this.kpiRunner.getTrendPeriod(this, kpiObject.getIdForKpi());
+            Pair<Date, Date> period = this.kpiRunner.getTrendPeriod(this.getKpiService().getPreferenceManagerPlugin(), this, kpiObject.getIdForKpi());
             Date today = new Date();
 
             if (period == null || (period.getLeft().before(today) && period.getRight().after(today))) {
@@ -511,7 +511,7 @@ public class Kpi {
      */
     private List<KpiData> getKpiData(Long objectId, KpiValueDefinition kpiValueDefinition) {
         if (kpiValueDefinition.isTrendDisplayed) {
-            Pair<Date, Date> period = this.kpiRunner.getTrendPeriod(this, objectId);
+            Pair<Date, Date> period = this.kpiRunner.getTrendPeriod(this.getKpiService().getPreferenceManagerPlugin(), this, objectId);
             if (period != null) {
                 return KpiData.getKpiDataAsListByPeriod(kpiValueDefinition.id, objectId, period.getLeft(), period.getRight());
             } else {
@@ -541,11 +541,11 @@ public class Kpi {
         if (!kpiDefinition.isExternal) {
             switch (dataType) {
             case ADDITIONAL1:
-                return kpiRunner.computeAdditional1(this, objectId);
+                return kpiRunner.computeAdditional1(this.getKpiService().getPreferenceManagerPlugin(), this, objectId);
             case ADDITIONAL2:
-                return kpiRunner.computeAdditional2(this, objectId);
+                return kpiRunner.computeAdditional2(this.getKpiService().getPreferenceManagerPlugin(), this, objectId);
             case MAIN:
-                return kpiRunner.computeMain(this, objectId);
+                return kpiRunner.computeMain(this.getKpiService().getPreferenceManagerPlugin(), this, objectId);
             }
         }
 

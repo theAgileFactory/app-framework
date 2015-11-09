@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -33,6 +34,7 @@ import org.apache.commons.lang3.tuple.Triple;
 import framework.highcharts.HighchartsUtils;
 import framework.highcharts.data.SeriesContainer;
 import framework.highcharts.data.TimeValueItem;
+import framework.services.account.IPreferenceManagerPlugin;
 import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.configuration.IImplementationDefinedObjectService;
 import framework.services.database.IDatabaseDependencyService;
@@ -57,12 +59,14 @@ import play.mvc.Result;
  */
 @Singleton
 public class KpiServiceImpl implements IKpiService {
+
     private static Logger.ALogger log = Logger.of(KpiServiceImpl.class);
     private Hashtable<String, Kpi> kpis;
     private String defaultCurrencyCode = "CHF";
     private ISysAdminUtils sysAdminUtils;
     private Environment environment;
     private II18nMessagesPlugin messagesPlugin;
+    private Provider<IPreferenceManagerPlugin> preferenceManagerPlugin;
 
     /**
      * Create a new KpiServiceImpl.
@@ -82,15 +86,18 @@ public class KpiServiceImpl implements IKpiService {
      *            the database dependency service
      * @param sysAdminUtils
      *            the system admin utils service
+     * @param preferenceManagerPlugin
+     *            a provider for the preference manager service
      */
     @Inject
     public KpiServiceImpl(ApplicationLifecycle lifecycle, Environment environment, Configuration configuration,
             IImplementationDefinedObjectService implementationDefinedObjectService, II18nMessagesPlugin messagesPlugin,
-            IDatabaseDependencyService databaseDependencyService, ISysAdminUtils sysAdminUtils) {
+            IDatabaseDependencyService databaseDependencyService, ISysAdminUtils sysAdminUtils, Provider<IPreferenceManagerPlugin> preferenceManagerPlugin) {
         log.info("SERVICE>>> KpiServiceImpl starting...");
         this.messagesPlugin = messagesPlugin;
         this.environment = environment;
         this.sysAdminUtils = sysAdminUtils;
+        this.preferenceManagerPlugin = preferenceManagerPlugin;
         this.defaultCurrencyCode = implementationDefinedObjectService.getDefaultCurrencyCode();
         init();
         lifecycle.addStopHook(() -> {
@@ -209,7 +216,7 @@ public class KpiServiceImpl implements IKpiService {
         Date endDate = null;
 
         Triple<List<KpiData>, List<KpiData>, List<KpiData>> datas = kpi.getTrendData(objectId);
-        Pair<String, List<KpiData>> staticTrendLine = kpi.getKpiRunner().getStaticTrendLine(kpi, objectId);
+        Pair<String, List<KpiData>> staticTrendLine = kpi.getKpiRunner().getStaticTrendLine(this.getPreferenceManagerPlugin(), kpi, objectId);
 
         SeriesContainer<TimeValueItem> seriesContainer = null;
 
@@ -240,7 +247,7 @@ public class KpiServiceImpl implements IKpiService {
 
             }
 
-            Pair<Date, Date> period = kpi.getKpiRunner().getTrendPeriod(kpi, objectId);
+            Pair<Date, Date> period = kpi.getKpiRunner().getTrendPeriod(this.getPreferenceManagerPlugin(), kpi, objectId);
             if (period != null) {
                 startDate = period.getLeft();
                 endDate = period.getRight();
@@ -336,6 +343,11 @@ public class KpiServiceImpl implements IKpiService {
     @Override
     public ISysAdminUtils getSysAdminUtils() {
         return sysAdminUtils;
+    }
+
+    @Override
+    public IPreferenceManagerPlugin getPreferenceManagerPlugin() {
+        return this.preferenceManagerPlugin.get();
     }
 
     /**

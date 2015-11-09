@@ -30,6 +30,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.WrapFactory;
 
+import framework.services.account.IPreferenceManagerPlugin;
 import framework.services.kpi.Kpi.DataType;
 import models.framework_models.kpi.KpiData;
 import play.Logger;
@@ -42,17 +43,17 @@ import play.Logger;
 public class CustomKpi implements IKpiRunner {
 
     @Override
-    public BigDecimal computeMain(Kpi kpi, Long objectId) {
+    public BigDecimal computeMain(IPreferenceManagerPlugin preferenceManagerPlugin, Kpi kpi, Long objectId) {
         return computeValue(kpi, objectId, DataType.MAIN);
     }
 
     @Override
-    public BigDecimal computeAdditional1(Kpi kpi, Long objectId) {
+    public BigDecimal computeAdditional1(IPreferenceManagerPlugin preferenceManagerPlugin, Kpi kpi, Long objectId) {
         return computeValue(kpi, objectId, DataType.ADDITIONAL1);
     }
 
     @Override
-    public BigDecimal computeAdditional2(Kpi kpi, Long objectId) {
+    public BigDecimal computeAdditional2(IPreferenceManagerPlugin preferenceManagerPlugin, Kpi kpi, Long objectId) {
         return computeValue(kpi, objectId, DataType.ADDITIONAL2);
     }
 
@@ -145,12 +146,12 @@ public class CustomKpi implements IKpiRunner {
     }
 
     @Override
-    public Pair<Date, Date> getTrendPeriod(Kpi kpi, Long objectId) {
+    public Pair<Date, Date> getTrendPeriod(IPreferenceManagerPlugin preferenceManagerPlugin, Kpi kpi, Long objectId) {
         return null;
     }
 
     @Override
-    public Pair<String, List<KpiData>> getStaticTrendLine(Kpi kpi, Long objectId) {
+    public Pair<String, List<KpiData>> getStaticTrendLine(IPreferenceManagerPlugin preferenceManagerPlugin, Kpi kpi, Long objectId) {
         return null;
     }
 

@@ -20,6 +20,7 @@ package framework.services.kpi;
 import java.util.Hashtable;
 import java.util.List;
 
+import framework.services.account.IPreferenceManagerPlugin;
 import framework.services.system.ISysAdminUtils;
 import play.Environment;
 import play.mvc.Http.Context;
@@ -115,4 +116,9 @@ public interface IKpiService {
      * Return the sysadmin utils service.
      */
     public ISysAdminUtils getSysAdminUtils();
+
+    /**
+     * Return the preference manager service.
+     */
+    public IPreferenceManagerPlugin getPreferenceManagerPlugin();
 }
