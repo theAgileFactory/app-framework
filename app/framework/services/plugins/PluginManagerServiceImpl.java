@@ -21,6 +21,7 @@ import static akka.actor.SupervisorStrategy.resume;
 
 import java.io.InputStream;
 import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -33,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
@@ -57,6 +59,7 @@ import framework.commons.message.EventMessage;
 import framework.commons.message.EventMessage.MessageType;
 import framework.services.actor.IActorSystemPlugin;
 import framework.services.configuration.II18nMessagesPlugin;
+import framework.services.database.IDatabaseChangeListener;
 import framework.services.database.IDatabaseDependencyService;
 import framework.services.email.IEmailService;
 import framework.services.ext.IExtension;
@@ -89,8 +92,9 @@ import scala.concurrent.duration.Duration;
  * @author Pierre-Yves Cloux
  */
 @Singleton
-public class PluginManagerServiceImpl implements IPluginManagerService, IEventBroadcastingService {
+public class PluginManagerServiceImpl implements IPluginManagerService, IEventBroadcastingService, IDatabaseChangeListener {
     private static Logger.ALogger log = Logger.of(PluginManagerServiceImpl.class);
+    private boolean databaseEventBroadcasting;
     private ActorSystem actorSystem;
     private ActorRef pluginStatusCallbackActorRef;
     private II18nMessagesPlugin messagesPlugin;
@@ -151,19 +155,20 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
      */
     @Inject
     public PluginManagerServiceImpl(ApplicationLifecycle lifecycle, IActorSystemPlugin actorSystemPlugin, ISysAdminUtils sysAdminUtils,
-            II18nMessagesPlugin messagesPlugin, IDatabaseDependencyService databaseDependencyService, ISharedStorageService sharedStorageService,
+            II18nMessagesPlugin messagesPlugin, final IDatabaseDependencyService databaseDependencyService, ISharedStorageService sharedStorageService,
             IExtensionManagerService extensionManagerService, Configuration configuration, IEmailService emailService) {
         log.info("SERVICE>>> PluginManagerServiceImpl starting...");
+        this.databaseEventBroadcasting = configuration.getBoolean("maf.plugins.database.event.broadcasting");
         this.messagesPlugin = messagesPlugin;
         this.sharedStorageService = sharedStorageService;
         this.extensionManagerService = extensionManagerService;
         this.configuration = configuration;
         this.emailService = emailService;
         pluginByIds = Collections.synchronizedMap(new HashMap<Long, PluginRegistrationEntry>());
-        createActors(actorSystemPlugin.getActorSystem());
+        init(actorSystemPlugin.getActorSystem(), databaseDependencyService);
         lifecycle.addStopHook(() -> {
             log.info("SERVICE>>> PluginManagerServiceImpl stopping...");
-            shutdown();
+            shutdown(databaseDependencyService);
             log.info("SERVICE>>> PluginManagerServiceImpl stopped");
             return Promise.pure(null);
         });
@@ -254,11 +259,16 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
         return extensionPluginRecord.getRight();
     }
 
-    private void createActors(ActorSystem actorSystem) {
+    /**
+     * Initialize the plugin manager
+     * 
+     * @param actorSystem
+     * @param databaseDependencyService
+     */
+    private void init(ActorSystem actorSystem, IDatabaseDependencyService databaseDependencyService) {
         this.actorSystem = actorSystem;
-
         if (log.isDebugEnabled()) {
-            log.debug("Actor system is created " + actorSystem != null ? actorSystem.name() : null);
+            log.debug("Actor system is " + actorSystem != null ? actorSystem.name() : null);
         }
 
         // Check the plugin definitions before starting
@@ -285,6 +295,14 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
                     log.error("Error while starting the PluginManagerService", e);
                 }
             }
+        }
+
+        if (isDatabaseEventBroadcasting()) {
+            // Register for database events
+            log.info("Database events broadcasting is ACTIVE");
+            databaseDependencyService.addDatabaseChangeListener(this);
+        } else {
+            log.info("Database events broadcasting is NOT ACTIVE");
         }
     }
 
@@ -317,7 +335,15 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
         }
     }
 
-    public void shutdown() {
+    public void shutdown(IDatabaseDependencyService databaseDependencyService) {
+        if (isDatabaseEventBroadcasting()) {
+            // Register for database events
+            if (log.isDebugEnabled()) {
+                log.debug("Unregister for database events");
+            }
+            databaseDependencyService.removeDatabaseChangeListener(this);
+        }
+
         if (log.isDebugEnabled()) {
             log.debug("Attempt to shutdown the plugin manager");
         }
@@ -646,11 +672,17 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
      *            a event message
      */
     public void postOutMessage(EventMessage eventMessage) {
+        if (log.isDebugEnabled()) {
+            log.debug("Post a message to the OUT interface " + eventMessage);
+        }
         postMessage(FlowType.OUT, eventMessage);
     }
 
     @Override
     public void postInMessage(EventMessage eventMessage) {
+        if (log.isDebugEnabled()) {
+            log.debug("Post a message to the IN interface " + eventMessage);
+        }
         postMessage(FlowType.IN, eventMessage);
     }
 
@@ -668,6 +700,87 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
             }
         }
         return pluginsSupportingRegistration;
+    }
+
+    @Override
+    public void postInsert(Object bean) {
+        if (log.isDebugEnabled()) {
+            log.debug("post Insert for " + bean);
+        }
+        if (bean != null) {
+            DataType dataType = DataType.getDataTypeFromClassName(bean.getClass().getName());
+            long id = getIdFromBean(bean);
+            if (dataType != null && id != -1) {
+                postOutMessage(new EventMessage(getIdFromBean(bean), dataType, MessageType.OBJECT_CREATED));
+            }
+        }
+    }
+
+    @Override
+    public void postDelete(Object bean) {
+        if (log.isDebugEnabled()) {
+            log.debug("post Delete for " + bean);
+        }
+        if (bean != null) {
+            DataType dataType = DataType.getDataTypeFromClassName(bean.getClass().getName());
+            long id = getIdFromBean(bean);
+            if (dataType != null && id != -1) {
+                postOutMessage(new EventMessage(getIdFromBean(bean), dataType, MessageType.OBJECT_DELETED));
+            }
+        }
+    }
+
+    @Override
+    public void postUpdate(Object bean) {
+        if (log.isDebugEnabled()) {
+            log.debug("post Update for " + bean);
+        }
+        if (bean != null) {
+            DataType dataType = DataType.getDataTypeFromClassName(bean.getClass().getName());
+            long id = getIdFromBean(bean);
+            boolean isDeleted = isBeanDeleted(bean);
+            if (dataType != null && id != -1) {
+                if (isDeleted) {
+                    postOutMessage(new EventMessage(getIdFromBean(bean), dataType, MessageType.OBJECT_DELETED));
+                } else {
+                    postOutMessage(new EventMessage(getIdFromBean(bean), dataType, MessageType.OBJECT_UPDATED));
+                }
+            }
+        }
+    }
+
+    /**
+     * Return the id for the BizDock object or -1 if this one is not found.
+     * 
+     * @param bean
+     *            a BizDock object
+     * @return the object id
+     */
+    public long getIdFromBean(Object bean) {
+        try {
+            return (long) PropertyUtils.getProperty(bean, "id");
+        } catch (NoSuchMethodException e) {
+        } catch (IllegalAccessException e) {
+        } catch (InvocationTargetException e) {
+        }
+        return -1;
+    }
+
+    /**
+     * Return true if the specified bean has been deleted
+     * 
+     * @param bean
+     *            a BizDock object
+     * @return the object id
+     */
+    public boolean isBeanDeleted(Object bean) {
+        try {
+            return (boolean) PropertyUtils.getProperty(bean, "deleted");
+        } catch (NoSuchMethodException e) {
+        } catch (IllegalAccessException e) {
+        } catch (InvocationTargetException e) {
+        }
+        return false;
     }
 
     /**
@@ -802,9 +915,13 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
     private Configuration getConfiguration() {
         return configuration;
     }
-    
+
     private IEmailService getEmailService() {
         return emailService;
+    }
+
+    private boolean isDatabaseEventBroadcasting() {
+        return databaseEventBroadcasting;
     }
 
     /**

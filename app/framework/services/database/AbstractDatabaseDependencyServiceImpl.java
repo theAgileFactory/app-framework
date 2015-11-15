@@ -4,8 +4,16 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -32,15 +40,29 @@ import play.libs.F.Promise;
  */
 @Singleton
 public abstract class AbstractDatabaseDependencyServiceImpl implements IDatabaseDependencyService {
-    /**
-     * How many threads to manage the cache in Ebean
-     */
-    public static final int EBEAN_CACHE_THREAD_POOL_SIZE = 5;
-    /**
-     * How many seconds should Ebean cache wait before stopping
-     */
-    public static final int EBEAN_CACHE_SHUTDOWN_DELAY = 30;
-    public static final String EBEAN_SERVER_DEFAULT_NAME = "default";
+    private int ebeanCacheThreadPoolSize;
+    private int ebeanCacheShutdownDelay;
+    private String ebeanServerDefaultName;
+    private int ebeanListenerQueueSize;
+    private EbeanConfig ebeanConfig;
+    private Map<IDatabaseChangeListener, ExecutorService> listeners;
+
+    public enum Config {
+        EBEAN_CACHE_THREAD_POOL_SIZE("maf.ebean.cache.thread.pool.size"), EBEAN_CACHE_SHUTDOWN_DELAY(
+                "maf.ebean.cache.shutdown.delay"), EBEAN_SERVER_DEFAULT_NAME("maf.ebean.default.server.name"), EBEAN_LISTENER_QUEUE_SIZE(
+                        "maf.ebean.change.listener.queue.size");
+
+        private String configurationKey;
+
+        private Config(String configurationKey) {
+            this.configurationKey = configurationKey;
+        }
+
+        public String getConfigurationKey() {
+            return configurationKey;
+        }
+    }
+
     private static Logger.ALogger log = Logger.of(AbstractDatabaseDependencyServiceImpl.class);
 
     /**
@@ -61,25 +83,74 @@ public abstract class AbstractDatabaseDependencyServiceImpl implements IDatabase
     @Inject
     public AbstractDatabaseDependencyServiceImpl(ApplicationLifecycle lifecycle, Environment environment, Configuration configuration, EbeanConfig ebeanConfig,
             DBApi dbApi) {
+        this.ebeanConfig = ebeanConfig;
+
+        this.ebeanCacheThreadPoolSize = configuration.getInt(Config.EBEAN_CACHE_THREAD_POOL_SIZE.getConfigurationKey());
+        this.ebeanCacheShutdownDelay = configuration.getInt(Config.EBEAN_CACHE_SHUTDOWN_DELAY.getConfigurationKey());
+        this.ebeanServerDefaultName = configuration.getString(Config.EBEAN_SERVER_DEFAULT_NAME.getConfigurationKey());
+        this.ebeanListenerQueueSize = configuration.getInt(Config.EBEAN_LISTENER_QUEUE_SIZE.getConfigurationKey());
+        if (log.isDebugEnabled()) {
+            log.debug(Config.EBEAN_CACHE_THREAD_POOL_SIZE.getConfigurationKey() + "=" + this.ebeanCacheThreadPoolSize);
+            log.debug(Config.EBEAN_CACHE_SHUTDOWN_DELAY.getConfigurationKey() + "=" + this.ebeanCacheShutdownDelay);
+            log.debug(Config.EBEAN_SERVER_DEFAULT_NAME.getConfigurationKey() + "=" + this.ebeanServerDefaultName);
+            log.debug(Config.EBEAN_LISTENER_QUEUE_SIZE.getConfigurationKey() + "=" + this.ebeanListenerQueueSize);
+        }
+
         log.info("SERVICE>>> AbstractDatabaseDependencyServiceImpl starting...");
-        init(configuration, ebeanConfig);
+        init(configuration);
         lifecycle.addStopHook(() -> {
             log.info("SERVICE>>> AbstractDatabaseDependencyServiceImpl stopping...");
-            Ebean.getServer(EBEAN_SERVER_DEFAULT_NAME).shutdown(false, true);
+            destroy();
             log.info("SERVICE>>> AbstractDatabaseDependencyServiceImpl stopped");
             return Promise.pure(null);
         });
         log.info("SERVICE>>> AbstractDatabaseDependencyServiceImpl started");
     }
 
+    @Override
+    public void addDatabaseChangeListener(IDatabaseChangeListener listener) {
+        if (log.isDebugEnabled()) {
+            log.debug("Adding a new listener " + listener);
+        }
+        // If a listener is already registered, do nothing
+        if (!getListeners().containsKey(listener)) {
+            BlockingQueue<Runnable> blockingQueue = new LinkedBlockingQueue<>(getEbeanListenerQueueSize());
+            ExecutorService executorService = new ThreadPoolExecutor(1, 1, 1, TimeUnit.SECONDS, blockingQueue, new ThreadPoolExecutor.DiscardPolicy());
+            listeners.put(listener, executorService);
+        }
+        log.info("Added listener for database events " + listener);
+    }
+
+    @Override
+    public void removeDatabaseChangeListener(IDatabaseChangeListener listener) {
+        if (log.isDebugEnabled()) {
+            log.debug("Removing a new listener " + listener);
+        }
+        ExecutorService executorService = getListeners().remove(listener);
+        if (executorService != null) {
+            try {
+                executorService.shutdown();
+            } catch (Exception e) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Error while shutting down the executor service", e);
+                }
+            }
+        }
+        log.info("Removed listener for database events " + listener);
+    }
+
     /**
      * Initialize the database (by running patches if required)
      */
-    private void init(Configuration configuration, EbeanConfig ebeanConfig) {
+    private void init(Configuration configuration) {
+        // Creates the listeners map
+        listeners = Collections.synchronizedMap(new HashMap<>());
+
         // Register the Ebean server as the default one
-        ServerConfig serverConfig = ebeanConfig.serverConfigs().get(EBEAN_SERVER_DEFAULT_NAME);
-        serverConfig.setBackgroundExecutorShutdownSecs(EBEAN_CACHE_SHUTDOWN_DELAY);
-        serverConfig.setBackgroundExecutorCorePoolSize(EBEAN_CACHE_THREAD_POOL_SIZE);
+        ServerConfig serverConfig = getEbeanConfig().serverConfigs().get(getEbeanServerDefaultName());
+        serverConfig.setBackgroundExecutorShutdownSecs(getEbeanCacheShutdownDelay());
+        serverConfig.setBackgroundExecutorCorePoolSize(getEbeanCacheThreadPoolSize());
+        serverConfig.add(new CustomBeanPersistController(listeners));
         Ebean.register(EbeanServerFactory.create(serverConfig), true);
 
         // Unregister ebean from the Runtime (Shutdown hooks are bad !)
@@ -92,6 +163,15 @@ public abstract class AbstractDatabaseDependencyServiceImpl implements IDatabase
         } else {
             log.info("The application is up to date, no patch to run");
         }
+    }
+
+    /**
+     * Stop the Ebean server
+     */
+    private void destroy() {
+        Ebean.getServer(getEbeanServerDefaultName()).shutdown(false, true);
+        listeners.clear();
+        this.ebeanConfig = null;
     }
 
     /**
@@ -165,5 +245,29 @@ public abstract class AbstractDatabaseDependencyServiceImpl implements IDatabase
      * @param log
      */
     public abstract void patch(Logger.ALogger log);
+
+    private EbeanConfig getEbeanConfig() {
+        return ebeanConfig;
+    }
+
+    private int getEbeanCacheThreadPoolSize() {
+        return ebeanCacheThreadPoolSize;
+    }
+
+    private int getEbeanCacheShutdownDelay() {
+        return ebeanCacheShutdownDelay;
+    }
+
+    private String getEbeanServerDefaultName() {
+        return ebeanServerDefaultName;
+    }
+
+    private int getEbeanListenerQueueSize() {
+        return ebeanListenerQueueSize;
+    }
+
+    private Map<IDatabaseChangeListener, ExecutorService> getListeners() {
+        return listeners;
+    }
 
 }

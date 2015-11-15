@@ -29,6 +29,8 @@ import javax.inject.Singleton;
 
 import org.apache.commons.io.FileUtils;
 
+import framework.services.database.IDatabaseChangeListener;
+import framework.services.database.IDatabaseDependencyService;
 import framework.services.session.IUserSessionManagerPlugin;
 import framework.utils.Utilities;
 import models.framework_models.parent.IModel;
@@ -50,7 +52,7 @@ import play.mvc.Http;
  * @author Pierre-Yves Cloux
  */
 @Singleton
-public class AuditLoggerServiceImpl implements IAuditLoggerService {
+public class AuditLoggerServiceImpl implements IAuditLoggerService, IDatabaseChangeListener {
 
     private static final String SYSTEM = "_SYSTEM";
     private String auditableEntitiesFilePath;
@@ -91,52 +93,37 @@ public class AuditLoggerServiceImpl implements IAuditLoggerService {
      *            the id of the user)
      */
     @Inject
-    public AuditLoggerServiceImpl(ApplicationLifecycle lifecycle, Configuration configuration, IUserSessionManagerPlugin userSessionManager) {
+    public AuditLoggerServiceImpl(ApplicationLifecycle lifecycle, Configuration configuration, IDatabaseDependencyService databaseService,
+            IUserSessionManagerPlugin userSessionManager) {
         log.info("SERVICE>>> AuditLoggerServiceImpl starting...");
         this.configuration = configuration;
         this.userSessionManager = userSessionManager;
+        databaseService.addDatabaseChangeListener(this);
         this.auditableEntitiesFilePath = configuration.getString(Config.AUDITABLE_ENTITIES_FILE.getConfigurationKey());
         log.info("Activating audit log with audit log file " + this.auditableEntitiesFilePath);
         reload();
         lifecycle.addStopHook(() -> {
             log.info("SERVICE>>> AuditLoggerServiceImpl stopping...");
+            databaseService.removeDatabaseChangeListener(this);
             log.info("SERVICE>>> AuditLoggerServiceImpl stopped");
             return Promise.pure(null);
         });
         log.info("SERVICE>>> AuditLoggerServiceImpl started");
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * framework.services.audit.IAuditLoggerService#logCreate(java.lang.Object)
-     */
     @Override
-    public void logCreate(Object entity) {
-        log(AuditedAction.CREATE, entity);
+    public void postInsert(Object bean) {
+        log(AuditedAction.CREATE, bean);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * framework.services.audit.IAuditLoggerService#logUpdate(java.lang.Object)
-     */
     @Override
-    public void logUpdate(Object entity) {
-        log(AuditedAction.UPDATE, entity);
+    public void postDelete(Object bean) {
+        log(AuditedAction.DELETE, bean);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * framework.services.audit.IAuditLoggerService#logDelete(java.lang.Object)
-     */
     @Override
-    public void logDelete(Object entity) {
-        log(AuditedAction.DELETE, entity);
+    public void postUpdate(Object bean) {
+        log(AuditedAction.UPDATE, bean);
     }
 
     /**

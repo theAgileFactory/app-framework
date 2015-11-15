@@ -6,28 +6,6 @@ import java.util.List;
  * The service which is managing the audit log
  */
 public interface IAuditLoggerService {
-
-    /**
-     * Log the creation of an entity
-     * 
-     * @param entity
-     */
-    public abstract void logCreate(Object entity);
-
-    /**
-     * Log the update of an entity
-     * 
-     * @param entity
-     */
-    public abstract void logUpdate(Object entity);
-
-    /**
-     * Log the deletion of an entity
-     * 
-     * @param entity
-     */
-    public abstract void logDelete(Object entity);
-
     /**
      * Reload the audit configuration
      */

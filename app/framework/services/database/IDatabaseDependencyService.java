@@ -7,5 +7,23 @@ package framework.services.database;
  * @author Pierre-Yves Cloux
  */
 public interface IDatabaseDependencyService {
+    /**
+     * Register a database change listener.<br/>
+     * <b>WARNING</b>: the handling of this event must be "unblocking" to avoid
+     * any impact on the database performance.
+     * 
+     * @param listener
+     *            a listener
+     */
+    public void addDatabaseChangeListener(IDatabaseChangeListener listener);
 
+    /**
+     * Unregister a database change listener<br/>
+     * <b>WARNING</b>: the handling of this event must be "unblocking" to avoid
+     * any impact on the database performance.
+     * 
+     * @param listener
+     *            a listener
+     */
+    public void removeDatabaseChangeListener(IDatabaseChangeListener listener);
 }
