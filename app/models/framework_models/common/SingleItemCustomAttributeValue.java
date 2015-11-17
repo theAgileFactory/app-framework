@@ -239,6 +239,11 @@ public class SingleItemCustomAttributeValue extends Model implements IModel, ICu
     }
 
     @Override
+    public Html renderDisplayNoDescription() {
+        return views.html.framework_views.parts.formats.display_value_holder.render(value, true);
+    }
+
+    @Override
     public void performSave() {
         save();
         this.isNotReadFromDb = false;

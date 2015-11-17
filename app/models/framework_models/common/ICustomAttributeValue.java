@@ -145,9 +145,16 @@ public interface ICustomAttributeValue {
     /**
      * Render a display.
      * 
-     * @return an Html "read-only" display of the value
+     * The description (if it exists) is displayed.
      */
     public Html renderDisplay();
+
+    /**
+     * Render a display.
+     * 
+     * The description (if it exists) is not displayed.
+     */
+    public Html renderDisplayNoDescription();
 
     /**
      * An enumeration which tells about the type of the attribute.

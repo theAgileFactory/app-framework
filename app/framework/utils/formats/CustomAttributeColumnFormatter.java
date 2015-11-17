@@ -17,10 +17,10 @@
  */
 package framework.utils.formats;
 
-import models.framework_models.common.CustomAttributeDefinition;
-import models.framework_models.common.ICustomAttributeValue;
 import framework.commons.IFrameworkConstants;
 import framework.utils.IColumnFormatter;
+import models.framework_models.common.CustomAttributeDefinition;
+import models.framework_models.common.ICustomAttributeValue;
 
 /**
  * A column formatter which displays the extended attributes.<br/>
@@ -28,7 +28,8 @@ import framework.utils.IColumnFormatter;
  * <ul>
  * <li>objectType : the type of object to which the extended attributes are
  * attached</li>
- * <li>customAttributeDefinitionId : the unique id for the custom definition</li>
+ * <li>customAttributeDefinitionId : the unique id for the custom definition
+ * </li>
  * </ul>
  * 
  * @author Pierre-Yves Cloux
@@ -50,7 +51,7 @@ public class CustomAttributeColumnFormatter<T> implements IColumnFormatter<T> {
         }
         Long id = (Long) cellValue;
         ICustomAttributeValue customAttributeValue = getCustomAttributeValue(id);
-        return customAttributeValue.renderDisplay().body();
+        return customAttributeValue.renderDisplayNoDescription().body();
     }
 
     private Class<?> getObjectType() {

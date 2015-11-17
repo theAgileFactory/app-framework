@@ -269,6 +269,11 @@ public class ImageCustomAttributeValue extends Model implements IModel, ICustomA
     }
 
     @Override
+    public Html renderDisplayNoDescription() {
+        return renderDisplay();
+    }
+
+    @Override
     public void performSave() {
 
         String fieldName = CustomAttributeFormAndDisplayHandler.getFieldNameFromDefinitionUuid(getDefinition().uuid);

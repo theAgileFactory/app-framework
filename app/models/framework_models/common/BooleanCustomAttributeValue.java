@@ -193,6 +193,11 @@ public class BooleanCustomAttributeValue extends Model implements IModel, ICusto
     }
 
     @Override
+    public Html renderDisplayNoDescription() {
+        return renderDisplay();
+    }
+
+    @Override
     public void performSave() {
         save();
         this.isNotReadFromDb = false;

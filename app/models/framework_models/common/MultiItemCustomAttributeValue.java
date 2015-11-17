@@ -267,6 +267,12 @@ public class MultiItemCustomAttributeValue extends Model implements IModel, ICus
     @Override
     public Html renderDisplay() {
         DefaultSelectableValueHolderCollection<Long> selectableValueHolderCollection = new DefaultSelectableValueHolderCollection<Long>(values);
+        return views.html.framework_views.parts.formats.display_value_holder_collection.render(selectableValueHolderCollection, false);
+    }
+
+    @Override
+    public Html renderDisplayNoDescription() {
+        DefaultSelectableValueHolderCollection<Long> selectableValueHolderCollection = new DefaultSelectableValueHolderCollection<Long>(values);
         return views.html.framework_views.parts.formats.display_value_holder_collection.render(selectableValueHolderCollection, true);
     }
 

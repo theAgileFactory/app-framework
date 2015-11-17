@@ -286,6 +286,11 @@ public class DynamicSingleItemCustomAttributeValue extends Model implements IMod
     }
 
     @Override
+    public Html renderDisplayNoDescription() {
+        return renderDisplay();
+    }
+
+    @Override
     public void performSave() {
         save();
         this.isNotReadFromDb = false;
