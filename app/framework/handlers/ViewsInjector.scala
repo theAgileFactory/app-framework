@@ -16,4 +16,5 @@ trait ViewsInjector{
 	val _cache=play.mvc.Http.Context.current().args.get(classOf[play.cache.CacheApi].getName).asInstanceOf[play.cache.CacheApi]
 	val _kpiService=play.mvc.Http.Context.current().args.get(classOf[framework.services.kpi.IKpiService].getName).asInstanceOf[framework.services.kpi.IKpiService]
 	val _implementationDefinedObjectService=play.mvc.Http.Context.current().args.get(classOf[framework.services.configuration.IImplementationDefinedObjectService].getName).asInstanceOf[framework.services.configuration.IImplementationDefinedObjectService]
+	val _topMenuBar=play.mvc.Http.Context.current().args.get(classOf[framework.services.configuration.ITopMenuBarService].getName).asInstanceOf[framework.services.configuration.ITopMenuBarService]
 }

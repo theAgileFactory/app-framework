@@ -19,12 +19,12 @@
 @(applicationIndex: String)(leftContent: Html)(rightContent: Html)
 
 @import framework_views.parts
-@import framework.utils.TopMenuBar
+@import framework_views.parts.commons._
 @import be.objectify.deadbolt.java.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
 
 @******************************************************
- Component to be used with the utils.TopMenuBar class
+ Component to be used with the ITopMenuBarService
  to display the main application menu bar.
  The top menu bar manage only 3 levels of menus/sub-menus
  ******************************************************@ 
@@ -41,19 +41,20 @@
                 <span class="icon-bar"></span>
             </button>
             
-                @if(TopMenuBar.getInstance().hasUser && TopMenuBar.getInstance().hasSecondaryPerspectives) {
+                @if(_topMenuBar.isUserConnected && _topMenuBar.hasSecondaryPerspectives) {
                     <div class="navbar-brand">
                         <a style="margin-top: -9px; padding-top: 10px" class="pull-left btn btn-light" href="@applicationIndex"><span class="glyphicons glyphicons-home glyphicons-panel"></span></a>
                         <div class="pull-left">&nbsp;&nbsp;&nbsp;</div>
                         <div class="dropdown pull-left">
                             <div style="cursor:pointer" aria-expanded="false" aria-haspopup="true" role="button" data-toggle="dropdown" class="dropdown-toggle">
-                                @TopMenuBar.getInstance().getCurrent().getLabel
+                                @_topMenuBar.getCurrentPerspective().getLabel
                                 <span class="caret" style="margin-top: -4px;"></span>
                             </div>
                             <ul class="dropdown-menu">
-                                @for((key, value) <- TopMenuBar.getInstance().get()){
-                                    @if(!key.equals(TopMenuBar.getInstance().getPerspectiveFromPreference)) {
-                                        <li><a href="@TopMenuBar.getInstance().getSwitchingRoute(key)">@value.getLabel</a></li>
+                                @for((key, value) <- _topMenuBar.getAllPerspectives()){
+                                    @if(!key.equals(_topMenuBar.getPerspectiveFromPreference)) {
+                                        @* TO BE IMPLEMENTED - CONTROLLER TO DEAL WITH THE PERSPECTIVE CHANGE *@
+                                        <li><a href="#">@value.getLabel</a></li>
                                     }
                                 }
                             </ul>
@@ -61,14 +62,14 @@
                     </div>
                 } else {
                     <a class="navbar-brand" href="@applicationIndex">
-                        @TopMenuBar.getInstance().getCurrent().getLabel &nbsp; <i>@parts.Msg("main.application.title")</i>
+                        @_topMenuBar.getCurrentPerspective().getLabel &nbsp; <i>@parts.Msg("main.application.title")</i>
                     </a>
                 }
         </div>
         <div class="collapse navbar-collapse">
             <ul id="topmenubar-navbar-left" class="nav navbar-nav navbar-left"></ul>
             <ul class="nav navbar-nav navbar-right">
-                    @for((menuItem, index) <- TopMenuBar.getInstance().getCurrent().getMenuItems().zipWithIndex) {
+                    @for((menuItem, index) <- _topMenuBar.getCurrentPerspective().getMenuItems().zipWithIndex) {
                             @if(menuItem.restrict()){
                                 @if(menuItem.hasSubMenuItems()){
                                     <li class="dropdown" id="topmenubar-item-@index">

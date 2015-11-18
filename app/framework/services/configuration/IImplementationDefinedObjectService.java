@@ -71,14 +71,6 @@ public interface IImplementationDefinedObjectService {
     public Call getRouteForAdPanelContent(String page);
 
     /**
-     * Get the route for switching the perspective.
-     * 
-     * @param key
-     *            the top menu bar perspective key
-     */
-    public Call getRouteForSwitchingTopMenuBarPerspective(String key);
-
-    /**
      * Return true if the save capability is active for the filter config tables
      * (the corresponding "getRouteForFilterConfiguration" should return the
      * filterConfigController actions).
@@ -119,11 +111,6 @@ public interface IImplementationDefinedObjectService {
      * Get the route for the search principal action of filter configuration.
      */
     public Call getRouteForFilterConfigurationSearchPrincipal();
-
-    /**
-     * Reset the top menu bar to defaults
-     */
-    public void resetTopMenuBar();
 
     /**
      * Render an object.<br/>

@@ -7,6 +7,7 @@ import com.google.inject.Inject;
 import framework.services.account.IAccountManagerPlugin;
 import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.configuration.IImplementationDefinedObjectService;
+import framework.services.configuration.ITopMenuBarService;
 import framework.services.kpi.IKpiService;
 import framework.services.session.IUserSessionManagerPlugin;
 import framework.services.storage.IAttachmentManagerPlugin;
@@ -38,6 +39,8 @@ public class AbstractErrorHandler extends DefaultHttpErrorHandler {
     private IKpiService kpiService;
     @Inject(optional = true)
     private IImplementationDefinedObjectService implementationDefinedObjectService;
+    @Inject(optional = true)
+    private ITopMenuBarService topMenuBarService;
 
     @Inject
     public AbstractErrorHandler(Configuration configuration, Environment environment, OptionalSourceMapper optionalSourceMapper,
@@ -56,7 +59,8 @@ public class AbstractErrorHandler extends DefaultHttpErrorHandler {
      */
     protected void injectCommonServicesIncontext(Http.Context context) {
         ContextArgsInjector.injectCommonServicesIncontext(context, getConfiguration(), getMessagesPlugin(), getUserSessionManagerPlugin(),
-                getAttachmentManagerPlugin(), getAccountManagerPlugin(), getCacheApi(), getKpiService(), getImplementationDefinedObjectService());
+                getAttachmentManagerPlugin(), getAccountManagerPlugin(), getCacheApi(), getKpiService(), getImplementationDefinedObjectService(),
+                getTopMenuBarService());
     }
 
     protected Configuration getConfiguration() {
@@ -89,5 +93,9 @@ public class AbstractErrorHandler extends DefaultHttpErrorHandler {
 
     protected IImplementationDefinedObjectService getImplementationDefinedObjectService() {
         return implementationDefinedObjectService;
+    }
+
+    private ITopMenuBarService getTopMenuBarService() {
+        return topMenuBarService;
     }
 }

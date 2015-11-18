@@ -62,7 +62,7 @@ import framework.security.ISecurityService;
 import framework.security.ISecurityServiceConfiguration;
 import framework.services.account.IPreferenceManagerPlugin;
 import framework.services.configuration.II18nMessagesPlugin;
-import framework.services.configuration.IImplementationDefinedObjectService;
+import framework.services.configuration.ITopMenuBarService;
 import framework.services.database.IDatabaseDependencyService;
 import framework.services.ext.ExtensionManagerServiceImpl.Extension.PluginResources;
 import framework.services.ext.XmlExtensionDescriptor.I18nMessage;
@@ -79,10 +79,10 @@ import framework.services.plugins.api.IPluginRunner;
 import framework.services.router.ICustomRouterService;
 import framework.services.session.IUserSessionManagerPlugin;
 import framework.services.system.ISysAdminUtils;
+import framework.utils.Menu;
 import framework.utils.Menu.ClickableMenuItem;
 import framework.utils.Menu.HeaderMenuItem;
 import framework.utils.Menu.MenuItem;
-import framework.utils.TopMenuBar;
 import framework.utils.Utilities;
 import play.Configuration;
 import play.Environment;
@@ -143,7 +143,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
     private ISecurityServiceConfiguration securityServiceConfiguration;
     private Injector injector;
     private IPreferenceManagerPlugin preferenceManagerPlugin;
-    private IImplementationDefinedObjectService implementationDefinedObjectService;
+    private ITopMenuBarService topMenuBarService;
     private List<Extension> extensions = Collections.synchronizedList(new ArrayList<Extension>());
     private Map<Object, Map<String, WebCommand>> extensionControllers = Collections.synchronizedMap(new HashMap<Object, Map<String, WebCommand>>());
     private List<WebCommand> webCommands = Collections.synchronizedList(new ArrayList<WebCommand>());
@@ -185,14 +185,16 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
      *            ensure that the service is loaded before being possibly used
      *            by an extension
      * @param securityService
+     * @param securityServiceConfiguration
+     * @param preferenceManagerPlugin
+     * @param topMenuBarService
      * @throws ExtensionManagerException
      */
     @Inject
     public ExtensionManagerServiceImpl(ApplicationLifecycle lifecycle, Environment environment, Injector injector, Configuration configuration,
             II18nMessagesPlugin iI18nMessagesPlugin, ICustomRouterService customRouterService, ISysAdminUtils sysAdminUtils,
-            IImplementationDefinedObjectService implementationDefinedObjectService, IDatabaseDependencyService databaseDependencyService,
-            ISecurityService securityService, ISecurityServiceConfiguration securityServiceConfiguration, IPreferenceManagerPlugin preferenceManagerPlugin)
-                    throws ExtensionManagerException {
+            IDatabaseDependencyService databaseDependencyService, ISecurityService securityService, ISecurityServiceConfiguration securityServiceConfiguration,
+            IPreferenceManagerPlugin preferenceManagerPlugin, ITopMenuBarService topMenuBarService) throws ExtensionManagerException {
         log.info("SERVICE>>> ExtensionManagerServiceImpl starting...");
         this.autoRefreshMode = configuration.getBoolean(Config.AUTO_REFRESH_ACTIVE.getConfigurationKey());
         this.autoRefreshFrequency = configuration.getInt(Config.AUTO_REFRESH_FREQUENCY.getConfigurationKey());
@@ -206,10 +208,10 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         this.injector = injector;
         this.iI18nMessagesPlugin = iI18nMessagesPlugin;
         this.sysAdminUtils = sysAdminUtils;
-        this.implementationDefinedObjectService = implementationDefinedObjectService;
         this.securityService = securityService;
         this.securityServiceConfiguration = securityServiceConfiguration;
         this.preferenceManagerPlugin = preferenceManagerPlugin;
+        this.topMenuBarService = topMenuBarService;
         init();
         // Register to the custom router so that the extension web components
         // could be supported
@@ -514,7 +516,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                 if (!menuReseted) {
                     menuReseted = true;
                     log.info("Reseting the toolbar before adding menu customizations");
-                    getImplementationDefinedObjectService().resetTopMenuBar();
+                    getTopMenuBarService().resetTopMenuBar();
                 }
                 log.info("Loading menu customization for extension " + extension.getDescriptor().getName());
                 return updateTopMenu(extension.getDescriptorInternal().getXmlExtensionDescriptor().getMenuCustomizationDescriptor());
@@ -531,8 +533,9 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
     private boolean updateTopMenu(MenuCustomizationDescriptor menuCustomizationDescriptor) {
         boolean result = true;
         // Remove some menu items
+        Menu mainPerspective = getTopMenuBarService().getMainPerspective();
         if (menuCustomizationDescriptor.getMenusToRemove() != null && menuCustomizationDescriptor.getMenusToRemove().size() != 0) {
-            TopMenuBar.getInstance().getMain()
+            mainPerspective
                     .removeMenuItem(menuCustomizationDescriptor.getMenusToRemove().toArray(new String[menuCustomizationDescriptor.getMenusToRemove().size()]));
             log.info("Remove the menus " + menuCustomizationDescriptor.getMenusToRemove());
         }
@@ -551,22 +554,22 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                 }
                 if (menuItemDescriptor.getAddAfterUuid() != null) {
                     log.info("Adding menu " + menuItemDescriptor.getUuid() + " after " + menuItemDescriptor.getAddAfterUuid());
-                    result = result && TopMenuBar.getInstance().getMain().addMenuItemAfter(menuItemDescriptor.getAddAfterUuid(), menuItem);
+                    result = result && mainPerspective.addMenuItemAfter(menuItemDescriptor.getAddAfterUuid(), menuItem);
                     log.info("Menu edition status " + result);
                 } else {
                     if (menuItemDescriptor.getAddBeforeUuid() != null) {
                         log.info("Adding menu " + menuItemDescriptor.getUuid() + " before " + menuItemDescriptor.getAddBeforeUuid());
-                        result = result && TopMenuBar.getInstance().getMain().addMenuItemBefore(menuItemDescriptor.getAddBeforeUuid(), menuItem);
+                        result = result && mainPerspective.addMenuItemBefore(menuItemDescriptor.getAddBeforeUuid(), menuItem);
                         log.info("Menu edition status " + result);
                     } else {
                         if (menuItemDescriptor.getToUuid() != null) {
                             log.info("Adding menu " + menuItemDescriptor.getUuid() + " to " + menuItemDescriptor.getToUuid());
-                            result = result && TopMenuBar.getInstance().getMain().addSubMenuItemTo(menuItemDescriptor.getToUuid(), menuItem);
+                            result = result && mainPerspective.addSubMenuItemTo(menuItemDescriptor.getToUuid(), menuItem);
                             log.info("Menu edition status " + result);
                         } else {
                             log.info("Adding menu " + menuItemDescriptor.getUuid() + " as top menu");
                             // Neither after nor before (top level menu)
-                            TopMenuBar.getInstance().addMenuItem(menuItem);
+                            getTopMenuBarService().addMenuItemToMainPerspective(menuItem);
                         }
                     }
                 }
@@ -786,10 +789,6 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         return sysAdminUtils;
     }
 
-    private IImplementationDefinedObjectService getImplementationDefinedObjectService() {
-        return implementationDefinedObjectService;
-    }
-
     private Environment getEnvironment() {
         return environment;
     }
@@ -812,6 +811,10 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
 
     private IPreferenceManagerPlugin getPreferenceManagerPlugin() {
         return preferenceManagerPlugin;
+    }
+
+    private ITopMenuBarService getTopMenuBarService() {
+        return topMenuBarService;
     }
 
     /**
