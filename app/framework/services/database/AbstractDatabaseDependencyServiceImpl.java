@@ -21,6 +21,7 @@ import javax.inject.Singleton;
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.EbeanServerFactory;
 import com.avaje.ebean.config.ServerConfig;
+import com.avaje.ebeaninternal.server.lib.BizDockEbeanShutdownManager;
 
 import models.framework_models.patcher.Patch;
 import play.Configuration;
@@ -145,15 +146,15 @@ public abstract class AbstractDatabaseDependencyServiceImpl implements IDatabase
         // Creates the listeners map
         listeners = Collections.synchronizedMap(new HashMap<>());
 
-        // Unregister ebean from the Runtime (Shutdown hooks are bad !)
-        System.setProperty("ebean.registerShutdownHook", "false");
-
         // Register the Ebean server as the default one
         ServerConfig serverConfig = getEbeanConfig().serverConfigs().get(getEbeanServerDefaultName());
         serverConfig.setBackgroundExecutorShutdownSecs(getEbeanCacheShutdownDelay());
         serverConfig.setBackgroundExecutorCorePoolSize(getEbeanCacheThreadPoolSize());
         serverConfig.add(new CustomBeanPersistController(listeners));
         Ebean.register(EbeanServerFactory.create(serverConfig), true);
+
+        // Unregister ebean from the Runtime (Shutdown hooks are bad !)
+        BizDockEbeanShutdownManager.killThisBloodyShutdownHook();
 
         if (isPatcheable(configuration)) {
             log.info("Running the patch for the release " + getRelease());
