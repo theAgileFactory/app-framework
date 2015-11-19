@@ -236,6 +236,8 @@ public interface IFrameworkConstants {
     // -------------------------------------------------------------------------------------
     // Bootstrap classes constants
     // -------------------------------------------------------------------------------------
+    public static final String PLUGIN_MENU_PREFIX = "<i class=\"glyphicons glyphicons-cloud-upload\"></i>&nbsp;";
+
     public static final String BOOTSTRAP_COLUMN_1 = "col-md-1";
     public static final String BOOTSTRAP_COLUMN_2 = "col-md-2";
     public static final String BOOTSTRAP_COLUMN_3 = "col-md-3";
