@@ -529,4 +529,18 @@ public interface IPluginContext {
      *            a table of recipients for this email
      */
     public void sendEmail(final String subject, final String body, final String... to);
+
+    /**
+     * Send a message to one or many principals.
+     * 
+     * @param title
+     *            the message title
+     * @param message
+     *            the message content
+     * @param actionLink
+     *            an URL to be associated with the message
+     * @param uids
+     *            the list of principal uid to be notified
+     */
+    public void sendNotification(String title, String message, String actionLink, String... uids);
 }

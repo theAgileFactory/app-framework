@@ -76,6 +76,7 @@ import framework.services.ext.XmlExtensionDescriptor;
 import framework.services.ext.XmlExtensionDescriptor.PluginConfigurationBlockDescriptor;
 import framework.services.ext.api.IExtensionDescriptor.IPluginConfigurationBlockDescriptor;
 import framework.services.ext.api.IExtensionDescriptor.IPluginDescriptor;
+import framework.services.notification.INotificationManagerPlugin;
 import framework.services.plugins.api.AbstractConfiguratorController;
 import framework.services.plugins.api.AbstractRegistrationConfiguratorController;
 import framework.services.plugins.api.IPluginActionDescriptor;
@@ -116,6 +117,7 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
     private IEmailService emailService;
     private Configuration configuration;
     private ITopMenuBarService topMenuBarService;
+    private INotificationManagerPlugin notificationManagerPlugin;
 
     /**
      * Map : key=plugin id , value= {@link PluginRegistrationEntry}.
@@ -168,11 +170,15 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
      *            the email service
      * @param topMenuBarService
      *            the service which is managing the top menu bar
+     * @param notificationManagerPlugin
+     *            the service which is used to send notifications to the end
+     *            user
      */
     @Inject
     public PluginManagerServiceImpl(ApplicationLifecycle lifecycle, IActorSystemPlugin actorSystemPlugin, ISysAdminUtils sysAdminUtils,
             II18nMessagesPlugin messagesPlugin, final IDatabaseDependencyService databaseDependencyService, ISharedStorageService sharedStorageService,
-            IExtensionManagerService extensionManagerService, Configuration configuration, IEmailService emailService, ITopMenuBarService topMenuBarService) {
+            IExtensionManagerService extensionManagerService, Configuration configuration, IEmailService emailService, ITopMenuBarService topMenuBarService,
+            INotificationManagerPlugin notificationManagerPlugin) {
         log.info("SERVICE>>> PluginManagerServiceImpl starting...");
         this.databaseEventBroadcasting = configuration.getBoolean("maf.plugins.database.event.broadcasting");
         this.messagesPlugin = messagesPlugin;
@@ -181,6 +187,7 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
         this.configuration = configuration;
         this.emailService = emailService;
         this.topMenuBarService = topMenuBarService;
+        this.notificationManagerPlugin = notificationManagerPlugin;
         pluginByIds = Collections.synchronizedMap(new HashMap<Long, PluginRegistrationEntry>());
         init(actorSystemPlugin.getActorSystem(), databaseDependencyService);
         lifecycle.addStopHook(() -> {
@@ -447,7 +454,7 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
             String pluginIdentifier = pluginConfiguration.pluginDefinition.identifier;
             IPluginDescriptor pluginDescriptor = getExtensionPlugins().get(pluginIdentifier).getRight();
             IPluginContext pluginContext = new PluginContextImpl(pluginConfiguration, pluginDescriptor, this, this, getSharedStorageService(),
-                    getConfiguration(), getEmailService());
+                    getConfiguration(), getEmailService(), getNotificationManagerPlugin());
             Triple<IPluginRunner, Object, Map<DataType, Object>> plugin = getExtensionManagerService().loadAndInitPluginInstance(pluginIdentifier,
                     pluginConfiguration.id, pluginContext);
             log.info(String.format("The class for the plugin %d has been found and instanciated", pluginConfiguration.id));
@@ -1584,5 +1591,9 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
         public void setPluginConfigurationBlockDescriptors(List<PluginConfigurationBlockDescriptor> pluginConfigurationBlockDescriptors) {
             this.pluginConfigurationBlockDescriptors = pluginConfigurationBlockDescriptors;
         }
+    }
+
+    private INotificationManagerPlugin getNotificationManagerPlugin() {
+        return notificationManagerPlugin;
     }
 }

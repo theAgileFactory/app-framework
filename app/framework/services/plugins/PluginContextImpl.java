@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
@@ -40,6 +41,7 @@ import framework.services.email.IEmailService;
 import framework.services.ext.api.IExtensionDescriptor.IPluginConfigurationBlockDescriptor;
 import framework.services.ext.api.IExtensionDescriptor.IPluginConfigurationBlockDescriptor.ConfigurationBlockEditionType;
 import framework.services.ext.api.IExtensionDescriptor.IPluginDescriptor;
+import framework.services.notification.INotificationManagerPlugin;
 import framework.services.plugins.api.IPluginContext;
 import framework.services.plugins.api.PluginException;
 import framework.services.storage.ISharedStorageService;
@@ -69,15 +71,17 @@ public class PluginContextImpl implements IPluginContext {
     private IEventBroadcastingService eventBroadcastingService;
     private ISharedStorageService sharedStorageService;
     private IEmailService emailService;
+    private INotificationManagerPlugin notificationManagerPlugin;
 
     public PluginContextImpl(PluginConfiguration pluginConfiguration, IPluginDescriptor pluginDescriptor, IPluginManagerService pluginManagerService,
             IEventBroadcastingService eventBroadcastingService, ISharedStorageService sharedStorageService, Configuration configuration,
-            IEmailService emailService) {
+            IEmailService emailService, INotificationManagerPlugin notificationManagerPlugin) {
         this.configuration = configuration;
         this.pluginManagerService = pluginManagerService;
         this.eventBroadcastingService = eventBroadcastingService;
         this.sharedStorageService = sharedStorageService;
         this.emailService = emailService;
+        this.notificationManagerPlugin = notificationManagerPlugin;
         this.pluginConfigurationId = pluginConfiguration.id;
         this.pluginConfigurationName = pluginConfiguration.name;
         this.pluginDescriptor = pluginDescriptor;
@@ -92,6 +96,11 @@ public class PluginContextImpl implements IPluginContext {
     @Override
     public void sendEmail(final String subject, final String body, final String... to) {
         getEmailService().sendEmail(subject, getConfiguration().getString("maf.email.from"), body, to);
+    }
+
+    @Override
+    public void sendNotification(String title, String message, String actionLink, String... uids) {
+        getNotificationManagerPlugin().sendNotification(Arrays.asList(uids), null, title, message, actionLink);
     }
 
     @Override
@@ -524,5 +533,9 @@ public class PluginContextImpl implements IPluginContext {
 
     private IEmailService getEmailService() {
         return emailService;
+    }
+
+    private INotificationManagerPlugin getNotificationManagerPlugin() {
+        return notificationManagerPlugin;
     }
 }
