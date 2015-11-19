@@ -39,7 +39,7 @@ import framework.services.plugins.api.IPluginRunner;
  * @author Pierre-Yves Cloux
  */
 @XmlRootElement(name = "extension-descriptor")
-class XmlExtensionDescriptor {
+public class XmlExtensionDescriptor {
     private String name;
     private List<String> controllers;
     private List<PluginDescriptor> pluginDescriptors;

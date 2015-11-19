@@ -146,6 +146,26 @@ public interface IPluginManagerService {
     public void unregisterPlugin(Long pluginConfigurationId) throws PluginException;
 
     /**
+     * Export the a plugin configuration as XML
+     * 
+     * @param pluginConfigurationId
+     *            the unique id for the plugin
+     * @return an XML document
+     */
+    public String exportPluginConfiguration(Long pluginConfigurationId) throws PluginException;
+
+    /**
+     * Export the a plugin configuration as XML
+     * 
+     * @param pluginConfigurationId
+     *            the unique id for the plugin
+     * @param configuration
+     *            an XML configuration previously exported using the previous
+     *            function
+     */
+    public void importPluginConfiguration(Long pluginConfigurationId, String configuration) throws PluginException;
+
+    /**
      * Return a list of descriptors of the plugins (including the ones which are
      * not available).<br/>
      * Return a map with the following structure:

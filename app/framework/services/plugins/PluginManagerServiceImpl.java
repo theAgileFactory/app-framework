@@ -21,6 +21,8 @@ import static akka.actor.SupervisorStrategy.resume;
 
 import java.io.InputStream;
 import java.io.Serializable;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,6 +35,11 @@ import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -64,6 +71,9 @@ import framework.services.database.IDatabaseDependencyService;
 import framework.services.email.IEmailService;
 import framework.services.ext.IExtension;
 import framework.services.ext.IExtensionManagerService;
+import framework.services.ext.XmlExtensionDescriptor;
+import framework.services.ext.XmlExtensionDescriptor.PluginConfigurationBlockDescriptor;
+import framework.services.ext.api.IExtensionDescriptor.IPluginConfigurationBlockDescriptor;
 import framework.services.ext.api.IExtensionDescriptor.IPluginDescriptor;
 import framework.services.plugins.api.AbstractConfiguratorController;
 import framework.services.plugins.api.AbstractRegistrationConfiguratorController;
@@ -76,6 +86,7 @@ import framework.services.storage.ISharedStorageService;
 import framework.services.system.ISysAdminUtils;
 import framework.utils.Utilities;
 import models.framework_models.plugin.PluginConfiguration;
+import models.framework_models.plugin.PluginConfigurationBlock;
 import models.framework_models.plugin.PluginDefinition;
 import models.framework_models.plugin.PluginLog;
 import play.Configuration;
@@ -700,6 +711,92 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
             }
         }
         return pluginsSupportingRegistration;
+    }
+
+    @Override
+    public String exportPluginConfiguration(Long pluginConfigurationId) throws PluginException {
+        if (log.isDebugEnabled()) {
+            log.debug(String.format("Request to export the plugin %d configuration", pluginConfigurationId));
+        }
+        try {
+            // Read from the database
+            PluginRegistrationEntry pluginRegistrationEntry = getPluginByIds().get(pluginConfigurationId);
+            Map<String, IPluginConfigurationBlockDescriptor> pluginConfigurationBlockDescriptors = pluginRegistrationEntry.getDescriptor()
+                    .getConfigurationBlockDescriptors();
+            if (pluginConfigurationBlockDescriptors != null && pluginConfigurationBlockDescriptors.size() != 0) {
+                if (log.isDebugEnabled()) {
+                    log.debug(String.format("Found some configuration blocks for plugin %d configuration", pluginConfigurationId));
+                }
+                // Fill the XML structure
+                PluginConfigurationExport export = new PluginConfigurationExport();
+                export.setPluginConfigurationBlockDescriptors(new ArrayList<XmlExtensionDescriptor.PluginConfigurationBlockDescriptor>());
+                for (IPluginConfigurationBlockDescriptor pluginConfigurationBlockDescription : pluginConfigurationBlockDescriptors.values()) {
+                    XmlExtensionDescriptor.PluginConfigurationBlockDescriptor xmlDesc = new XmlExtensionDescriptor.PluginConfigurationBlockDescriptor();
+                    xmlDesc.setDefaultValue(new String(pluginConfigurationBlockDescription.getDefaultValue()));
+                    xmlDesc.setDescription(pluginConfigurationBlockDescription.getDescription());
+                    xmlDesc.setIdentifier(pluginConfigurationBlockDescription.getIdentifier());
+                    xmlDesc.setName(pluginConfigurationBlockDescription.getName());
+                    xmlDesc.setType(pluginConfigurationBlockDescription.getEditionType().name());
+                    xmlDesc.setVersion(pluginConfigurationBlockDescription.getVersion());
+                    export.getPluginConfigurationBlockDescriptors().add(xmlDesc);
+                }
+
+                // Marshall it as a String
+                JAXBContext jc = JAXBContext.newInstance(PluginConfigurationExport.class);
+                Marshaller m = jc.createMarshaller();
+                StringWriter sw = new StringWriter();
+                m.marshal(export, sw);
+                return sw.toString();
+            }
+        } catch (Exception e) {
+            throw new PluginException("Error while exporting the plugin configuration", e);
+        }
+        return null;
+    }
+
+    @Override
+    public void importPluginConfiguration(Long pluginConfigurationId, String configuration) throws PluginException {
+        if (log.isDebugEnabled()) {
+            log.debug(String.format("Request to import the plugin %d configuration", pluginConfigurationId));
+        }
+        try {
+            // Read the import file
+            JAXBContext jc = JAXBContext.newInstance(PluginConfigurationExport.class);
+            Unmarshaller u = jc.createUnmarshaller();
+            PluginConfigurationExport importXml = (PluginConfigurationExport) u.unmarshal(new StringReader(configuration));
+
+            if (log.isDebugEnabled()) {
+                log.debug(String.format("Import parsed for %d configuration", pluginConfigurationId));
+            }
+
+            // Identify what is changed or new and update the database
+            if (importXml.getPluginConfigurationBlockDescriptors() != null) {
+                for (XmlExtensionDescriptor.PluginConfigurationBlockDescriptor xmlDesc : importXml.getPluginConfigurationBlockDescriptors()) {
+                    PluginConfigurationBlock pluginConfigurationBlock = PluginConfigurationBlock
+                            .getPluginConfigurationBlockFromIdentifier(pluginConfigurationId, xmlDesc.getIdentifier());
+                    if (pluginConfigurationBlock == null) {
+                        if (log.isDebugEnabled()) {
+                            log.debug(String.format("Creating a new config block %s plugin %d configuration", xmlDesc.getIdentifier(), pluginConfigurationId));
+                        }
+                        pluginConfigurationBlock = new PluginConfigurationBlock();
+                        pluginConfigurationBlock.configurationType = xmlDesc.getType();
+                        pluginConfigurationBlock.identifier = xmlDesc.getIdentifier();
+                        pluginConfigurationBlock.pluginConfiguration = PluginConfiguration.getPluginById(pluginConfigurationId);
+                    } else {
+                        if (log.isDebugEnabled()) {
+                            log.debug(String.format("Updating an existing config block %s plugin %d configuration", xmlDesc.getIdentifier(),
+                                    pluginConfigurationId));
+                        }
+                    }
+                    pluginConfigurationBlock.version = xmlDesc.getVersion();
+                    pluginConfigurationBlock.configuration = xmlDesc.getDefaultValue() != null ? xmlDesc.getDefaultValue().getBytes() : null;
+                    pluginConfigurationBlock.save();
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error while importing the plugin configuration", e);
+            throw new PluginException("Error while importing the plugin configuration", e);
+        }
     }
 
     @Override
@@ -1406,6 +1503,25 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
 
         private Long getPluginConfigurationId() {
             return pluginConfigurationId;
+        }
+    }
+
+    /**
+     * A data structure used to export/import a plugin configuration
+     * 
+     * @author Pierre-Yves Cloux
+     */
+    @XmlRootElement(name = "plugin-config")
+    public static class PluginConfigurationExport {
+        private List<PluginConfigurationBlockDescriptor> pluginConfigurationBlockDescriptors;
+
+        @XmlElement(name = "configuration-block", required = false, nillable = false)
+        public List<PluginConfigurationBlockDescriptor> getPluginConfigurationBlockDescriptors() {
+            return pluginConfigurationBlockDescriptors;
+        }
+
+        public void setPluginConfigurationBlockDescriptors(List<PluginConfigurationBlockDescriptor> pluginConfigurationBlockDescriptors) {
+            this.pluginConfigurationBlockDescriptors = pluginConfigurationBlockDescriptors;
         }
     }
 }
