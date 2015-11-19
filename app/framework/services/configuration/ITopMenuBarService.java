@@ -92,6 +92,24 @@ public interface ITopMenuBarService {
     public void addMenuItemToMainPerspective(MenuItem menuItem);
 
     /**
+     * Add dynamic tool menu.<br/>
+     * This action is to be used to modify a menu which is welcoming some
+     * external tools (example : plugins).
+     * 
+     * @param menuItem
+     *            the menu item to add
+     */
+    public void addToolMenuItem(MenuItem menuItem);
+
+    /**
+     * Remove a dynamic tool menu.
+     * 
+     * @param uuid
+     *            the uuid of the menu item to be removed
+     */
+    public void removeToolMenuItem(String uuid);
+
+    /**
      * Reset the top menu bar to defaults
      */
     public void resetTopMenuBar();

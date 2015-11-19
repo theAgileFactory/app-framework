@@ -26,10 +26,10 @@ import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
 
-import play.mvc.Call;
-import play.mvc.Http.Context;
 import framework.commons.IFrameworkConstants;
 import framework.security.SecurityUtils;
+import play.mvc.Call;
+import play.mvc.Http.Context;
 
 /**
  * Root class for the various navigation structures.<br/>
@@ -37,7 +37,7 @@ import framework.security.SecurityUtils;
  * @author Pierre-Yves Cloux
  */
 public abstract class Menu {
-    private List<MenuItem> menuItems = new ArrayList<MenuItem>();
+    private List<MenuItem> menuItems = Collections.synchronizedList(new ArrayList<MenuItem>());
 
     public Menu() {
     }
@@ -137,7 +137,8 @@ public abstract class Menu {
     }
 
     /**
-     * Remove one or more menu items associated with the specified unique id.<br/>
+     * Remove one or more menu items associated with the specified unique id.
+     * <br/>
      * The method search recursively for the corresponding menu item.
      * 
      * @param uuid
@@ -190,9 +191,8 @@ public abstract class Menu {
      * key)</li>
      * <li>A CSS icon: the CSS class of the menu item icon</li>
      * <li>Some permissions : the permissions which restrict the display of the
-     * menu item.</li>
-     * Le permissions are associated with AND within an array and with OR
-     * between the arrays.
+     * menu item.</li> Le permissions are associated with AND within an array
+     * and with OR between the arrays.
      * <li>A flag which tells if the menu item is a separator or not (by default
      * false)</li>
      * </ul>
@@ -259,7 +259,7 @@ public abstract class Menu {
             }
             if (authorizedPermissions == null) {
                 // If no roles is found then add a default one
-                authorizedPermissions = new ArrayList<String[]>();
+                authorizedPermissions = Collections.synchronizedList(new ArrayList<String[]>());
                 authorizedPermissions.add(new String[] { IFrameworkConstants.DEFAULT_PERMISSION_PRIVATE });
             }
             return authorizedPermissions;
@@ -312,7 +312,7 @@ public abstract class Menu {
      */
     public static class HeaderMenuItem extends MenuItem {
 
-        private List<MenuItem> subMenuItems = new ArrayList<MenuItem>();
+        private List<MenuItem> subMenuItems = Collections.synchronizedList(new ArrayList<MenuItem>());
 
         public HeaderMenuItem(String label) {
             super(label);
@@ -350,6 +350,28 @@ public abstract class Menu {
         public void addSubMenuItem(MenuItem menuItem) {
             menuItem.setParent(this);
             this.subMenuItems.add(menuItem);
+        }
+
+        public void removeSubMenuItems(String... uuids) {
+            List<String> uuidList = Arrays.asList(uuids);
+            // Remove the blank uuid from the list (not allowed)
+            for (String uuid : uuids) {
+                if (StringUtils.isBlank(uuid)) {
+                    uuidList.remove(uuid);
+                }
+            }
+            // Remove the sub menu item if available
+            List<MenuItem> toBeRemovedMenuItems = new ArrayList<MenuItem>();
+            if (subMenuItems != null) {
+                for (MenuItem subMenuItem : subMenuItems) {
+                    if (uuidList.contains(subMenuItem.getUuid())) {
+                        toBeRemovedMenuItems.add(subMenuItem);
+                    }
+                }
+            }
+            for (MenuItem subMenuItem : toBeRemovedMenuItems) {
+                this.subMenuItems.remove(subMenuItem);
+            }
         }
 
         public boolean hasSubMenuItems() {

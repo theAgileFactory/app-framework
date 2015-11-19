@@ -66,6 +66,7 @@ import framework.commons.message.EventMessage;
 import framework.commons.message.EventMessage.MessageType;
 import framework.services.actor.IActorSystemPlugin;
 import framework.services.configuration.II18nMessagesPlugin;
+import framework.services.configuration.ITopMenuBarService;
 import framework.services.database.IDatabaseChangeListener;
 import framework.services.database.IDatabaseDependencyService;
 import framework.services.email.IEmailService;
@@ -84,6 +85,7 @@ import framework.services.plugins.api.IPluginRunner;
 import framework.services.plugins.api.PluginException;
 import framework.services.storage.ISharedStorageService;
 import framework.services.system.ISysAdminUtils;
+import framework.utils.Menu.ClickableMenuItem;
 import framework.utils.Utilities;
 import models.framework_models.plugin.PluginConfiguration;
 import models.framework_models.plugin.PluginConfigurationBlock;
@@ -113,6 +115,7 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
     private IExtensionManagerService extensionManagerService;
     private IEmailService emailService;
     private Configuration configuration;
+    private ITopMenuBarService topMenuBarService;
 
     /**
      * Map : key=plugin id , value= {@link PluginRegistrationEntry}.
@@ -163,11 +166,13 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
      *            the play configuration
      * @param emailService
      *            the email service
+     * @param topMenuBarService
+     *            the service which is managing the top menu bar
      */
     @Inject
     public PluginManagerServiceImpl(ApplicationLifecycle lifecycle, IActorSystemPlugin actorSystemPlugin, ISysAdminUtils sysAdminUtils,
             II18nMessagesPlugin messagesPlugin, final IDatabaseDependencyService databaseDependencyService, ISharedStorageService sharedStorageService,
-            IExtensionManagerService extensionManagerService, Configuration configuration, IEmailService emailService) {
+            IExtensionManagerService extensionManagerService, Configuration configuration, IEmailService emailService, ITopMenuBarService topMenuBarService) {
         log.info("SERVICE>>> PluginManagerServiceImpl starting...");
         this.databaseEventBroadcasting = configuration.getBoolean("maf.plugins.database.event.broadcasting");
         this.messagesPlugin = messagesPlugin;
@@ -175,6 +180,7 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
         this.extensionManagerService = extensionManagerService;
         this.configuration = configuration;
         this.emailService = emailService;
+        this.topMenuBarService = topMenuBarService;
         pluginByIds = Collections.synchronizedMap(new HashMap<Long, PluginRegistrationEntry>());
         init(actorSystemPlugin.getActorSystem(), databaseDependencyService);
         lifecycle.addStopHook(() -> {
@@ -291,7 +297,8 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
 
         // Start the actor which will receive the notifications from the actors
         // (I am started, I am stopped)
-        this.pluginStatusCallbackActorRef = getActorSystem().actorOf(Props.create(new PluginStatusCallbackActorCreator(getPluginByIds())));
+        this.pluginStatusCallbackActorRef = getActorSystem()
+                .actorOf(Props.create(new PluginStatusCallbackActorCreator(getPluginByIds(), getTopMenuBarService())));
         List<PluginConfiguration> pluginConfigurations = PluginConfiguration.getAllAvailablePlugins();
         if (pluginConfigurations != null) {
             for (PluginConfiguration pluginConfiguration : pluginConfigurations) {
@@ -731,14 +738,18 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
                 PluginConfigurationExport export = new PluginConfigurationExport();
                 export.setPluginConfigurationBlockDescriptors(new ArrayList<XmlExtensionDescriptor.PluginConfigurationBlockDescriptor>());
                 for (IPluginConfigurationBlockDescriptor pluginConfigurationBlockDescription : pluginConfigurationBlockDescriptors.values()) {
-                    XmlExtensionDescriptor.PluginConfigurationBlockDescriptor xmlDesc = new XmlExtensionDescriptor.PluginConfigurationBlockDescriptor();
-                    xmlDesc.setDefaultValue(new String(pluginConfigurationBlockDescription.getDefaultValue()));
-                    xmlDesc.setDescription(pluginConfigurationBlockDescription.getDescription());
-                    xmlDesc.setIdentifier(pluginConfigurationBlockDescription.getIdentifier());
-                    xmlDesc.setName(pluginConfigurationBlockDescription.getName());
-                    xmlDesc.setType(pluginConfigurationBlockDescription.getEditionType().name());
-                    xmlDesc.setVersion(pluginConfigurationBlockDescription.getVersion());
-                    export.getPluginConfigurationBlockDescriptors().add(xmlDesc);
+                    PluginConfigurationBlock pluginConfigurationBlock = PluginConfigurationBlock
+                            .getPluginConfigurationBlockFromIdentifier(pluginConfigurationId, pluginConfigurationBlockDescription.getIdentifier());
+                    if (pluginConfigurationBlock != null) {
+                        XmlExtensionDescriptor.PluginConfigurationBlockDescriptor xmlDesc = new XmlExtensionDescriptor.PluginConfigurationBlockDescriptor();
+                        xmlDesc.setDefaultValue(new String(pluginConfigurationBlock.configuration));
+                        xmlDesc.setDescription(pluginConfigurationBlockDescription.getDescription());
+                        xmlDesc.setIdentifier(pluginConfigurationBlockDescription.getIdentifier());
+                        xmlDesc.setName(pluginConfigurationBlockDescription.getName());
+                        xmlDesc.setType(pluginConfigurationBlockDescription.getEditionType().name());
+                        xmlDesc.setVersion(pluginConfigurationBlockDescription.getVersion());
+                        export.getPluginConfigurationBlockDescriptors().add(xmlDesc);
+                    }
                 }
 
                 // Marshall it as a String
@@ -1017,6 +1028,10 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
         return emailService;
     }
 
+    private ITopMenuBarService getTopMenuBarService() {
+        return topMenuBarService;
+    }
+
     private boolean isDatabaseEventBroadcasting() {
         return databaseEventBroadcasting;
     }
@@ -1235,14 +1250,16 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
     public static class PluginStatusCallbackActorCreator implements Creator<PluginStatusCallbackActor> {
         private static final long serialVersionUID = 4075638451954038626L;
         private Map<Long, PluginRegistrationEntry> pluginByIds;
+        private ITopMenuBarService topMenuBarService;
 
-        public PluginStatusCallbackActorCreator(Map<Long, PluginRegistrationEntry> pluginByIds) {
+        public PluginStatusCallbackActorCreator(Map<Long, PluginRegistrationEntry> pluginByIds, ITopMenuBarService topMenuBarService) {
             this.pluginByIds = pluginByIds;
+            this.topMenuBarService = topMenuBarService;
         }
 
         @Override
         public PluginStatusCallbackActor create() throws Exception {
-            return new PluginStatusCallbackActor(pluginByIds);
+            return new PluginStatusCallbackActor(pluginByIds, topMenuBarService);
         }
     }
 
@@ -1254,9 +1271,11 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
      */
     public static class PluginStatusCallbackActor extends UntypedActor {
         private Map<Long, PluginRegistrationEntry> pluginByIds;
+        private ITopMenuBarService topMenuBarService;
 
-        public PluginStatusCallbackActor(Map<Long, PluginRegistrationEntry> pluginByIds) {
+        public PluginStatusCallbackActor(Map<Long, PluginRegistrationEntry> pluginByIds, ITopMenuBarService topMenuBarService) {
             this.pluginByIds = pluginByIds;
+            this.topMenuBarService = topMenuBarService;
         }
 
         @Override
@@ -1266,10 +1285,12 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
                 switch (callbackLifeCycleMessage.getPluginStatus()) {
                 case STARTED:
                     getPluginByIds().get(callbackLifeCycleMessage.getPluginConfigurationId()).setPluginStatus(PluginStatus.STARTED);
+                    addPluginMenuItem(callbackLifeCycleMessage.getPluginConfigurationId());
                     log.info(String.format("The plugin %d has reported as successfull start", callbackLifeCycleMessage.getPluginConfigurationId()));
                     break;
                 case STOPPED:
                     getPluginByIds().get(callbackLifeCycleMessage.getPluginConfigurationId()).setPluginStatus(PluginStatus.STOPPED);
+                    removePluginMenuItem(callbackLifeCycleMessage.getPluginConfigurationId());
                     log.info(String.format("The plugin %d has reported a successfull stop", callbackLifeCycleMessage.getPluginConfigurationId()));
                     break;
                 case START_FAILED:
@@ -1284,8 +1305,48 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
             }
         }
 
+        /**
+         * Add a custom menu for the plugin
+         * 
+         * @param pluginConfigurationId
+         */
+        private void addPluginMenuItem(Long pluginConfigurationId) {
+            try {
+                String pluginIdentifier = getPluginByIds().get(pluginConfigurationId).getDescriptor().getIdentifier();
+                IPluginMenuDescriptor menuDesc = getPluginByIds().get(pluginConfigurationId).getMenuDescriptor();
+                if (menuDesc != null) {
+                    ClickableMenuItem toolMenu = new ClickableMenuItem("_PLUGIN_" + pluginIdentifier + "_" + pluginConfigurationId, menuDesc.getLabel(),
+                            menuDesc.getPath());
+                    getTopMenuBarService().addToolMenuItem(toolMenu);
+                }
+            } catch (Exception e) {
+                log.error("Error while adding the plugin custom menu " + pluginConfigurationId, e);
+            }
+        }
+
+        /**
+         * Remove the custom menu for the plugin
+         * 
+         * @param pluginConfigurationId
+         */
+        private void removePluginMenuItem(Long pluginConfigurationId) {
+            try {
+                String pluginIdentifier = getPluginByIds().get(pluginConfigurationId).getDescriptor().getIdentifier();
+                IPluginMenuDescriptor menuDesc = getPluginByIds().get(pluginConfigurationId).getMenuDescriptor();
+                if (menuDesc != null) {
+                    getTopMenuBarService().removeToolMenuItem("_PLUGIN_" + pluginIdentifier + "_" + pluginConfigurationId);
+                }
+            } catch (Exception e) {
+                log.error("Error while removing the plugin custom menu " + pluginConfigurationId, e);
+            }
+        }
+
         private Map<Long, PluginRegistrationEntry> getPluginByIds() {
             return pluginByIds;
+        }
+
+        private ITopMenuBarService getTopMenuBarService() {
+            return topMenuBarService;
         }
     }
 
