@@ -39,6 +39,7 @@ import framework.services.account.IUserAccount;
 import framework.services.account.IUserAccount.AccountType;
 import framework.utils.Utilities;
 import framework.utils.formats.DateType;
+import models.framework_models.common.ActionLog;
 import models.framework_models.common.FilterConfiguration;
 import models.framework_models.parent.IModel;
 import models.framework_models.parent.IModelConstants;
@@ -200,6 +201,9 @@ public class Principal extends Model implements IModel {
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "principal")
     public List<FilterConfiguration> filterConfigurations;
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "principal")
+    public List<ActionLog> actionLogs;
 
     public Boolean isActive;
 
