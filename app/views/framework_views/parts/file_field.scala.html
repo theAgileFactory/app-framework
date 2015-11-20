@@ -15,11 +15,27 @@
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  *@
-@(field: Field, fieldLabel: String)
+@(field: Field, fieldLabel: String, maxFileSize: Long = -1)
+@*
+ * maxFileSize must be expressed in bytes
+ *@
 
 @import framework_views.parts._
 @import framework_views.parts.commons._
 @import framework.utils.FileAttachmentHelper
+
+@maximumFileSize=@{
+	var maximumFileSize=maxFileSize;
+	if(maxFileSize == -1L){
+		var maximumFileSizeAsString=_cfg.getString("play.http.parser.maxDiskBuffer");
+		if(maximumFileSizeAsString.endsWith("m")){
+			maximumFileSize=Integer.parseInt(maximumFileSizeAsString.substring(0,maximumFileSizeAsString.length()-1))*1024*1024;
+		}else{
+			maximumFileSize=Integer.parseInt(maximumFileSizeAsString.substring(0,maximumFileSizeAsString.length()-1))*1024;
+		}
+	}
+	maximumFileSize
+}
 
 <label class="control-label">@(fieldLabel)@if(isRequired(field)){&nbsp;<i style="color: red;" class="glyphicons glyphicons-asterisk"></i>}</label>
 
@@ -53,7 +69,7 @@
             <label class="control-label" style="font-weight: normal;">@Msg("form.input.file_field.file.label")</label>
             
             <input type="file" id="@(FileAttachmentHelper.FILE_ATTRIBUTE_PREFIX)@(field.id)_@(FileAttachmentHelper.FileType.UPLOAD.name)" name="@(FileAttachmentHelper.getFileInputName(field.name, FileAttachmentHelper.FileType.UPLOAD))"/>
-            
+            <span class="help-block">@Msg("form.input.file_field.file.size.warning", org.apache.commons.io.FileUtils.byteCountToDisplaySize(maximumFileSize))</span>
             <div>
                 <div class="input-group">
                     <span class="input-group-addon"><span class="glyphicons glyphicons-link"></span></span>
@@ -90,6 +106,20 @@ $(document).ready(function(){
 
     uploadField.change(function(){
         $('#@(field("value").id)').val(uploadField.val());
+        
+        @* Test the file size and display a message in case of issue *@
+    	var submit = $(this).closest('form').find(':submit');
+		if(this.files[0].size>@maximumFileSize){
+		    alert("@Msg("form.input.file_field.file.size.invalid",
+		              org.apache.commons.io.FileUtils.byteCountToDisplaySize(maximumFileSize))");
+		    if(submit){
+		    	submit.attr("disabled", true);
+		    }
+		}else{
+			if(submit){
+		    	submit.attr("disabled", false);
+		    }
+		}
     });
     
     urlField.change(function(){
@@ -120,6 +150,5 @@ $(document).ready(function(){
         }
 
     });
-
 });
 </script>

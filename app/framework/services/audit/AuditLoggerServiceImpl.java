@@ -17,21 +17,29 @@
  */
 package framework.services.audit;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import org.apache.commons.io.FileUtils;
+import org.slf4j.LoggerFactory;
 
+import ch.qos.logback.classic.Level;
 import framework.services.database.IDatabaseChangeListener;
 import framework.services.database.IDatabaseDependencyService;
 import framework.services.session.IUserSessionManagerPlugin;
+import framework.services.system.ISysAdminUtils;
 import framework.utils.Utilities;
 import models.framework_models.parent.IModel;
 import play.Configuration;
@@ -39,6 +47,7 @@ import play.Logger;
 import play.inject.ApplicationLifecycle;
 import play.libs.F.Promise;
 import play.mvc.Http;
+import scala.concurrent.duration.FiniteDuration;
 
 /**
  * This utility class loads the audit configuration from the {@link Auditable}
@@ -58,6 +67,8 @@ public class AuditLoggerServiceImpl implements IAuditLoggerService, IDatabaseCha
     private String auditableEntitiesFilePath;
     private IUserSessionManagerPlugin userSessionManager;
     private Configuration configuration;
+    private ISysAdminUtils sysAdminUtils;
+    private boolean debugModeEnabled;
     private static Logger.ALogger log = Logger.of(IAuditLoggerService.class);
     private static Logger.ALogger auditLog = Logger.of(AuditLoggerServiceImpl.class);
 
@@ -91,13 +102,18 @@ public class AuditLoggerServiceImpl implements IAuditLoggerService, IDatabaseCha
      * @param userSessionManager
      *            the user session manager (will be used to enrich the log with
      *            the id of the user)
+     * @param databaseService
+     *            the service managing the access to data
+     * @param sysAdminUtils
+     *            the utils for scheduling management
      */
     @Inject
     public AuditLoggerServiceImpl(ApplicationLifecycle lifecycle, Configuration configuration, IDatabaseDependencyService databaseService,
-            IUserSessionManagerPlugin userSessionManager) {
+            IUserSessionManagerPlugin userSessionManager, ISysAdminUtils sysAdminUtils) {
         log.info("SERVICE>>> AuditLoggerServiceImpl starting...");
         this.configuration = configuration;
         this.userSessionManager = userSessionManager;
+        this.sysAdminUtils = sysAdminUtils;
         databaseService.addDatabaseChangeListener(this);
         this.auditableEntitiesFilePath = configuration.getString(Config.AUDITABLE_ENTITIES_FILE.getConfigurationKey());
         log.info("Activating audit log with audit log file " + this.auditableEntitiesFilePath);
@@ -254,6 +270,44 @@ public class AuditLoggerServiceImpl implements IAuditLoggerService, IDatabaseCha
         }
     }
 
+    @Override
+    public synchronized void changeLogLevelToDebug(int minutes) {
+        log.info("Change log level to debug requested...");
+        if (!debugModeEnabled) {
+            log.info("...debug mode activated for " + minutes + " minutes");
+            ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
+            Level originalLevel = root.getLevel();
+            root.setLevel(Level.DEBUG);
+            debugModeEnabled = true;
+            getSysAdminUtils().scheduleOnce(true, "LOG_TO_DEBUG", new FiniteDuration(minutes, TimeUnit.MINUTES), new Runnable() {
+                @Override
+                public void run() {
+                    debugModeEnabled = false;
+                    ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory
+                            .getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
+                    root.setLevel(originalLevel);
+                    log.info("Debug mode is unactivated");
+                }
+            });
+        } else {
+            log.info("...debug mode already activated");
+        }
+    }
+
+    @Override
+    public synchronized boolean isLogLevelDebug() {
+        return debugModeEnabled;
+    }
+
+    @Override
+    public InputStream getApplicationLog() {
+        try {
+            return new BufferedInputStream(new FileInputStream(getConfiguration().getString("maf.audit.application.log.location")));
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException("Unable to download the application log", e);
+        }
+    }
+
     private IUserSessionManagerPlugin getUserSessionManager() {
         return userSessionManager;
     }
@@ -268,5 +322,9 @@ public class AuditLoggerServiceImpl implements IAuditLoggerService, IDatabaseCha
 
     private Configuration getConfiguration() {
         return configuration;
+    }
+
+    private ISysAdminUtils getSysAdminUtils() {
+        return sysAdminUtils;
     }
 }
