@@ -26,9 +26,6 @@ import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.Version;
 
-import models.framework_models.parent.IModelConstants;
-import play.Logger;
-
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.ExpressionList;
 import com.avaje.ebean.Model;
@@ -36,6 +33,8 @@ import com.avaje.ebean.SqlUpdate;
 
 import framework.commons.DataType;
 import framework.commons.message.EventMessage;
+import models.framework_models.parent.IModelConstants;
+import play.Logger;
 
 /**
  * A pluginConfiguration log is a record of an association between an object in
@@ -114,6 +113,23 @@ public class PluginLog extends Model {
      */
     public static void saveStopPluginLog(Long pluginConfigurationId, String logMessage, boolean isError) {
         savePluginLog(null, pluginConfigurationId, isError, EVENT_TYPE_STOP, logMessage, null, null, null);
+    }
+
+    /**
+     * Creates a plugin log for an informational message (info or error)
+     * 
+     * @param transactionId
+     *            the unique id of the transaction associated with the event
+     *            handling
+     * @param pluginConfigurationId
+     *            the unique identifier for the plugin configuration
+     * @param isError
+     *            true if the log is an error
+     * @param logMessage
+     *            the error message
+     */
+    public static void saveMessagePluginLog(String transactionId, Long pluginConfigurationId, boolean isError, String logMessage) {
+        savePluginLog(transactionId, pluginConfigurationId, isError, "LOG", logMessage, null, null, null);
     }
 
     /**

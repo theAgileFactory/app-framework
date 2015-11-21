@@ -288,6 +288,28 @@ public interface IPluginContext {
     public void reportOnStartup(boolean isError, String logMessage, Exception exception);
 
     /**
+     * Report a message generated when the plugin stopped
+     * 
+     * @param isError
+     *            true if the message is an error
+     * @param logMessage
+     *            a message
+     */
+    public void reportOnStop(boolean isError, String logMessage);
+
+    /**
+     * Report a message generated when the plugin stopped
+     * 
+     * @param isError
+     *            true if the message is an error
+     * @param logMessage
+     *            a message
+     * @param exception
+     *            an Exception
+     */
+    public void reportOnStop(boolean isError, String logMessage, Exception exception);
+
+    /**
      * Report a status about the the handling of an event.<br/>
      * Such trace will be displayed to the end user.<br/>
      * It should give an understandable information about the status of the
@@ -326,6 +348,18 @@ public interface IPluginContext {
      *            an exception
      */
     public void reportOnEventHandling(String transactionId, boolean isError, EventMessage eventMessage, String logMessage, Exception exception);
+
+    /**
+     * Report a message which can be an error or an info
+     * 
+     * @param transactionId
+     *            a transaction id
+     * @param isError
+     *            true if the message is an error
+     * @param logMessage
+     *            a message
+     */
+    public void reportMessage(String transactionId, boolean isError, String logMessage);
 
     /**
      * Store the plugin state into a persistent storage
