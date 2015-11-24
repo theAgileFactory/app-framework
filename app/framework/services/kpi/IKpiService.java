@@ -17,10 +17,13 @@
  */
 package framework.services.kpi;
 
+import java.math.BigDecimal;
+import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
 
 import framework.services.account.IPreferenceManagerPlugin;
+import framework.services.kpi.KpiServiceImpl.KpiServiceException;
 import framework.services.system.ISysAdminUtils;
 import play.Environment;
 import play.mvc.Http.Context;
@@ -121,4 +124,22 @@ public interface IKpiService {
      * Return the preference manager service.
      */
     public IPreferenceManagerPlugin getPreferenceManagerPlugin();
+
+    /**
+     * 
+     * @param uid
+     *            the KPI uid
+     * @param objectId
+     *            the related object id
+     * @param timestamp
+     *            the timestamp of the data, let null to use the current date
+     * @param mainValue
+     *            the main value
+     * @param additional1Value
+     *            the additional 1 value
+     * @param additional2Value
+     *            the additional 2 value
+     */
+    public void addData(String uid, Long objectId, Date timestamp, BigDecimal mainValue, BigDecimal additional1Value, BigDecimal additional2Value)
+            throws KpiServiceException;
 }

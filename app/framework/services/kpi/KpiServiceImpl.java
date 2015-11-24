@@ -17,6 +17,7 @@
  */
 package framework.services.kpi;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Hashtable;
@@ -350,10 +351,106 @@ public class KpiServiceImpl implements IKpiService {
         return this.preferenceManagerPlugin.get();
     }
 
+    @Override
+    public void addData(String uid, Long objectId, Date timestamp, BigDecimal mainValue, BigDecimal additional1Value, BigDecimal additional2Value)
+            throws KpiServiceException {
+
+        uid = uid.trim();
+        KpiDefinition kpiDefinition = KpiDefinition.getByUid(uid);
+        if (kpiDefinition == null) {
+            throw new KpiServiceException("The KPI with the specified uid is not found", 404);
+        }
+
+        if (mainValue == null || additional1Value == null || additional2Value == null) {
+            throw new KpiServiceException("The mainValue, additional1Value and additional2Value should not be null", 400);
+        }
+
+        Kpi kpi = this.getKpi(uid);
+        if (kpi == null) {
+            throw new KpiServiceException("Impossible to add a data for an inactive KPI", 400);
+        }
+
+        if (kpi.isStandard()) {
+            throw new KpiServiceException("Impossible to add a data for a standard KPI", 400);
+        }
+
+        if (!kpi.isExternal()) {
+            throw new KpiServiceException("Impossible to add a data for a KPI with data provided by BizDock", 400);
+        }
+
+        if (!kpi.hasBoxDisplay()) {
+            throw new KpiServiceException("Impossible to add a data for a KPI without box display.", 400);
+        }
+
+        // Check the object id (should exist for the given object type)
+        if (kpi.getKpiObjectsContainer().getObjectByIdForKpi(objectId) == null) {
+            throw new KpiServiceException("Impossible to find the corresponding object for the given objectId", 400);
+        }
+
+        // If the timestamp is not given then get the current date
+        if (timestamp == null) {
+            timestamp = new Date();
+        }
+
+        KpiData mainKpiData = new KpiData();
+        mainKpiData.kpiValueDefinition = kpiDefinition.mainKpiValueDefinition;
+        mainKpiData.objectId = objectId;
+        mainKpiData.timestamp = timestamp;
+        mainKpiData.value = mainValue;
+        mainKpiData.save();
+
+        KpiData additional1KpiData = new KpiData();
+        additional1KpiData.kpiValueDefinition = kpiDefinition.additional1KpiValueDefinition;
+        additional1KpiData.objectId = objectId;
+        additional1KpiData.timestamp = timestamp;
+        additional1KpiData.value = additional1Value;
+        additional1KpiData.save();
+
+        KpiData additional2KpiData = new KpiData();
+        additional2KpiData.kpiValueDefinition = kpiDefinition.additional2KpiValueDefinition;
+        additional2KpiData.objectId = objectId;
+        additional2KpiData.timestamp = timestamp;
+        additional2KpiData.value = additional2Value;
+        additional2KpiData.save();
+
+    }
+
     /**
      * Get the messages service.
      */
     private II18nMessagesPlugin getMessagesPlugin() {
         return messagesPlugin;
+    }
+
+    /**
+     * The KPI service exception.
+     * 
+     * @author Johann Kohler
+     */
+    public static class KpiServiceException extends Exception {
+
+        private static final long serialVersionUID = 15698232151247954L;
+
+        private int httpCode;
+
+        /**
+         * Default constructor.
+         * 
+         * @param message
+         *            the error message
+         * @param httpCode
+         *            the corresponding HTTP error code
+         */
+        public KpiServiceException(String message, int httpCode) {
+            super(message);
+            this.httpCode = httpCode;
+        }
+
+        /**
+         * Get the HTTP error code.
+         */
+        public int getHttpCode() {
+            return this.httpCode;
+        }
     }
 }
