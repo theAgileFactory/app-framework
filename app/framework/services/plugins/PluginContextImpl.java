@@ -136,6 +136,12 @@ public class PluginContextImpl implements IPluginContext {
     }
 
     @Override
+    public void reportMessage(String transactionId, boolean isError, String logMessage, Exception exception) {
+        String exceptionStack = logException(exception);
+        PluginLog.saveMessagePluginLog(transactionId, getPluginConfigurationId(), isError, logMessage + "\nError trace:\n" + exceptionStack);
+    }
+
+    @Override
     public void reportOnEventHandling(String transactionId, boolean isError, EventMessage eventMessage, String logMessage) {
         PluginLog.saveOnEventHandlingPluginLog(transactionId, getPluginConfigurationId(), isError, eventMessage.getMessageType(), logMessage,
                 eventMessage.getDataType(), eventMessage.getInternalId(), eventMessage.getExternalId());

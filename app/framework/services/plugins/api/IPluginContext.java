@@ -362,6 +362,20 @@ public interface IPluginContext {
     public void reportMessage(String transactionId, boolean isError, String logMessage);
 
     /**
+     * Report a message which can be an error or an info
+     * 
+     * @param transactionId
+     *            a transaction id
+     * @param isError
+     *            true if the message is an error
+     * @param logMessage
+     *            a message
+     * @param exception
+     *            an exception
+     */
+    public void reportMessage(String transactionId, boolean isError, String logMessage, Exception exception);
+
+    /**
      * Store the plugin state into a persistent storage
      * 
      * @param stateObject
