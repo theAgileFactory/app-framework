@@ -143,24 +143,20 @@ public class Kpi {
             return false;
         }
 
-        if (!kpiDefinition.isExternal) {
+        // load the kpiRunner
+        try {
 
-            // load the kpiRunner
-            try {
-
-                Class<?> clazz = null;
-                if (kpiDefinition.isStandard) {
-                    clazz = getKpiService().getEnvironment().classLoader().loadClass(kpiDefinition.clazz);
-                } else {
-                    clazz = CustomKpi.class;
-                }
-                kpiRunner = (IKpiRunner) clazz.newInstance();
-
-            } catch (Exception e) {
-                Logger.error("Unable to instanciate the runner", e);
-                return false;
-
+            Class<?> clazz = null;
+            if (!kpiDefinition.isExternal && kpiDefinition.isStandard) {
+                clazz = getKpiService().getEnvironment().classLoader().loadClass(kpiDefinition.clazz);
+            } else {
+                clazz = CustomKpi.class;
             }
+            kpiRunner = (IKpiRunner) clazz.newInstance();
+
+        } catch (Exception e) {
+            Logger.error("Unable to instanciate the runner", e);
+            return false;
 
         }
 
