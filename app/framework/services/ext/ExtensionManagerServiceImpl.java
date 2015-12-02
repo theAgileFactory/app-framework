@@ -442,8 +442,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                     try {
                         Object registrationController = plugin.getRight().getRegistrationConfigurationControllers().get(dataType);
                         log.info("Found a registration configuration controller for DataType " + dataType + " ...");
-                        addExtensionController(registrationController, "/" + pluginConfigurationId + "/register" + dataType.getDataName().toLowerCase(),
-                                IFrameworkConstants.ADMIN_PLUGIN_MANAGER_PERMISSION);
+                        addExtensionController(registrationController, "/" + pluginConfigurationId + "/register" + dataType.getDataName().toLowerCase());
                         log.info("Custom registration configuration controller loaded !");
                     } catch (ExtensionManagerException e) {
                         log.warn("Error while loading the registration configuration controller"
@@ -1330,7 +1329,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                 perms.add(getPermissions());
                 if (!getSecurityService().restrict(perms)) {
                     if (log.isDebugEnabled()) {
-                        log.debug("Call to path " + path + " but permissions are not sufficient");
+                        log.debug("Call to path " + path + " but permissions are not sufficient [expected : " + perms + "]");
                     }
                     return Promise.promise(() -> getSecurityServiceConfiguration().displayAccessForbidden());
                 }

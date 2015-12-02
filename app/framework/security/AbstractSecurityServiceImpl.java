@@ -164,10 +164,28 @@ public abstract class AbstractSecurityServiceImpl implements HandlerCache, ISecu
             if (subject == null) {
                 return false;
             }
+            if (deadBoltRoles.size() == 0) {
+                if (log.isDebugEnabled()) {
+                    log.debug("No permissions to check, permission set is empty ");
+                }
+                // Empty permissions
+                return true;
+            }
+            boolean isNotEmptyArray = false;
             for (String[] rolesArray : deadBoltRoles) {
+                if (rolesArray.length != 0) {
+                    isNotEmptyArray = true;
+                }
                 if (getDeadBoltAnalyzer().hasAllRoles(Optional.of(subject), rolesArray)) {
                     return true;
                 }
+            }
+            if (!isNotEmptyArray) {
+                if (log.isDebugEnabled()) {
+                    log.debug("No permissions to check, permission list contains only empty arrays");
+                }
+                // All arrays were empty : empty permissions set
+                return true;
             }
             return false;
         } catch (Exception e) {
