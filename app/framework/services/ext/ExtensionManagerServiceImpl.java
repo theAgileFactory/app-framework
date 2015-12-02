@@ -91,6 +91,7 @@ import play.inject.ApplicationLifecycle;
 import play.inject.Injector;
 import play.libs.F.Function0;
 import play.libs.F.Promise;
+import play.libs.ws.WSClient;
 import play.mvc.Controller;
 import play.mvc.Http.Context;
 import play.mvc.Result;
@@ -188,13 +189,16 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
      * @param securityServiceConfiguration
      * @param preferenceManagerPlugin
      * @param topMenuBarService
+     * @param wsClient
+     *            ensure that the service is loaded before being possibly used
+     *            by an extension
      * @throws ExtensionManagerException
      */
     @Inject
     public ExtensionManagerServiceImpl(ApplicationLifecycle lifecycle, Environment environment, Injector injector, Configuration configuration,
             II18nMessagesPlugin iI18nMessagesPlugin, ICustomRouterService customRouterService, ISysAdminUtils sysAdminUtils,
             IDatabaseDependencyService databaseDependencyService, ISecurityService securityService, ISecurityServiceConfiguration securityServiceConfiguration,
-            IPreferenceManagerPlugin preferenceManagerPlugin, ITopMenuBarService topMenuBarService) throws ExtensionManagerException {
+            IPreferenceManagerPlugin preferenceManagerPlugin, ITopMenuBarService topMenuBarService, WSClient wsClient) throws ExtensionManagerException {
         log.info("SERVICE>>> ExtensionManagerServiceImpl starting...");
         this.autoRefreshMode = configuration.getBoolean(Config.AUTO_REFRESH_ACTIVE.getConfigurationKey());
         this.autoRefreshFrequency = configuration.getInt(Config.AUTO_REFRESH_FREQUENCY.getConfigurationKey());
@@ -828,7 +832,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
      */
     public static class Extension implements IExtension {
         private static final List<Class<?>> AUTHORIZED_INJECTED_SERVICE = Arrays.asList(ISecurityService.class, IUserSessionManagerPlugin.class,
-                ILinkGenerationService.class, II18nMessagesPlugin.class, ISysAdminUtils.class, IPluginContext.class, IPluginRunner.class);
+                ILinkGenerationService.class, II18nMessagesPlugin.class, ISysAdminUtils.class, IPluginContext.class, IPluginRunner.class, WSClient.class);
 
         private Date loadingTime;
         private File jarFile;
