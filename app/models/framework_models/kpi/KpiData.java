@@ -23,7 +23,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -73,13 +72,13 @@ public class KpiData extends Model {
      * This attribute is used only for a related KPI value definition that is
      * MAIN.
      */
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     public KpiColorRule kpiColorRule;
 
     /**
      * The related KPI value definition.
      */
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     public KpiValueDefinition kpiValueDefinition;
 
     /**
