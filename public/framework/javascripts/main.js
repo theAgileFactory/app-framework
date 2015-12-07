@@ -1060,7 +1060,7 @@ function maf_activateEditable_for_autocomplete(editableCache,container,fieldId, 
          success: function(response, newValue) {
              for(value in editableCache){
                  if(editableCache[value].name==newValue){
-                     jContainer.find('#'+fieldId).val(value);
+                     jContainer.find('#'+fieldId).val(value).trigger('change');
                      jContainer.find('#'+fieldId+"_content").val(newValue);
                      if(callbackMethod){
                          callbackMethod.apply(this, new Array(value, newValue));
