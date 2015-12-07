@@ -38,7 +38,9 @@
     <span class="help-block"><strong>@{field.error.map { error => parts.Msg(error.message) }}</strong></span>
 </div>
 
-@*********************************************************
- * A template which generates a radiobutton group with
- * a twitter bootstrap 3 compatible style
- *********************************************************@
+<script>
+    if (!$("input[name='@(field.name)']:checked").val()) {
+        $("input[name='@(field.name)']:first").attr('checked', true);
+        $("input[name='@(field.name)']:first").parent().addClass("active")
+    }
+</script>
