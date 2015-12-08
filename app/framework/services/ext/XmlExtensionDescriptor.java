@@ -157,6 +157,7 @@ public class XmlExtensionDescriptor {
         private String addAfterUuid;
         private String addBeforeUuid;
         private String label;
+        private String cssIcon;
         private String url;
         private List<String> permissions;
 
@@ -180,6 +181,15 @@ public class XmlExtensionDescriptor {
 
         public void setLabel(String label) {
             this.label = label;
+        }
+
+        @XmlElement(name = "css-icon", nillable = false)
+        public String getCssIcon() {
+            return cssIcon;
+        }
+
+        public void setCssIcon(String cssIcon) {
+            this.cssIcon = cssIcon;
         }
 
         @XmlElement(name = "after-uuid", nillable = false)

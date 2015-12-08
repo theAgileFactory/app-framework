@@ -197,8 +197,9 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
     @Inject
     public ExtensionManagerServiceImpl(ApplicationLifecycle lifecycle, Environment environment, Injector injector, Configuration configuration,
             II18nMessagesPlugin iI18nMessagesPlugin, ICustomRouterService customRouterService, ISysAdminUtils sysAdminUtils,
-            IDatabaseDependencyService databaseDependencyService, ISecurityService securityService, ISecurityServiceConfiguration securityServiceConfiguration,
-            IPreferenceManagerPlugin preferenceManagerPlugin, ITopMenuBarService topMenuBarService, WSClient wsClient) throws ExtensionManagerException {
+            IDatabaseDependencyService databaseDependencyService, ISecurityService securityService,
+            ISecurityServiceConfiguration securityServiceConfiguration, IPreferenceManagerPlugin preferenceManagerPlugin,
+            ITopMenuBarService topMenuBarService, WSClient wsClient) throws ExtensionManagerException {
         log.info("SERVICE>>> ExtensionManagerServiceImpl starting...");
         this.autoRefreshMode = configuration.getBoolean(Config.AUTO_REFRESH_ACTIVE.getConfigurationKey());
         this.autoRefreshFrequency = configuration.getInt(Config.AUTO_REFRESH_FREQUENCY.getConfigurationKey());
@@ -533,13 +534,13 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         return Utilities.folderSize(this.getExtensionDirectory());
     }
 
-    private boolean updateTopMenu(MenuCustomizationDescriptor menuCustomizationDescriptor) {
+    private synchronized boolean updateTopMenu(MenuCustomizationDescriptor menuCustomizationDescriptor) {
         boolean result = true;
         // Remove some menu items
         Menu mainPerspective = getTopMenuBarService().getMainPerspective();
         if (menuCustomizationDescriptor.getMenusToRemove() != null && menuCustomizationDescriptor.getMenusToRemove().size() != 0) {
-            mainPerspective
-                    .removeMenuItem(menuCustomizationDescriptor.getMenusToRemove().toArray(new String[menuCustomizationDescriptor.getMenusToRemove().size()]));
+            mainPerspective.removeMenuItem(
+                    menuCustomizationDescriptor.getMenusToRemove().toArray(new String[menuCustomizationDescriptor.getMenusToRemove().size()]));
             log.info("Remove the menus " + menuCustomizationDescriptor.getMenusToRemove());
         }
         // Add some new menu items
@@ -547,9 +548,10 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             for (MenuItemDescriptor menuItemDescriptor : menuCustomizationDescriptor.getMenusToAdd()) {
                 MenuItem menuItem = null;
                 if (menuItemDescriptor.getUrl() != null) {
-                    menuItem = new ClickableMenuItem(menuItemDescriptor.getUuid(), menuItemDescriptor.getLabel(), menuItemDescriptor.getUrl());
+                    menuItem = new ClickableMenuItem(menuItemDescriptor.getUuid(), menuItemDescriptor.getLabel(), menuItemDescriptor.getUrl(),
+                            menuItemDescriptor.getCssIcon(), false);
                 } else {
-                    menuItem = new HeaderMenuItem(menuItemDescriptor.getUuid(), menuItemDescriptor.getLabel());
+                    menuItem = new HeaderMenuItem(menuItemDescriptor.getUuid(), menuItemDescriptor.getLabel(), menuItemDescriptor.getCssIcon(), false);
                 }
                 if (menuItemDescriptor.getPermissions() != null) {
                     menuItem.setAuthorizedPermissions(
@@ -636,9 +638,8 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                             }
                             log.info("Loaded i18n keys [" + i18nMessage.getLanguage() + "] for the extension" + extension.getDescriptor().getName());
                         } catch (IOException e) {
-                            log.error(
-                                    "Unable to load the i18n keys [" + i18nMessage.getLanguage() + "] for the extension" + extension.getDescriptor().getName(),
-                                    e);
+                            log.error("Unable to load the i18n keys [" + i18nMessage.getLanguage() + "] for the extension"
+                                    + extension.getDescriptor().getName(), e);
                         }
                     }
                 }
@@ -1082,7 +1083,8 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                     if (injectableConstructor == null) {
                         injectableConstructor = constructor;
                     } else {
-                        throw new IllegalArgumentException("Multiple injectable constructor defined, please correct : only one injectable constructor allowed");
+                        throw new IllegalArgumentException(
+                                "Multiple injectable constructor defined, please correct : only one injectable constructor allowed");
                     }
                 }
             }

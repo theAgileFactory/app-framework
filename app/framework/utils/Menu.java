@@ -65,7 +65,7 @@ public abstract class Menu {
      * @param menuItem
      *            a menuItem
      */
-    public boolean addSubMenuItemTo(String uuid, MenuItem newMenuItem) {
+    public synchronized boolean addSubMenuItemTo(String uuid, MenuItem newMenuItem) {
         for (MenuItem menuItem : getMenuItems()) {
             if (menuItem.getUuid().equals(uuid) && menuItem instanceof HeaderMenuItem) {
                 HeaderMenuItem header = (HeaderMenuItem) menuItem;
@@ -86,7 +86,7 @@ public abstract class Menu {
      *            a new menu item to be added
      * @return true if the uuid was found add the menu item added
      */
-    public boolean addMenuItemAfter(String uuid, MenuItem newMenuItem) {
+    public synchronized boolean addMenuItemAfter(String uuid, MenuItem newMenuItem) {
         if (!StringUtils.isBlank(uuid)) {
             return recursiveAddMenuItem(true, uuid, newMenuItem, getMenuItems());
         }
@@ -103,14 +103,14 @@ public abstract class Menu {
      *            a new menu item to be added
      * @return true if the uuid was found add the menu item added
      */
-    public boolean addMenuItemBefore(String uuid, MenuItem newMenuItem) {
+    public synchronized boolean addMenuItemBefore(String uuid, MenuItem newMenuItem) {
         if (!StringUtils.isBlank(uuid)) {
             return recursiveAddMenuItem(false, uuid, newMenuItem, getMenuItems());
         }
         return false;
     }
 
-    private boolean recursiveAddMenuItem(boolean addAfter, String uuid, MenuItem newMenuItem, List<MenuItem> subMenuItems) {
+    private synchronized boolean recursiveAddMenuItem(boolean addAfter, String uuid, MenuItem newMenuItem, List<MenuItem> subMenuItems) {
         List<MenuItem> copySubMenuItems = new ArrayList<MenuItem>();
         copySubMenuItems.addAll(subMenuItems);
         for (MenuItem menuItem : copySubMenuItems) {
@@ -144,7 +144,7 @@ public abstract class Menu {
      * @param uuid
      *            a unique Id.
      */
-    public void removeMenuItem(String... uuids) {
+    public synchronized void removeMenuItem(String... uuids) {
         List<String> uuidList = Arrays.asList(uuids);
         // Remove the blank uuid from the list (not allowed)
         for (String uuid : uuids) {
@@ -163,7 +163,7 @@ public abstract class Menu {
      *            a list of UUID to remove
      * @param subMenuItems
      */
-    private void recursiveRemoveMenuItem(List<String> uuidList, List<MenuItem> subMenuItems) {
+    private synchronized void recursiveRemoveMenuItem(List<String> uuidList, List<MenuItem> subMenuItems) {
         List<MenuItem> copySubMenuItems = new ArrayList<MenuItem>();
         copySubMenuItems.addAll(subMenuItems);
         for (MenuItem menuItem : copySubMenuItems) {
@@ -177,7 +177,7 @@ public abstract class Menu {
         }
     }
 
-    public void clear() {
+    public synchronized void clear() {
         if (getMenuItems() != null) {
             getMenuItems().clear();
         }
