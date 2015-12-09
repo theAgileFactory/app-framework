@@ -16,12 +16,15 @@
  * this program. If not, see <http://www.gnu.org/licenses/>.
  *@
 @(listOfValues: List[_], methodName: String = null)
+
+@import framework_views.parts.commons._
+
 @if(listOfValues!=null && !listOfValues.isEmpty){
 <ul class="list-unstyled">
     @for(value <- listOfValues){
         @if(value!=null){
             <li>
-                @Html(framework.services.ServiceStaticAccessor.getImplementationDefinedObjectService().renderObject(value))
+                @Html(_implementationDefinedObjectService.renderObject(value))
             </li>
         }
     }
