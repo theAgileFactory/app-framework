@@ -846,9 +846,9 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
     }
 
     @Override
-    public void postUpdate(Object bean) {
+    public void postUpdate(Object bean, Set<String> modifiedAttributes) {
         if (log.isDebugEnabled()) {
-            log.debug("post Update for " + bean);
+            log.debug("post Update for " + bean + " for modified attributes " + modifiedAttributes);
         }
         if (bean != null) {
             DataType dataType = DataType.getDataTypeFromClassName(bean.getClass().getName());
@@ -858,7 +858,9 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
                 if (isDeleted) {
                     postOutMessage(new EventMessage(getIdFromBean(bean), dataType, MessageType.OBJECT_DELETED));
                 } else {
-                    postOutMessage(new EventMessage(getIdFromBean(bean), dataType, MessageType.OBJECT_UPDATED));
+                    EventMessage updateEvent = new EventMessage(getIdFromBean(bean), dataType, MessageType.OBJECT_UPDATED);
+                    updateEvent.setPayload(modifiedAttributes);
+                    postOutMessage(updateEvent);
                 }
             }
         }

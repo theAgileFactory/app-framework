@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
@@ -129,17 +130,17 @@ public class AuditLoggerServiceImpl implements IAuditLoggerService, IDatabaseCha
 
     @Override
     public void postInsert(Object bean) {
-        log(AuditedAction.CREATE, bean);
+        log(AuditedAction.CREATE, bean, null);
     }
 
     @Override
     public void postDelete(Object bean) {
-        log(AuditedAction.DELETE, bean);
+        log(AuditedAction.DELETE, bean, null);
     }
 
     @Override
-    public void postUpdate(Object bean) {
-        log(AuditedAction.UPDATE, bean);
+    public void postUpdate(Object bean, Set<String> modifiedAttributes) {
+        log(AuditedAction.UPDATE, bean, modifiedAttributes);
     }
 
     /**
@@ -150,11 +151,15 @@ public class AuditLoggerServiceImpl implements IAuditLoggerService, IDatabaseCha
      * @param entity
      *            the instance of the concerning entity
      */
-    private void log(AuditedAction action, Object entity) {
+    private void log(AuditedAction action, Object entity, Set<String> modifiedAttributes) {
         if (entity != null && IModel.class.isAssignableFrom(entity.getClass()) && getUserSessionManager() != null) {
             Boolean flag = auditableEntities.get(entity.getClass().getName());
             if (flag != null && flag) {
-                auditLog.info(String.format("%s/%s/%s", action.name(), getCurrentUserLogin(), ((IModel) entity).audit()));
+                String message = String.format("%s/%s/%s", action.name(), getCurrentUserLogin(), ((IModel) entity).audit());
+                if (modifiedAttributes != null) {
+                    message = message + "/" + modifiedAttributes;
+                }
+                auditLog.info(message);
             }
         }
     }

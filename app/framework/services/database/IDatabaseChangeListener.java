@@ -1,5 +1,7 @@
 package framework.services.database;
 
+import java.util.Set;
+
 /**
  * An interface which can be registered to listen for database changes (INSERT,
  * DELETE, UPDATE).<br/>
@@ -30,6 +32,8 @@ public interface IDatabaseChangeListener {
      * 
      * @param bean
      *            the object itself
+     * @param modifiedAttributes
+     *            the attributes modified by the update
      */
-    public void postUpdate(Object bean);
+    public void postUpdate(Object bean, Set<String> modifiedAttributes);
 }

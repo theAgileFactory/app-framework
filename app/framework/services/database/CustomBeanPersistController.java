@@ -17,6 +17,7 @@
  */
 package framework.services.database;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -97,6 +98,8 @@ public class CustomBeanPersistController implements BeanPersistController {
 
     @Override
     public void postUpdate(BeanPersistRequest<?> beanPersistRequest) {
+        final Set<String> modifiedAttributes = getModifiedAttributes(beanPersistRequest);
+        System.out.println("\n\n>>>>>" + modifiedAttributes);
         Set<IDatabaseChangeListener> listenersSet = new HashSet<IDatabaseChangeListener>(getListeners().keySet());
         listenersSet.forEach(new Consumer<IDatabaseChangeListener>() {
             @Override
@@ -106,12 +109,29 @@ public class CustomBeanPersistController implements BeanPersistController {
                     executorService.submit(new Runnable() {
                         @Override
                         public void run() {
-                            listener.postUpdate(beanPersistRequest.getBean());
+                            listener.postUpdate(beanPersistRequest.getBean(), Collections.unmodifiableSet(modifiedAttributes));
                         }
                     });
                 }
             }
         });
+    }
+
+    /**
+     * Return a set of the modified attributes associated with this "update"
+     * event
+     * 
+     * @param beanPersistRequest
+     * @return
+     */
+    public Set<String> getModifiedAttributes(BeanPersistRequest<?> beanPersistRequest) {
+        Set<String> modifiedAttributes = null;
+        if (beanPersistRequest.getUpdatedProperties() != null) {
+            modifiedAttributes = new HashSet<String>(beanPersistRequest.getUpdatedProperties());
+        } else {
+            modifiedAttributes = new HashSet<String>();
+        }
+        return modifiedAttributes;
     }
 
     @Override
