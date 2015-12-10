@@ -565,7 +565,7 @@ public class Kpi {
 
         if (kpiDefinition.kpiColorRules != null) {
 
-            for (KpiColorRule kpiColorRule : kpiDefinition.kpiColorRules) {
+            for (KpiColorRule kpiColorRule : KpiColorRule.getKpiColorRuleAsListByDefinition(kpiDefinition.id)) {
 
                 Context cx = null;
                 try {

@@ -28,11 +28,11 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Version;
 
-import models.framework_models.parent.IModel;
-import models.framework_models.parent.IModelConstants;
-
 import com.avaje.ebean.Model;
 import com.avaje.ebean.annotation.Where;
+
+import models.framework_models.parent.IModel;
+import models.framework_models.parent.IModelConstants;
 
 /**
  * A KPI color rule describes a rule for the background color of a KPI display.
@@ -141,6 +141,16 @@ public class KpiColorRule extends Model implements IModel {
      */
     public static KpiColorRule getById(Long id) {
         return find.where().eq("deleted", false).eq("id", id).findUnique();
+    }
+
+    /**
+     * Get the KPI color rules of a definition.
+     * 
+     * @param kpiDefinitionId
+     *            the KPI definition id
+     */
+    public static List<KpiColorRule> getKpiColorRuleAsListByDefinition(Long kpiDefinitionId) {
+        return find.orderBy("order").where().eq("deleted", false).eq("kpiDefinition.id", kpiDefinitionId).findList();
     }
 
     /**
