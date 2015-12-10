@@ -747,16 +747,20 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
                 for (IPluginConfigurationBlockDescriptor pluginConfigurationBlockDescription : pluginConfigurationBlockDescriptors.values()) {
                     PluginConfigurationBlock pluginConfigurationBlock = PluginConfigurationBlock
                             .getPluginConfigurationBlockFromIdentifier(pluginConfigurationId, pluginConfigurationBlockDescription.getIdentifier());
+                    XmlExtensionDescriptor.PluginConfigurationBlockDescriptor xmlDesc = new XmlExtensionDescriptor.PluginConfigurationBlockDescriptor();
+                    xmlDesc.setDescription(pluginConfigurationBlockDescription.getDescription());
+                    xmlDesc.setIdentifier(pluginConfigurationBlockDescription.getIdentifier());
+                    xmlDesc.setName(pluginConfigurationBlockDescription.getName());
+                    xmlDesc.setType(pluginConfigurationBlockDescription.getEditionType().name());
+                    xmlDesc.setVersion(pluginConfigurationBlockDescription.getVersion());
                     if (pluginConfigurationBlock != null) {
-                        XmlExtensionDescriptor.PluginConfigurationBlockDescriptor xmlDesc = new XmlExtensionDescriptor.PluginConfigurationBlockDescriptor();
+                        // Get the value form the database
                         xmlDesc.setDefaultValue(new String(pluginConfigurationBlock.configuration));
-                        xmlDesc.setDescription(pluginConfigurationBlockDescription.getDescription());
-                        xmlDesc.setIdentifier(pluginConfigurationBlockDescription.getIdentifier());
-                        xmlDesc.setName(pluginConfigurationBlockDescription.getName());
-                        xmlDesc.setType(pluginConfigurationBlockDescription.getEditionType().name());
-                        xmlDesc.setVersion(pluginConfigurationBlockDescription.getVersion());
-                        export.getPluginConfigurationBlockDescriptors().add(xmlDesc);
+                    } else {
+                        // No value in the database, use the default one
+                        xmlDesc.setDefaultValue(new String(pluginConfigurationBlockDescription.getDefaultValue()));
                     }
+                    export.getPluginConfigurationBlockDescriptors().add(xmlDesc);
                 }
 
                 // Marshall it as a String
