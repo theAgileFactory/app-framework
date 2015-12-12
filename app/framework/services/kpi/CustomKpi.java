@@ -18,20 +18,17 @@
 package framework.services.kpi;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import javax.script.ScriptContext;
+import javax.script.SimpleScriptContext;
+
 import org.apache.commons.lang3.tuple.Pair;
-import org.mozilla.javascript.ClassShutter;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Script;
-import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
-import org.mozilla.javascript.WrapFactory;
 
 import framework.services.account.IPreferenceManagerPlugin;
 import framework.services.kpi.Kpi.DataType;
+import framework.services.script.IScriptService;
 import models.framework_models.kpi.KpiData;
 import play.Logger;
 
@@ -43,18 +40,18 @@ import play.Logger;
 public class CustomKpi implements IKpiRunner {
 
     @Override
-    public BigDecimal computeMain(IPreferenceManagerPlugin preferenceManagerPlugin, Kpi kpi, Long objectId) {
-        return computeValue(kpi, objectId, DataType.MAIN);
+    public BigDecimal computeMain(IPreferenceManagerPlugin preferenceManagerPlugin, IScriptService scriptService, Kpi kpi, Long objectId) {
+        return computeValue(scriptService, kpi, objectId, DataType.MAIN);
     }
 
     @Override
-    public BigDecimal computeAdditional1(IPreferenceManagerPlugin preferenceManagerPlugin, Kpi kpi, Long objectId) {
-        return computeValue(kpi, objectId, DataType.ADDITIONAL1);
+    public BigDecimal computeAdditional1(IPreferenceManagerPlugin preferenceManagerPlugin, IScriptService scriptService, Kpi kpi, Long objectId) {
+        return computeValue(scriptService, kpi, objectId, DataType.ADDITIONAL1);
     }
 
     @Override
-    public BigDecimal computeAdditional2(IPreferenceManagerPlugin preferenceManagerPlugin, Kpi kpi, Long objectId) {
-        return computeValue(kpi, objectId, DataType.ADDITIONAL2);
+    public BigDecimal computeAdditional2(IPreferenceManagerPlugin preferenceManagerPlugin, IScriptService scriptService, Kpi kpi, Long objectId) {
+        return computeValue(scriptService, kpi, objectId, DataType.ADDITIONAL2);
     }
 
     @Override
@@ -65,6 +62,7 @@ public class CustomKpi implements IKpiRunner {
     /**
      * Compute a value.
      * 
+     * @param scriptService
      * @param kpi
      *            the KPI
      * @param objectId
@@ -73,38 +71,16 @@ public class CustomKpi implements IKpiRunner {
      *            the value type
      * @return
      */
-    private BigDecimal computeValue(Kpi kpi, Long objectId, DataType dataType) {
+    private BigDecimal computeValue(IScriptService scriptService, Kpi kpi, Long objectId, DataType dataType) {
 
         Object object = kpi.getKpiObjectsContainer().getObjectByIdForKpi(objectId);
 
         BigDecimal value = null;
 
-        Context cx = null;
         try {
-
-            cx = Context.enter();
-
-            WrapFactory wrapFactory = new WrapFactory();
-            wrapFactory.setJavaPrimitiveWrap(false);
-            cx.setWrapFactory(wrapFactory);
-
-            // Protect the script against the use of not allowed classes
-            final List<String> allowedClasses = Arrays.asList(kpi.getObjectType());
-            cx.setClassShutter(new ClassShutter() {
-                @Override
-                public boolean visibleToScripts(String className) {
-                    return allowedClasses.contains(className);
-                }
-            });
-
-            // Compile the script
-            Script script = cx.compileString(kpi.getComputationJsCode(dataType), "colorScript", 1, null);
-
-            // Inject the values
-            Scriptable scope = cx.initStandardObjects();
-            ScriptableObject.putProperty(scope, "object", object);
-
-            Object result = script.exec(cx, scope);
+            SimpleScriptContext simpleScriptContext = new SimpleScriptContext();
+            simpleScriptContext.setAttribute("object", object, ScriptContext.ENGINE_SCOPE);
+            Object result = scriptService.evaluateScript("colorScript", kpi.getComputationJsCode(dataType), simpleScriptContext);
 
             // convert the return value to a BigDecimal
             try {
@@ -134,24 +110,19 @@ public class CustomKpi implements IKpiRunner {
             String message = "Error while computing the " + dataType.name().toLowerCase() + " value for the KPI " + kpi.getUid();
             Logger.error(message, e);
 
-        } finally {
-
-            try {
-                Context.exit();
-            } catch (Exception e) {
-            }
         }
 
         return value;
     }
 
     @Override
-    public Pair<Date, Date> getTrendPeriod(IPreferenceManagerPlugin preferenceManagerPlugin, Kpi kpi, Long objectId) {
+    public Pair<Date, Date> getTrendPeriod(IPreferenceManagerPlugin preferenceManagerPlugin, IScriptService scriptService, Kpi kpi, Long objectId) {
         return null;
     }
 
     @Override
-    public Pair<String, List<KpiData>> getStaticTrendLine(IPreferenceManagerPlugin preferenceManagerPlugin, Kpi kpi, Long objectId) {
+    public Pair<String, List<KpiData>> getStaticTrendLine(IPreferenceManagerPlugin preferenceManagerPlugin, IScriptService scriptService, Kpi kpi,
+            Long objectId) {
         return null;
     }
 

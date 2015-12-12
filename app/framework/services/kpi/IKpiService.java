@@ -24,6 +24,7 @@ import java.util.List;
 
 import framework.services.account.IPreferenceManagerPlugin;
 import framework.services.kpi.KpiServiceImpl.KpiServiceException;
+import framework.services.script.IScriptService;
 import framework.services.system.ISysAdminUtils;
 import play.Environment;
 import play.mvc.Http.Context;
@@ -119,6 +120,11 @@ public interface IKpiService {
      * Return the sysadmin utils service.
      */
     public ISysAdminUtils getSysAdminUtils();
+
+    /**
+     * Return a script service instance
+     */
+    public IScriptService getScriptService();
 
     /**
      * Return the preference manager service.

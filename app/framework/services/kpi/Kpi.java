@@ -233,7 +233,8 @@ public class Kpi {
 
         for (IKpiObjectsContainer kpiObject : kpiObjectsContainer.getAllInstancesForKpi()) {
 
-            Pair<Date, Date> period = this.kpiRunner.getTrendPeriod(this.getKpiService().getPreferenceManagerPlugin(), this, kpiObject.getIdForKpi());
+            Pair<Date, Date> period = this.kpiRunner.getTrendPeriod(this.getKpiService().getPreferenceManagerPlugin(), this.getKpiService().getScriptService(),
+                    this, kpiObject.getIdForKpi());
             Date today = new Date();
 
             if (period == null || (period.getLeft().before(today) && period.getRight().after(today))) {
@@ -493,8 +494,7 @@ public class Kpi {
      */
     public Triple<List<KpiData>, List<KpiData>, List<KpiData>> getTrendData(Long objectId) {
         return Triple.of(getKpiData(objectId, this.kpiDefinition.mainKpiValueDefinition),
-                getKpiData(objectId, this.kpiDefinition.additional1KpiValueDefinition),
-                getKpiData(objectId, this.kpiDefinition.additional2KpiValueDefinition));
+                getKpiData(objectId, this.kpiDefinition.additional1KpiValueDefinition), getKpiData(objectId, this.kpiDefinition.additional2KpiValueDefinition));
     }
 
     /**
@@ -507,7 +507,8 @@ public class Kpi {
      */
     private List<KpiData> getKpiData(Long objectId, KpiValueDefinition kpiValueDefinition) {
         if (kpiValueDefinition.isTrendDisplayed) {
-            Pair<Date, Date> period = this.kpiRunner.getTrendPeriod(this.getKpiService().getPreferenceManagerPlugin(), this, objectId);
+            Pair<Date, Date> period = this.kpiRunner.getTrendPeriod(this.getKpiService().getPreferenceManagerPlugin(), this.getKpiService().getScriptService(),
+                    this, objectId);
             if (period != null) {
                 return KpiData.getKpiDataAsListByPeriod(kpiValueDefinition.id, objectId, period.getLeft(), period.getRight());
             } else {
@@ -537,11 +538,11 @@ public class Kpi {
         if (!kpiDefinition.isExternal) {
             switch (dataType) {
             case ADDITIONAL1:
-                return kpiRunner.computeAdditional1(this.getKpiService().getPreferenceManagerPlugin(), this, objectId);
+                return kpiRunner.computeAdditional1(this.getKpiService().getPreferenceManagerPlugin(), this.getKpiService().getScriptService(), this, objectId);
             case ADDITIONAL2:
-                return kpiRunner.computeAdditional2(this.getKpiService().getPreferenceManagerPlugin(), this, objectId);
+                return kpiRunner.computeAdditional2(this.getKpiService().getPreferenceManagerPlugin(), this.getKpiService().getScriptService(), this, objectId);
             case MAIN:
-                return kpiRunner.computeMain(this.getKpiService().getPreferenceManagerPlugin(), this, objectId);
+                return kpiRunner.computeMain(this.getKpiService().getPreferenceManagerPlugin(), this.getKpiService().getScriptService(), this, objectId);
             }
         }
 

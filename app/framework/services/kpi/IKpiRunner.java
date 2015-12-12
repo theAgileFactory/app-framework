@@ -21,9 +21,12 @@ import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
+import javax.script.ScriptEngine;
+
 import org.apache.commons.lang3.tuple.Pair;
 
 import framework.services.account.IPreferenceManagerPlugin;
+import framework.services.script.IScriptService;
 import models.framework_models.kpi.KpiData;
 
 /**
@@ -39,36 +42,42 @@ public interface IKpiRunner {
      * 
      * @param preferenceManagerPlugin
      *            the preference manager service
+     * @param scriptService
+     *            the service which manages the {@link ScriptEngine}
      * @param kpi
      *            the KPI
      * @param objectId
      *            the object id
      */
-    public BigDecimal computeMain(IPreferenceManagerPlugin preferenceManagerPlugin, Kpi kpi, Long objectId);
+    public BigDecimal computeMain(IPreferenceManagerPlugin preferenceManagerPlugin, IScriptService scriptService, Kpi kpi, Long objectId);
 
     /**
      * Compute the KPI additional1 value and return it (only for internal KPI).
      * 
      * @param preferenceManagerPlugin
      *            the preference manager service
+     * @param scriptService
+     *            the service which manages the {@link ScriptEngine}
      * @param kpi
      *            the KPI
      * @param objectId
      *            the object id
      */
-    public BigDecimal computeAdditional1(IPreferenceManagerPlugin preferenceManagerPlugin, Kpi kpi, Long objectId);
+    public BigDecimal computeAdditional1(IPreferenceManagerPlugin preferenceManagerPlugin, IScriptService scriptService, Kpi kpi, Long objectId);
 
     /**
      * Compute the KPI additional2 value and return it (only for internal KPI).
      * 
      * @param preferenceManagerPlugin
      *            the preference manager service
+     * @param scriptService
+     *            the service which manages the {@link ScriptEngine}
      * @param kpi
      *            the KPI
      * @param objectId
      *            the object id
      */
-    public BigDecimal computeAdditional2(IPreferenceManagerPlugin preferenceManagerPlugin, Kpi kpi, Long objectId);
+    public BigDecimal computeAdditional2(IPreferenceManagerPlugin preferenceManagerPlugin, IScriptService scriptService, Kpi kpi, Long objectId);
 
     /**
      * It's possible to add a link to the cell/box display, simply return it if
@@ -88,12 +97,14 @@ public interface IKpiRunner {
      * 
      * @param preferenceManagerPlugin
      *            the preference manager service
+     * @param scriptService
+     *            the service which manages the {@link ScriptEngine}
      * @param kpi
      *            the KPI
      * @param objectId
      *            the object id
      */
-    public Pair<Date, Date> getTrendPeriod(IPreferenceManagerPlugin preferenceManagerPlugin, Kpi kpi, Long objectId);
+    public Pair<Date, Date> getTrendPeriod(IPreferenceManagerPlugin preferenceManagerPlugin, IScriptService scriptService, Kpi kpi, Long objectId);
 
     /**
      * Draw an additionally static line in the trend.
@@ -104,11 +115,14 @@ public interface IKpiRunner {
      * 
      * @param preferenceManagerPlugin
      *            the preference manager service
+     * @param scriptService
+     *            the service which manages the {@link ScriptEngine}
      * @param kpi
      *            the KPI
      * @param objectId
      *            the object id
      */
-    public Pair<String, List<KpiData>> getStaticTrendLine(IPreferenceManagerPlugin preferenceManagerPlugin, Kpi kpi, Long objectId);
+    public Pair<String, List<KpiData>> getStaticTrendLine(IPreferenceManagerPlugin preferenceManagerPlugin, IScriptService scriptService, Kpi kpi,
+            Long objectId);
 
 }

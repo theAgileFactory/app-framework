@@ -40,6 +40,7 @@ import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.configuration.IImplementationDefinedObjectService;
 import framework.services.database.IDatabaseDependencyService;
 import framework.services.kpi.Kpi.DataType;
+import framework.services.script.IScriptService;
 import framework.services.system.ISysAdminUtils;
 import models.framework_models.kpi.KpiData;
 import models.framework_models.kpi.KpiDefinition;
@@ -67,6 +68,7 @@ public class KpiServiceImpl implements IKpiService {
     private ISysAdminUtils sysAdminUtils;
     private Environment environment;
     private II18nMessagesPlugin messagesPlugin;
+    private IScriptService scriptService;
     private Provider<IPreferenceManagerPlugin> preferenceManagerPlugin;
 
     /**
@@ -87,17 +89,21 @@ public class KpiServiceImpl implements IKpiService {
      *            the database dependency service
      * @param sysAdminUtils
      *            the system admin utils service
+     * @param scriptService
+     *            the service which is managing the scripts
      * @param preferenceManagerPlugin
      *            a provider for the preference manager service
      */
     @Inject
     public KpiServiceImpl(ApplicationLifecycle lifecycle, Environment environment, Configuration configuration,
             IImplementationDefinedObjectService implementationDefinedObjectService, II18nMessagesPlugin messagesPlugin,
-            IDatabaseDependencyService databaseDependencyService, ISysAdminUtils sysAdminUtils, Provider<IPreferenceManagerPlugin> preferenceManagerPlugin) {
+            IDatabaseDependencyService databaseDependencyService, ISysAdminUtils sysAdminUtils, IScriptService scriptService,
+            Provider<IPreferenceManagerPlugin> preferenceManagerPlugin) {
         log.info("SERVICE>>> KpiServiceImpl starting...");
         this.messagesPlugin = messagesPlugin;
         this.environment = environment;
         this.sysAdminUtils = sysAdminUtils;
+        this.scriptService = scriptService;
         this.preferenceManagerPlugin = preferenceManagerPlugin;
         this.defaultCurrencyCode = implementationDefinedObjectService.getDefaultCurrencyCode();
         init();
@@ -217,7 +223,8 @@ public class KpiServiceImpl implements IKpiService {
         Date endDate = null;
 
         Triple<List<KpiData>, List<KpiData>, List<KpiData>> datas = kpi.getTrendData(objectId);
-        Pair<String, List<KpiData>> staticTrendLine = kpi.getKpiRunner().getStaticTrendLine(this.getPreferenceManagerPlugin(), kpi, objectId);
+        Pair<String, List<KpiData>> staticTrendLine = kpi.getKpiRunner().getStaticTrendLine(this.getPreferenceManagerPlugin(), getScriptService(), kpi,
+                objectId);
 
         SeriesContainer<TimeValueItem> seriesContainer = null;
 
@@ -248,7 +255,7 @@ public class KpiServiceImpl implements IKpiService {
 
             }
 
-            Pair<Date, Date> period = kpi.getKpiRunner().getTrendPeriod(this.getPreferenceManagerPlugin(), kpi, objectId);
+            Pair<Date, Date> period = kpi.getKpiRunner().getTrendPeriod(this.getPreferenceManagerPlugin(), getScriptService(), kpi, objectId);
             if (period != null) {
                 startDate = period.getLeft();
                 endDate = period.getRight();
@@ -344,6 +351,11 @@ public class KpiServiceImpl implements IKpiService {
     @Override
     public ISysAdminUtils getSysAdminUtils() {
         return sysAdminUtils;
+    }
+
+    @Override
+    public IScriptService getScriptService() {
+        return scriptService;
     }
 
     @Override

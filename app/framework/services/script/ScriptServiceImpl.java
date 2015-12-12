@@ -86,6 +86,30 @@ public class ScriptServiceImpl implements IScriptService {
         return result;
     }
 
+    @Override
+    public Object evaluateScript(ScriptEngine scriptEngine, String script, ScriptContext scriptContext) throws ScriptException {
+        if (log.isDebugEnabled()) {
+            log.debug("Evaluating script [" + script + "] in ScriptEngine [" + getScriptEngineName(scriptEngine) + "]");
+        }
+        Object result = scriptEngine.eval(script, scriptContext);
+        if (log.isDebugEnabled()) {
+            log.debug("Evaluating script [" + script + "] in ScriptEngine [" + getScriptEngineName(scriptEngine) + "] result is : " + result);
+        }
+        return result;
+    }
+
+    @Override
+    public Object evaluateScript(String scriptName, String script, ScriptContext scriptContext) throws ScriptException {
+        if (log.isDebugEnabled()) {
+            log.debug("Evaluating script [" + script + "] in ScriptEngine [" + scriptName + "]");
+        }
+        Object result = getEngine(scriptName).eval(script, scriptContext);
+        if (log.isDebugEnabled()) {
+            log.debug("Evaluating script [" + script + "] in ScriptEngine [" + scriptName + "] result is : " + result);
+        }
+        return result;
+    }
+
     /**
      * Return the name of a script engine (see the getEngine method)
      * 
