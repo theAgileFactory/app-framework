@@ -18,18 +18,17 @@
 package framework.services.plugins.loader.toolkit;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
+
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.tuple.Pair;
-import org.mozilla.javascript.ClassShutter;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Script;
-import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
+
+import framework.services.script.IScriptService;
 
 /**
  * A default implementation of the {@link IGenericFileLoaderMapper} interface
@@ -59,10 +58,21 @@ public abstract class AbstractJavaScriptFileLoaderMapper<K extends ILoadableObje
      */
     public static final String JS_VARIABLE_IGNORE_RECORD = "ignoreRecord";
 
+    /**
+     * Name of the method which will wraps the mapping script
+     */
+    public static final String JS_WRAPPER_METHOD_NAME = "action";
+
+    /**
+     * A javascript function to wrap the mapping script
+     */
+    public static final String JS_WRAPPER_METHOD = "function " + JS_WRAPPER_METHOD_NAME + "(" + JS_VARIABLE_TARGET + "," + JS_VARIABLE_CSV + "){\n%s\nreturn "
+            + JS_VARIABLE_IGNORE_RECORD + ";\n}";
+
     private Class<K> objectClass;
-    private Context cx;
     private String javaScriptMappingScript;
-    private Script script;
+    private IScriptService scriptService;
+    private ScriptEngine scriptEngine;
 
     /**
      * Default constructor.
@@ -71,42 +81,29 @@ public abstract class AbstractJavaScriptFileLoaderMapper<K extends ILoadableObje
      *            the object class
      * @param javaScriptMappingScript
      *            the javascript mapping script
+     * @param scriptService
+     *            the service which is managing the {@link ScriptEngine}
      */
-    public AbstractJavaScriptFileLoaderMapper(Class<K> objectClass, String javaScriptMappingScript) {
+    public AbstractJavaScriptFileLoaderMapper(Class<K> objectClass, String javaScriptMappingScript, IScriptService scriptService) {
         this.objectClass = objectClass;
         this.javaScriptMappingScript = javaScriptMappingScript;
+        this.scriptService = scriptService;
     }
 
     @Override
-    public void init() throws IOException {
-        this.cx = Context.enter();
-
-        // Protect the script against the use of not allowed classes
-        final List<String> allowedClasses = Arrays.asList(getObjectClass().getName(), "org.apache.commons.csv.CSVRecord", "java.lang.String");
-        this.cx.setClassShutter(new ClassShutter() {
-            @Override
-            public boolean visibleToScripts(String className) {
-                return allowedClasses.contains(className);
-            }
-        });
-
-        // Compile the script
-        this.script = cx.compileString(getJavaScriptMappingScript(), "mappingScript", 1, null);
+    public void init() throws ScriptException {
+        this.scriptEngine = getScriptService().getEngine("FileLoaderScript" + getObjectClass());
+        this.scriptEngine.eval(String.format(JS_WRAPPER_METHOD, getJavaScriptMappingScript()));
     }
 
     @Override
-    public boolean convert(CSVRecord record, K loadableObject) {
+    public boolean convert(CSVRecord record, K loadableObject) throws NoSuchMethodException, ScriptException {
         return executeJavaScriptMapping(record, loadableObject);
     }
 
     @Override
     public void close() {
-        try {
-            Context.exit();
-        } catch (Exception e) {
-        }
-        this.cx = null;
-        this.script = null;
+        this.scriptEngine = null;
     }
 
     /**
@@ -117,15 +114,12 @@ public abstract class AbstractJavaScriptFileLoaderMapper<K extends ILoadableObje
      *            a CSV file row
      * @param loadableObject
      *            a loadable object
+     * @throws ScriptException
+     * @throws NoSuchMethodException
      */
-    private boolean executeJavaScriptMapping(final CSVRecord record, ILoadableObject loadableObject) {
-        Scriptable scope = getCx().initStandardObjects();
-        Object wrappedActorLoadObject = Context.javaToJS(loadableObject, scope);
-        Object wrappedCsv = Context.javaToJS(record, scope);
-        ScriptableObject.putProperty(scope, JS_VARIABLE_TARGET, wrappedActorLoadObject);
-        ScriptableObject.putProperty(scope, JS_VARIABLE_CSV, wrappedCsv);
-        getScript().exec(getCx(), scope);
-        return (Boolean) ScriptableObject.getProperty(scope, JS_VARIABLE_IGNORE_RECORD);
+    private synchronized boolean executeJavaScriptMapping(final CSVRecord record, ILoadableObject loadableObject)
+            throws NoSuchMethodException, ScriptException {
+        return (Boolean) getScriptService().callMethod(getScriptEngine(), JS_WRAPPER_METHOD_NAME, loadableObject, record);
     }
 
     /**
@@ -136,24 +130,10 @@ public abstract class AbstractJavaScriptFileLoaderMapper<K extends ILoadableObje
     }
 
     /**
-     * Get the context.
-     */
-    private Context getCx() {
-        return cx;
-    }
-
-    /**
      * Get the javascript mapping script.
      */
     private String getJavaScriptMappingScript() {
         return javaScriptMappingScript;
-    }
-
-    /**
-     * Get the script.
-     */
-    private Script getScript() {
-        return script;
     }
 
     @Override
@@ -177,6 +157,14 @@ public abstract class AbstractJavaScriptFileLoaderMapper<K extends ILoadableObje
             }
         }
         return invalidRows;
+    }
+
+    private IScriptService getScriptService() {
+        return scriptService;
+    }
+
+    private ScriptEngine getScriptEngine() {
+        return scriptEngine;
     }
 
 }

@@ -77,6 +77,7 @@ import framework.services.ext.api.WebParameter;
 import framework.services.plugins.api.IPluginContext;
 import framework.services.plugins.api.IPluginRunner;
 import framework.services.router.ICustomRouterService;
+import framework.services.script.IScriptService;
 import framework.services.session.IUserSessionManagerPlugin;
 import framework.services.system.ISysAdminUtils;
 import framework.utils.Menu;
@@ -192,14 +193,17 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
      * @param wsClient
      *            ensure that the service is loaded before being possibly used
      *            by an extension
+     * @param scriptService
+     *            ensure that the service is loaded before being possibly used
+     *            by an extension
      * @throws ExtensionManagerException
      */
     @Inject
     public ExtensionManagerServiceImpl(ApplicationLifecycle lifecycle, Environment environment, Injector injector, Configuration configuration,
             II18nMessagesPlugin iI18nMessagesPlugin, ICustomRouterService customRouterService, ISysAdminUtils sysAdminUtils,
-            IDatabaseDependencyService databaseDependencyService, ISecurityService securityService,
-            ISecurityServiceConfiguration securityServiceConfiguration, IPreferenceManagerPlugin preferenceManagerPlugin,
-            ITopMenuBarService topMenuBarService, WSClient wsClient) throws ExtensionManagerException {
+            IDatabaseDependencyService databaseDependencyService, ISecurityService securityService, ISecurityServiceConfiguration securityServiceConfiguration,
+            IPreferenceManagerPlugin preferenceManagerPlugin, ITopMenuBarService topMenuBarService, WSClient wsClient, IScriptService scriptService)
+                    throws ExtensionManagerException {
         log.info("SERVICE>>> ExtensionManagerServiceImpl starting...");
         this.autoRefreshMode = configuration.getBoolean(Config.AUTO_REFRESH_ACTIVE.getConfigurationKey());
         this.autoRefreshFrequency = configuration.getInt(Config.AUTO_REFRESH_FREQUENCY.getConfigurationKey());
@@ -539,8 +543,8 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         // Remove some menu items
         Menu mainPerspective = getTopMenuBarService().getMainPerspective();
         if (menuCustomizationDescriptor.getMenusToRemove() != null && menuCustomizationDescriptor.getMenusToRemove().size() != 0) {
-            mainPerspective.removeMenuItem(
-                    menuCustomizationDescriptor.getMenusToRemove().toArray(new String[menuCustomizationDescriptor.getMenusToRemove().size()]));
+            mainPerspective
+                    .removeMenuItem(menuCustomizationDescriptor.getMenusToRemove().toArray(new String[menuCustomizationDescriptor.getMenusToRemove().size()]));
             log.info("Remove the menus " + menuCustomizationDescriptor.getMenusToRemove());
         }
         // Add some new menu items
@@ -638,8 +642,9 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                             }
                             log.info("Loaded i18n keys [" + i18nMessage.getLanguage() + "] for the extension" + extension.getDescriptor().getName());
                         } catch (IOException e) {
-                            log.error("Unable to load the i18n keys [" + i18nMessage.getLanguage() + "] for the extension"
-                                    + extension.getDescriptor().getName(), e);
+                            log.error(
+                                    "Unable to load the i18n keys [" + i18nMessage.getLanguage() + "] for the extension" + extension.getDescriptor().getName(),
+                                    e);
                         }
                     }
                 }
@@ -833,7 +838,8 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
      */
     public static class Extension implements IExtension {
         private static final List<Class<?>> AUTHORIZED_INJECTED_SERVICE = Arrays.asList(ISecurityService.class, IUserSessionManagerPlugin.class,
-                ILinkGenerationService.class, II18nMessagesPlugin.class, ISysAdminUtils.class, IPluginContext.class, IPluginRunner.class, WSClient.class);
+                ILinkGenerationService.class, II18nMessagesPlugin.class, ISysAdminUtils.class, IPluginContext.class, IPluginRunner.class, WSClient.class,
+                IScriptService.class);
 
         private Date loadingTime;
         private File jarFile;
@@ -1083,8 +1089,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                     if (injectableConstructor == null) {
                         injectableConstructor = constructor;
                     } else {
-                        throw new IllegalArgumentException(
-                                "Multiple injectable constructor defined, please correct : only one injectable constructor allowed");
+                        throw new IllegalArgumentException("Multiple injectable constructor defined, please correct : only one injectable constructor allowed");
                     }
                 }
             }

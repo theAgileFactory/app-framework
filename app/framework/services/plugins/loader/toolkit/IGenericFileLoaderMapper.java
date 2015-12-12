@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import javax.script.ScriptException;
+
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -42,9 +44,9 @@ public interface IGenericFileLoaderMapper<K extends ILoadableObject> {
     /**
      * Perform initializations actions.
      * 
-     * @throws IOException
+     * @throws ScriptException
      */
-    public void init() throws IOException;
+    public void init() throws ScriptException;
 
     /**
      * Create a new {@link ILoadableObject}.
@@ -61,8 +63,10 @@ public interface IGenericFileLoaderMapper<K extends ILoadableObject> {
      * @param loadableObject
      *            the loadable object
      * @return false if the object must be ignored
+     * @throws NoSuchMethodException
+     * @throws ScriptException
      */
-    public boolean convert(final CSVRecord record, K loadableObject);
+    public boolean convert(final CSVRecord record, K loadableObject) throws NoSuchMethodException, ScriptException;
 
     /**
      * Perform some checks and validation of the loaded objects.<br/>
