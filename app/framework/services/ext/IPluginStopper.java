@@ -12,6 +12,8 @@ public interface IPluginStopper {
      * identifier.
      * 
      * @param pluginDefinitionIdentifier
+     * @return true if a plugin was stopped (false if no started plugins were
+     *         found)
      */
-    public void stopAllPluginsWithIdentifier(String pluginDefinitionIdentifier);
+    public boolean stopAllPluginsWithIdentifier(String pluginDefinitionIdentifier);
 }

@@ -677,16 +677,19 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
     }
 
     @Override
-    public void stopAllPluginsWithIdentifier(String pluginDefinitionIdentifier) {
+    public boolean stopAllPluginsWithIdentifier(String pluginDefinitionIdentifier) {
+        boolean atLeastOnePluginStopped = false;
         if (isActorSystemReady()) {
             synchronized (getPluginByIds()) {
                 for (Long pluginConfigurationId : getPluginByIds().keySet()) {
                     if (getPluginByIds().get(pluginConfigurationId).getDescriptor().getIdentifier().equals(pluginDefinitionIdentifier)) {
+                        atLeastOnePluginStopped = true;
                         stopPluginRunner(pluginConfigurationId);
                     }
                 }
             }
         }
+        return atLeastOnePluginStopped;
     }
 
     @Override

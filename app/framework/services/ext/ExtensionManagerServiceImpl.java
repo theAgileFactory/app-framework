@@ -378,8 +378,11 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             if (getPluginStopper() != null) {
                 for (String pluginDefinitionIdentifier : extensionObject.getDescriptor().getDeclaredPlugins().keySet()) {
                     log.info("Stopping all the plugins " + pluginDefinitionIdentifier);
-                    getPluginStopper().stopAllPluginsWithIdentifier(pluginDefinitionIdentifier);
-                    Utilities.wait(PLUGIN_TO_STOP_WAIT_DURATION);
+                    if (getPluginStopper().stopAllPluginsWithIdentifier(pluginDefinitionIdentifier)) {
+                        // If a plugin was stopped, wait until the plugin
+                        // stopped (hopefully)
+                        Utilities.wait(PLUGIN_TO_STOP_WAIT_DURATION);
+                    }
                 }
             } else {
                 log.info("Plugin manager is already stopped, no need to request the plugins to be stopped");
