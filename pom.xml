@@ -63,7 +63,6 @@
         <pac4j-core.version>1.7.0</pac4j-core.version>
         <pac4j-saml.version>1.7.0</pac4j-saml.version>
         <spring.version>4.0.3.RELEASE</spring.version>
-        <rhino.version>1.7.7</rhino.version>
         <swagger-play2.version>1.3.12</swagger-play2.version>
         <swagger-play2-utils.version>1.3.12</swagger-play2-utils.version>
 		<commons-beanutils.version>1.9.2</commons-beanutils.version>
@@ -221,13 +220,6 @@
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-context</artifactId>
 			<version>${spring.version}</version>
-		</dependency>
-
-		<!-- Scripting -->
-		<dependency>
-			<groupId>org.mozilla</groupId>
-			<artifactId>rhino</artifactId>
-			<version>${rhino.version}</version>
 		</dependency>
 		
 		<!-- Deadbolt -->

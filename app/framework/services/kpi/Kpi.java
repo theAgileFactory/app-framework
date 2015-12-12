@@ -19,7 +19,6 @@ package framework.services.kpi;
 
 import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -28,14 +27,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import javax.script.ScriptContext;
+import javax.script.SimpleScriptContext;
+
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
-import org.mozilla.javascript.ClassShutter;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Script;
-import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
 
 import akka.actor.Cancellable;
 import framework.commons.IFrameworkConstants;
@@ -568,35 +565,20 @@ public class Kpi {
 
             for (KpiColorRule kpiColorRule : KpiColorRule.getKpiColorRuleAsListByDefinition(kpiDefinition.id)) {
 
-                Context cx = null;
                 try {
-                    cx = Context.enter();
+                    SimpleScriptContext scriptContext = new SimpleScriptContext();
+                    scriptContext.setAttribute(DataType.MAIN.name().toLowerCase(), main, ScriptContext.ENGINE_SCOPE);
 
-                    // Protect the script against the use of not allowed classes
-                    final List<String> allowedClasses = Arrays.asList();
-                    cx.setClassShutter(new ClassShutter() {
-                        @Override
-                        public boolean visibleToScripts(String className) {
-                            return allowedClasses.contains(className);
-                        }
-                    });
-
-                    // Compile the script
-                    Script script = cx.compileString(kpiColorRule.rule, "colorScript", 1, null);
-
-                    // Inject the values
-                    Scriptable scope = cx.initStandardObjects();
-                    ScriptableObject.putProperty(scope, DataType.MAIN.name().toLowerCase(), main);
                     if (additional1 != null) {
-                        ScriptableObject.putProperty(scope, DataType.ADDITIONAL1.name().toLowerCase(), additional1);
+                        scriptContext.setAttribute(DataType.ADDITIONAL1.name().toLowerCase(), additional1, ScriptContext.ENGINE_SCOPE);
                     }
                     if (additional2 != null) {
-                        ScriptableObject.putProperty(scope, DataType.ADDITIONAL2.name().toLowerCase(), additional2);
+                        scriptContext.setAttribute(DataType.ADDITIONAL2.name().toLowerCase(), additional2, ScriptContext.ENGINE_SCOPE);
                     }
 
                     Boolean ruleResult = false;
                     try {
-                        ruleResult = (Boolean) script.exec(cx, scope);
+                        ruleResult = (Boolean) getKpiService().getScriptService().evaluateScript("colorScript", kpiColorRule.rule, scriptContext);
                     } catch (ClassCastException eCast) {
                         Logger.warn("Warning while computing the color rule " + kpiColorRule.id + " for the KPI " + kpiDefinition.uid
                                 + ": the last statement should be a boolean");
@@ -611,12 +593,6 @@ public class Kpi {
                     String message = "Error while computing the color rule " + kpiColorRule.id + " for the KPI " + kpiDefinition.uid;
                     Logger.error(message, e);
 
-                } finally {
-
-                    try {
-                        Context.exit();
-                    } catch (Exception e) {
-                    }
                 }
 
                 if (computedColorRule != null) {
