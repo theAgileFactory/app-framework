@@ -160,6 +160,7 @@ public class JobsServiceImpl implements IJobsService {
         for (Cancellable scheduler : schedulers) {
             if (scheduler != null) {
                 scheduler.cancel();
+                log.info("***** Scheduler was not null and is cancelled ****");
             }
         }
         log.info("***** END cancel JobsServiceImpl ****");

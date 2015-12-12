@@ -120,6 +120,12 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
     private static Logger.ALogger log = Logger.of(ExtensionManagerServiceImpl.class);
 
     /**
+     * How much time (in ms) should the extension unloader wait the plugins to
+     * be stopped before going on with the resources removal.
+     */
+    private static final int PLUGIN_TO_STOP_WAIT_DURATION = 5000;
+
+    /**
      * True if the system is in "autorefresh" mode (should be used only for
      * development)
      */
@@ -146,6 +152,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
     private Injector injector;
     private IPreferenceManagerPlugin preferenceManagerPlugin;
     private ITopMenuBarService topMenuBarService;
+    private IPluginStopper pluginStopper;
     private List<Extension> extensions = Collections.synchronizedList(new ArrayList<Extension>());
     private Map<Object, Map<String, WebCommand>> extensionControllers = Collections.synchronizedMap(new HashMap<Object, Map<String, WebCommand>>());
     private List<WebCommand> webCommands = Collections.synchronizedList(new ArrayList<WebCommand>());
@@ -290,6 +297,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
      * This will unload all the loaded extensions
      */
     public void destroy() {
+        this.pluginStopper = null;
         List<IExtension> extensionsCopy = new ArrayList<IExtension>(getExtensions());
         for (IExtension extension : extensionsCopy) {
             try {
@@ -364,6 +372,17 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             for (Object extensionController : extensionObject.getStandaloneControllersInstances()) {
                 removeExtensionController(extensionController);
                 log.info("Unloading controller " + extensionObject.getClass());
+            }
+
+            // Attempt to top the plugins
+            if (getPluginStopper() != null) {
+                for (String pluginDefinitionIdentifier : extensionObject.getDescriptor().getDeclaredPlugins().keySet()) {
+                    log.info("Stopping all the plugins " + pluginDefinitionIdentifier);
+                    getPluginStopper().stopAllPluginsWithIdentifier(pluginDefinitionIdentifier);
+                    Utilities.wait(PLUGIN_TO_STOP_WAIT_DURATION);
+                }
+            } else {
+                log.info("Plugin manager is already stopped, no need to request the plugins to be stopped");
             }
 
             // Remove the plugin controllers
@@ -536,6 +555,11 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
     @Override
     public Long getSize() {
         return Utilities.folderSize(this.getExtensionDirectory());
+    }
+
+    @Override
+    public void registerPluginStopper(IPluginStopper pluginStopper) {
+        this.pluginStopper = pluginStopper;
     }
 
     private synchronized boolean updateTopMenu(MenuCustomizationDescriptor menuCustomizationDescriptor) {
@@ -824,6 +848,10 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
 
     private ITopMenuBarService getTopMenuBarService() {
         return topMenuBarService;
+    }
+
+    private IPluginStopper getPluginStopper() {
+        return pluginStopper;
     }
 
     /**

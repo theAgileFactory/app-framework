@@ -125,4 +125,11 @@ public interface IExtensionManagerService extends IRequestListener, ILinkGenerat
      * Get the size (bytes) of the extensions folder.
      */
     public Long getSize();
+
+    /**
+     * A method which provides a way to request "stopping" some plugings
+     * according to their identifier.<br/>
+     * This method is required when unloading an extension.
+     */
+    public void registerPluginStopper(IPluginStopper pluginStopper);
 }

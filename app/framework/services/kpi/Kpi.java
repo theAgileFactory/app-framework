@@ -56,13 +56,15 @@ import scala.concurrent.duration.FiniteDuration;
  * 
  */
 public class Kpi {
+    private static Logger.ALogger log = Logger.of(Kpi.class);
+
     private IKpiService kpiService;
     private KpiDefinition kpiDefinition;
     private IKpiRunner kpiRunner;
     private IKpiObjectsContainer kpiObjectsContainer;
-
     private Cancellable scheduler = null;
     private Map<String, Object> parameters = new HashMap<String, Object>();
+    private boolean cancelled;
 
     /**
      * Construct a KPI with a KPI definition.
@@ -75,6 +77,7 @@ public class Kpi {
     public Kpi(KpiDefinition kpiDefinition, IKpiService kpiService) {
         this.kpiDefinition = kpiDefinition;
         this.kpiService = kpiService;
+        this.cancelled = false;
     }
 
     /*
@@ -186,7 +189,9 @@ public class Kpi {
         getKpiService().getSysAdminUtils().scheduleOnce(false, "INITIAL_" + getUid(), Duration.create(1, TimeUnit.MINUTES), new Runnable() {
             @Override
             public void run() {
-                storeValues();
+                if (!isCancelled()) {
+                    storeValues();
+                }
             }
         });
 
@@ -217,9 +222,13 @@ public class Kpi {
     /**
      * Cancel a KPI.
      */
-    public void cancel() {
+
+    public synchronized void cancel() {
+        this.cancelled = true;
+        log.info("Request cancel KPI " + getUid());
         if (scheduler != null) {
             scheduler.cancel();
+            log.info("Scheduler not null and cancelled for " + getUid());
         }
     }
 
@@ -676,6 +685,10 @@ public class Kpi {
      */
     private IKpiService getKpiService() {
         return kpiService;
+    }
+
+    private synchronized boolean isCancelled() {
+        return cancelled;
     }
 
 }

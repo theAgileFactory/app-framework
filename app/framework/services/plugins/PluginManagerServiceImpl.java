@@ -312,7 +312,8 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
                 try {
                     registerPluginRunner(pluginConfiguration.id);
                     if (pluginConfiguration.isAutostart) {
-                        // If the plugin is maked as "autostart" then auto-start
+                        // If the plugin is marked as "autostart" then
+                        // auto-start
                         // it
                         startPluginRunner(pluginConfiguration.id);
                     }
@@ -329,6 +330,9 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
         } else {
             log.info("Database events broadcasting is NOT ACTIVE");
         }
+
+        // Register the pluginStopper with the extension manager
+        getExtensionManagerService().registerPluginStopper(this);
     }
 
     /**
@@ -672,13 +676,15 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
         }
     }
 
-    /**
-     * Stop all the registered plugin.
-     */
-    private void stopAllPluginFlows() {
-        synchronized (getPluginByIds()) {
-            for (Long pluginConfigurationId : getPluginByIds().keySet()) {
-                stopPluginRunner(pluginConfigurationId);
+    @Override
+    public void stopAllPluginsWithIdentifier(String pluginDefinitionIdentifier) {
+        if (isActorSystemReady()) {
+            synchronized (getPluginByIds()) {
+                for (Long pluginConfigurationId : getPluginByIds().keySet()) {
+                    if (getPluginByIds().get(pluginConfigurationId).getDescriptor().getIdentifier().equals(pluginDefinitionIdentifier)) {
+                        stopPluginRunner(pluginConfigurationId);
+                    }
+                }
             }
         }
     }
@@ -687,6 +693,17 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
     public void stopAll() {
         if (isActorSystemReady()) {
             stopAllPluginFlows();
+        }
+    }
+
+    /**
+     * Stop all the registered plugin.
+     */
+    private void stopAllPluginFlows() {
+        synchronized (getPluginByIds()) {
+            for (Long pluginConfigurationId : getPluginByIds().keySet()) {
+                stopPluginRunner(pluginConfigurationId);
+            }
         }
     }
 
@@ -1047,6 +1064,10 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
 
     private boolean isDatabaseEventBroadcasting() {
         return databaseEventBroadcasting;
+    }
+
+    private INotificationManagerPlugin getNotificationManagerPlugin() {
+        return notificationManagerPlugin;
     }
 
     /**
@@ -1597,9 +1618,5 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
         public void setPluginConfigurationBlockDescriptors(List<PluginConfigurationBlockDescriptor> pluginConfigurationBlockDescriptors) {
             this.pluginConfigurationBlockDescriptors = pluginConfigurationBlockDescriptors;
         }
-    }
-
-    private INotificationManagerPlugin getNotificationManagerPlugin() {
-        return notificationManagerPlugin;
     }
 }

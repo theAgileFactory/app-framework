@@ -26,6 +26,7 @@ import org.apache.commons.lang3.tuple.Triple;
 
 import framework.commons.DataType;
 import framework.commons.message.EventMessage;
+import framework.services.ext.IPluginStopper;
 import framework.services.ext.api.IExtensionDescriptor.IPluginDescriptor;
 import framework.services.plugins.api.IPluginActionDescriptor;
 import framework.services.plugins.api.IPluginMenuDescriptor;
@@ -37,7 +38,7 @@ import framework.services.plugins.api.PluginException;
  * 
  * @author Pierre-Yves Cloux
  */
-public interface IPluginManagerService {
+public interface IPluginManagerService extends IPluginStopper {
 
     /**
      * The various status for plugin
