@@ -228,6 +228,7 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
                 schedulerState.transactionId = transactionId;
                 schedulerState.save();
                 Ebean.commitTransaction();
+                endTransactionSilent();
                 return true;
             } else {
                 if (log.isDebugEnabled()) {
@@ -275,8 +276,8 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
             } else {
                 schedulerState.isRunning = false;
                 schedulerState.save();
-                log.info(
-                        String.format("Scheduled action for %s with transaction id %s completed, scheduler state flushed", scheduledActionUuid, transactionId));
+                log.info(String.format("Scheduled action for %s with transaction id %s completed, scheduler state flushed", scheduledActionUuid,
+                        transactionId));
             }
             SchedulerState.flushOldStates(getConfiguration());
             Ebean.commitTransaction();

@@ -78,7 +78,7 @@ public class SchedulerState extends Model {
      */
     public static int flushOldStates(Configuration configuration) {
         int hours = configuration.getInt("maf.flush.scheduler.states.interval");
-        String sql = "delete from scheduler_state where last_update > DATE_SUB(NOW(), INTERVAL " + hours + " HOUR)";
+        String sql = "delete from scheduler_state where last_update < DATE_SUB(NOW(), INTERVAL " + hours + " HOUR)";
         SqlUpdate update = Ebean.createSqlUpdate(sql);
         return Ebean.execute(update);
     }
