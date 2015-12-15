@@ -27,7 +27,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
@@ -39,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import ch.qos.logback.classic.Level;
 import framework.services.database.IDatabaseChangeListener;
 import framework.services.database.IDatabaseDependencyService;
+import framework.services.database.ModificationPair;
 import framework.services.session.IUserSessionManagerPlugin;
 import framework.services.system.ISysAdminUtils;
 import framework.utils.Utilities;
@@ -139,7 +139,7 @@ public class AuditLoggerServiceImpl implements IAuditLoggerService, IDatabaseCha
     }
 
     @Override
-    public void postUpdate(Object bean, Set<String> modifiedAttributes) {
+    public void postUpdate(Object bean, Map<String, ModificationPair> modifiedAttributes) {
         log(AuditedAction.UPDATE, bean, modifiedAttributes);
     }
 
@@ -151,7 +151,7 @@ public class AuditLoggerServiceImpl implements IAuditLoggerService, IDatabaseCha
      * @param entity
      *            the instance of the concerning entity
      */
-    private void log(AuditedAction action, Object entity, Set<String> modifiedAttributes) {
+    private void log(AuditedAction action, Object entity, Map<String, ModificationPair> modifiedAttributes) {
         if (entity != null && IModel.class.isAssignableFrom(entity.getClass()) && getUserSessionManager() != null) {
             Boolean flag = auditableEntities.get(entity.getClass().getName());
             if (flag != null && flag) {

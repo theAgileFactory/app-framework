@@ -69,6 +69,7 @@ import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.configuration.ITopMenuBarService;
 import framework.services.database.IDatabaseChangeListener;
 import framework.services.database.IDatabaseDependencyService;
+import framework.services.database.ModificationPair;
 import framework.services.email.IEmailService;
 import framework.services.ext.IExtension;
 import framework.services.ext.IExtensionManagerService;
@@ -870,7 +871,7 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
     }
 
     @Override
-    public void postUpdate(Object bean, Set<String> modifiedAttributes) {
+    public void postUpdate(Object bean, Map<String, ModificationPair> modifiedAttributes) {
         if (log.isDebugEnabled()) {
             log.debug("post Update for " + bean + " for modified attributes " + modifiedAttributes);
         }

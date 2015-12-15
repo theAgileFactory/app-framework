@@ -18,12 +18,14 @@
 package framework.services.database;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
+import com.avaje.ebean.ValuePair;
 import com.avaje.ebean.event.BeanPersistController;
 import com.avaje.ebean.event.BeanPersistRequest;
 
@@ -98,8 +100,7 @@ public class CustomBeanPersistController implements BeanPersistController {
 
     @Override
     public void postUpdate(BeanPersistRequest<?> beanPersistRequest) {
-        final Set<String> modifiedAttributes = getModifiedAttributes(beanPersistRequest);
-        System.out.println("\n\n>>>>>" + modifiedAttributes);
+        final Map<String, ModificationPair> modifiedAttributes = getModifiedAttributes(beanPersistRequest);
         Set<IDatabaseChangeListener> listenersSet = new HashSet<IDatabaseChangeListener>(getListeners().keySet());
         listenersSet.forEach(new Consumer<IDatabaseChangeListener>() {
             @Override
@@ -109,7 +110,7 @@ public class CustomBeanPersistController implements BeanPersistController {
                     executorService.submit(new Runnable() {
                         @Override
                         public void run() {
-                            listener.postUpdate(beanPersistRequest.getBean(), Collections.unmodifiableSet(modifiedAttributes));
+                            listener.postUpdate(beanPersistRequest.getBean(), Collections.unmodifiableMap(modifiedAttributes));
                         }
                     });
                 }
@@ -124,12 +125,18 @@ public class CustomBeanPersistController implements BeanPersistController {
      * @param beanPersistRequest
      * @return
      */
-    public Set<String> getModifiedAttributes(BeanPersistRequest<?> beanPersistRequest) {
-        Set<String> modifiedAttributes = null;
-        if (beanPersistRequest.getUpdatedProperties() != null) {
-            modifiedAttributes = new HashSet<String>(beanPersistRequest.getUpdatedProperties());
+    private Map<String, ModificationPair> getModifiedAttributes(BeanPersistRequest<?> beanPersistRequest) {
+        Map<String, ModificationPair> modifiedAttributes = null;
+        if (beanPersistRequest.getUpdatedValues() != null) {
+            modifiedAttributes = new HashMap<String, ModificationPair>();
+            for (String key : beanPersistRequest.getUpdatedValues().keySet()) {
+                ValuePair pair = beanPersistRequest.getUpdatedValues().get(key);
+                if (pair != null) {
+                    modifiedAttributes.put(key, new ModificationPairImpl(pair));
+                }
+            }
         } else {
-            modifiedAttributes = new HashSet<String>();
+            modifiedAttributes = new HashMap<>();
         }
         return modifiedAttributes;
     }
