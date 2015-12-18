@@ -115,7 +115,8 @@
                             <div class="panel-body">
                                 <p>@parts.Msg("object.filter_configuration.share.manually.header")</p>
                                 
-                                <code style="word-wrap:break-word; white-space: normal;">@(play.Play.application().configuration().getString("maf.public.url"))@(filterConfiguration.getLink(route))</code>
+                                <code style="word-wrap:break-word; white-space: normal;">
+                                @(_preferenceManagerPlugin.getPreferenceElseConfigurationValue(framework.commons.IFrameworkConstants.PUBLIC_URL_PREFERENCE, "maf.public.url"))@(filterConfiguration.getLink(route))</code>
                             </div>
                         </div>
                     </div>

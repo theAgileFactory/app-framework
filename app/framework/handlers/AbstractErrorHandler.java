@@ -5,6 +5,7 @@ import javax.inject.Provider;
 import com.google.inject.Inject;
 
 import framework.services.account.IAccountManagerPlugin;
+import framework.services.account.IPreferenceManagerPlugin;
 import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.configuration.IImplementationDefinedObjectService;
 import framework.services.configuration.ITopMenuBarService;
@@ -41,6 +42,8 @@ public class AbstractErrorHandler extends DefaultHttpErrorHandler {
     private IImplementationDefinedObjectService implementationDefinedObjectService;
     @Inject(optional = true)
     private ITopMenuBarService topMenuBarService;
+    @Inject(optional = true)
+    private IPreferenceManagerPlugin preferenceManagerPlugin;
 
     @Inject
     public AbstractErrorHandler(Configuration configuration, Environment environment, OptionalSourceMapper optionalSourceMapper,
@@ -60,7 +63,7 @@ public class AbstractErrorHandler extends DefaultHttpErrorHandler {
     protected void injectCommonServicesIncontext(Http.Context context) {
         ContextArgsInjector.injectCommonServicesIncontext(context, getConfiguration(), getMessagesPlugin(), getUserSessionManagerPlugin(),
                 getAttachmentManagerPlugin(), getAccountManagerPlugin(), getCacheApi(), getKpiService(), getImplementationDefinedObjectService(),
-                getTopMenuBarService());
+                getTopMenuBarService(), getPreferenceManagerPlugin());
     }
 
     protected Configuration getConfiguration() {
@@ -97,5 +100,9 @@ public class AbstractErrorHandler extends DefaultHttpErrorHandler {
 
     private ITopMenuBarService getTopMenuBarService() {
         return topMenuBarService;
+    }
+
+    private IPreferenceManagerPlugin getPreferenceManagerPlugin() {
+        return preferenceManagerPlugin;
     }
 }
