@@ -89,6 +89,7 @@ import framework.services.storage.ISharedStorageService;
 import framework.services.system.ISysAdminUtils;
 import framework.utils.Menu.ClickableMenuItem;
 import framework.utils.Utilities;
+import models.framework_models.common.ICustomAttributeValue;
 import models.framework_models.plugin.PluginConfiguration;
 import models.framework_models.plugin.PluginConfigurationBlock;
 import models.framework_models.plugin.PluginDefinition;
@@ -983,11 +984,36 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
             boolean isDeleted = isBeanDeleted(bean);
             if (dataType != null && id != -1) {
                 if (isDeleted) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Applicative delete for data type " + dataType);
+                    }
                     postOutMessage(new EventMessage(getIdFromBean(bean), dataType, MessageType.OBJECT_DELETED));
                 } else {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Standard update for data type " + dataType);
+                    }
                     EventMessage updateEvent = new EventMessage(getIdFromBean(bean), dataType, MessageType.OBJECT_UPDATED);
                     updateEvent.setPayload(modifiedAttributes);
                     postOutMessage(updateEvent);
+                }
+            } else {
+                // Custom attributes
+                if (ICustomAttributeValue.class.isAssignableFrom(bean.getClass())) {
+                    ICustomAttributeValue custAttr = (ICustomAttributeValue) bean;
+                    if (log.isDebugEnabled()) {
+                        log.debug("Custom attribute modification detected for " + custAttr.getLinkedObjectClassName() + " with id "
+                                + custAttr.getLinkedObjectId());
+                    }
+                    dataType = DataType.getDataTypeFromClassName(custAttr.getLinkedObjectClassName());
+                    if (dataType != null) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Custom attribute update for data type " + dataType);
+                        }
+                        EventMessage updateEvent = new EventMessage(custAttr.getLinkedObjectId(), dataType, MessageType.OBJECT_UPDATED);
+                        // No details for updated custom attributes
+                        updateEvent.setPayload(new HashMap<String, ModificationPair>());
+                        postOutMessage(updateEvent);
+                    }
                 }
             }
         }
