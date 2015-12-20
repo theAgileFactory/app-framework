@@ -27,6 +27,14 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.wordnik.swagger.annotations.ApiModelProperty;
+
 import models.framework_models.common.CustomAttributeDefinition;
 import models.framework_models.common.ICustomAttributeValue;
 import play.data.Form;
@@ -81,6 +89,16 @@ public abstract class CustomAttributeFormAndDisplayHandler {
         return customAttributeDefinitions != null && customAttributeDefinitions.size() > 0;
     }
 
+    /**
+     * Return true if the specified type of object has one or more associated
+     * custom attributes
+     * 
+     * @param clazz
+     *            the same class
+     * @param filter
+     *            a filtering value
+     * @return
+     */
     public static boolean hasCustomAttributes(Class<?> clazz, String filter) {
         List<CustomAttributeDefinition> customAttributeDefinitions = CustomAttributeDefinition.getOrderedCustomAttributeDefinitions(clazz, filter);
         return customAttributeDefinitions != null && customAttributeDefinitions.size() > 0;
@@ -302,5 +320,87 @@ public abstract class CustomAttributeFormAndDisplayHandler {
             }
         }
         return hasErrors;
+    }
+
+    /**
+     * Return a list of custom attribute values which are serializable
+     * 
+     * @param clazz
+     *            a model class
+     * @param objectId
+     *            the unique id of an instance of the specified class
+     * @return
+     */
+    public static List<CustomAttributeValueObject> getSerializableValues(Class<?> clazz, Long objectId) {
+        List<CustomAttributeValueObject> customAtttributeApiValues = new ArrayList<>();
+
+        for (ICustomAttributeValue iCustomAttributeValue : CustomAttributeDefinition.getOrderedCustomAttributeValues(clazz, objectId)) {
+
+            CustomAttributeValueObject customAttributeApiValue = new CustomAttributeValueObject();
+
+            customAttributeApiValue.uuid = iCustomAttributeValue.getDefinition().uuid;
+            customAttributeApiValue.name = iCustomAttributeValue.getDefinition().getNameLabel();
+            customAttributeApiValue.type = iCustomAttributeValue.getDefinition().attributeType;
+            customAttributeApiValue.value = iCustomAttributeValue.getAsSerializableValue();
+
+            customAtttributeApiValues.add(customAttributeApiValue);
+
+        }
+        return customAtttributeApiValues;
+    }
+
+    /**
+     * Return a list of custom attribute values which are serializable
+     * 
+     * @param clazz
+     *            a model class
+     * @param objectId
+     *            the unique id of an instance of the specified class
+     * @param filter
+     *            a filtering condition
+     * @return
+     */
+    public static List<CustomAttributeValueObject> getSerializableValues(Class<?> clazz, String filter, Long objectId) {
+
+        List<CustomAttributeValueObject> customAtttributeApiValues = new ArrayList<>();
+
+        for (ICustomAttributeValue iCustomAttributeValue : CustomAttributeDefinition.getOrderedCustomAttributeValues(clazz, filter, objectId)) {
+
+            CustomAttributeValueObject customAttributeApiValue = new CustomAttributeValueObject();
+
+            customAttributeApiValue.uuid = iCustomAttributeValue.getDefinition().uuid;
+            customAttributeApiValue.name = iCustomAttributeValue.getDefinition().getNameLabel();
+            customAttributeApiValue.type = iCustomAttributeValue.getDefinition().attributeType;
+            customAttributeApiValue.value = iCustomAttributeValue.getAsSerializableValue();
+
+            customAtttributeApiValues.add(customAttributeApiValue);
+
+        }
+        return customAtttributeApiValues;
+    }
+
+    /**
+     * Class use for representing the serializable values for a custom attribute
+     */
+    @JsonAutoDetect(fieldVisibility = Visibility.NONE, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE, isGetterVisibility = Visibility.NONE, creatorVisibility = Visibility.NONE)
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    @JsonInclude(Include.ALWAYS)
+    public static class CustomAttributeValueObject {
+        @JsonProperty
+        public String uuid;
+
+        @JsonProperty
+        public String name;
+
+        @JsonProperty
+        public String type;
+
+        @JsonProperty
+        @ApiModelProperty(required = true)
+        public Object value;
+
+        public CustomAttributeValueObject() {
+
+        }
     }
 }

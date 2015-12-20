@@ -804,9 +804,9 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
             if (pluginConfigurationBlock != null) {
                 byte[] configAsByteArray = pluginConfigurationBlock.configuration;
                 if (configAsByteArray != null) {
-                    Pair.of(pluginConfigurationBlockDescriptor, pluginConfigurationBlock.configuration);
+                    return Pair.of(pluginConfigurationBlockDescriptor, pluginConfigurationBlock.configuration);
                 } else {
-                    Pair.of(pluginConfigurationBlockDescriptor, "".getBytes());
+                    return Pair.of(pluginConfigurationBlockDescriptor, "".getBytes());
                 }
             }
             return Pair.of(pluginConfigurationBlockDescriptor, pluginConfigurationBlockDescriptor.getDefaultValue());
