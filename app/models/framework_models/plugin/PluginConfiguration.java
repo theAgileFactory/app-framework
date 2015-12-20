@@ -28,11 +28,10 @@ import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
-import models.framework_models.parent.IModelConstants;
-
 import com.avaje.ebean.Model;
 
 import framework.utils.Utilities;
+import models.framework_models.parent.IModelConstants;
 
 /**
  * This represents a pluginConfiguration which deals with the integration of a
@@ -107,7 +106,8 @@ public class PluginConfiguration extends Model {
     }
 
     /**
-     * Return the pluginConfiguration associated with the specified identifier.<br/>
+     * Return the pluginConfiguration associated with the specified identifier.
+     * <br/>
      * The pluginConfiguration must be available.
      * 
      * @param pluginConfigurationId
@@ -119,7 +119,8 @@ public class PluginConfiguration extends Model {
     }
 
     /**
-     * Return the pluginConfiguration associated with the specified identifier.<br/>
+     * Return the pluginConfiguration associated with the specified identifier.
+     * <br/>
      * The pluginConfiguration may not available.
      * 
      * @param pluginConfigurationId
@@ -137,5 +138,19 @@ public class PluginConfiguration extends Model {
      */
     public static List<PluginConfiguration> getAllAvailablePlugins() {
         return find.where().eq("pluginDefinition.isAvailable", true).findList();
+    }
+
+    /**
+     * Change the value of the autostart field
+     * 
+     * @param mode
+     *            a boolean
+     */
+    public static void changeAutoStartMode(Long pluginConfigurationId, boolean mode) {
+        PluginConfiguration pluginConfiguration = find.where().eq("id", pluginConfigurationId).findUnique();
+        if (pluginConfiguration != null) {
+            pluginConfiguration.isAutostart = mode;
+            pluginConfiguration.save();
+        }
     }
 }

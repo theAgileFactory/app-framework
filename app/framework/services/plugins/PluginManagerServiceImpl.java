@@ -92,6 +92,7 @@ import framework.utils.Utilities;
 import models.framework_models.plugin.PluginConfiguration;
 import models.framework_models.plugin.PluginConfigurationBlock;
 import models.framework_models.plugin.PluginDefinition;
+import models.framework_models.plugin.PluginIdentificationLink;
 import models.framework_models.plugin.PluginLog;
 import play.Configuration;
 import play.Logger;
@@ -391,9 +392,25 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
     }
 
     @Override
-    public void registerPlugin(Long pluginConfigurationId) throws PluginException {
-        if (isActorSystemReady()) {
-            registerPluginRunner(pluginConfigurationId);
+    public void registerPlugin(String name, String pluginDefinitionIdentifier) throws PluginException {
+        // Create the plugin configuration entry
+        PluginConfiguration pluginConfiguration = new PluginConfiguration();
+        pluginConfiguration.name = name;
+        pluginConfiguration.isAutostart = false;// Default is autostart false
+        pluginConfiguration.pluginDefinition = PluginDefinition.getAvailablePluginDefinitionFromIdentifier(pluginDefinitionIdentifier);
+        if (pluginConfiguration.pluginDefinition == null) {
+            throw new PluginException("Attempt to register a plugin definition which is not available : " + pluginDefinitionIdentifier);
+        }
+        pluginConfiguration.save();
+
+        try {
+            // Attempt to register with the actor system
+            if (isActorSystemReady()) {
+                registerPluginRunner(pluginConfiguration.id);
+            }
+        } catch (PluginException e) {
+            // Rollback the entry configuration if something wrong happened
+            pluginConfiguration.delete();
         }
     }
 
@@ -420,6 +437,24 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
 
     @Override
     public void unregisterPlugin(Long pluginConfigurationId) throws PluginException {
+        PluginConfiguration configuration = PluginConfiguration.getPluginById(pluginConfigurationId);
+        if (configuration == null) {
+            throw new PluginException("Unknow plugin configuratio " + pluginConfigurationId);
+        }
+
+        // due to an issue with play, the children are not removed with
+        // cascade property, they should be manually removed.
+        for (PluginIdentificationLink pluginIdentificationLink : configuration.pluginIdentificationLinks) {
+            for (PluginIdentificationLink child : pluginIdentificationLink.children) {
+                child.delete();
+            }
+            if (pluginIdentificationLink.parent == null) {
+                pluginIdentificationLink.delete();
+            }
+        }
+        // Delete the associated configuration
+        configuration.delete();
+
         if (isActorSystemReady()) {
             synchronized (getPluginByIds()) {
                 PluginRegistrationEntry pluginRegistrationEntry = getPluginByIds().get(pluginConfigurationId);
@@ -431,6 +466,7 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
                 }
             }
         }
+
     }
 
     @Override
@@ -467,8 +503,8 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
                     .actorOf(Props.create(new PluginLifeCycleControllingActorCreator(pluginConfiguration.id, plugin.getLeft(),
                             getPluginStatusCallbackActorRef(), getMessagesPlugin())));
             log.info(String.format("[END] the plugin %d has been initialized", pluginConfiguration.id));
-            return new PluginRegistrationEntry(pluginConfiguration.id, plugin.getLeft(), plugin.getMiddle(), plugin.getRight(), pluginDescriptor,
-                    pluginLifeCycleControllingActorRef);
+            return new PluginRegistrationEntry(pluginConfiguration.id, pluginConfiguration.name, plugin.getLeft(), plugin.getMiddle(), plugin.getRight(),
+                    pluginDescriptor, pluginLifeCycleControllingActorRef);
         } catch (Exception e) {
             String message = String.format("Unable to initialize the plugin %d", pluginConfiguration.id);
             log.error(message, e);
@@ -510,6 +546,7 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
         if (isActorSystemReady()) {
             startPluginRunner(pluginConfigurationId);
         }
+        PluginConfiguration.changeAutoStartMode(pluginConfigurationId, true);
     }
 
     /**
@@ -604,6 +641,7 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
         if (isActorSystemReady()) {
             stopPluginRunner(pluginConfigurationId);
         }
+        PluginConfiguration.changeAutoStartMode(pluginConfigurationId, false);
     }
 
     /**
@@ -749,6 +787,67 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
     }
 
     @Override
+    public Pair<IPluginConfigurationBlockDescriptor, byte[]> getPluginConfigurationBlock(Long pluginConfigurationId, String pluginConfigurationBlockIdentifier)
+            throws PluginException {
+        PluginRegistrationEntry pluginRegistrationEntry = getPluginByIds().get(pluginConfigurationId);
+        if (pluginRegistrationEntry == null) {
+            throw new PluginException("Unknown plugin configuration :" + pluginConfigurationId);
+        }
+        Map<String, IPluginConfigurationBlockDescriptor> pluginConfigurationBlockDescriptors = pluginRegistrationEntry.getDescriptor()
+                .getConfigurationBlockDescriptors();
+        if (pluginConfigurationBlockDescriptors != null && pluginConfigurationBlockDescriptors.size() != 0
+                && pluginConfigurationBlockDescriptors.containsKey(pluginConfigurationBlockIdentifier)) {
+            IPluginConfigurationBlockDescriptor pluginConfigurationBlockDescriptor = pluginConfigurationBlockDescriptors
+                    .get(pluginConfigurationBlockIdentifier);
+            PluginConfigurationBlock pluginConfigurationBlock = PluginConfigurationBlock.getPluginConfigurationBlockFromIdentifier(pluginConfigurationId,
+                    pluginConfigurationBlockIdentifier);
+            if (pluginConfigurationBlock != null) {
+                byte[] configAsByteArray = pluginConfigurationBlock.configuration;
+                if (configAsByteArray != null) {
+                    Pair.of(pluginConfigurationBlockDescriptor, pluginConfigurationBlock.configuration);
+                } else {
+                    Pair.of(pluginConfigurationBlockDescriptor, "".getBytes());
+                }
+            }
+            return Pair.of(pluginConfigurationBlockDescriptor, pluginConfigurationBlockDescriptor.getDefaultValue());
+        } else {
+            throw new PluginException("Unknown plugin configuration block identifier " + pluginConfigurationBlockIdentifier);
+        }
+    }
+
+    @Override
+    public IPluginConfigurationBlockDescriptor updatePluginConfiguration(Long pluginConfigurationId, String pluginConfigurationBlockIdentifier, byte[] value)
+            throws PluginException {
+        PluginRegistrationEntry pluginRegistrationEntry = getPluginByIds().get(pluginConfigurationId);
+        if (pluginRegistrationEntry == null) {
+            throw new PluginException("Unknown plugin configuration :" + pluginConfigurationId);
+        }
+        Map<String, IPluginConfigurationBlockDescriptor> pluginConfigurationBlockDescriptors = pluginRegistrationEntry.getDescriptor()
+                .getConfigurationBlockDescriptors();
+        if (pluginConfigurationBlockDescriptors != null && pluginConfigurationBlockDescriptors.size() != 0
+                && pluginConfigurationBlockDescriptors.containsKey(pluginConfigurationBlockIdentifier)) {
+            IPluginConfigurationBlockDescriptor pluginConfigurationBlockDescriptor = pluginConfigurationBlockDescriptors
+                    .get(pluginConfigurationBlockIdentifier);
+
+            PluginConfigurationBlock pluginConfigurationBlock = PluginConfigurationBlock.getPluginConfigurationBlockFromIdentifier(pluginConfigurationId,
+                    pluginConfigurationBlockIdentifier);
+            if (pluginConfigurationBlock == null) {
+                pluginConfigurationBlock = new PluginConfigurationBlock();
+                pluginConfigurationBlock.configurationType = pluginConfigurationBlockDescriptor.getEditionType().name();
+                pluginConfigurationBlock.identifier = pluginConfigurationBlockIdentifier;
+                pluginConfigurationBlock.pluginConfiguration = PluginConfiguration.getPluginById(pluginConfigurationId);
+            }
+            pluginConfigurationBlock.version = pluginConfigurationBlockDescriptor.getVersion();
+            pluginConfigurationBlock.configuration = value;
+            pluginConfigurationBlock.save();
+
+            return pluginConfigurationBlockDescriptor;
+        } else {
+            throw new PluginException("Unknown plugin configuration block identifier " + pluginConfigurationBlockIdentifier);
+        }
+    }
+
+    @Override
     public String exportPluginConfiguration(Long pluginConfigurationId) throws PluginException {
         if (log.isDebugEnabled()) {
             log.debug(String.format("Request to export the plugin %d configuration", pluginConfigurationId));
@@ -756,6 +855,9 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
         try {
             // Read from the database
             PluginRegistrationEntry pluginRegistrationEntry = getPluginByIds().get(pluginConfigurationId);
+            if (pluginRegistrationEntry == null) {
+                throw new PluginException("Unknown plugin configuration :" + pluginConfigurationId);
+            }
             Map<String, IPluginConfigurationBlockDescriptor> pluginConfigurationBlockDescriptors = pluginRegistrationEntry.getDescriptor()
                     .getConfigurationBlockDescriptors();
             if (pluginConfigurationBlockDescriptors != null && pluginConfigurationBlockDescriptors.size() != 0) {
@@ -1158,6 +1260,7 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
      */
     public static class PluginRegistrationEntry implements IPluginInfo {
         private Long pluginConfigurationId;
+        private String pluginConfigurationName;
         private PluginStatus pluginStatus;
         private ActorRef inEventMessageProcessingActorRef;
         private ActorRef outEventMessageProcessingActorRef;
@@ -1167,10 +1270,12 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
         private Object customConfigurationController;
         private Map<DataType, Object> registrationConfigurationControllers;
 
-        public PluginRegistrationEntry(Long pluginConfigurationId, IPluginRunner pluginRunner, Object customConfigurationController,
-                Map<DataType, Object> registrationConfigurationControllers, IPluginDescriptor descriptor, ActorRef lifeCycleControllingRouter) {
+        public PluginRegistrationEntry(Long pluginConfigurationId, String pluginConfigurationName, IPluginRunner pluginRunner,
+                Object customConfigurationController, Map<DataType, Object> registrationConfigurationControllers, IPluginDescriptor descriptor,
+                ActorRef lifeCycleControllingRouter) {
             super();
             this.pluginConfigurationId = pluginConfigurationId;
+            this.pluginConfigurationName = pluginConfigurationName;
             this.pluginRunner = pluginRunner;
             this.customConfigurationController = customConfigurationController;
             this.registrationConfigurationControllers = registrationConfigurationControllers;
@@ -1199,6 +1304,11 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
             return pluginConfigurationId;
         }
 
+        @Override
+        public synchronized String getPluginConfigurationName() {
+            return pluginConfigurationName;
+        }
+
         public synchronized boolean isPluginCompatible(DataType dataType) {
             if (getDescriptor().getSupportedDataTypes() == null) {
                 return false;
@@ -1215,7 +1325,7 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
         }
 
         @Override
-        public IPluginDescriptor getDescriptor() {
+        public synchronized IPluginDescriptor getDescriptor() {
             return descriptor;
         }
 

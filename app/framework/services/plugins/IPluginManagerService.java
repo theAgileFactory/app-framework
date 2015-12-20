@@ -27,10 +27,13 @@ import org.apache.commons.lang3.tuple.Triple;
 import framework.commons.DataType;
 import framework.commons.message.EventMessage;
 import framework.services.ext.IPluginStopper;
+import framework.services.ext.api.IExtensionDescriptor.IPluginConfigurationBlockDescriptor;
 import framework.services.ext.api.IExtensionDescriptor.IPluginDescriptor;
 import framework.services.plugins.api.IPluginActionDescriptor;
 import framework.services.plugins.api.IPluginMenuDescriptor;
 import framework.services.plugins.api.PluginException;
+import models.framework_models.plugin.PluginConfiguration;
+import models.framework_models.plugin.PluginConfigurationBlock;
 
 /**
  * The interface to be implemented by the service which manages the plugin
@@ -58,6 +61,13 @@ public interface IPluginManagerService extends IPluginStopper {
      * An interface that gathers some information about a plugin
      */
     public interface IPluginInfo {
+        /**
+         * Return the plugin configuration name (as chosen by the end user)
+         * 
+         * @return
+         */
+        public String getPluginConfigurationName();
+
         /**
          * Provide an interface giving access to the plugin status
          * 
@@ -128,14 +138,16 @@ public interface IPluginManagerService extends IPluginStopper {
      * Register the specified plugin.<br/>
      * This requires that:
      * <ul>
-     * <li>the plugin is not already registered</li>
      * <li>the plugin is available</li>
+     * <li>the plugin is not "mono-instance" and already registered</li>
      * </ul>
      * 
-     * @param pluginConfigurationId
-     *            the unique id for the plugin
+     * @param name
+     *            the name of the plugin configuration
+     * @param pluginDefinitionIdentifier
+     *            the unique plugin identifier
      */
-    public void registerPlugin(Long pluginConfigurationId) throws PluginException;
+    public void registerPlugin(String name, String pluginDefinitionIdentifier) throws PluginException;
 
     /**
      * UnRegister the specified plugin.<br/>
@@ -145,6 +157,33 @@ public interface IPluginManagerService extends IPluginStopper {
      *            the unique id for the plugin
      */
     public void unregisterPlugin(Long pluginConfigurationId) throws PluginException;
+
+    /**
+     * Return the {@link PluginConfigurationBlock} value associated with the
+     * provided identifier
+     * 
+     * @param pluginConfigurationId
+     * @param pluginConfigurationBlockIdentifier
+     * @return a pair of (configuration block descriptor, byte array filled with
+     *         the value of the block (or a default one if not already filled))
+     */
+    public Pair<IPluginConfigurationBlockDescriptor, byte[]> getPluginConfigurationBlock(Long pluginConfigurationId, String pluginConfigurationBlockIdentifier)
+            throws PluginException;
+
+    /**
+     * Update the specified {@link PluginConfigurationBlock} for the specified
+     * {@link PluginConfiguration}.
+     * 
+     * @param pluginConfigurationId
+     *            the plugin configuration id
+     * @param pluginConfigurationBlockIdentifier
+     *            the plugin configuration block identifier
+     * @param value
+     *            the content of the plugin configuration block
+     * @return the descriptor of the updated configuration
+     */
+    public IPluginConfigurationBlockDescriptor updatePluginConfiguration(Long pluginConfigurationId, String pluginConfigurationBlockIdentifier, byte[] value)
+            throws PluginException;
 
     /**
      * Export the a plugin configuration as XML
@@ -263,7 +302,9 @@ public interface IPluginManagerService extends IPluginStopper {
     public PluginStatus getPluginStatus(Long pluginConfigurationId) throws PluginException;
 
     /**
-     * Start the specified plugin
+     * Start the specified plugin.<br/>
+     * This method also change the plugin "autostart" flag so that it will start
+     * automatically after system restart.
      * 
      * @param pluginConfigurationId
      *            the plugin configuration id
@@ -271,7 +312,9 @@ public interface IPluginManagerService extends IPluginStopper {
     public void startPlugin(Long pluginConfigurationId) throws PluginException;
 
     /**
-     * Stop the specified plugin
+     * Stop the specified plugin.<br/>
+     * This method also change the plugin "autostart" flag so that it will NOT
+     * start automatically after system restart.
      * 
      * @param pluginConfigurationId
      *            the id of the plugin configuration
