@@ -206,8 +206,8 @@ public class TextCustomAttributeValue extends Model implements IModel, ICustomAt
             setValue(null);
         } else {
             if (!(newValue instanceof String)) {
-                throw new IllegalArgumentException("This custom attribute " + this.customAttributeDefinition.uuid
-                        + " is a text attribute and is not compatible with value : " + newValue);
+                throw new IllegalArgumentException(
+                        "This custom attribute " + this.customAttributeDefinition.uuid + " is a text attribute and is not compatible with value : " + newValue);
             }
             setValue((String) newValue);
         }
@@ -264,4 +264,13 @@ public class TextCustomAttributeValue extends Model implements IModel, ICustomAt
         return getValueAsObject();
     }
 
+    @Override
+    public String getLinkedObjectClassName() {
+        return objectType;
+    }
+
+    @Override
+    public Long getLinkedObjectId() {
+        return objectId;
+    }
 }

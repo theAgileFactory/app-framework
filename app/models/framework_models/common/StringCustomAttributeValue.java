@@ -256,4 +256,14 @@ public class StringCustomAttributeValue extends Model implements IModel, ICustom
         return getValueAsObject();
     }
 
+    @Override
+    public String getLinkedObjectClassName() {
+        return objectType;
+    }
+
+    @Override
+    public Long getLinkedObjectId() {
+        return objectId;
+    }
+
 }

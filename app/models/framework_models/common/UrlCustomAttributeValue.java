@@ -196,8 +196,8 @@ public class UrlCustomAttributeValue extends Model implements IModel, ICustomAtt
             this.value = null;
         } else {
             if (!(newValue instanceof String)) {
-                throw new IllegalArgumentException("This custom attribute " + this.customAttributeDefinition.uuid
-                        + " is an url attribute and is not compatible with value : " + newValue);
+                throw new IllegalArgumentException(
+                        "This custom attribute " + this.customAttributeDefinition.uuid + " is an url attribute and is not compatible with value : " + newValue);
             }
             String text = (String) newValue;
             if (text != null && !text.equals("") && !isValidUrl(text)) {
@@ -282,4 +282,13 @@ public class UrlCustomAttributeValue extends Model implements IModel, ICustomAtt
         return getValueAsObject();
     }
 
+    @Override
+    public String getLinkedObjectClassName() {
+        return objectType;
+    }
+
+    @Override
+    public Long getLinkedObjectId() {
+        return objectId;
+    }
 }

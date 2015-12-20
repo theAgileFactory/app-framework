@@ -222,4 +222,13 @@ public class BooleanCustomAttributeValue extends Model implements IModel, ICusto
         return getValueAsObject();
     }
 
+    @Override
+    public String getLinkedObjectClassName() {
+        return objectType;
+    }
+
+    @Override
+    public Long getLinkedObjectId() {
+        return objectId;
+    }
 }

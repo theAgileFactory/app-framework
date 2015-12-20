@@ -222,8 +222,8 @@ public class DateCustomAttributeValue extends Model implements IModel, ICustomAt
             this.value = null;
         } else {
             if (!(newValue instanceof Date)) {
-                throw new IllegalArgumentException("This custom attribute " + this.customAttributeDefinition.uuid
-                        + " is a Date attribute and is not compatible with value : " + newValue);
+                throw new IllegalArgumentException(
+                        "This custom attribute " + this.customAttributeDefinition.uuid + " is a Date attribute and is not compatible with value : " + newValue);
             }
             this.value = (Date) newValue;
             if (!customAttributeDefinition.isDateAfter(this.value)) {
@@ -291,4 +291,13 @@ public class DateCustomAttributeValue extends Model implements IModel, ICustomAt
         return getValueAsObject();
     }
 
+    @Override
+    public String getLinkedObjectClassName() {
+        return objectType;
+    }
+
+    @Override
+    public Long getLinkedObjectId() {
+        return objectId;
+    }
 }

@@ -233,8 +233,8 @@ public class DynamicSingleItemCustomAttributeValue extends Model implements IMod
             this.value = null;
         } else {
             if (!(newValue instanceof Long)) {
-                throw new IllegalArgumentException("This custom attribute " + this.customAttributeDefinition.uuid
-                        + " is a Long attribute and is not compatible with value : " + newValue);
+                throw new IllegalArgumentException(
+                        "This custom attribute " + this.customAttributeDefinition.uuid + " is a Long attribute and is not compatible with value : " + newValue);
             }
             this.value = (Long) newValue;
         }
@@ -272,8 +272,7 @@ public class DynamicSingleItemCustomAttributeValue extends Model implements IMod
         }
         IImplementationDefinedObjectService implementationDefinedObjects = ServiceStaticAccessor.getImplementationDefinedObjectService();
         return views.html.framework_views.parts.autocomplete.render(field, Msg.get(customAttributeDefinition.name), description,
-                implementationDefinedObjects.getRouteForDynamicSingleCustomAttributeApi().url(),
-                customAttributeDefinition.getContextParametersForDynamicApi());
+                implementationDefinedObjects.getRouteForDynamicSingleCustomAttributeApi().url(), customAttributeDefinition.getContextParametersForDynamicApi());
     }
 
     @Override
@@ -355,4 +354,13 @@ public class DynamicSingleItemCustomAttributeValue extends Model implements IMod
         return getValueAsObject();
     }
 
+    @Override
+    public String getLinkedObjectClassName() {
+        return objectType;
+    }
+
+    @Override
+    public Long getLinkedObjectId() {
+        return objectId;
+    }
 }

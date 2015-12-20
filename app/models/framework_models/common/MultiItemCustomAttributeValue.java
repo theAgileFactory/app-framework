@@ -94,8 +94,8 @@ public class MultiItemCustomAttributeValue extends Model implements IModel, ICus
 
     @Override
     public String audit() {
-        return "MultiItemCustomAttributeValue [id=" + id + ", deleted=" + deleted + ", lastUpdate=" + lastUpdate + ", objectType=" + objectType
-                + ", objectId=" + objectId + "]";
+        return "MultiItemCustomAttributeValue [id=" + id + ", deleted=" + deleted + ", lastUpdate=" + lastUpdate + ", objectType=" + objectType + ", objectId="
+                + objectId + "]";
     }
 
     @Override
@@ -316,4 +316,13 @@ public class MultiItemCustomAttributeValue extends Model implements IModel, ICus
         return null;
     }
 
+    @Override
+    public String getLinkedObjectClassName() {
+        return objectType;
+    }
+
+    @Override
+    public Long getLinkedObjectId() {
+        return objectId;
+    }
 }

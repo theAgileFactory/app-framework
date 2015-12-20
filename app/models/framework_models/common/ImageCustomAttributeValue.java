@@ -311,4 +311,14 @@ public class ImageCustomAttributeValue extends Model implements IModel, ICustomA
     public Object getAsSerializableValue() {
         return getValueAsObject();
     }
+
+    @Override
+    public String getLinkedObjectClassName() {
+        return objectType;
+    }
+
+    @Override
+    public Long getLinkedObjectId() {
+        return objectId;
+    }
 }

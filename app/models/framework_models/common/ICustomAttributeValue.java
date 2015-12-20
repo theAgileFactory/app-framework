@@ -32,6 +32,20 @@ public interface ICustomAttributeValue {
     public static final String GENERIC_INVALID_ERROR_MESSAGE = "error.invalid";
 
     /**
+     * Return the object type to which belongs this custom attribute value
+     * 
+     * @return a java class name
+     */
+    public String getLinkedObjectClassName();
+
+    /**
+     * Return the id of the object to which belongs this custom attribute value
+     * 
+     * @return a java class name
+     */
+    public Long getLinkedObjectId();
+
+    /**
      * Return false if the attribute has been extracted from the database and
      * true if it is not yet saved
      */

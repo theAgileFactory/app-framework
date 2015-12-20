@@ -91,8 +91,8 @@ public class SingleItemCustomAttributeValue extends Model implements IModel, ICu
 
     @Override
     public String audit() {
-        return "SingleItemCustomAttributeValue [id=" + id + ", deleted=" + deleted + ", lastUpdate=" + lastUpdate + ", objectType=" + objectType
-                + ", objectId=" + objectId + ", value=" + value + "]";
+        return "SingleItemCustomAttributeValue [id=" + id + ", deleted=" + deleted + ", lastUpdate=" + lastUpdate + ", objectType=" + objectType + ", objectId="
+                + objectId + ", value=" + value + "]";
     }
 
     @Override
@@ -198,8 +198,8 @@ public class SingleItemCustomAttributeValue extends Model implements IModel, ICu
             this.value = null;
         } else {
             if (!(newValue instanceof Long)) {
-                throw new IllegalArgumentException("This custom attribute " + this.customAttributeDefinition.uuid
-                        + " is a Long attribute and is not compatible with value : " + newValue);
+                throw new IllegalArgumentException(
+                        "This custom attribute " + this.customAttributeDefinition.uuid + " is a Long attribute and is not compatible with value : " + newValue);
             }
             CustomAttributeItemOption itemOption = CustomAttributeItemOption.getCustomAttributeItemOptionById((Long) newValue);
             this.value = itemOption;
@@ -262,4 +262,13 @@ public class SingleItemCustomAttributeValue extends Model implements IModel, ICu
         return null;
     }
 
+    @Override
+    public String getLinkedObjectClassName() {
+        return objectType;
+    }
+
+    @Override
+    public Long getLinkedObjectId() {
+        return objectId;
+    }
 }
