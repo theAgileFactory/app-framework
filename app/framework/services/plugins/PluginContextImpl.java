@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.configuration.ConfigurationException;
@@ -520,6 +521,11 @@ public class PluginContextImpl implements IPluginContext {
     @Override
     public void moveFileInSharedStorage(String sourceFilePath, String targetFolderPath) throws IOException {
         getSharedStorageService().move(sourceFilePath, targetFolderPath);
+    }
+
+    @Override
+    public Map<String, Object> getSharedContext() {
+        return pluginManagerService.getSharedContext();
     }
 
     private String getPluginPrefix() {

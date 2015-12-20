@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.lang3.tuple.Pair;
@@ -389,6 +390,14 @@ public interface IPluginContext {
      * @return the state object
      */
     public Object getState() throws PluginException;
+
+    /**
+     * Provide access to an in-memory context allowing different plugins to
+     * share some data
+     * 
+     * @return the shared context
+     */
+    public Map<String, Object> getSharedContext();
 
     /**
      * Return the configuration content associated with the specified

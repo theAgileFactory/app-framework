@@ -121,6 +121,7 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
     private Configuration configuration;
     private ITopMenuBarService topMenuBarService;
     private INotificationManagerPlugin notificationManagerPlugin;
+    private Map<String, Object> sharedContext;
 
     /**
      * Map : key=plugin id , value= {@link PluginRegistrationEntry}.
@@ -293,6 +294,8 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
      * @param databaseDependencyService
      */
     private void init(ActorSystem actorSystem, IDatabaseDependencyService databaseDependencyService) {
+        this.sharedContext = Collections.synchronizedMap(new HashMap<String, Object>());
+
         this.actorSystem = actorSystem;
         if (log.isDebugEnabled()) {
             log.debug("Actor system is " + actorSystem != null ? actorSystem.name() : null);
@@ -1051,6 +1054,17 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
         } catch (InvocationTargetException e) {
         }
         return false;
+    }
+
+    /**
+     * Provide an access to the Plugins shared context.<br/>
+     * This allow a plugin do exchange some information without another plugin
+     * at runtime.
+     * 
+     * @return a shared context
+     */
+    public Map<String, Object> getSharedContext() {
+        return sharedContext;
     }
 
     /**
