@@ -29,12 +29,12 @@ import java.util.Set;
  */
 public class Icon {
 
-    public static Set<String> icons = new HashSet<String>(Arrays.asList("glyphicons glyphicons-ok-2", "glyphicons glyphicons-electricity",
-            "glyphicons glyphicons-bin", "glyphicons glyphicons-envelope", "glyphicons glyphicons-circle-info", "glyphicons glyphicons-charts",
-            "glyphicons glyphicons-paperclip", "glyphicons glyphicons-parents", "glyphicons glyphicons-coins", "glyphicons glyphicons-cargo",
-            "glyphicons glyphicons-log-book", "glyphicons glyphicons-history", "glyphicons glyphicons-git-branch", "glyphicons glyphicons-cogwheels",
-            "glyphicons glyphicons-cluster", "glyphicons glyphicons-thumbs-up", "glyphicons glyphicons-package", "glyphicons glyphicons-address-book",
-            "glyphicons glyphicons-inbox", "glyphicons glyphicons-cloud", "glyphicons glyphicons-clock", "glyphicons glyphicons-sort"));
+    public static Set<String> icons = new HashSet<String>(Arrays.asList("fa fa-check", "fa fa-bolt",
+            "fa fa-trash", "fa fa-envelope", "fa fa-info-circle", "fa fa-bar-chart",
+            "fa fa-paperclip", "fa fa-user", "fa fa-money", "fa fa-industry",
+            "fa fa-newspaper-o", "fa fa-history", "fa fa-code-fork", "fa fa-cogs",
+            "fa fa-university", "fa fa-thumbs-up", "fa fa-cubes", "fa fa-book",
+            "fa fa-inbox", "fa fa-cloud", "fa fa-clock-o", "fa fa-folder"));
 
     /**
      * Get the the selectable icons as a value holder collection.

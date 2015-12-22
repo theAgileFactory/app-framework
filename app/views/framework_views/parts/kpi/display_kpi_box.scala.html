@@ -51,7 +51,7 @@
                     <div class="row no-padding no-margin">
                         <div class="col-xs-2 text-left small tooltip-wide">
                             @if(kpiRender.getKpi.isValueFromKpiData()) {
-                                <span id="kpi-@uid-last-update" class="glyphicons glyphicons-clock" data-html="true" title="@parts.Msg("kpi.label.last_update"):<br/> @parts.formats.display_date(kpiRender.getValueTimestamp, framework.utils.Utilities.getDefaultDatePattern() + " kk:mm")"></span>
+                                <span id="kpi-@uid-last-update" class="fa fa-clock-o" data-html="true" title="@parts.Msg("kpi.label.last_update"):<br/> @parts.formats.display_date(kpiRender.getValueTimestamp, framework.utils.Utilities.getDefaultDatePattern() + " kk:mm")"></span>
                                 <script>
                                     $('#kpi-@uid-last-update').tooltip();
                                 </script>
@@ -61,7 +61,7 @@
                         </div>
                         <div class="col-xs-10 text-right small">
                             @if(kpiRender.getKpi.hasTrend()) {
-                                <span style="cursor: pointer;" id="@(kpiRender.getKpi.getUid)-b-trend-@(objectId)"><span class="glyphicons glyphicons-stats"></span> @parts.Msg("kpi.label.trend")</span>
+                                <span style="cursor: pointer;" id="@(kpiRender.getKpi.getUid)-b-trend-@(objectId)"><span class="fa fa-line-chart"></span> @parts.Msg("kpi.label.trend")</span>
                             } else {
                                 &nbsp;
                             }

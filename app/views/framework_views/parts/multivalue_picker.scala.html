@@ -20,7 +20,7 @@
 @import framework_views.parts
 
 <div id="_@(field.id)_div" class="form-group @if(field.hasErrors) {has-error}">
-    <label class="control-label" for="@field.id">@fieldLabel@if(isRequired(field)){&nbsp;<i style="color: red;" class="glyphicons glyphicons-asterisk"></i>}</label>
+    <label class="control-label" for="@field.id">@fieldLabel@if(isRequired(field)){&nbsp;<i style="color: red;" class="fa fa-asterisk"></i>}</label>
     <ul id="_@(field.id)_values_list">
     @for( index <- field.indexes ) {
         <li>
@@ -29,7 +29,7 @@
         </li>
     }
     </ul>
-    <button id="_@(field.id)_selection_button" class="btn btn-default" type="button" disabled="disabled"><i class="glyphicons glyphicons-pencil"></i></button>
+    <button id="_@(field.id)_selection_button" class="btn btn-default" type="button" disabled="disabled"><i class="fa fa-pencil"></i></button>
     <span id="_@(field.id)_error" class="help-block"><strong>@{field.error.map { error => parts.Msg(error.message) }}</strong></span>
 </div>
 <div id="_@(field.id)_picker_modal" 
@@ -52,7 +52,7 @@
                                 <input id="_@(field.id)_picker_modal_searchstring" type="text" class="form-control" value="*">
                                 <span class="input-group-btn">
                                     <button class="btn btn-default" id="_@(field.id)_picker_modal_searchbutton" type="button">
-                                <span class="glyphicons glyphicons-search"></span></button></span>
+                                <span class="fa fa-search"></span></button></span>
                             </div>
                         </div>
                     </div>

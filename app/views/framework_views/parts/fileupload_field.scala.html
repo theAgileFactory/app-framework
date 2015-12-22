@@ -29,13 +29,13 @@
     }
 }
 <div class="form-group @if(field.hasErrors) {has-error}">
-    <label class="control-label" for="@field.id">@parts.Msg(fieldLabel)@if(isRequired(field)){&nbsp;<i style="color: red;" class="glyphicons glyphicons-asterisk"></i>}</label>
+    <label class="control-label" for="@field.id">@parts.Msg(fieldLabel)@if(isRequired(field)){&nbsp;<i style="color: red;" class="fa fa-asterisk"></i>}</label>
     @if(fileAttachments!=null && fileAttachments.size()!=0){
         <ul>
         @for(fileAttachment <- fileAttachments){
             <li id="_fileUpdateBlock_@fileAttachment.id">
-                <a href="@framework.utils.Utilities.getAttachmentDownloadUrl(fileAttachment.id)"><i class="glyphicons glyphicons-floppy-open"></i></a>&nbsp;@Msg(fileAttachment.name)&nbsp;
-                <a id="_fileDelete_@fileAttachment.id" href="@framework.utils.Utilities.getAttachmentDeleteUrl(fileAttachment.id)"><i class="glyphicons glyphicons-bin"></i></a>
+                <a href="@framework.utils.Utilities.getAttachmentDownloadUrl(fileAttachment.id)"><i class="fa fa-floppy-o"></i></a>&nbsp;@Msg(fileAttachment.name)&nbsp;
+                <a id="_fileDelete_@fileAttachment.id" href="@framework.utils.Utilities.getAttachmentDeleteUrl(fileAttachment.id)"><i class="fa fa-trash"></i></a>
             </li>
         }
         </ul>

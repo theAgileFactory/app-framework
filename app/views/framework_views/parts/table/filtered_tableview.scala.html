@@ -38,7 +38,7 @@
 
 <div class="row">
   <div class="col-md-7">
-      <a id="_@table.getId()_filterContainerCollapse" data-toggle="button" href="#"><i class="glyphicons glyphicons-circle-minus"></i>&nbsp;<small>@parts.Msg("filter.togglebutton.label")</small></a>
+      <a id="_@table.getId()_filterContainerCollapse" data-toggle="button" href="#"><i class="fa fa-minus-circle"></i>&nbsp;<small>@parts.Msg("filter.togglebutton.label")</small></a>
     <ul id="_@table.getId()_filterContainer" class="list-inline">
     </ul>
   </div>
@@ -58,7 +58,7 @@
         
         <div class="col-md-2 text-right">
           @if(exportAsExcelUrl!=null){
-            <a href="#" class="btn btn-primary" id="_@table.getId()_exportAsExcel"><i class="glyphicons glyphicons-disk-save"></i></a>
+            <a href="#" class="btn btn-primary" id="_@table.getId()_exportAsExcel"><i class="fa fa-download"></i></a>
           }
         </div>
 
@@ -77,8 +77,8 @@ var _@table.getId()_currentFilterConfigurationIndex = 0;
 
 $(document).ready(function(){
     $('#_@table.getId()_filterContainerCollapse').click(function(){
-        $('#_@table.getId()_filterContainerCollapse i').toggleClass('glyphicons-circle-minus').toggleClass('glyphicons-circle-plus');
-        if($('#_@table.getId()_filterContainerCollapse i').hasClass('glyphicons-circle-minus')){
+        $('#_@table.getId()_filterContainerCollapse i').toggleClass('fa-minus-circle').toggleClass('fa-plus-circle');
+        if($('#_@table.getId()_filterContainerCollapse i').hasClass('fa-minus-circle')){
             $('#_@table.getId()_filterContainer').show();
         }else{
             $('#_@table.getId()_filterContainer').hide();
@@ -124,9 +124,9 @@ function _@table.getId()_drawCurrentFilterConfiguration() {
     $("#_@table.getId()_columnsSelector" + currentIndex).remove();
 
     // draw the new icons
-    $("#_@table.getId()_currentFilterConfiguration").append('<a href="#" class="btn btn-primary" id="_@table.getId()_columnsSelector' + newIndex + '"><i class="glyphicons glyphicons-cogwheel"></i></a>');
+    $("#_@table.getId()_currentFilterConfiguration").append('<a href="#" class="btn btn-primary" id="_@table.getId()_columnsSelector' + newIndex + '"><i class="fa fa-cog"></i></a>');
     $("#_@table.getId()_currentFilterConfiguration").append(' ');
-    $("#_@table.getId()_currentFilterConfiguration").append('<a href="#" class="btn btn-primary" id="_@table.getId()_filterSelector' + newIndex + '"><i class="glyphicons glyphicons-filter"></i></a>');
+    $("#_@table.getId()_currentFilterConfiguration").append('<a href="#" class="btn btn-primary" id="_@table.getId()_filterSelector' + newIndex + '"><i class="fa fa-filter"></i></a>');
 
     // bind new x-editable 
     maf_filter_prepareColumnsSelector('_@table.getId()_filterContainer','_@table.getId()_columnsSelector' + newIndex,'_@table.getId()_filterSelector' + newIndex, _@table.getId()_filterConfig, _@table.getId()_refreshTable);

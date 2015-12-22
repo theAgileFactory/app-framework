@@ -18,14 +18,10 @@
 @(booleanValue: Boolean)
 @if(booleanValue!=null){
 	@if(booleanValue){
-		<i class="glyphicons glyphicons-ok-2"></i><span class="hidden">true</span>
+		<i class="fa fa-check"></i><span class="hidden">true</span>
 	}else{
-		<i class="glyphicons glyphicons-ban"></i><span class="hidden">false</span>
+		<i class="fa fa-ban"></i><span class="hidden">false</span>
 	}
 } else {
     @framework.commons.IFrameworkConstants.DEFAULT_VALUE_EMPTY_DATA
 }
-
-@*************************************************************************
- * Display a boolean using glyphicons                                    *
- *************************************************************************@

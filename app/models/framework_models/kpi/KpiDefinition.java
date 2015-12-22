@@ -28,10 +28,10 @@ import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
 import javax.persistence.Version;
 
-import models.framework_models.parent.IModelConstants;
-
 import com.avaje.ebean.Model;
 import com.avaje.ebean.annotation.Where;
+
+import models.framework_models.parent.IModelConstants;
 
 /**
  * A KPI definition represents all elements that describes a KPI.<br/>
@@ -66,11 +66,13 @@ import com.avaje.ebean.annotation.Where;
  * -internal and custom: the computation is done thanks a JS code (stored in the
  * DB, so the custom KPIs could be created/modified at any time).
  * 
- * For the internal KPIs, there is one more dimension that could have 3 states: <br/>
+ * For the internal KPIs, there is one more dimension that could have 3 states:
+ * <br/>
  * -without scheduler: the values are note stored in the kpi_data table and so
  * the computation is always done one the fly, no trend is also available.<br/>
  * -with scheduler and not real time: the values are stored in the kpi_data
- * table (so a trend is available), and are displayed thanks the last stored. <br/>
+ * table (so a trend is available), and are displayed thanks the last stored.
+ * <br/>
  * -with scheduler and real time: the values are stored in the kpi_data table
  * (so a trend is available), and are displayed (in cell/box displays) on real
  * time (the computation is done on the fly).
@@ -104,7 +106,7 @@ public class KpiDefinition extends Model {
     public String uid;
 
     /**
-     * CSS glyphicons used in the "box" display.
+     * CSS icon used in the "box" display.
      */
     @Column(length = IModelConstants.MEDIUM_STRING)
     public String cssGlyphicon;

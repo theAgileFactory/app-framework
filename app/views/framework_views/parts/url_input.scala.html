@@ -20,10 +20,10 @@
 @import framework_views.parts
 
 <div class="form-group @if(field.hasErrors) {has-error}">
-    <label class="control-label" for="@field.id">@parts.Msg(fieldLabel)@if(isRequired(field) || forceRequired){&nbsp;<i style="color: red;" class="glyphicons glyphicons-asterisk"></i>}</label>
+    <label class="control-label" for="@field.id">@parts.Msg(fieldLabel)@if(isRequired(field) || forceRequired){&nbsp;<i style="color: red;" class="fa fa-asterisk"></i>}</label>
     
     <div class="input-group">
-        <span class="input-group-addon" id="basic-addon1"><span class="glyphicons glyphicons-link"></span></span>
+        <span class="input-group-addon" id="basic-addon1"><span class="fa fa-link"></span></span>
         <input class="form-control" type="text" id="@field.id" name="@field.name" value="@field.value"/>
     </div>
     

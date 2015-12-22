@@ -93,7 +93,7 @@ public class Kpi {
 
         // check the cssGlyphicon
         if (hasBoxDisplay() && (kpiDefinition.cssGlyphicon == null || kpiDefinition.cssGlyphicon.equals(""))) {
-            Logger.error("The cssGlyphicon shoud be defined because the KPI has additional values");
+            Logger.error("The icon shoud be defined because the KPI has additional values");
             return false;
         }
 

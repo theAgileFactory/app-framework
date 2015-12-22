@@ -37,7 +37,7 @@
     }
 
     <label class="control-label" for="@field.id">
-        @(fieldLabel) @if(required){&nbsp;<i style="color: red;" class="glyphicons glyphicons-asterisk"></i> <small><span style="color: red;">@parts.Msg("form.input.multi_languages_string.required")</span></small>}</label>
+        @(fieldLabel) @if(required){&nbsp;<i style="color: red;" class="fa fa-asterisk"></i> <small><span style="color: red;">@parts.Msg("form.input.multi_languages_string.required")</span></small>}</label>
 
         @helper.repeat(field("values"), min = _messagesPluginService.getValidLanguageList().size) { vField =>
 

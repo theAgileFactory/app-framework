@@ -236,7 +236,7 @@ public interface IFrameworkConstants {
     // -------------------------------------------------------------------------------------
     // Bootstrap classes constants
     // -------------------------------------------------------------------------------------
-    public static final String PLUGIN_MENU_PREFIX = "<i class=\"glyphicons glyphicons-cloud-upload\"></i>&nbsp;";
+    public static final String PLUGIN_MENU_PREFIX = "<i class=\"fa fa-cloud-upload\"></i>&nbsp;";
 
     public static final String BOOTSTRAP_COLUMN_1 = "col-md-1";
     public static final String BOOTSTRAP_COLUMN_2 = "col-md-2";
@@ -272,19 +272,19 @@ public interface IFrameworkConstants {
     public static final String LABEL_DANGER_FORMAT = "<span class=\"label label-danger\">%s</span>";
 
     // Common URLs format
-    public static final String DISPLAY_URL_FORMAT = "<a href=\"%s\"><span class=\"glyphicons glyphicons-eye-open\"></span></a>";
-    public static final String EDIT_URL_FORMAT = "<a href=\"%s\"><span class=\"glyphicons glyphicons-edit\"></span></a>";
-    public static final String REQUEST_URL_FORMAT = "<a href=\"%s\"><span class=\"glyphicons glyphicons-circle-arrow-right\"></span></a>";
-    public static final String DELETE_URL_FORMAT = "<a href=\"%s\"><span class=\"glyphicons glyphicons-bin\"></span></a>";
-    public static final String DOWNLOAD_URL_FORMAT = "<a href=\"%s\" target=\"_blank\"><span class=\"glyphicons glyphicons-download\"></span></a>";
-    public static final String CONFIG_URL_FORMAT = "<a href=\"%s\"><span class=\"glyphicons glyphicons-cogwheel\"></span></a>";
-    public static final String ADD_URL_FORMAT = "<a href=\"%s\"><span class=\"glyphicons glyphicons-plus\"></span></a>";
+    public static final String DISPLAY_URL_FORMAT = "<a href=\"%s\"><span class=\"fa fa-eye\"></span></a>";
+    public static final String EDIT_URL_FORMAT = "<a href=\"%s\"><span class=\"fa fa-pencil-square-o\"></span></a>";
+    public static final String REQUEST_URL_FORMAT = "<a href=\"%s\"><span class=\"fa fa-arrow-circle-right\"></span></a>";
+    public static final String DELETE_URL_FORMAT = "<a href=\"%s\"><span class=\"fa fa-trash\"></span></a>";
+    public static final String DOWNLOAD_URL_FORMAT = "<a href=\"%s\" target=\"_blank\"><span class=\"fa fa-arrow-circle-o-down\"></span></a>";
+    public static final String CONFIG_URL_FORMAT = "<a href=\"%s\"><span class=\"fa fa-cog\"></span></a>";
+    public static final String ADD_URL_FORMAT = "<a href=\"%s\"><span class=\"fa fa-plus\"></span></a>";
 
     // WARNING this message must be handled by java.text.MessageFormat to
     // specify the error message to be used (default can be
     // Msg.get("default.delete.confirmation.message"))
     public static final String DELETE_URL_FORMAT_WITH_CONFIRMATION = "<a onclick=\"return maf_confirmAction(''{0}'');\" href=\"%s\">"
-            + "<span class=\"glyphicons glyphicons-bin\"></span></a>";
+            + "<span class=\"fa fa-trash\"></span></a>";
 
     // Other common formats
     public static final String TITLE_DESCRIPTION_FORMAT = "<dl><dt>%s</dt><dd>%s</dd></dl>";

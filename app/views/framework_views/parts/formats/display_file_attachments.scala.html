@@ -27,7 +27,7 @@ framework.utils.FileAttachmentHelper.getFileAttachmentsForDisplay(objectType, ob
 	<ul>
 	@for(fileAttachment <- fileAttachments){
 		<li>
-			<a href="@framework.utils.Utilities.getAttachmentDownloadUrl(fileAttachment.id)"><i class="glyphicons glyphicons-floppy-open"></i></a>&nbsp;@parts.Msg(fileAttachment.name)
+			<a href="@framework.utils.Utilities.getAttachmentDownloadUrl(fileAttachment.id)"><i class="fa fa-floppy-o"></i></a>&nbsp;@parts.Msg(fileAttachment.name)
 		</li>
 	}
 	</ul>

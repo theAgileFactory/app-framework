@@ -117,7 +117,7 @@ public interface IJobDescriptor {
 
                     addColumn("triggerActionLink", "id", "", Table.ColumnDef.SorterType.NONE);
                     setJavaColumnFormatter("triggerActionLink",
-                            new StringFormatFormatter<JobDescriptorRow>("<a href=\"%s\"><span class=\"glyphicons glyphicons-play-button\"></span></a>",
+                            new StringFormatFormatter<JobDescriptorRow>("<a href=\"%s\"><span class=\"fa fa-play-button\"></span></a>",
                                     new StringFormatFormatter.Hook<JobDescriptorRow>() {
                         @Override
                         public String convert(JobDescriptorRow jobDescriptorRow) {

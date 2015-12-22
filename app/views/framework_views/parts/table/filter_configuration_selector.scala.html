@@ -39,14 +39,14 @@
     
 
     @if(!filterConfiguration.isDefault) {
-        <li><a href="#" id="_@(tableId)_filter_configuration_reload"><i class="glyphicons glyphicons-refresh"></i>&nbsp; @parts.Msg("object.filter_configuration.action.reload")</a></li>
-        <li><a href="#" id="_@(tableId)_filter_configuration_save"><i class="glyphicons glyphicons-floppy-saved"></i>&nbsp; @parts.Msg("object.filter_configuration.action.save")</a></li>
+        <li><a href="#" id="_@(tableId)_filter_configuration_reload"><i class="fa fa-refresh"></i>&nbsp; @parts.Msg("object.filter_configuration.action.reload")</a></li>
+        <li><a href="#" id="_@(tableId)_filter_configuration_save"><i class="fa fa-floppy-od"></i>&nbsp; @parts.Msg("object.filter_configuration.action.save")</a></li>
     }
-    <li><a href="#" id="_@(tableId)_filter_configuration_save_as"><i class="glyphicons glyphicons-floppy-save"></i>&nbsp; @parts.Msg("object.filter_configuration.action.save_as")</a></li>
+    <li><a href="#" id="_@(tableId)_filter_configuration_save_as"><i class="fa fa-floppy-o"></i>&nbsp; @parts.Msg("object.filter_configuration.action.save_as")</a></li>
     @if(!filterConfiguration.isDefault) {
-        <li><a href="#" id="_@(tableId)_filter_configuration_edit"><i class="glyphicons glyphicons-edit"></i>&nbsp; @parts.Msg("object.filter_configuration.action.edit")</a></li>
-        <li><a href="#" id="_@(tableId)_filter_configuration_share"><i class="glyphicons glyphicons-share-alt"></i>&nbsp; @parts.Msg("object.filter_configuration.action.share")</a></li>
-        <li><a href="#" id="_@(tableId)_filter_configuration_delete"><i class="glyphicons glyphicons-bin"></i>&nbsp; @parts.Msg("object.filter_configuration.action.delete")</a></li>
+        <li><a href="#" id="_@(tableId)_filter_configuration_edit"><i class="fa fa-pencil-square-o"></i>&nbsp; @parts.Msg("object.filter_configuration.action.edit")</a></li>
+        <li><a href="#" id="_@(tableId)_filter_configuration_share"><i class="fa fa-share-alt"></i>&nbsp; @parts.Msg("object.filter_configuration.action.share")</a></li>
+        <li><a href="#" id="_@(tableId)_filter_configuration_delete"><i class="fa fa-trash"></i>&nbsp; @parts.Msg("object.filter_configuration.action.delete")</a></li>
     }
 
     @for(availableFilterConfiguration <- availableFilterConfigurations) {

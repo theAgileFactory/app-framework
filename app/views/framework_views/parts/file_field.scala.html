@@ -37,7 +37,7 @@
 	maximumFileSize
 }
 
-<label class="control-label">@(fieldLabel)@if(isRequired(field)){&nbsp;<i style="color: red;" class="glyphicons glyphicons-asterisk"></i>}</label>
+<label class="control-label">@(fieldLabel)@if(isRequired(field)){&nbsp;<i style="color: red;" class="fa fa-asterisk"></i>}</label>
 
 <div class="panel panel-default">
     <div class="panel-body">
@@ -72,7 +72,7 @@
             <span class="help-block">@Msg("form.input.file_field.file.size.warning", org.apache.commons.io.FileUtils.byteCountToDisplaySize(maximumFileSize))</span>
             <div>
                 <div class="input-group">
-                    <span class="input-group-addon"><span class="glyphicons glyphicons-link"></span></span>
+                    <span class="input-group-addon"><span class="fa fa-link"></span></span>
                     <input class="form-control" type="text" id="@(FileAttachmentHelper.FILE_ATTRIBUTE_PREFIX)@(field.id)_@(FileAttachmentHelper.FileType.URL.name)" name="@(FileAttachmentHelper.getFileInputName(field.name, FileAttachmentHelper.FileType.URL))" value="@field("value").value"/>
                 </div>
                 <span class="help-block">@Msg("form.input.url.help")</span>

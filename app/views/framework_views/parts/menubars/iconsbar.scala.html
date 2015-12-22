@@ -32,7 +32,7 @@
                         @for(subMenuItem <- menuItem.getSubMenuItems()){
                             @if(!subMenuItem.isSeparator()){
                                  @if(subMenuItem.restrict()){
-                                     <li><a href="@subMenuItem.getActionUrl()"><span class="@subMenuItem.getCssIcon() glyphicons-menu-small"></span>&nbsp; @parts.Msg(subMenuItem.getLabel())</a></li>
+                                     <li><a href="@subMenuItem.getActionUrl()"><span class="@subMenuItem.getCssIcon()"></span>&nbsp; @parts.Msg(subMenuItem.getLabel())</a></li>
                                  }
                              }
                         }
@@ -60,7 +60,7 @@
                         @for(subMenuItem <- menuItem.getSubMenuItems()){
                             @if(!subMenuItem.isSeparator()){
                                  @if(subMenuItem.restrict()){
-                                     <li><a href="@subMenuItem.getActionUrl()"><span class="@subMenuItem.getCssIcon() glyphicons-menu-small"></span>&nbsp; @parts.Msg(subMenuItem.getLabel())</a></li>
+                                     <li><a href="@subMenuItem.getActionUrl()"><span class="@subMenuItem.getCssIcon()"></span>&nbsp; @parts.Msg(subMenuItem.getLabel())</a></li>
                                  }
                              }
                         }

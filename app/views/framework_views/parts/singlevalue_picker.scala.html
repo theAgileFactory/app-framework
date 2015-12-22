@@ -20,14 +20,14 @@
 @import framework_views.parts.Msg
 @import framework_views.parts
 <div id="_@(field.id)_div" class="form-group @if(field.hasErrors) {has-error}">
-    <label class="control-label" for="@field.id">@fieldLabel@if(isRequired(field)){&nbsp;<i style="color: red;" class="glyphicons glyphicons-asterisk"></i>}</label>
+    <label class="control-label" for="@field.id">@fieldLabel@if(isRequired(field)){&nbsp;<i style="color: red;" class="fa fa-asterisk"></i>}</label>
     <div class="input-group">
       <span class="input-group-btn">
-        <button id="_@(field.id)_selection_button" class="btn btn-default" type="button" disabled="disabled"><i class="glyphicons glyphicons-pencil"></i></button>
+        <button id="_@(field.id)_selection_button" class="btn btn-default" type="button" disabled="disabled"><i class="fa fa-pencil"></i></button>
       </span>
       <input type="text" id="_@(field.id)_name" class="form-control" readonly="readonly"/>
       <span class="input-group-btn">
-            <button class="btn btn-default" type="button" id="empty-@(field.id)-field"><span class="glyphicons glyphicons-bin"></span></button>
+            <button class="btn btn-default" type="button" id="empty-@(field.id)-field"><span class="fa fa-trash"></span></button>
         </span>
     </div>
     <input type="hidden" id="@field.id" name="@field.name" value="@field.value"/>
@@ -53,7 +53,7 @@
                                 <input id="_@(field.id)_picker_modal_searchstring" type="text" class="form-control" value="*"/>
                                 <span class="input-group-btn">
                                     <button id="_@(field.id)_picker_modal_searchbutton" class="btn btn-default" type="button">
-                                        <span class="glyphicons glyphicons-search"></span>
+                                        <span class="fa fa-search"></span>
                                     </button>
                                 </span>
                             </div>
