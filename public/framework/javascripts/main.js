@@ -227,8 +227,8 @@ function maf_sort(sortingFunctionName,column, tableId){
      var jColumn=$(column);
      
      //Ascending/Descending
-    var iconHolder=jColumn.find('i[class*="glyphicons"]');
-    var ascending=(iconHolder.attr('class')=='glyphicons glyphicons-chevron-down');
+    var iconHolder=jColumn.find('i[class*="fa"]');
+    var ascending=(iconHolder.attr('class')=='fa fa-chevron-down');
      
      var columnIndex=$("#"+tableId+" th").index(jColumn);
      //Create a dictionary of values for the specified column
@@ -274,9 +274,9 @@ function maf_sort(sortingFunctionName,column, tableId){
      }
      //Switch the icon
      if(ascending){
-         iconHolder.removeClass('glyphicons-chevron-down').addClass('glyphicons-chevron-up');
+         iconHolder.removeClass('fa-chevron-down').addClass('fa-chevron-up');
      }else{
-         iconHolder.removeClass('glyphicons-chevron-up').addClass('glyphicons-chevron-down');
+         iconHolder.removeClass('fa-chevron-up').addClass('fa-chevron-down');
      }
  }
  function maf_stringSort(cellA, cellB){
@@ -354,27 +354,27 @@ function maf_filter_sort_url(columnId, filterConfig, callbackRefreshTable){
         }
         
         var jColumn=$(column);
-        var iconHolder=jColumn.find('i[class*="glyphicons"]');
+        var iconHolder=jColumn.find('i[class*="fa"]');
         
         //First sort
-        if(iconHolder.attr('class')=='glyphicons glyphicons-sort'){
+        if(iconHolder.attr('class')=='fa fa-folder'){
             //Initialize the sort with the default value
             if(sortStatus=="DESC"){
-                iconHolder.removeClass('glyphicons-sort').addClass('glyphicons-chevron-up');
+                iconHolder.removeClass('fa-sort').addClass('fa-chevron-up');
             }else{
-                iconHolder.removeClass('glyphicons-sort').addClass('glyphicons-chevron-down');
+                iconHolder.removeClass('fa-sort').addClass('fa-chevron-down');
             }
         }
         
         //Change the filter status for the column
-        var ascending=(iconHolder.attr('class')=='glyphicons glyphicons-chevron-down');
+        var ascending=(iconHolder.attr('class')=='fa fa-chevron-down');
         //Switch the icon and update the sortStatus
         if(ascending){
             filterConfig.userColumnConfiguration[columnId].sortType="ASC";
-            iconHolder.removeClass('glyphicons-chevron-down').addClass('glyphicons-chevron-up');
+            iconHolder.removeClass('fa-chevron-down').addClass('fa-chevron-up');
         }else{
             filterConfig.userColumnConfiguration[columnId].sortType="DESC";
-            iconHolder.removeClass('glyphicons-chevron-up').addClass('glyphicons-chevron-down');
+            iconHolder.removeClass('fa-chevron-up').addClass('fa-chevron-down');
         }        
         callbackRefreshTable.apply();
     }else{
@@ -465,7 +465,7 @@ function maf_filter_prepareSortableColumns(ajaxContentId, tableId, filterConfig,
             var columnHeaderLabel=column.html();
             column.html('');
             var link=$('<a/>',{"href" : "#"});
-            link.html(columnHeaderLabel+'&nbsp;<i class="glyphicons"></i>');
+            link.html(columnHeaderLabel+'&nbsp;<i class="fa"></i>');
             column.append(link);
             
             //Set the initial sort order
@@ -519,19 +519,19 @@ function maf_filter_prepareSortableColumns(ajaxContentId, tableId, filterConfig,
  */
 function maf_filter_setSortOrder(icon, columnId, filterConfig){
     if(filterConfig.userColumnConfiguration[columnId].sortType=="UNSORTED"){
-        icon.removeClass('glyphicons-chevron-up');
-        icon.removeClass('glyphicons-chevron-down');
+        icon.removeClass('fa-chevron-up');
+        icon.removeClass('fa-chevron-down');
     }
     if(filterConfig.userColumnConfiguration[columnId].sortType=="DESC"){
-        icon.removeClass('glyphicons-chevron-up');
-        if(!icon.hasClass('glyphicons-chevron-down')){
-            icon.addClass('glyphicons-chevron-down');
+        icon.removeClass('fa-chevron-up');
+        if(!icon.hasClass('fa-chevron-down')){
+            icon.addClass('fa-chevron-down');
         }
     }
     if(filterConfig.userColumnConfiguration[columnId].sortType=="ASC"){
-        icon.removeClass('glyphicons-chevron-down');
-        if(!icon.hasClass('glyphicons-chevron-up')){
-            icon.addClass('glyphicons-chevron-up');
+        icon.removeClass('fa-chevron-down');
+        if(!icon.hasClass('fa-chevron-up')){
+            icon.addClass('fa-chevron-up');
         }
     }
 }
@@ -922,7 +922,7 @@ function maf_filter_addAutocomplete(parentId, columnId, filterSelectorId, fieldC
     li.append(hiddenFieldContent);
     
     var clear = $('<a/>', {"href" : '#',"id" : '_'+columnId+'_clear_editable', 'class' : 'btn btn-default btn-sm'});
-    clear.append($('<span/>', {"class" : "glyphicons glyphicons-erase"}));
+    clear.append($('<span/>', {"class" : "fa fa-eraser"}));
     li.append(" &nbsp;")
     li.append(clear);
 
@@ -962,7 +962,7 @@ function maf_filter_construct_field_header(columnId, fieldConfig) {
     var li = $('<li/>', {"class" : 'filter-input', "id" : "_filter_cp_"+columnId});
     var leftDiv = $('<div/>', {"class" : "pull-left"});
     var rightDiv = $('<div/>', {"class" : "pull-right"});
-    var removeA = $('<a/>', {"href" : "#", "id" : "_filter_remove_" + columnId, "html" : "<span class='glyphicons glyphicons-remove-2'></span>"});
+    var removeA = $('<a/>', {"href" : "#", "id" : "_filter_remove_" + columnId, "html" : "<span class='fa fa-times-2'></span>"});
     var label = $('<strong/>',{text : fieldConfig.label}); 
     leftDiv.append(label);
     rightDiv.append("&nbsp;&nbsp;");
