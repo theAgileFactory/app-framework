@@ -22,15 +22,14 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * This helper provides the components to manage an attribute that is a
- * bootstrap glyphicon.
+ * This helper provides the components to manage an attribute that is an icon.
  * 
  * @author Johann Kohler
  * 
  */
-public class Glyphicon {
+public class Icon {
 
-    public static Set<String> glyphicons = new HashSet<String>(Arrays.asList("glyphicons glyphicons-ok-2", "glyphicons glyphicons-electricity",
+    public static Set<String> icons = new HashSet<String>(Arrays.asList("glyphicons glyphicons-ok-2", "glyphicons glyphicons-electricity",
             "glyphicons glyphicons-bin", "glyphicons glyphicons-envelope", "glyphicons glyphicons-circle-info", "glyphicons glyphicons-charts",
             "glyphicons glyphicons-paperclip", "glyphicons glyphicons-parents", "glyphicons glyphicons-coins", "glyphicons glyphicons-cargo",
             "glyphicons glyphicons-log-book", "glyphicons glyphicons-history", "glyphicons glyphicons-git-branch", "glyphicons glyphicons-cogwheels",
@@ -38,32 +37,32 @@ public class Glyphicon {
             "glyphicons glyphicons-inbox", "glyphicons glyphicons-cloud", "glyphicons glyphicons-clock", "glyphicons glyphicons-sort"));
 
     /**
-     * Get the the selectable glyphicons as a value holder collection.
+     * Get the the selectable icons as a value holder collection.
      */
-    public static DefaultSelectableValueHolderCollection<CssValueForValueHolder> getGlyphiconsAsVHC() {
+    public static DefaultSelectableValueHolderCollection<CssValueForValueHolder> getIconsAsVHC() {
 
-        DefaultSelectableValueHolderCollection<CssValueForValueHolder> selectableGlyphicons;
-        selectableGlyphicons = new DefaultSelectableValueHolderCollection<CssValueForValueHolder>();
+        DefaultSelectableValueHolderCollection<CssValueForValueHolder> selectableIcons;
+        selectableIcons = new DefaultSelectableValueHolderCollection<CssValueForValueHolder>();
         int i = 0;
-        for (String glyphicon : glyphicons) {
-            selectableGlyphicons.add(new DefaultSelectableValueHolder<CssValueForValueHolder>(new CssValueForValueHolder(glyphicon, "<span class='"
-                    + glyphicon + " glyphicons-menu-small'></span>", "default"), String.valueOf(i)));
+        for (String icon : icons) {
+            selectableIcons.add(new DefaultSelectableValueHolder<CssValueForValueHolder>(
+                    new CssValueForValueHolder(icon, "<span class='" + icon + "'></span>", "default"), String.valueOf(i)));
             i++;
         }
 
-        return selectableGlyphicons;
+        return selectableIcons;
 
     }
 
     /**
-     * Get the label for a glyphicon.
+     * Get the label for an icon.
      * 
-     * @param glyphicon
-     *            the glyphicon
+     * @param icon
+     *            the icon
      * @return
      */
-    public static String getLabel(String glyphicon) {
-        return "<span class='" + glyphicon + "'></span>";
+    public static String getLabel(String icon) {
+        return "<span class='" + icon + "'></span>";
     }
 
 }
