@@ -116,9 +116,8 @@ public interface IJobDescriptor {
                     setJavaColumnFormatter("frequency", new ObjectFormatter<JobDescriptorRow>());
 
                     addColumn("triggerActionLink", "id", "", Table.ColumnDef.SorterType.NONE);
-                    setJavaColumnFormatter("triggerActionLink",
-                            new StringFormatFormatter<JobDescriptorRow>("<a href=\"%s\"><span class=\"fa fa-play-button\"></span></a>",
-                                    new StringFormatFormatter.Hook<JobDescriptorRow>() {
+                    setJavaColumnFormatter("triggerActionLink", new StringFormatFormatter<JobDescriptorRow>(
+                            "<a href=\"%s\"><span class=\"fa fa-play-circle-o\"></span></a>", new StringFormatFormatter.Hook<JobDescriptorRow>() {
                         @Override
                         public String convert(JobDescriptorRow jobDescriptorRow) {
                             return jobDescriptorRow.triggerUrl;
