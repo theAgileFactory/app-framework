@@ -257,11 +257,11 @@ public interface IFrameworkConstants {
     public static final String BOOTSTRAP_TEXT_ALIGN_JUSTIFY = "text-justify";
 
     // File types
-    public static final String BOOTSTRAP_FILETYPE_TXT = "<span class=\"text-primary filetypes filetypes-txt\" style=\"font-size: 2em;\"></span>";
-    public static final String BOOTSTRAP_FILETYPE_PROPERTIES = "<span class=\"text-primary filetypes filetypes-ini\" style=\"font-size: 2em;\"></span>";
-    public static final String BOOTSTRAP_FILETYPE_XML = "<span class=\"text-primary filetypes filetypes-xml\" style=\"font-size: 2em;\"></span>";
-    public static final String BOOTSTRAP_FILETYPE_JAVASCRIPT = "<span class=\"text-primary filetypes filetypes-js\" style=\"font-size: 2em;\"></span>";
-    public static final String BOOTSTRAP_FILETYPE_BINARY = "<span class=\"text-primary filetypes filetypes-bin\" style=\"font-size: 2em;\"></span>";
+    public static final String BOOTSTRAP_FILETYPE_TXT = "<span class=\"text-primary fa fa-file-text-o\" style=\"font-size: 2em;\"></span>";
+    public static final String BOOTSTRAP_FILETYPE_PROPERTIES = "<span class=\"text-primary fa fa-file-powerpoint-o\" style=\"font-size: 2em;\"></span>";
+    public static final String BOOTSTRAP_FILETYPE_XML = "<span class=\"text-primary fa fa-file-code-o\" style=\"font-size: 2em;\"></span>";
+    public static final String BOOTSTRAP_FILETYPE_JAVASCRIPT = "<span class=\"text-primary fa fa-file-code-o\" style=\"font-size: 2em;\"></span>";
+    public static final String BOOTSTRAP_FILETYPE_BINARY = "<span class=\"text-primary fa fa-file-o\" style=\"font-size: 2em;\"></span>";
 
     // Labels
     public static final String LABEL_DEFAULT_FORMAT = "<span class=\"label label-default\">%s</span>";

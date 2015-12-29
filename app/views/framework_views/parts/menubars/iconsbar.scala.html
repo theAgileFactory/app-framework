@@ -26,7 +26,7 @@
             @if(menuItem.hasSubMenuItems()){
                 <div class="btn-group">
                     <button type="button" class="btn dropdown-toggle @if(menuItem.isSelected()){ btn-primary } else { @if(menuItem.isImportant()) { btn-info } else { btn-light } }" data-toggle="dropdown">
-                        <span class="@menuItem.getCssIcon() fa-2x"></span><br/>@parts.Msg(menuItem.getLabel()) <span class="caret right-caret"></span>
+                        <span class="@menuItem.getCssIcon()" style="font-size: 1.6em;"></span><br/>@parts.Msg(menuItem.getLabel()) <span class="caret right-caret"></span>
                     </button>
                     <ul class="dropdown-menu right-dropdown-menu">
                         @for(subMenuItem <- menuItem.getSubMenuItems()){
@@ -40,7 +40,7 @@
                 </div>
             }else{
                 <a href="@menuItem.getActionUrl()" class="btn btn-group-lg @if(menuItem.isSelected()){ btn-primary } else { @if(menuItem.isImportant()) { btn-info } else { btn-light }}" >
-                    <span class="@menuItem.getCssIcon() fa-2x"></span><br/>@parts.Msg(menuItem.getLabel())
+                    <span class="@menuItem.getCssIcon()" style="font-size: 1.6em;"></span><br/>@parts.Msg(menuItem.getLabel())
                 </a>
             }
         }
@@ -54,7 +54,7 @@
             @if(menuItem.hasSubMenuItems()){
                 <div class="btn-group">
                     <a data-toggle="dropdown" class="btn @if(menuItem.isSelected()){ btn-primary } else { @if(menuItem.isImportant()) { btn-info } else { btn-light } } dropdown-toggle" href="#">
-                        <span class="@menuItem.getCssIcon() fa-2x"></span> <span class="caret"></span>
+                        <span class="@menuItem.getCssIcon()" style="font-size: 1.6em;"></span> <span class="caret"></span>
                     </a>
                     <ul class="dropdown-menu" style="left: auto;">
                         @for(subMenuItem <- menuItem.getSubMenuItems()){
@@ -68,7 +68,7 @@
                 </div>
             }else{
                 <a href="@menuItem.getActionUrl()" class="btn @if(menuItem.isSelected()){ btn-primary } else { @if(menuItem.isImportant()) { btn-info } else { btn-light }}" >
-                    <span class="@menuItem.getCssIcon() fa-2x"></span>
+                    <span class="@menuItem.getCssIcon()" style="font-size: 1.6em;"></span>
                 </a>
             }
         }
