@@ -23,7 +23,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -33,17 +35,17 @@ import javax.inject.Singleton;
 
 import org.apache.commons.io.FileUtils;
 
-import play.Configuration;
-import play.Logger;
-import play.inject.ApplicationLifecycle;
-import play.libs.F.Promise;
-import scala.concurrent.duration.Duration;
 import akka.actor.Cancellable;
 import framework.services.account.AccountManagementException;
 import framework.services.account.IAccountManagerPlugin;
 import framework.services.database.IDatabaseDependencyService;
 import framework.services.system.ISysAdminUtils;
 import framework.utils.Utilities;
+import play.Configuration;
+import play.Logger;
+import play.inject.ApplicationLifecycle;
+import play.libs.F.Promise;
+import scala.concurrent.duration.Duration;
 
 /**
  * The default implementation for the personal storage plugin.<br/>
@@ -161,7 +163,13 @@ public class PersonalStoragePluginImpl implements IPersonalStoragePlugin {
     public File[] getContentView(String uid) throws IOException {
         File personalFolder = new File(getPersonalStorageRootFolder(), getPersonalStorageFolderFromUid(uid));
         createPersonalFolderIfNotExists(uid, personalFolder);
-        return personalFolder.listFiles();
+        File[] files = personalFolder.listFiles();
+        Arrays.sort(files, new Comparator<File>() {
+            public int compare(File f1, File f2) {
+                return Long.valueOf(f1.lastModified()).compareTo(f2.lastModified());
+            }
+        });
+        return files;
     }
 
     @Override
@@ -216,8 +224,8 @@ public class PersonalStoragePluginImpl implements IPersonalStoragePlugin {
         File targetFile = new File(personalFolder, name);
         if (targetFile.exists()) {
             if (!targetFile.canWrite()) {
-                String errorMessage = String.format(
-                        "Unable to move a file (named %s) to the personal storage for %s (file already exists and cannot be overwritten)", name, uid);
+                String errorMessage = String
+                        .format("Unable to move a file (named %s) to the personal storage for %s (file already exists and cannot be overwritten)", name, uid);
                 log.error(errorMessage);
                 throw new IOException(errorMessage);
             }
