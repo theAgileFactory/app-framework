@@ -962,7 +962,7 @@ function maf_filter_construct_field_header(columnId, fieldConfig) {
     var li = $('<li/>', {"class" : 'filter-input', "id" : "_filter_cp_"+columnId});
     var leftDiv = $('<div/>', {"class" : "pull-left"});
     var rightDiv = $('<div/>', {"class" : "pull-right"});
-    var removeA = $('<a/>', {"href" : "#", "id" : "_filter_remove_" + columnId, "html" : "<span class='fa fa-times-2'></span>"});
+    var removeA = $('<a/>', {"href" : "#", "id" : "_filter_remove_" + columnId, "html" : "<span class='fa fa-times'></span>"});
     var label = $('<strong/>',{text : fieldConfig.label}); 
     leftDiv.append(label);
     rightDiv.append("&nbsp;&nbsp;");
