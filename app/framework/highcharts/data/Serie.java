@@ -38,6 +38,7 @@ public class Serie<T extends SerieItem> implements IDataProvider {
 
     private String name;
     private List<T> data;
+    private String stack;
 
     /**
      * Default constructor.
@@ -48,6 +49,7 @@ public class Serie<T extends SerieItem> implements IDataProvider {
     public Serie(String name) {
         this.name = name;
         this.data = new ArrayList<T>();
+        this.stack = null;
     }
 
     /**
@@ -65,6 +67,23 @@ public class Serie<T extends SerieItem> implements IDataProvider {
      */
     public void setName(String name) {
         this.name = name;
+    }
+
+    /**
+     * Get the stack.
+     */
+    public String getStack() {
+        return stack;
+    }
+
+    /**
+     * Set the stack.
+     * 
+     * @param stack
+     *            the stack
+     */
+    public void setStack(String stack) {
+        this.stack = stack;
     }
 
     /**
@@ -95,7 +114,11 @@ public class Serie<T extends SerieItem> implements IDataProvider {
 
             generator.writeStartObject();
 
-            generator.writeStringField("name", name);
+            generator.writeStringField("name", this.name);
+
+            if (this.stack != null) {
+                generator.writeStringField("stack", this.stack);
+            }
 
             generator.writeFieldName("data");
 
@@ -123,6 +146,6 @@ public class Serie<T extends SerieItem> implements IDataProvider {
 
     @Override
     public String toString() {
-        return "Serie [name=" + name + ", data=" + data + "]";
+        return "Serie [name=" + name + ", data=" + data + ", stack=" + stack + "]";
     }
 }

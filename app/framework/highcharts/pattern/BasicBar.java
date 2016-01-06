@@ -20,8 +20,6 @@ package framework.highcharts.pattern;
 import java.util.ArrayList;
 import java.util.List;
 
-import play.Logger;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -29,10 +27,11 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import framework.highcharts.data.Serie;
 import framework.highcharts.data.SeriesContainer;
 import framework.highcharts.data.SingleValueItem;
+import play.Logger;
 
 /**
- * A basic bar pattern is a bar chart with one or many categories
- * ("groups of bars").
+ * A basic bar pattern is a bar chart with one or many categories (
+ * "groups of bars").
  * 
  * @author Johann Kohler
  * 
@@ -85,6 +84,7 @@ public class BasicBar {
 
         for (Elem elem : this.elems) {
             Serie<SingleValueItem> serie = new Serie<SingleValueItem>(elem.getName());
+            serie.setStack(elem.getStack());
             for (Double value : elem.getValues()) {
                 serie.add(new SingleValueItem(value));
             }
@@ -110,6 +110,7 @@ public class BasicBar {
 
         private String name;
         private List<Double> values;
+        private String stack;
 
         /**
          * Default constructor.
@@ -120,6 +121,7 @@ public class BasicBar {
         public Elem(String name) {
             this.name = name;
             this.values = new ArrayList<Double>();
+            this.stack = null;
         }
 
         /**
@@ -144,6 +146,23 @@ public class BasicBar {
          */
         public List<Double> getValues() {
             return this.values;
+        }
+
+        /**
+         * Get the stack.
+         */
+        public String getStack() {
+            return stack;
+        }
+
+        /**
+         * Set the stack.
+         * 
+         * @param stack
+         *            the stack
+         */
+        public void setStack(String stack) {
+            this.stack = stack;
         }
 
     }

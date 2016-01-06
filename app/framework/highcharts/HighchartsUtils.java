@@ -21,11 +21,11 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
-import play.Logger;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+
+import play.Logger;
 
 /**
  * The highcharts utils.
@@ -38,12 +38,12 @@ public class HighchartsUtils {
     /**
      * The standard colors.
      */
-    public static final String[] COLORS = { "#777777", "#428BCA", "#5BC0DE", "#5CB85C", "#F0AD4E", "#D9534F" };
+    public static final String[] COLORS = { "#777777", "#428BCA", "#5CB85C", "#F0AD4E", "#D9534F", "#5BC0DE" };
 
     /**
      * The standard lighted colors.
      */
-    public static final String[] LIGHT_COLORS = { "#A0A0A0", "#7BAEDA", "#8CD3E8", "#7DC67D", "#F3BD71", "#E48784" };
+    public static final String[] LIGHT_COLORS = { "#A0A0A0", "#7BAEDA", "#7DC67D", "#F3BD71", "#E48784", "#8CD3E8" };
 
     /**
      * Get the colors as a json array.
