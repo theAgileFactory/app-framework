@@ -176,7 +176,7 @@ public interface ICustomAttributeValue {
      * @author Pierre-Yves Cloux
      */
     public static enum AttributeType {
-        BOOLEAN, INTEGER, DECIMAL, STRING, TEXT, DATE, SINGLE_ITEM, DYNAMIC_SINGLE_ITEM, IMAGE, MULTI_ITEM, URL;
+        BOOLEAN, INTEGER, DECIMAL, STRING, TEXT, DATE, SINGLE_ITEM, DYNAMIC_SINGLE_ITEM, DYNAMIC_MULTI_ITEM, IMAGE, MULTI_ITEM, URL;
 
         private boolean isFileType = false;
         private boolean isMultiValued = false;
@@ -184,6 +184,7 @@ public interface ICustomAttributeValue {
         static {
             IMAGE.isFileType = true;
             MULTI_ITEM.isMultiValued = true;
+            DYNAMIC_MULTI_ITEM.isMultiValued = true;
         }
 
         public boolean isFileType() {

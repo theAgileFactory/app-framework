@@ -733,6 +733,34 @@ public class CustomAttributeDefinition extends Model implements IModel {
     }
 
     /**
+     * Return the list of values for a
+     * {@link DynamicMultiItemCustomAttributeValue}
+     * 
+     * @param uid
+     *            the uid of the current user
+     */
+    public ISelectableValueHolderCollection<Long> getValueHoldersCollectionFromNameForDynamicMultiItemCustomAttribute(String uid) {
+        String sql = getSelectionQuery();
+        if (log.isDebugEnabled()) {
+            log.debug("SQL Query : " + sql);
+        }
+        SqlQuery sqlQuery = Ebean.createSqlQuery(sql);
+        sqlQuery.setParameter("uid", uid);
+        sqlQuery.setParameter("lang", ServiceStaticAccessor.getMessagesPlugin().getCurrentLanguage().getCode());
+        if (log.isDebugEnabled()) {
+            log.debug("uid passed as a parameter : " + uid);
+        }
+        List<SqlRow> rows = sqlQuery.findList();
+        DefaultSelectableValueHolderCollection<Long> valueHolders = new DefaultSelectableValueHolderCollection<Long>();
+        if (rows != null) {
+            for (SqlRow row : rows) {
+                valueHolders.add(new DefaultSelectableValueHolder<Long>(row.getLong("value"), row.getString("name")));
+            }
+        }
+        return valueHolders;
+    }
+
+    /**
      * Returns the list of valid values for a
      * {@link SingleItemCustomAttributeValue}
      * 
@@ -1106,6 +1134,9 @@ public class CustomAttributeDefinition extends Model implements IModel {
             return SingleItemCustomAttributeValue.getOrCreateCustomAttributeValueFromObjectReference(objectType, filter, objectId, customAttributeDefinition);
         case DYNAMIC_SINGLE_ITEM:
             return DynamicSingleItemCustomAttributeValue.getOrCreateCustomAttributeValueFromObjectReference(objectType, filter, objectId,
+                    customAttributeDefinition);
+        case DYNAMIC_MULTI_ITEM:
+            return DynamicMultiItemCustomAttributeValue.getOrCreateCustomAttributeValueFromObjectReference(objectType, filter, objectId,
                     customAttributeDefinition);
         case MULTI_ITEM:
             return MultiItemCustomAttributeValue.getOrCreateCustomAttributeValueFromObjectReference(objectType, filter, objectId, customAttributeDefinition);

@@ -608,6 +608,7 @@ public class FilterConfig<T> {
                         SortStatusType.NONE);
                 break;
             case DYNAMIC_SINGLE_ITEM:
+            case DYNAMIC_MULTI_ITEM:
                 addNonFilterableColumnConfiguration(customAttributeDefinition.uuid, tableIdFieldName, customAttributeDefinition.name,
                         customAttributeDefinition.isDisplayed);
                 break;
