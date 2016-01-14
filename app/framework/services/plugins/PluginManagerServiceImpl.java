@@ -73,6 +73,7 @@ import framework.services.database.ModificationPair;
 import framework.services.email.IEmailService;
 import framework.services.ext.IExtension;
 import framework.services.ext.IExtensionManagerService;
+import framework.services.ext.IExtensionManagerService.IInitializedPluginData;
 import framework.services.ext.XmlExtensionDescriptor;
 import framework.services.ext.XmlExtensionDescriptor.PluginConfigurationBlockDescriptor;
 import framework.services.ext.api.IExtensionDescriptor.IPluginConfigurationBlockDescriptor;
@@ -85,6 +86,7 @@ import framework.services.plugins.api.IPluginContext;
 import framework.services.plugins.api.IPluginMenuDescriptor;
 import framework.services.plugins.api.IPluginRunner;
 import framework.services.plugins.api.PluginException;
+import framework.services.plugins.api.WidgetController;
 import framework.services.storage.ISharedStorageService;
 import framework.services.system.ISysAdminUtils;
 import framework.utils.Menu.ClickableMenuItem;
@@ -500,15 +502,16 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
             IPluginDescriptor pluginDescriptor = getExtensionPlugins().get(pluginIdentifier).getRight();
             IPluginContext pluginContext = new PluginContextImpl(pluginConfiguration, pluginDescriptor, this, this, getSharedStorageService(),
                     getConfiguration(), getEmailService(), getNotificationManagerPlugin());
-            Triple<IPluginRunner, Object, Map<DataType, Object>> plugin = getExtensionManagerService().loadAndInitPluginInstance(pluginIdentifier,
-                    pluginConfiguration.id, pluginContext);
+            IInitializedPluginData pluginInitializationData = getExtensionManagerService().loadAndInitPluginInstance(pluginIdentifier, pluginConfiguration.id,
+                    pluginContext);
             log.info(String.format("The class for the plugin %d has been found and instanciated", pluginConfiguration.id));
             ActorRef pluginLifeCycleControllingActorRef = getActorSystem()
-                    .actorOf(Props.create(new PluginLifeCycleControllingActorCreator(pluginConfiguration.id, plugin.getLeft(),
+                    .actorOf(Props.create(new PluginLifeCycleControllingActorCreator(pluginConfiguration.id, pluginInitializationData.getPluginRunner(),
                             getPluginStatusCallbackActorRef(), getMessagesPlugin())));
             log.info(String.format("[END] the plugin %d has been initialized", pluginConfiguration.id));
-            return new PluginRegistrationEntry(pluginConfiguration.id, pluginConfiguration.name, plugin.getLeft(), plugin.getMiddle(), plugin.getRight(),
-                    pluginDescriptor, pluginLifeCycleControllingActorRef);
+            return new PluginRegistrationEntry(pluginConfiguration.id, pluginConfiguration.name, pluginInitializationData.getPluginRunner(),
+                    pluginInitializationData.getCustomConfigurationController(), pluginInitializationData.getRegistrationConfigurationControllers(),
+                    pluginInitializationData.getWidgetControllers(), pluginDescriptor, pluginLifeCycleControllingActorRef);
         } catch (Exception e) {
             String message = String.format("Unable to initialize the plugin %d", pluginConfiguration.id);
             log.error(message, e);
@@ -1309,16 +1312,18 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
         private IPluginRunner pluginRunner;
         private Object customConfigurationController;
         private Map<DataType, Object> registrationConfigurationControllers;
+        private Map<String, Object> widgetControllers;
 
         public PluginRegistrationEntry(Long pluginConfigurationId, String pluginConfigurationName, IPluginRunner pluginRunner,
-                Object customConfigurationController, Map<DataType, Object> registrationConfigurationControllers, IPluginDescriptor descriptor,
-                ActorRef lifeCycleControllingRouter) {
+                Object customConfigurationController, Map<DataType, Object> registrationConfigurationControllers, Map<String, Object> widgetControllers,
+                IPluginDescriptor descriptor, ActorRef lifeCycleControllingRouter) {
             super();
             this.pluginConfigurationId = pluginConfigurationId;
             this.pluginConfigurationName = pluginConfigurationName;
             this.pluginRunner = pluginRunner;
             this.customConfigurationController = customConfigurationController;
             this.registrationConfigurationControllers = registrationConfigurationControllers;
+            this.widgetControllers = widgetControllers;
             this.descriptor = descriptor;
             this.lifeCycleControllingRouter = lifeCycleControllingRouter;
             pluginStatus = PluginStatus.STOPPED;
@@ -1395,6 +1400,18 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
                 return "";
             }
             return ctrl.linkDefault();
+        }
+
+        @Override
+        public String getLinkToDisplayWidget(String identifier, Long widgetId) {
+            if (widgetControllers == null) {
+                return "";
+            }
+            WidgetController ctrl = (WidgetController) widgetControllers.get(identifier);
+            if (ctrl == null) {
+                return "";
+            }
+            return ctrl.linkDefault(widgetId);
         }
 
         @Override

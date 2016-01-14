@@ -43,6 +43,7 @@ import models.framework_models.common.ActionLog;
 import models.framework_models.common.FilterConfiguration;
 import models.framework_models.parent.IModel;
 import models.framework_models.parent.IModelConstants;
+import models.framework_models.plugin.DashboardPage;
 import models.framework_models.workspace.WorkspaceMember;
 
 /**
@@ -228,6 +229,9 @@ public class Principal extends Model implements IModel {
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "principal")
     public List<Shortcut> shortcuts;
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "principal")
+    public List<DashboardPage> dashboardPages;
 
     /**
      * Return the account type for the specified principal.<br/>
@@ -429,8 +433,7 @@ public class Principal extends Model implements IModel {
      * @return list of {@link Notification}
      */
     public List<Notification> getMessages() {
-        return Notification.find.where().eq("deleted", false).eq("isMessage", true).eq("principal.id", this.id).orderBy("isRead, creationDate desc")
-                .findList();
+        return Notification.find.where().eq("deleted", false).eq("isMessage", true).eq("principal.id", this.id).orderBy("isRead, creationDate desc").findList();
     }
 
     /**
@@ -442,8 +445,8 @@ public class Principal extends Model implements IModel {
      * @return list of {@link Notification}
      */
     public List<Notification> getNotReadMessages() {
-        return Notification.find.where().eq("deleted", false).eq("isMessage", true).eq("isRead", false).eq("principal.id", this.id)
-                .orderBy("creationDate desc").setMaxRows(5).findList();
+        return Notification.find.where().eq("deleted", false).eq("isMessage", true).eq("isRead", false).eq("principal.id", this.id).orderBy("creationDate desc")
+                .setMaxRows(5).findList();
     }
 
     /**

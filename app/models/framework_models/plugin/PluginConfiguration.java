@@ -79,6 +79,9 @@ public class PluginConfiguration extends Model {
     @OneToMany(mappedBy = "pluginConfiguration", cascade = CascadeType.ALL)
     public List<PluginRegistration> pluginRegistrations;
 
+    @OneToMany(mappedBy = "pluginConfiguration", cascade = CascadeType.ALL)
+    public List<DashboardWidget> widgets;
+
     @ManyToOne(optional = false)
     public PluginDefinition pluginDefinition;
 

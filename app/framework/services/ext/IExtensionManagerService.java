@@ -20,8 +20,6 @@ package framework.services.ext;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.tuple.Triple;
-
 import framework.commons.DataType;
 import framework.services.plugins.api.IPluginContext;
 import framework.services.plugins.api.IPluginRunner;
@@ -78,15 +76,16 @@ public interface IExtensionManagerService extends IRequestListener, ILinkGenerat
      * @param pluginContext
      *            the plugin context to be passed as a parameter of the plugin
      *            runner init method
-     * @return a triple which contains : the plugin runner, the custom
+     * @return a data structure which contains : the plugin runner, the custom
      *         configuration controller instance (if any), the plugin
-     *         registration configuration controllers for this plugin (if any)
+     *         registration configuration controllers for this plugin (if any),
+     *         the widget controllers (if any)
      * @throws ExtensionManagerException
      *             if no associated and loaded extension is available or if the
      *             loading failed
      */
-    public Triple<IPluginRunner, Object, Map<DataType, Object>> loadAndInitPluginInstance(String pluginIdentifier, Long pluginConfigurationId,
-            IPluginContext pluginContext) throws ExtensionManagerException;
+    public IInitializedPluginData loadAndInitPluginInstance(String pluginIdentifier, Long pluginConfigurationId, IPluginContext pluginContext)
+            throws ExtensionManagerException;
 
     /**
      * Unload the specified plugin and its associated controllers (if any)
@@ -132,4 +131,39 @@ public interface IExtensionManagerService extends IRequestListener, ILinkGenerat
      * This method is required when unloading an extension.
      */
     public void registerPluginStopper(IPluginStopper pluginStopper);
+
+    /**
+     * A data structure which is used when calling the loadAndPluginInstance.
+     * 
+     * @author Pierre-Yves Cloux
+     */
+    public interface IInitializedPluginData {
+        /**
+         * The initialized plugin runner
+         * 
+         * @return
+         */
+        public IPluginRunner getPluginRunner();
+
+        /**
+         * A custom configuration controller for the plugin (if any)
+         * 
+         * @return
+         */
+        public Object getCustomConfigurationController();
+
+        /**
+         * Some registration controllers associated with a defined DataType
+         * 
+         * @return
+         */
+        public Map<DataType, Object> getRegistrationConfigurationControllers();
+
+        /**
+         * Some widget controllers
+         * 
+         * @return
+         */
+        public Map<String, Object> getWidgetControllers();
+    }
 }

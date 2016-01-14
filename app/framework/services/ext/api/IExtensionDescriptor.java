@@ -146,6 +146,12 @@ public interface IExtensionDescriptor {
          * specified data type) with the plugin.
          */
         public Map<DataType, String> getRegistrationConfiguratorControllerClassNames();
+
+        /**
+         * Return the controllers which are managing widgets.<br/>
+         * This method returns a Map[widgetIdentifier, descriptor]
+         */
+        public Map<String, IWidgetDescriptor> getWidgetControllerClassNames();
     }
 
     /**
@@ -202,5 +208,34 @@ public interface IExtensionDescriptor {
          * first time or manually reseted)
          */
         public byte[] getDefaultValue();
+    }
+
+    /**
+     * A meta-description of a widget plugin
+     * 
+     * @author Pierre-Yves Cloux
+     */
+    public interface IWidgetDescriptor {
+        /**
+         * The unique identifier of a widget.<br/>
+         * 
+         * @return a String
+         */
+        public String getIdentifier();
+
+        /**
+         * The i18n key for name of the widget
+         */
+        public String getName();
+
+        /**
+         * The i18n key for the description of the widget
+         */
+        public String getDescription();
+
+        /**
+         * The name of the controller managing this widget
+         */
+        public String getControllerClassName();
     }
 }

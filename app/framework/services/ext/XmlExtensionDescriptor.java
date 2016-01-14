@@ -244,7 +244,25 @@ public class XmlExtensionDescriptor {
      * <li>identifier : the unique ID for a plugin</li>
      * <li>clazz : the class which is implementing the {@link IPluginRunner}
      * interface</li>
-     * <li>isAvailable : true if the plugin will be "visible" to the users</li>
+     * <li>name : a name of a i18n key</li>
+     * <li>description : the description of a plugin</li>
+     * <li>version : the version of the plugin</li>
+     * <li>vendorUrl : an URL pointing to the plugin documentation</li>
+     * <li>multiInstance : true if the plugin can be instanciated multiple times
+     * </li>
+     * <li>eventInterface : tells if the plugin can received some invents from
+     * BizDock or the outside world</li>
+     * <li>pluginConfigurationBlockDescriptors : the list of "standard"
+     * configuration items supported by this plugin</li>
+     * <li>supportedDataTypes : the data types that this plugin is able to
+     * handle. This is used to filter the notifications from BizDock when a data
+     * is changed.</li>
+     * <li>customConfigurationController : a configuration controler for
+     * "non standard" configuration blocks</li>
+     * <li>registrationConfigurationControllerDescriptors : the controllers
+     * managing the registration for a named data type</li>
+     * <li>widgetControllers : a list of controller managing one or more widgets
+     * </li>
      * </ul>
      * 
      * @author Pierre-Yves Cloux
@@ -262,6 +280,7 @@ public class XmlExtensionDescriptor {
         private List<String> supportedDataTypes;
         private String customConfigurationController;
         private List<PluginRegistrationConfiguratorControllerDescriptor> registrationConfigurationControllerDescriptors;
+        private List<WidgetDescriptor> widgetDescriptors;
 
         public PluginDescriptor() {
             super();
@@ -374,6 +393,15 @@ public class XmlExtensionDescriptor {
         public void setRegistrationConfigurationControllerDescriptors(
                 List<PluginRegistrationConfiguratorControllerDescriptor> registrationConfiguratorControllerDescriptors) {
             this.registrationConfigurationControllerDescriptors = registrationConfiguratorControllerDescriptors;
+        }
+
+        @XmlElement(name = "widget", required = false, nillable = false)
+        public List<WidgetDescriptor> getWidgetDescriptors() {
+            return widgetDescriptors;
+        }
+
+        public void setWidgetDescriptors(List<WidgetDescriptor> widgetDescriptors) {
+            this.widgetDescriptors = widgetDescriptors;
         }
     }
 
@@ -518,6 +546,58 @@ public class XmlExtensionDescriptor {
 
         public void setDefaultValue(String defaultValue) {
             this.defaultValue = defaultValue;
+        }
+    }
+
+    /**
+     * The descriptor of a widget
+     * 
+     * @author Pierre-Yves Cloux
+     */
+    public static class WidgetDescriptor {
+        private String identifier;
+        private String clazz;
+        private String name;
+        private String description;
+
+        public WidgetDescriptor() {
+            super();
+        }
+
+        @XmlElement(name = "identifier", required = true, nillable = false)
+        public String getIdentifier() {
+            return identifier;
+        }
+
+        public void setIdentifier(String identifier) {
+            this.identifier = identifier;
+        }
+
+        @XmlElement(name = "class", required = true, nillable = false)
+        public String getClazz() {
+            return clazz;
+        }
+
+        public void setClazz(String clazz) {
+            this.clazz = clazz;
+        }
+
+        @XmlElement(name = "name", required = true, nillable = false)
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        @XmlElement(name = "description", required = true, nillable = false)
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
         }
     }
 

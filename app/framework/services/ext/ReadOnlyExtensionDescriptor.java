@@ -10,6 +10,7 @@ import framework.commons.DataType;
 import framework.services.ext.XmlExtensionDescriptor.PluginConfigurationBlockDescriptor;
 import framework.services.ext.XmlExtensionDescriptor.PluginDescriptor;
 import framework.services.ext.XmlExtensionDescriptor.PluginRegistrationConfiguratorControllerDescriptor;
+import framework.services.ext.XmlExtensionDescriptor.WidgetDescriptor;
 import framework.services.ext.api.IExtensionDescriptor;
 
 /**
@@ -64,6 +65,7 @@ public class ReadOnlyExtensionDescriptor implements IExtensionDescriptor {
         private List<DataType> supportedDataTypes;
         private Map<String, IPluginConfigurationBlockDescriptor> configurationBlockDescriptors;
         private Map<DataType, String> registrationControllers;
+        private Map<String, IWidgetDescriptor> widgetDesriptors;
 
         public ReadOnlyPluginDescriptor(PluginDescriptor pluginDescriptor) {
             super();
@@ -163,6 +165,20 @@ public class ReadOnlyExtensionDescriptor implements IExtensionDescriptor {
             return registrationControllers;
         }
 
+        @Override
+        public Map<String, IWidgetDescriptor> getWidgetControllerClassNames() {
+            if (widgetDesriptors == null) {
+                widgetDesriptors = Collections.synchronizedMap(new HashMap<>());
+                if (getPluginDescriptor().getWidgetDescriptors() != null) {
+                    for (WidgetDescriptor desc : getPluginDescriptor().getWidgetDescriptors()) {
+                        widgetDesriptors.put(desc.getIdentifier(), new ReadOnlyWidgetDescriptor(desc));
+                    }
+                    widgetDesriptors = Collections.unmodifiableMap(widgetDesriptors);
+                }
+            }
+            return widgetDesriptors;
+        }
+
         private PluginDescriptor getPluginDescriptor() {
             return pluginDescriptor;
         }
@@ -209,6 +225,38 @@ public class ReadOnlyExtensionDescriptor implements IExtensionDescriptor {
 
         private PluginConfigurationBlockDescriptor getPluginConfigurationBlockDescriptor() {
             return pluginConfigurationBlockDescriptor;
+        }
+    }
+
+    public static class ReadOnlyWidgetDescriptor implements IWidgetDescriptor {
+        private WidgetDescriptor widgetDescriptor;
+
+        public ReadOnlyWidgetDescriptor(WidgetDescriptor widgetDescriptor) {
+            this.widgetDescriptor = widgetDescriptor;
+        }
+
+        @Override
+        public String getIdentifier() {
+            return getWidgetDescriptor().getIdentifier();
+        }
+
+        @Override
+        public String getName() {
+            return getWidgetDescriptor().getName();
+        }
+
+        @Override
+        public String getDescription() {
+            return getWidgetDescriptor().getDescription();
+        }
+
+        @Override
+        public String getControllerClassName() {
+            return getWidgetDescriptor().getClazz();
+        }
+
+        private WidgetDescriptor getWidgetDescriptor() {
+            return widgetDescriptor;
         }
     }
 }

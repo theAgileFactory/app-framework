@@ -106,6 +106,18 @@ public interface IPluginManagerService extends IPluginStopper {
         public boolean isRegistrableWith(DataType dataType);
 
         /**
+         * Return a link to the widget display page which is associated with the
+         * specified identifier and the specified widget Id
+         * 
+         * @param identifier
+         *            a unique widget identifier
+         * @param widgetId
+         *            a widget Id
+         * @return a URL link
+         */
+        public String getLinkToDisplayWidget(String identifier, Long widgetId);
+
+        /**
          * Return a link to the default action of the registration controller
          * managing the specified {@link DataType}
          * 
@@ -113,7 +125,7 @@ public interface IPluginManagerService extends IPluginStopper {
          *            a data type
          * @param objectId
          *            an object id (the one which will be registered)
-         * @return
+         * @return a URL link
          */
         public String getLinkToRegistrationConfiguration(DataType dataType, Long objectId);
 

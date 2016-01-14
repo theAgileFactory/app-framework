@@ -48,7 +48,6 @@ import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
 import org.xeustechnologies.jcl.JarClassLoader;
 import org.xeustechnologies.jcl.JclObjectFactory;
 
@@ -65,7 +64,6 @@ import framework.services.account.IPreferenceManagerPlugin;
 import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.configuration.ITopMenuBarService;
 import framework.services.database.IDatabaseDependencyService;
-import framework.services.ext.ExtensionManagerServiceImpl.Extension.PluginResources;
 import framework.services.ext.XmlExtensionDescriptor.I18nMessage;
 import framework.services.ext.XmlExtensionDescriptor.MenuCustomizationDescriptor;
 import framework.services.ext.XmlExtensionDescriptor.MenuItemDescriptor;
@@ -75,6 +73,7 @@ import framework.services.ext.api.IExtensionDescriptor.IPluginDescriptor;
 import framework.services.ext.api.WebCommandPath;
 import framework.services.ext.api.WebControllerPath;
 import framework.services.ext.api.WebParameter;
+import framework.services.plugins.IPluginManagerService;
 import framework.services.plugins.api.IPluginContext;
 import framework.services.plugins.api.IPluginRunner;
 import framework.services.router.ICustomRouterService;
@@ -345,6 +344,10 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         return Promise.promise(() -> Controller.badRequest());
     }
 
+    public String getWidgetDisplayPathPrefix(Long pluginConfigurationId, String widgetIdentifier) {
+        return "/" + pluginConfigurationId + "/widget/" + widgetIdentifier.toLowerCase();
+    }
+
     @Override
     public String link(Object controllerInstance, String commandId, Object... parameters) throws ExtensionManagerException {
         if (!getExtensionControllers().containsKey(controllerInstance)) {
@@ -393,12 +396,12 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             }
 
             // Remove the plugin controllers
-            for (PluginResources pluginResources : extensionObject.getPluginResources().values()) {
-                if (pluginResources.getCustomConfigurationController() != null) {
-                    removeExtensionController(pluginResources.getCustomConfigurationController());
+            for (InternalPluginResources internalPluginResources : extensionObject.getPluginResources().values()) {
+                if (internalPluginResources.getCustomConfigurationController() != null) {
+                    removeExtensionController(internalPluginResources.getCustomConfigurationController());
                 }
-                if (pluginResources.getRegistrationConfigurationControllers() != null) {
-                    for (Object controllerInstance : pluginResources.getRegistrationConfigurationControllers().values()) {
+                if (internalPluginResources.getRegistrationConfigurationControllers() != null) {
+                    for (Object controllerInstance : internalPluginResources.getRegistrationConfigurationControllers().values()) {
                         removeExtensionController(controllerInstance);
                     }
                 }
@@ -443,8 +446,8 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
     }
 
     @Override
-    public Triple<IPluginRunner, Object, Map<DataType, Object>> loadAndInitPluginInstance(String pluginIdentifier, Long pluginConfigurationId,
-            IPluginContext pluginContext) throws ExtensionManagerException {
+    public IInitializedPluginData loadAndInitPluginInstance(String pluginIdentifier, Long pluginConfigurationId, IPluginContext pluginContext)
+            throws ExtensionManagerException {
         try {
             // Find the plugin runner instanciate
             Pair<Extension, IPluginDescriptor> result = findPluginExtensionFromIdentifier(pluginIdentifier);
@@ -452,7 +455,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                 throw new ExtensionManagerException("No plugin implementation found for the plugin identifier " + pluginIdentifier);
             }
 
-            Pair<IPluginRunner, PluginResources> plugin = result.getLeft().loadPluginInstance(pluginIdentifier, pluginConfigurationId, pluginContext,
+            Pair<IPluginRunner, InternalPluginResources> plugin = result.getLeft().loadPluginInstance(pluginIdentifier, pluginConfigurationId, pluginContext,
                     result.getRight());
             log.info("Plugin instance [" + pluginConfigurationId + "] for the unique id [" + pluginIdentifier + "] in the extension "
                     + result.getLeft().getDescriptor().getName() + " : PluginRunner instanciated");
@@ -487,10 +490,24 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             } else {
                 log.info("No registration configuration controller !");
             }
+            if (plugin.getRight().getWidgetControllers() != null) {
+                for (String identifier : plugin.getRight().getWidgetControllers().keySet()) {
+                    try {
+                        Object widgetController = plugin.getRight().getWidgetControllers().get(identifier);
+                        log.info("Found a widget controller with identifier " + identifier + " ...");
+                        addExtensionController(widgetController, "/" + pluginConfigurationId + "/widget/" + identifier.toLowerCase());
+                        log.info("Widget controller loaded !");
+                    } catch (ExtensionManagerException e) {
+                        log.warn("Error while loading the widget controller" + plugin.getRight().getWidgetControllers(), e);
+                    }
+                }
+            } else {
+                log.info("No widget controller !");
+            }
+
             log.info("Plugin instance [" + pluginConfigurationId + "] for the unique id [" + pluginIdentifier + "] in the extension "
                     + result.getLeft().getDescriptor().getName() + " loaded");
-            return Triple.of(plugin.getLeft(), plugin.getRight().getCustomConfigurationController(),
-                    plugin.getRight().getRegistrationConfigurationControllers());
+            return new InitializedPluginDataImpl(plugin.getLeft(), plugin.getRight());
         } catch (Exception e) {
             throw new ExtensionManagerException("Unable to create an instance for the specified plugin " + pluginIdentifier, e);
         }
@@ -508,14 +525,14 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         // to
         // the
         // extension manager
-        PluginResources pluginResources = result.getLeft().unloadPluginInstance(pluginIdentifier, pluginConfigurationId);
-        if (pluginResources.getCustomConfigurationController() != null) {
-            removeExtensionController(pluginResources.getCustomConfigurationController());
+        InternalPluginResources internalPluginResources = result.getLeft().unloadPluginInstance(pluginIdentifier, pluginConfigurationId);
+        if (internalPluginResources.getCustomConfigurationController() != null) {
+            removeExtensionController(internalPluginResources.getCustomConfigurationController());
             log.info("Un-registering a custom configuration controller !");
         }
-        if (pluginResources.getRegistrationConfigurationControllers() != null) {
-            for (DataType dataType : pluginResources.getRegistrationConfigurationControllers().keySet()) {
-                Object registrationController = pluginResources.getRegistrationConfigurationControllers().get(dataType);
+        if (internalPluginResources.getRegistrationConfigurationControllers() != null) {
+            for (DataType dataType : internalPluginResources.getRegistrationConfigurationControllers().keySet()) {
+                Object registrationController = internalPluginResources.getRegistrationConfigurationControllers().get(dataType);
                 removeExtensionController(registrationController);
                 log.info("Un-registering a registration configuration controller for data type" + dataType);
             }
@@ -862,12 +879,51 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
     }
 
     /**
+     * The data structure which holds the information returned to the
+     * {@link IPluginManagerService} when this one request a plugin
+     * initialization
+     * 
+     * @author Pierre-Yves Cloux
+     */
+    private static class InitializedPluginDataImpl implements IInitializedPluginData {
+        private IPluginRunner pluginRunner;
+        private Object customConfigurationController;
+        private Map<DataType, Object> registrationConfigurationControllers;
+        private Map<String, Object> widgetControllers;
+
+        public InitializedPluginDataImpl(IPluginRunner pluginRunner, InternalPluginResources internalPluginResource) {
+            this.pluginRunner = pluginRunner;
+            this.registrationConfigurationControllers = internalPluginResource.getRegistrationConfigurationControllers();
+            this.customConfigurationController = internalPluginResource.getCustomConfigurationController();
+            this.widgetControllers = internalPluginResource.getWidgetControllers();
+        }
+
+        @Override
+        public IPluginRunner getPluginRunner() {
+            return pluginRunner;
+        }
+
+        public Object getCustomConfigurationController() {
+            return customConfigurationController;
+        }
+
+        public Map<DataType, Object> getRegistrationConfigurationControllers() {
+            return registrationConfigurationControllers;
+        }
+
+        @Override
+        public Map<String, Object> getWidgetControllers() {
+            return widgetControllers;
+        }
+    }
+
+    /**
      * The class which encapsulate an extension.<br/>
      * This class deals with all the object creations using a custom class
      * loader.<br/>
      * It references the created controller classes or plugin resources (
-     * {@link PluginResources}) in order to "unload" them when the extension is
-     * not used anymore.
+     * {@link InternalPluginResources}) in order to "unload" them when the
+     * extension is not used anymore.
      * 
      * @author Pierre-Yves Cloux
      */
@@ -883,7 +939,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         private Injector injector;
         private ILinkGenerationService linkGenerationService;
         private List<Object> standaloneControllers;
-        private Map<String, PluginResources> pluginResources;
+        private Map<String, InternalPluginResources> internalPluginResources;
 
         /**
          * Creates an extension using the specified JAR file
@@ -904,7 +960,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             this.linkGenerationService = linkGenerationService;
             this.loadingTime = new Date();
             this.jarFile = jarFile;
-            this.pluginResources = new HashMap<>();
+            this.internalPluginResources = new HashMap<>();
             init(jarFile, environment);
         }
 
@@ -944,7 +1000,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
          * @return a resources holder
          * @throws ClassNotFoundException
          */
-        public synchronized Pair<IPluginRunner, PluginResources> loadPluginInstance(String pluginIdentifier, Long pluginConfigurationId,
+        public synchronized Pair<IPluginRunner, InternalPluginResources> loadPluginInstance(String pluginIdentifier, Long pluginConfigurationId,
                 IPluginContext pluginContext, IPluginDescriptor pluginDescriptor) throws ClassNotFoundException {
             JclObjectFactory factory = JclObjectFactory.getInstance();
             String pluginRunnerClassName = pluginDescriptor.getClazz();
@@ -963,7 +1019,9 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             // Creates the custom configuration controller (if any)
             Object customConfiguratorController = null;
             if (pluginDescriptor.getCustomConfiguratorControllerClassName() != null) {
-                customConfiguratorController = createInstanceOfClass(pluginDescriptor.getCustomConfiguratorControllerClassName(), factory, injectableValues);
+                String controllerClassName = pluginDescriptor.getCustomConfiguratorControllerClassName();
+                log.info("Loading custom configuration controller " + controllerClassName);
+                customConfiguratorController = createInstanceOfClass(controllerClassName, factory, injectableValues);
             }
 
             // Creates the registration configuration controllers (if any)
@@ -972,14 +1030,26 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                 registrationConfiguratorControllers = Collections.synchronizedMap(new HashMap<>());
                 for (DataType dataType : pluginDescriptor.getRegistrationConfiguratorControllerClassNames().keySet()) {
                     String controllerClassName = pluginDescriptor.getRegistrationConfiguratorControllerClassNames().get(dataType);
-                    log.info("Loading controller " + controllerClassName);
+                    log.info("Loading registration controller " + controllerClassName);
                     registrationConfiguratorControllers.put(dataType, createInstanceOfClass(controllerClassName, factory, injectableValues));
                 }
             }
-            PluginResources pluginResources = new PluginResources(pluginIdentifier, pluginConfigurationId, customConfiguratorController,
-                    registrationConfiguratorControllers);
-            getPluginResources().put(pluginResources.getUniquePluginResourceKey(), pluginResources);
-            return Pair.of(pluginRunner, pluginResources);
+
+            // Creates the widget controllers (if any)
+            Map<String, Object> widgetControllers = null;
+            if (pluginDescriptor.getWidgetControllerClassNames().size() != 0) {
+                widgetControllers = Collections.synchronizedMap(new HashMap<>());
+                for (String identifier : pluginDescriptor.getWidgetControllerClassNames().keySet()) {
+                    String controllerClassName = pluginDescriptor.getWidgetControllerClassNames().get(identifier).getControllerClassName();
+                    log.info("Loading widget controller " + controllerClassName);
+                    widgetControllers.put(identifier, createInstanceOfClass(controllerClassName, factory, injectableValues));
+                }
+            }
+
+            InternalPluginResources internalPluginResources = new InternalPluginResources(pluginIdentifier, pluginConfigurationId, customConfiguratorController,
+                    registrationConfiguratorControllers, widgetControllers);
+            getPluginResources().put(internalPluginResources.getUniquePluginResourceKey(), internalPluginResources);
+            return Pair.of(pluginRunner, internalPluginResources);
         }
 
         /**
@@ -989,8 +1059,8 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
          * @param pluginConfigurationId
          * @return
          */
-        public synchronized PluginResources unloadPluginInstance(String pluginIdentifier, Long pluginConfigurationId) {
-            return pluginResources.remove(PluginResources.createUniqueResourceKey(pluginIdentifier, pluginConfigurationId));
+        public synchronized InternalPluginResources unloadPluginInstance(String pluginIdentifier, Long pluginConfigurationId) {
+            return internalPluginResources.remove(InternalPluginResources.createUniqueResourceKey(pluginIdentifier, pluginConfigurationId));
         }
 
         @Override
@@ -1017,13 +1087,13 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
 
         /**
          * A map of plugin resources.<br/>
-         * The key of the map is a unique {@link PluginResources} id (see the
-         * class implementation)
+         * The key of the map is a unique {@link InternalPluginResources} id
+         * (see the class implementation)
          * 
          * @return
          */
-        public synchronized Map<String, PluginResources> getPluginResources() {
-            return pluginResources;
+        public synchronized Map<String, InternalPluginResources> getPluginResources() {
+            return internalPluginResources;
         }
 
         /**
@@ -1195,54 +1265,6 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
 
         private ILinkGenerationService getLinkGenerationService() {
             return linkGenerationService;
-        }
-
-        /**
-         * The resources associated with a plugin.<br/>
-         * The extension is holder some references to these resources so that
-         * their life cycle is correctly managed.
-         * 
-         * @author Pierre-Yves Cloux
-         */
-        public static class PluginResources {
-            private String uniquePluginResourceKey;
-            private Object customConfigurationController;
-            private Map<DataType, Object> registrationConfigurationControllers;
-
-            public PluginResources(String pluginIdentifier, Long pluginConfigurationId, Object customConfigurationController,
-                    Map<DataType, Object> registrationConfigurationControllers) {
-                super();
-                this.uniquePluginResourceKey = createUniqueResourceKey(pluginIdentifier, pluginConfigurationId);
-                this.customConfigurationController = customConfigurationController;
-                this.registrationConfigurationControllers = registrationConfigurationControllers;
-            }
-
-            public Object getCustomConfigurationController() {
-                return customConfigurationController;
-            }
-
-            public Map<DataType, Object> getRegistrationConfigurationControllers() {
-                return registrationConfigurationControllers;
-            }
-
-            public String getUniquePluginResourceKey() {
-                return uniquePluginResourceKey;
-            }
-
-            /**
-             * A unique key for the plugin resources.<br/>
-             * This is a concatenation of:
-             * <ul>
-             * <li>the unique plugin identifier</li>
-             * <li>the plugin configuration identifier (specific from a plugin
-             * instance)</li>
-             * </ul>
-             * 
-             * @return
-             */
-            public static String createUniqueResourceKey(String pluginIdentifier, Long pluginConfigurationId) {
-                return pluginIdentifier + "#" + pluginConfigurationId;
-            }
         }
     }
 
@@ -1524,5 +1546,61 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                 return "ParameterMeta [parameterName=" + parameterName + ", realIndex=" + realIndex + ", parameterType=" + parameterType + "]";
             }
         }
+    }
+
+    /**
+     * The resources associated with a plugin.<br/>
+     * The extension is holder some references to these resources so that their
+     * life cycle is correctly managed.<br/>
+     * <b>This object is only used within this service</b>
+     * 
+     * @author Pierre-Yves Cloux
+     */
+    private static class InternalPluginResources {
+        private String uniquePluginResourceKey;
+        private Object customConfigurationController;
+        private Map<DataType, Object> registrationConfigurationControllers;
+        private Map<String, Object> widgetControllers;
+
+        public InternalPluginResources(String pluginIdentifier, Long pluginConfigurationId, Object customConfigurationController,
+                Map<DataType, Object> registrationConfigurationControllers, Map<String, Object> widgetControllers) {
+            super();
+            this.uniquePluginResourceKey = createUniqueResourceKey(pluginIdentifier, pluginConfigurationId);
+            this.customConfigurationController = customConfigurationController;
+            this.registrationConfigurationControllers = registrationConfigurationControllers;
+            this.widgetControllers = widgetControllers;
+        }
+
+        public Object getCustomConfigurationController() {
+            return customConfigurationController;
+        }
+
+        public Map<DataType, Object> getRegistrationConfigurationControllers() {
+            return registrationConfigurationControllers;
+        }
+
+        public String getUniquePluginResourceKey() {
+            return uniquePluginResourceKey;
+        }
+
+        public Map<String, Object> getWidgetControllers() {
+            return widgetControllers;
+        }
+
+        /**
+         * A unique key for the plugin resources.<br/>
+         * This is a concatenation of:
+         * <ul>
+         * <li>the unique plugin identifier</li>
+         * <li>the plugin configuration identifier (specific from a plugin
+         * instance)</li>
+         * </ul>
+         * 
+         * @return
+         */
+        public static String createUniqueResourceKey(String pluginIdentifier, Long pluginConfigurationId) {
+            return pluginIdentifier + "#" + pluginConfigurationId;
+        }
+
     }
 }
