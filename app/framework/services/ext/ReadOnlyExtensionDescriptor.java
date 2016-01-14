@@ -166,7 +166,7 @@ public class ReadOnlyExtensionDescriptor implements IExtensionDescriptor {
         }
 
         @Override
-        public Map<String, IWidgetDescriptor> getWidgetControllerClassNames() {
+        public Map<String, IWidgetDescriptor> getWidgetDescriptors() {
             if (widgetDesriptors == null) {
                 widgetDesriptors = Collections.synchronizedMap(new HashMap<>());
                 if (getPluginDescriptor().getWidgetDescriptors() != null) {

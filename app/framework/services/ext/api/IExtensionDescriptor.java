@@ -151,7 +151,7 @@ public interface IExtensionDescriptor {
          * Return the controllers which are managing widgets.<br/>
          * This method returns a Map[widgetIdentifier, descriptor]
          */
-        public Map<String, IWidgetDescriptor> getWidgetControllerClassNames();
+        public Map<String, IWidgetDescriptor> getWidgetDescriptors();
     }
 
     /**

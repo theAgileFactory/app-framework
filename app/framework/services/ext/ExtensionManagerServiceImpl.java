@@ -1037,10 +1037,10 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
 
             // Creates the widget controllers (if any)
             Map<String, Object> widgetControllers = null;
-            if (pluginDescriptor.getWidgetControllerClassNames().size() != 0) {
+            if (pluginDescriptor.getWidgetDescriptors().size() != 0) {
                 widgetControllers = Collections.synchronizedMap(new HashMap<>());
-                for (String identifier : pluginDescriptor.getWidgetControllerClassNames().keySet()) {
-                    String controllerClassName = pluginDescriptor.getWidgetControllerClassNames().get(identifier).getControllerClassName();
+                for (String identifier : pluginDescriptor.getWidgetDescriptors().keySet()) {
+                    String controllerClassName = pluginDescriptor.getWidgetDescriptors().get(identifier).getControllerClassName();
                     log.info("Loading widget controller " + controllerClassName);
                     widgetControllers.put(identifier, createInstanceOfClass(controllerClassName, factory, injectableValues));
                 }
