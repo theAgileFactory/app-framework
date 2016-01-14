@@ -694,7 +694,6 @@ function maf_sort_result_source(a, b) {
 */
 function maf_filter_addCheckboxField(parentId, columnId, filterSelectorId, fieldConfig, filterConfig, callbackRefreshTable){
     var li = maf_filter_construct_field_header(columnId, fieldConfig);
-    li.append('<br/>');
     var field = $('<a/>', {"href" : '#',"id" : columnId});  
     li.append(field);   
     $('#'+parentId).append(li);
@@ -728,7 +727,6 @@ function maf_filter_addCheckboxField(parentId, columnId, filterSelectorId, field
 */
 function maf_filter_addTextField(parentId, columnId, filterSelectorId, fieldConfig, filterConfig, callbackRefreshTable){
     var li = maf_filter_construct_field_header(columnId, fieldConfig);
-    li.append('<br/>');
     var field = $('<a/>', {"href" : '#',"id" : columnId});  
     li.append(field);   
     $('#'+parentId).append(li);
@@ -752,7 +750,6 @@ function maf_filter_addTextField(parentId, columnId, filterSelectorId, fieldConf
 function maf_filter_addNumericField(parentId, columnId, filterSelectorId, fieldConfig, filterConfig, callbackRefreshTable){
     
     var li = maf_filter_construct_field_header(columnId, fieldConfig);
-    li.append('<br/>');
     var fieldComparator = $('<a/>', {"href" : '#',"id" : columnId + "Comparator"});
     li.append(fieldComparator);
     li.append('&nbsp;&nbsp;');
@@ -806,7 +803,7 @@ function maf_filter_addNumericField(parentId, columnId, filterSelectorId, fieldC
 function maf_filter_addDateRangeField(parentId, columnId, filterSelectorId, fieldConfig, filterConfig, callbackRefreshTable){
 
     var li = maf_filter_construct_field_header(columnId, fieldConfig);
-    li.append('<br/>' + _maf_translations.from + '&nbsp;');
+    li.append(_maf_translations.from + '&nbsp;');
     var fieldFrom = $('<a/>', {"href" : '#',"id" : columnId+"From"});  
     li.append(fieldFrom);
     li.append("&nbsp;" + _maf_translations.to + "&nbsp;");
@@ -864,7 +861,6 @@ function maf_filter_addDateRangeField(parentId, columnId, filterSelectorId, fiel
 function maf_filter_addSelect(parentId, columnId, filterSelectorId, fieldConfig, filterConfig, callbackRefreshTable){
     
     var li = maf_filter_construct_field_header(columnId, fieldConfig);
-    li.append('<br/>');
     var field = $('<a/>', {"href" : '#',"id" : columnId});  
     li.append(field);
     $('#'+parentId).append(li);
@@ -913,7 +909,6 @@ function maf_filter_addSelect(parentId, columnId, filterSelectorId, fieldConfig,
 */
 function maf_filter_addAutocomplete(parentId, columnId, filterSelectorId, fieldConfig, filterConfig, callbackRefreshTable){
     var li = maf_filter_construct_field_header(columnId, fieldConfig);
-    li.append('<div class="clearfix"></div>');
     var field = $('<a/>', {"href" : '#',"id" : "_"+columnId+"_editable"});
     li.append(field);
     var hiddenFieldValue=$('<input/>', {"type" : "hidden", "name" : columnId, "id" : columnId, "value" : ""});
@@ -962,6 +957,7 @@ function maf_filter_construct_field_header(columnId, fieldConfig) {
     var li = $('<li/>', {"class" : 'filter-input', "id" : "_filter_cp_"+columnId});
     var leftDiv = $('<div/>', {"class" : "pull-left"});
     var rightDiv = $('<div/>', {"class" : "pull-right"});
+    var clearfixDiv = $('<div/>', {"class" : "clearfix"});
     var removeA = $('<a/>', {"href" : "#", "id" : "_filter_remove_" + columnId, "html" : "<span class='fa fa-times'></span>"});
     var label = $('<strong/>',{text : fieldConfig.label}); 
     leftDiv.append(label);
@@ -969,6 +965,7 @@ function maf_filter_construct_field_header(columnId, fieldConfig) {
     rightDiv.append(removeA);
     li.append(leftDiv);
     li.append(rightDiv);
+    li.append(clearfixDiv);
     return li;
 }
 
