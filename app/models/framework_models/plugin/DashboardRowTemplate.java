@@ -1,5 +1,7 @@
 package models.framework_models.plugin;
 
+import org.apache.commons.lang.StringUtils;
+
 /**
  * An enumeration which is listing all the possible row templates.<br/>
  * A page is made of the combination of multiple rows.<br/>
@@ -19,6 +21,13 @@ public enum DashboardRowTemplate {
      */
     public String getLayout() {
         return layout;
+    }
+
+    /**
+     * List of the columns sizes as an array
+     */
+    public String[] getColumnsSizes() {
+        return StringUtils.split(this.getLayout(), ',');
     }
 
     /**
