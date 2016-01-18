@@ -17,12 +17,12 @@ public abstract class WidgetController extends AbstractExtensionController {
     /**
      * Default command for Edit mode
      */
-    public static final String EDIT_COMMAND_ID="_edit";
+    public static final String EDIT_COMMAND_ID = "_edit";
     /**
      * Default path for the command EDIT_COMMAND_ID
      */
-    public static final String EDIT_COMMAND_PATH="/edit";
-    
+    public static final String EDIT_COMMAND_PATH = "/edit";
+
     /**
      * Default constructor.
      * 
@@ -45,23 +45,10 @@ public abstract class WidgetController extends AbstractExtensionController {
     public Promise<Result> displayCommand(@WebParameter(name = "id") Long widgetId) {
         return display(widgetId);
     }
-    
-    /**
-     * The display action.
-     * 
-     * @param template
-     *            the template
-     * @param widgetId
-     *            the widget id
-     */
-    @WebCommandPath(id = WidgetController.EDIT_COMMAND_ID, path = WidgetController.EDIT_COMMAND_PATH + "/:id")
-    public Promise<Result> editCommand(@WebParameter(name = "id") Long widgetId) {
-        return edit(widgetId);
-    }
 
     /**
-     * This method is called when the widget is in DISPLAY mode.
-     * <b>No need to mark it with</b>:
+     * This method is called when the widget is in DISPLAY mode. <b>No need to
+     * mark it with</b>:
      * 
      * <pre>
      * {@code
@@ -76,22 +63,5 @@ public abstract class WidgetController extends AbstractExtensionController {
      * @return a result
      */
     public abstract Promise<Result> display(Long widgetId);
-    
-    /**
-     * This method is called when the widget is in EDIT mode.
-     * <b>No need to mark it with</b>:
-     * 
-     * <pre>
-     * {@code
-     * &#64;WebCommandPath
-     * }
-     * 
-     * </pre>
-     * 
-     * @param widgetId
-     *            the widget id which is referencing the configuration to be
-     *            used by the controller
-     * @return a result
-     */
-    public abstract Promise<Result> edit(Long widgetId);
+
 }
