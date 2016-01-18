@@ -58,7 +58,7 @@ public class DashboardPage extends Model {
     @Lob
     public byte[] layout;
 
-    @ManyToOne(cascade = CascadeType.ALL, optional = false)
+    @ManyToOne(optional = false)
     public Principal principal;
 
     @OneToMany(mappedBy = "dashboardPage", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
