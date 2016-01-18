@@ -12,7 +12,7 @@ import org.apache.commons.lang.StringUtils;
  * @author Pierre-Yves Cloux
  */
 public enum DashboardRowTemplate {
-    TPL12COL_1("12"), TPL66COL_2("6,6"), TPL444COL_3("4,4,4"), TPL48_OL_2("4,8"), TPL84COL_2("8,4");
+    TPL12COL_1("12"), TPL66COL_2("6,6"), TPL444COL_3("4,4,4"), TPL48COL_2("4,8"), TPL84COL_2("8,4");
 
     private String layout;
 
