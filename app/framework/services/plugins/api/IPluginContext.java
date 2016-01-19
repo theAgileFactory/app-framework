@@ -600,4 +600,27 @@ public interface IPluginContext {
      *            the list of principal uid to be notified
      */
     public void sendNotification(String title, String message, String actionLink, String... uids);
+
+    /**
+     * Store the widget state into a persistent storage.<br/>
+     * Only a widget attached to the current plugin can make use of this
+     * feature.
+     * 
+     * @param widgetId
+     *            a unique widget id
+     * @param stateObject
+     *            an object which must be {@link Serializable}
+     */
+    public void setWidgetState(Long widgetId, Object stateObject) throws PluginException;
+
+    /**
+     * Retrieve the widget state from the persistent storage.<br/>
+     * Only a widget attached to the current plugin can make use of this
+     * feature.
+     * 
+     * @param widgetId
+     *            a unique widget id
+     * @return the state object
+     */
+    public Object getWidgetState(Long widgetId) throws PluginException;
 }

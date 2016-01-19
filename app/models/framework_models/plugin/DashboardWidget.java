@@ -1,5 +1,7 @@
 package models.framework_models.plugin;
 
+import java.io.Serializable;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -8,6 +10,7 @@ import javax.persistence.ManyToOne;
 
 import com.avaje.ebean.Model;
 
+import framework.utils.Utilities;
 import models.framework_models.parent.IModelConstants;
 
 /**
@@ -58,4 +61,24 @@ public class DashboardWidget extends Model {
 
     @ManyToOne(optional = false)
     public PluginConfiguration pluginConfiguration;
+
+    /**
+     * Return the state of the widget.<br/>
+     * The stored object must be {@link Serializable}
+     * 
+     * @param stateObject
+     *            an object which is to be stored as XML in the database.
+     */
+    public void setState(Object stateObject) {
+        this.config = Utilities.marshallObject(stateObject);
+    }
+
+    /**
+     * Get the state of the widget.
+     * 
+     * @return an object
+     */
+    public Object getState() {
+        return Utilities.unmarshallObject(this.config);
+    }
 }

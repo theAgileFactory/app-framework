@@ -47,6 +47,7 @@ import framework.services.plugins.api.IPluginContext;
 import framework.services.plugins.api.PluginException;
 import framework.services.storage.ISharedStorageService;
 import framework.utils.Utilities;
+import models.framework_models.plugin.DashboardWidget;
 import models.framework_models.plugin.PluginConfiguration;
 import models.framework_models.plugin.PluginConfigurationBlock;
 import models.framework_models.plugin.PluginIdentificationLink;
@@ -213,6 +214,33 @@ public class PluginContextImpl implements IPluginContext {
             throw new PluginException(String.format("Plugin configuration for %d not found", getPluginConfigurationId()));
         }
         return pluginConfiguration.getState();
+    }
+
+    @Override
+    public void setWidgetState(Long widgetId, Object stateObject) throws PluginException {
+        Ebean.beginTransaction();
+        try {
+            DashboardWidget widget = DashboardWidget.find.where().eq("id", widgetId).eq("pluginConfiguration.id", getPluginConfigurationId()).findUnique();
+            if (widget != null) {
+                widget.setState(stateObject);
+                widget.save();
+            }
+            Ebean.commitTransaction();
+        } catch (Exception e) {
+            log.error(String.format("Exception while attempting to store the state of the widget %d for plugin %d", widgetId, getPluginConfigurationId()), e);
+            Ebean.rollbackTransaction();
+        } finally {
+            Ebean.endTransaction();
+        }
+    }
+
+    @Override
+    public Object getWidgetState(Long widgetId) throws PluginException {
+        DashboardWidget widget = DashboardWidget.find.where().eq("id", widgetId).eq("pluginConfiguration.id", getPluginConfigurationId()).findUnique();
+        if (widget == null) {
+            throw new PluginException(String.format("WidgetId %d not found for plugin %d", widgetId, getPluginConfigurationId()));
+        }
+        return widget.getState();
     }
 
     @Override
