@@ -1,0 +1,8 @@
+@(id: Long, title: String, message: String)
+@widget(id, title, models.framework_models.plugin.DashboardWidgetColor.DANGER.getColor()){
+	<div class="bg-danger _maf_widget_error"><i class="fa fa-exclamation-triangle"></i>&nbsp;@message</div>
+	<script type="text/javascript">
+	bizdock_widget_addEventListener(@id, function(event){
+	});
+	</script>
+}

@@ -1,0 +1,27 @@
+@* LICENSE
+ *
+ * Copyright (c) 2015, The Agile Factory SA and/or its affiliates. All rights
+ * reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ *@
+@(id: Long, title: String, color: String)(content: Html)
+<div id="maf_widget_widget_id_@id" class="panel panel-@color _maf_widget_widget _maf_widget_draggable">
+  <div class="panel-heading">@title<div class="_maf_widget_widget_commands pull-right"></div></div>
+  <div class="panel-body">
+  	<div class="_maf_widget_widget_message"></div>
+  	<div class="_maf_widget_widget_content">
+  	@content
+  	</div>
+  </div>
+</div>
