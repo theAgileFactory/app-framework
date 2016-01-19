@@ -73,6 +73,7 @@ import framework.services.ext.api.IExtensionDescriptor.IPluginDescriptor;
 import framework.services.ext.api.WebCommandPath;
 import framework.services.ext.api.WebControllerPath;
 import framework.services.ext.api.WebParameter;
+import framework.services.notification.INotificationManagerPlugin;
 import framework.services.plugins.IPluginManagerService;
 import framework.services.plugins.api.IPluginContext;
 import framework.services.plugins.api.IPluginRunner;
@@ -206,6 +207,9 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
      * @param authenticatonAccountWriter
      *            ensure that the service is loaded before being possibly used
      *            by an extension
+     * @param notificationManagerPlugin
+     *            ensure that the service is loaded before being possibly used
+     *            by an extension
      * @throws ExtensionManagerException
      */
     @Inject
@@ -213,7 +217,8 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             II18nMessagesPlugin iI18nMessagesPlugin, ICustomRouterService customRouterService, ISysAdminUtils sysAdminUtils,
             IDatabaseDependencyService databaseDependencyService, ISecurityService securityService, ISecurityServiceConfiguration securityServiceConfiguration,
             IPreferenceManagerPlugin preferenceManagerPlugin, ITopMenuBarService topMenuBarService, WSClient wsClient, IScriptService scriptService,
-            IAuthenticationAccountWriterPlugin authenticatonAccountWriter) throws ExtensionManagerException {
+            IAuthenticationAccountWriterPlugin authenticatonAccountWriter, INotificationManagerPlugin notificationManagerPlugin)
+                    throws ExtensionManagerException {
         log.info("SERVICE>>> ExtensionManagerServiceImpl starting...");
         this.autoRefreshMode = configuration.getBoolean(Config.AUTO_REFRESH_ACTIVE.getConfigurationKey());
         this.autoRefreshFrequency = configuration.getInt(Config.AUTO_REFRESH_FREQUENCY.getConfigurationKey());
@@ -930,7 +935,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
     public static class Extension implements IExtension {
         private static final List<Class<?>> AUTHORIZED_INJECTED_SERVICE = Arrays.asList(ISecurityService.class, IUserSessionManagerPlugin.class,
                 ILinkGenerationService.class, II18nMessagesPlugin.class, ISysAdminUtils.class, IPluginContext.class, IPluginRunner.class, WSClient.class,
-                IScriptService.class, IAuthenticationAccountWriterPlugin.class);
+                IScriptService.class, IAuthenticationAccountWriterPlugin.class, INotificationManagerPlugin.class);
 
         private Date loadingTime;
         private File jarFile;

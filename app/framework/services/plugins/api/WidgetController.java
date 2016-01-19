@@ -1,5 +1,6 @@
 package framework.services.plugins.api;
 
+import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.ext.ILinkGenerationService;
 import framework.services.ext.api.AbstractExtensionController;
 import framework.services.ext.api.WebCommandPath;
@@ -14,14 +15,7 @@ import play.mvc.Result;
  *
  */
 public abstract class WidgetController extends AbstractExtensionController {
-    /**
-     * Default command for Edit mode
-     */
-    public static final String EDIT_COMMAND_ID = "_edit";
-    /**
-     * Default path for the command EDIT_COMMAND_ID
-     */
-    public static final String EDIT_COMMAND_PATH = "/edit";
+    private II18nMessagesPlugin i18nMessagePlugin;
 
     /**
      * Default constructor.
@@ -29,8 +23,9 @@ public abstract class WidgetController extends AbstractExtensionController {
      * @param linkGenerationService
      *            the link generation service.
      */
-    public WidgetController(ILinkGenerationService linkGenerationService) {
+    public WidgetController(ILinkGenerationService linkGenerationService, II18nMessagesPlugin i18nMessagePlugin) {
         super(linkGenerationService);
+        this.i18nMessagePlugin = i18nMessagePlugin;
     }
 
     /**
@@ -64,4 +59,32 @@ public abstract class WidgetController extends AbstractExtensionController {
      */
     public abstract Promise<Result> display(Long widgetId);
 
+    /**
+     * Display a widget error
+     * 
+     * @param widgetId
+     * @param title
+     *            the error widget title
+     * @param message
+     *            a message to be displayed in the widget
+     * @return
+     */
+    public Result displayErrorWidget(Long widgetId, String title, String message) {
+        return ok(views.html.framework_views.dashboard.error_widget.render(widgetId, title, message));
+    }
+
+    /**
+     * Display a default widget error
+     * 
+     * @param widgetId
+     * @return
+     */
+    public Result displayErrorWidget(Long widgetId) {
+        return ok(views.html.framework_views.dashboard.error_widget.render(widgetId, getI18nMessagePlugin().get("unexpected.error.title"),
+                getI18nMessagePlugin().get("unexpected.error.message")));
+    }
+
+    protected II18nMessagesPlugin getI18nMessagePlugin() {
+        return i18nMessagePlugin;
+    }
 }
