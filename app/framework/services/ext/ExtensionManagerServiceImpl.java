@@ -539,7 +539,14 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             for (DataType dataType : internalPluginResources.getRegistrationConfigurationControllers().keySet()) {
                 Object registrationController = internalPluginResources.getRegistrationConfigurationControllers().get(dataType);
                 removeExtensionController(registrationController);
-                log.info("Un-registering a registration configuration controller for data type" + dataType);
+                log.info("Un-registering a registration configuration controller for data type " + dataType);
+            }
+        }
+        if (internalPluginResources.getWidgetControllers() != null) {
+            for (String identifier : internalPluginResources.getWidgetControllers().keySet()) {
+                Object widgetController = internalPluginResources.getWidgetControllers().get(identifier);
+                removeExtensionController(widgetController);
+                log.info("Un-registering a widget controller with identifier " + identifier);
             }
         }
 
