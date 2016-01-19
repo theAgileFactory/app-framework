@@ -154,7 +154,7 @@ public class DashboardServiceImpl implements IDashboardService {
 
         Ebean.beginTransaction();
         try {
-            DashboardWidget widget = DashboardWidget.find.where().eq("id", dashboardPageId).eq("dashboardPage.id", dashboardPageId).findUnique();
+            DashboardWidget widget = DashboardWidget.find.where().eq("id", widgetId).eq("dashboardPage.id", dashboardPageId).findUnique();
             if (widget != null) {
                 if (log.isDebugEnabled()) {
                     log.debug("Found a widget with id " + widgetId + " in dashboard page " + dashboardPageId + " : deleting");
@@ -484,6 +484,24 @@ public class DashboardServiceImpl implements IDashboardService {
         } catch (Exception e) {
             Ebean.rollbackTransaction();
             String message = String.format("Cannot delete dashboard page %d", dashboardPageId);
+            log.error(message, e);
+            throw new DashboardException(message, e);
+        } finally {
+            Ebean.endTransaction();
+        }
+    }
+
+    @Override
+    public boolean isWidgetExists(Long widgetId) throws DashboardException {
+        Ebean.beginTransaction();
+        try {
+            DashboardWidget widget = DashboardWidget.find.where().eq("id", widgetId).findUnique();
+            boolean isWidgetExists = widget != null;
+            Ebean.commitTransaction();
+            return isWidgetExists;
+        } catch (Exception e) {
+            Ebean.rollbackTransaction();
+            String message = String.format("Error while looking for the widget %d", widgetId);
             log.error(message, e);
             throw new DashboardException(message, e);
         } finally {
