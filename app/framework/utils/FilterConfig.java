@@ -1229,14 +1229,18 @@ public class FilterConfig<T> {
         /**
          * Convert the meta data for this fiter component into JSON.<br/>
          * This one contains the static for the filter components to be used by
-         * the JavaScript client
+         * the JavaScript client.
+         * 
+         * @param selectableColumnFilterComponentMetaData
+         *            the meta data of the selected filter
          */
         public void marshallMetaData(ObjectNode selectableColumnFilterComponentMetaData);
 
         /**
-         * Convert the default value for the filter
+         * Convert the default value for the filter.
          * 
          * @param userColumnConfiguration
+         *            the user column configuration.
          * @param filterValue
          *            the filter value to be used to marshall
          */
@@ -1244,10 +1248,10 @@ public class FilterConfig<T> {
 
         /**
          * Convert the JSON structure into one or more values to be used for the
-         * SQL query search section
+         * SQL query search section.
          * 
-         * @param json
-         *            the JSON value
+         * @param filterValue
+         *            the filter value
          * @param fieldName
          *            the name of the field (should match the SQL field name)
          */
@@ -1255,7 +1259,10 @@ public class FilterConfig<T> {
 
         /**
          * Convert the JSON structure into one or more values to be used for the
-         * SQL query orderBy section
+         * SQL query orderBy section.
+         * 
+         * @param <T>
+         *            the corresponding class
          * 
          * @param orderby
          *            an order by expression set
@@ -1267,7 +1274,7 @@ public class FilterConfig<T> {
         public <T> void addEBeanSortExpression(OrderBy<T> orderby, SortStatusType sortStatusType, String fieldName);
 
         /**
-         * Convert the JSON structure into one or more java values
+         * Convert the JSON structure into one or more java values.
          * 
          * @param json
          *            the JSON value
@@ -1289,18 +1296,27 @@ public class FilterConfig<T> {
     }
 
     /**
-     * A filter component implemented as a checkbox
+     * A filter component implemented as a checkbox.
      * 
      * @author Pierre-Yves Cloux
      */
     public static class CheckboxFilterComponent implements IFilterComponent {
         private boolean defaultValue;
 
+        /**
+         * Default constructor.
+         * 
+         * @param defaultValue
+         *            the default value
+         */
         public CheckboxFilterComponent(boolean defaultValue) {
             super();
             this.defaultValue = defaultValue;
         }
 
+        /**
+         * Get the default value.
+         */
         public boolean getDefaultValue() {
             return defaultValue;
         }
@@ -1362,7 +1378,7 @@ public class FilterConfig<T> {
     }
 
     /**
-     * A filter component implemented as a text field
+     * A filter component implemented as a text field.
      * 
      * @author Pierre-Yves Cloux
      */
@@ -1370,11 +1386,20 @@ public class FilterConfig<T> {
         public static final String JOKER = "*";
         private String defaultValue;
 
+        /**
+         * Default constructor.
+         * 
+         * @param defaultValue
+         *            the default value
+         */
         public TextFieldFilterComponent(String defaultValue) {
             super();
             this.defaultValue = defaultValue;
         }
 
+        /**
+         * Get the default value.
+         */
         public String getDefaultValue() {
             return defaultValue;
         }
@@ -1451,16 +1476,30 @@ public class FilterConfig<T> {
         private String defaultValue;
         private String defaultComparator;
 
+        /**
+         * Default constructor.
+         * 
+         * @param defaultValue
+         *            the default value (for comparison)
+         * @param defaultComparator
+         *            the default comparator
+         */
         public NumericFieldFilterComponent(String defaultValue, String defaultComparator) {
             super();
             this.defaultValue = defaultValue;
             this.defaultComparator = defaultComparator;
         }
 
+        /**
+         * Get the default value.
+         */
         public String getDefaultValue() {
             return defaultValue;
         }
 
+        /**
+         * Get the default comparator.
+         */
         public String getDefaultComparator() {
             return defaultComparator;
         }
@@ -1562,6 +1601,16 @@ public class FilterConfig<T> {
         private Date to;
         private String format;
 
+        /**
+         * Default constructor.
+         * 
+         * @param from
+         *            the default from date
+         * @param to
+         *            the default to date
+         * @param format
+         *            the default format
+         */
         public DateRangeFilterComponent(Date from, Date to, String format) {
             super();
             this.from = from;
@@ -1569,14 +1618,23 @@ public class FilterConfig<T> {
             this.format = format;
         }
 
+        /**
+         * Get the from date.
+         */
         public Date getFrom() {
             return from;
         }
 
+        /**
+         * Get the to date.
+         */
         public Date getTo() {
             return to;
         }
 
+        /**
+         * Get the format.
+         */
         public String getFormat() {
             return format;
         }
@@ -1686,11 +1744,25 @@ public class FilterConfig<T> {
         }
     }
 
+    /**
+     * A filter component implemented as dropdown.
+     * 
+     * @author Johann kohler
+     *
+     */
     public static class SelectFilterComponent implements IFilterComponent {
         private List<String> defaultValue;
         private ISelectableValueHolderCollection<String> values;
         private String[] fieldsSort;
 
+        /**
+         * Default constructor for "Long" case.
+         * 
+         * @param defaultValue
+         *            the default value
+         * @param values
+         *            the possible values
+         */
         public SelectFilterComponent(Long defaultValue, ISelectableValueHolderCollection<Long> values) {
             super();
 
@@ -1710,11 +1782,29 @@ public class FilterConfig<T> {
             this.fieldsSort = null;
         }
 
+        /**
+         * Default constructor for "Long" case with sort of the fields.
+         * 
+         * @param defaultValue
+         *            the default value
+         * @param values
+         *            the possible values
+         * @param fieldsSort
+         *            the sort of the fields
+         */
         public SelectFilterComponent(Long defaultValue, ISelectableValueHolderCollection<Long> values, String[] fieldsSort) {
             this(defaultValue, values);
             this.fieldsSort = fieldsSort;
         }
 
+        /**
+         * Default constructor for "String" case.
+         * 
+         * @param defaultValue
+         *            the default value
+         * @param values
+         *            the possible values
+         */
         public SelectFilterComponent(String defaultValue, ISelectableValueHolderCollection<String> values) {
             super();
             this.defaultValue = new ArrayList<>();
@@ -1725,11 +1815,24 @@ public class FilterConfig<T> {
             this.fieldsSort = null;
         }
 
+        /**
+         * Default constructor for "String" case with sort of the fields.
+         * 
+         * @param defaultValue
+         *            the default value
+         * @param values
+         *            the possible values
+         * @param fieldsSort
+         *            the sort of the fields
+         */
         public SelectFilterComponent(String defaultValue, ISelectableValueHolderCollection<String> values, String[] fieldsSort) {
             this(defaultValue, values);
             this.fieldsSort = fieldsSort;
         }
 
+        /**
+         * Get the possible values.
+         */
         public ISelectableValueHolderCollection<String> getValues() {
             return values;
         }
@@ -1832,16 +1935,36 @@ public class FilterConfig<T> {
         }
     }
 
+    /**
+     * A filter component implemented as an autocomplete field.
+     * 
+     * @author Johann kohler
+     *
+     */
     public static class AutocompleteFilterComponent implements IFilterComponent {
         private String url;
         private String[] fieldsSort;
 
+        /**
+         * Default constructor.
+         * 
+         * @param url
+         *            the URL of the data provider (for autocomplete search)
+         */
         public AutocompleteFilterComponent(String url) {
             super();
             this.url = url;
             this.fieldsSort = null;
         }
 
+        /**
+         * Default constructor.
+         * 
+         * @param url
+         *            the URL of the data provider (for autocomplete search)
+         * @param fieldsSort
+         *            the sort of the fields
+         */
         public AutocompleteFilterComponent(String url, String[] fieldsSort) {
             this(url);
             this.fieldsSort = fieldsSort;
@@ -1918,6 +2041,9 @@ public class FilterConfig<T> {
             return new Object[] { 0L, "" };
         }
 
+        /**
+         * Get the URL.
+         */
         private String getUrl() {
             return url;
         }
@@ -1933,6 +2059,12 @@ public class FilterConfig<T> {
         }
     }
 
+    /**
+     * The none filter componenent.
+     * 
+     * @author Johann Kohler
+     *
+     */
     public static class NoneFilterComponent implements IFilterComponent {
         @Override
         public void marshallMetaData(ObjectNode selectableColumnFilterComponentMetaData) {
@@ -1977,11 +2109,23 @@ public class FilterConfig<T> {
         private static final String SEARCH_EXPRESSION_TEMPLATE = "(select count(*) from string_custom_attribute_value as cust%2$s "
                 + "where cust%2$s.deleted=0 and cust%2$s.object_type='%1$s' "
                 + "and cust%2$s.object_id=t0.id and cust%2$s.custom_attribute_definition_id=%2$s and cust%2$s.value%3$s)<>0";
-        private static final String SORT_EXPRESSION_TEMPLATE = "(select sortcust%2$s.value from string_custom_attribute_value as sortcust%2$s "
+
+        private static final String SORT_EXPRESSION_TEMPLATE = "(select #value# from string_custom_attribute_value as sortcust%2$s "
                 + "where sortcust%2$s.deleted=0 "
                 + "and sortcust%2$s.object_type='%1$s' and sortcust%2$s.object_id=t0.id and sortcust%2$s.custom_attribute_definition_id=%2$s)";
+        private static final String SORT_EXPRESSION_TEMPLATE_ASC = "HEX(WEIGHT_STRING(sortcust%2$s.value LEVEL 1))";
+        private static final String SORT_EXPRESSION_TEMPLATE_DESC = "HEX(WEIGHT_STRING(sortcust%2$s.value LEVEL 1 DESC))";
+
         private CustomAttributeDefinition customAttributeDefinition;
 
+        /**
+         * Default constructor.
+         * 
+         * @param defaultValue
+         *            the default value
+         * @param customAttributeDefinition
+         *            the custom attribute definition
+         */
         public StringCustomAttributeFilterComponent(String defaultValue, CustomAttributeDefinition customAttributeDefinition) {
             super(defaultValue);
             this.customAttributeDefinition = customAttributeDefinition;
@@ -2008,15 +2152,19 @@ public class FilterConfig<T> {
         @Override
         public <T> void addEBeanSortExpression(OrderBy<T> orderby, SortStatusType sortStatusType, String fieldName) {
             if (sortStatusType != SortStatusType.NONE && sortStatusType != SortStatusType.UNSORTED) {
-                String sql = String.format(SORT_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id);
+                String template = null;
                 if (sortStatusType == SortStatusType.DESC) {
-                    orderby.desc(sql);
+                    template = SORT_EXPRESSION_TEMPLATE.replace("#value#", SORT_EXPRESSION_TEMPLATE_DESC);
                 } else {
-                    orderby.asc(sql);
+                    template = SORT_EXPRESSION_TEMPLATE.replace("#value#", SORT_EXPRESSION_TEMPLATE_ASC);
                 }
+                orderby.asc(String.format(template, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id));
             }
         }
 
+        /**
+         * Get the custom attribute definition.
+         */
         private CustomAttributeDefinition getCustomAttributeDefinition() {
             return customAttributeDefinition;
         }
@@ -2024,7 +2172,7 @@ public class FilterConfig<T> {
 
     /**
      * A custom attribute filter component for a custom attribute whichz is a
-     * text (long string)
+     * text (long string).
      * 
      * @author Pierre-Yves Cloux
      */
@@ -2032,11 +2180,23 @@ public class FilterConfig<T> {
         private static final String SEARCH_EXPRESSION_TEMPLATE = "(select count(*) from text_custom_attribute_value as cust%2$s "
                 + "where cust%2$s.deleted=0 and cust%2$s.object_type='%1$s' and cust%2$s.object_id=t0.id and cust%2$s.custom_attribute_definition_id=%2$s "
                 + "and CAST(cust%2$s.value AS CHAR(10000) CHARACTER SET utf8)%3$s)<>0";
-        private static final String SORT_EXPRESSION_TEMPLATE = "(select sortcust%2$s.value from text_custom_attribute_value as sortcust%2$s "
+
+        private static final String SORT_EXPRESSION_TEMPLATE = "(select #value# from text_custom_attribute_value as sortcust%2$s "
                 + "where sortcust%2$s.deleted=0 and sortcust%2$s.object_type='%1$s' and sortcust%2$s.object_id=t0.id "
                 + "and sortcust%2$s.custom_attribute_definition_id=%2$s)";
+        private static final String SORT_EXPRESSION_TEMPLATE_ASC = "HEX(WEIGHT_STRING(sortcust%2$s.value LEVEL 1))";
+        private static final String SORT_EXPRESSION_TEMPLATE_DESC = "HEX(WEIGHT_STRING(sortcust%2$s.value LEVEL 1 DESC))";
+
         private CustomAttributeDefinition customAttributeDefinition;
 
+        /**
+         * Default constructor.
+         * 
+         * @param defaultValue
+         *            the default value
+         * @param customAttributeDefinition
+         *            the custom attribute definition
+         */
         public TextCustomAttributeFilterComponent(String defaultValue, CustomAttributeDefinition customAttributeDefinition) {
             super(defaultValue);
             this.customAttributeDefinition = customAttributeDefinition;
@@ -2063,22 +2223,26 @@ public class FilterConfig<T> {
         @Override
         public <T> void addEBeanSortExpression(OrderBy<T> orderby, SortStatusType sortStatusType, String fieldName) {
             if (sortStatusType != SortStatusType.NONE && sortStatusType != SortStatusType.UNSORTED) {
-                String sql = String.format(SORT_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id);
+                String template = null;
                 if (sortStatusType == SortStatusType.DESC) {
-                    orderby.desc(sql);
+                    template = SORT_EXPRESSION_TEMPLATE.replace("#value#", SORT_EXPRESSION_TEMPLATE_DESC);
                 } else {
-                    orderby.asc(sql);
+                    template = SORT_EXPRESSION_TEMPLATE.replace("#value#", SORT_EXPRESSION_TEMPLATE_ASC);
                 }
+                orderby.asc(String.format(template, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id));
             }
         }
 
+        /**
+         * Get the custom attribute definition.
+         */
         private CustomAttributeDefinition getCustomAttributeDefinition() {
             return customAttributeDefinition;
         }
     }
 
     /**
-     * A filter component for a boolean custom attribute
+     * A filter component for a boolean custom attribute.
      * 
      * @author Pierre-Yves Cloux
      */
@@ -2086,11 +2250,23 @@ public class FilterConfig<T> {
         private static final String SEARCH_EXPRESSION_TEMPLATE = "(select count(*) from boolean_custom_attribute_value as cust%2$s "
                 + "where cust%2$s.deleted=0 and cust%2$s.object_type='%1$s' and cust%2$s.object_id=t0.id and cust%2$s.custom_attribute_definition_id=%2$s "
                 + "and cust%2$s.value=%3$s)<>0";
-        private static final String SORT_EXPRESSION_TEMPLATE = "(select sortcust%2$s.value from boolean_custom_attribute_value as sortcust%2$s "
+
+        private static final String SORT_EXPRESSION_TEMPLATE = "(select #value# from boolean_custom_attribute_value as sortcust%2$s "
                 + "where sortcust%2$s.deleted=0 and sortcust%2$s.object_type='%1$s' and sortcust%2$s.object_id=t0.id "
                 + "and sortcust%2$s.custom_attribute_definition_id=%2$s)";
+        private static final String SORT_EXPRESSION_TEMPLATE_ASC = "sortcust%2$s.value";
+        private static final String SORT_EXPRESSION_TEMPLATE_DESC = "(1 - sortcust%2$s.value)";
+
         private CustomAttributeDefinition customAttributeDefinition;
 
+        /**
+         * Default constructor.
+         * 
+         * @param defaultValue
+         *            the default value
+         * @param customAttributeDefinition
+         *            the custom attribute definition
+         */
         public BooleanCustomAttributeFilterComponent(boolean defaultValue, CustomAttributeDefinition customAttributeDefinition) {
             super(defaultValue);
             this.customAttributeDefinition = customAttributeDefinition;
@@ -2113,22 +2289,26 @@ public class FilterConfig<T> {
         @Override
         public <T> void addEBeanSortExpression(OrderBy<T> orderby, SortStatusType sortStatusType, String fieldName) {
             if (sortStatusType != SortStatusType.NONE && sortStatusType != SortStatusType.UNSORTED) {
-                String sql = String.format(SORT_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id);
+                String template = null;
                 if (sortStatusType == SortStatusType.DESC) {
-                    orderby.desc(sql);
+                    template = SORT_EXPRESSION_TEMPLATE.replace("#value#", SORT_EXPRESSION_TEMPLATE_DESC);
                 } else {
-                    orderby.asc(sql);
+                    template = SORT_EXPRESSION_TEMPLATE.replace("#value#", SORT_EXPRESSION_TEMPLATE_ASC);
                 }
+                orderby.asc(String.format(template, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id));
             }
         }
 
+        /**
+         * Get the custom attribute definition.
+         */
         private CustomAttributeDefinition getCustomAttributeDefinition() {
             return customAttributeDefinition;
         }
     }
 
     /**
-     * A filter component for a data custom attribute
+     * A filter component for a data custom attribute.
      * 
      * @author Pierre-Yves Cloux
      */
@@ -2139,11 +2319,27 @@ public class FilterConfig<T> {
         private static final String SEARCH_EXPRESSION_TEMPLATE = "(select count(*) from date_custom_attribute_value as cust%2$s "
                 + "where cust%2$s.deleted=0 and cust%2$s.object_type='%1$s' and cust%2$s.object_id=t0.id and cust%2$s.custom_attribute_definition_id=%2$s "
                 + "and (cust%2$s.value between '%3$s' and '%4$s'))<>0";
-        private static final String SORT_EXPRESSION_TEMPLATE = "(select sortcust%2$s.value from date_custom_attribute_value as sortcust%2$s "
+
+        private static final String SORT_EXPRESSION_TEMPLATE = "(select #value# from date_custom_attribute_value as sortcust%2$s "
                 + "where sortcust%2$s.deleted=0 and sortcust%2$s.object_type='%1$s' and sortcust%2$s.object_id=t0.id "
                 + "and sortcust%2$s.custom_attribute_definition_id=%2$s)";
+        private static final String SORT_EXPRESSION_TEMPLATE_ASC = "sortcust%2$s.value";
+        private static final String SORT_EXPRESSION_TEMPLATE_DESC = "DATEDIFF(NOW(), sortcust%2$s.value)";
+
         private CustomAttributeDefinition customAttributeDefinition;
 
+        /**
+         * Default constructor.
+         * 
+         * @param from
+         *            the from date
+         * @param to
+         *            the to date
+         * @param format
+         *            the date format
+         * @param customAttributeDefinition
+         *            the custom attribute definition
+         */
         public DateCustomAttributeFilterComponent(Date from, Date to, String format, CustomAttributeDefinition customAttributeDefinition) {
             super(from, to, format);
             this.customAttributeDefinition = customAttributeDefinition;
@@ -2164,15 +2360,19 @@ public class FilterConfig<T> {
         @Override
         public <T> void addEBeanSortExpression(OrderBy<T> orderby, SortStatusType sortStatusType, String fieldName) {
             if (sortStatusType != SortStatusType.NONE && sortStatusType != SortStatusType.UNSORTED) {
-                String sql = String.format(SORT_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id);
+                String template = null;
                 if (sortStatusType == SortStatusType.DESC) {
-                    orderby.desc(sql);
+                    template = SORT_EXPRESSION_TEMPLATE.replace("#value#", SORT_EXPRESSION_TEMPLATE_DESC);
                 } else {
-                    orderby.asc(sql);
+                    template = SORT_EXPRESSION_TEMPLATE.replace("#value#", SORT_EXPRESSION_TEMPLATE_ASC);
                 }
+                orderby.asc(String.format(template, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id));
             }
         }
 
+        /**
+         * Get the custom attribute definition.
+         */
         private CustomAttributeDefinition getCustomAttributeDefinition() {
             return customAttributeDefinition;
         }
@@ -2187,11 +2387,25 @@ public class FilterConfig<T> {
         private static final String SEARCH_EXPRESSION_TEMPLATE = "(select count(*) from integer_custom_attribute_value as cust%2$s "
                 + "where cust%2$s.deleted=0 and cust%2$s.object_type='%1$s' and cust%2$s.object_id=t0.id and cust%2$s.custom_attribute_definition_id=%2$s "
                 + "and cust%2$s.value %4$s %3$s)<>0";
-        private static final String SORT_EXPRESSION_TEMPLATE = "(select sortcust%2$s.value from integer_custom_attribute_value as sortcust%2$s "
+
+        private static final String SORT_EXPRESSION_TEMPLATE = "(select #value# from integer_custom_attribute_value as sortcust%2$s "
                 + "where sortcust%2$s.deleted=0 and sortcust%2$s.object_type='%1$s' and sortcust%2$s.object_id=t0.id "
                 + "and sortcust%2$s.custom_attribute_definition_id=%2$s)";
+        private static final String SORT_EXPRESSION_TEMPLATE_ASC = "sortcust%2$s.value";
+        private static final String SORT_EXPRESSION_TEMPLATE_DESC = "(1 - sortcust%2$s.value)";
+
         private CustomAttributeDefinition customAttributeDefinition;
 
+        /**
+         * Default constructor.
+         * 
+         * @param defaultValue
+         *            the default value
+         * @param defaultComparator
+         *            the default comparator
+         * @param customAttributeDefinition
+         *            the custom attribute definition
+         */
         public IntegerCustomAttributeFilterComponent(String defaultValue, String defaultComparator, CustomAttributeDefinition customAttributeDefinition) {
             super(defaultValue, defaultComparator);
             this.customAttributeDefinition = customAttributeDefinition;
@@ -2205,7 +2419,7 @@ public class FilterConfig<T> {
                 String comparator = ((String[]) filterValue)[1];
                 try {
                     value = new BigDecimal(((String[]) filterValue)[0]);
-                } catch (Exception NumberFormatException) {
+                } catch (NumberFormatException e) {
                     Logger.warn("impossible to convert '" + filterValue + "' to a BigDecimal");
                 }
                 String sql = String.format(SEARCH_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id,
@@ -2219,22 +2433,26 @@ public class FilterConfig<T> {
         @Override
         public <T> void addEBeanSortExpression(OrderBy<T> orderby, SortStatusType sortStatusType, String fieldName) {
             if (sortStatusType != SortStatusType.NONE && sortStatusType != SortStatusType.UNSORTED) {
-                String sql = String.format(SORT_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id);
+                String template = null;
                 if (sortStatusType == SortStatusType.DESC) {
-                    orderby.desc(sql);
+                    template = SORT_EXPRESSION_TEMPLATE.replace("#value#", SORT_EXPRESSION_TEMPLATE_DESC);
                 } else {
-                    orderby.asc(sql);
+                    template = SORT_EXPRESSION_TEMPLATE.replace("#value#", SORT_EXPRESSION_TEMPLATE_ASC);
                 }
+                orderby.asc(String.format(template, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id));
             }
         }
 
+        /**
+         * Get the custom attribute definition.
+         */
         private CustomAttributeDefinition getCustomAttributeDefinition() {
             return customAttributeDefinition;
         }
     }
 
     /**
-     * A filter component for a decimal custom attribute
+     * A filter component for a decimal custom attribute.
      * 
      * @author Pierre-Yves Cloux
      */
@@ -2242,11 +2460,25 @@ public class FilterConfig<T> {
         private static final String SEARCH_EXPRESSION_TEMPLATE = "(select count(*) from decimal_custom_attribute_value as cust%2$s "
                 + "where cust%2$s.deleted=0 and cust%2$s.object_type='%1$s' and cust%2$s.object_id=t0.id and cust%2$s.custom_attribute_definition_id=%2$s "
                 + "and cust%2$s.value %4$s %3$s)<>0";
-        private static final String SORT_EXPRESSION_TEMPLATE = "(select sortcust%2$s.value from decimal_custom_attribute_value as sortcust%2$s "
+
+        private static final String SORT_EXPRESSION_TEMPLATE = "(select #value# from decimal_custom_attribute_value as sortcust%2$s "
                 + "where sortcust%2$s.deleted=0 and sortcust%2$s.object_type='%1$s' and sortcust%2$s.object_id=t0.id "
                 + "and sortcust%2$s.custom_attribute_definition_id=%2$s)";
+        private static final String SORT_EXPRESSION_TEMPLATE_ASC = "sortcust%2$s.value";
+        private static final String SORT_EXPRESSION_TEMPLATE_DESC = "(1 - sortcust%2$s.value)";
+
         private CustomAttributeDefinition customAttributeDefinition;
 
+        /**
+         * Default constructor.
+         * 
+         * @param defaultValue
+         *            the default value
+         * @param defaultComparator
+         *            the default comparator
+         * @param customAttributeDefinition
+         *            the custom attribute definition
+         */
         public DecimalCustomAttributeFilterComponent(String defaultValue, String defaultComparator, CustomAttributeDefinition customAttributeDefinition) {
             super(defaultValue, defaultComparator);
             this.customAttributeDefinition = customAttributeDefinition;
@@ -2261,7 +2493,7 @@ public class FilterConfig<T> {
                 String comparator = ((String[]) filterValue)[1];
                 try {
                     value = new BigDecimal(((String[]) filterValue)[0]);
-                } catch (Exception NumberFormatException) {
+                } catch (NumberFormatException e) {
                     Logger.warn("impossible to convert '" + filterValue + "' to a BigDecimal");
                 }
                 String sql = String.format(SEARCH_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id,
@@ -2275,22 +2507,26 @@ public class FilterConfig<T> {
         @Override
         public <T> void addEBeanSortExpression(OrderBy<T> orderby, SortStatusType sortStatusType, String fieldName) {
             if (sortStatusType != SortStatusType.NONE && sortStatusType != SortStatusType.UNSORTED) {
-                String sql = String.format(SORT_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id);
+                String template = null;
                 if (sortStatusType == SortStatusType.DESC) {
-                    orderby.desc(sql);
+                    template = SORT_EXPRESSION_TEMPLATE.replace("#value#", SORT_EXPRESSION_TEMPLATE_DESC);
                 } else {
-                    orderby.asc(sql);
+                    template = SORT_EXPRESSION_TEMPLATE.replace("#value#", SORT_EXPRESSION_TEMPLATE_ASC);
                 }
+                orderby.asc(String.format(template, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id));
             }
         }
 
+        /**
+         * Get the custom attribute definition.
+         */
         private CustomAttributeDefinition getCustomAttributeDefinition() {
             return customAttributeDefinition;
         }
     }
 
     /**
-     * A filter component for for a single item custom attribute
+     * A filter component for for a single item custom attribute.
      * 
      * @author Pierre-Yves Cloux
      */
@@ -2303,13 +2539,21 @@ public class FilterConfig<T> {
                 + "where cust%2$s.deleted=0 and cust%2$s.object_type='%1$s' and cust%2$s.object_id=t0.id and cust%2$s.custom_attribute_definition_id=%2$s "
                 + "and cust%2$s.value_id IS NULL)<>0";
 
-        private static final String SORT_EXPRESSION_TEMPLATE = "(select sortcust%2$s_option.order from single_item_custom_attribute_value as sortcust%2$s"
+        private static final String SORT_EXPRESSION_TEMPLATE = "(select #value# from single_item_custom_attribute_value as sortcust%2$s"
                 + " join custom_attribute_item_option as sortcust%2$s_option on sortcust%2$s_option.id=sortcust%2$s.value_id"
                 + " where sortcust%2$s.deleted=0 and sortcust%2$s.object_type='%1$s' and sortcust%2$s.object_id=t0.id "
                 + "and sortcust%2$s.custom_attribute_definition_id=%2$s)";
+        private static final String SORT_EXPRESSION_TEMPLATE_ASC = "sortcust%2$s_option.order";
+        private static final String SORT_EXPRESSION_TEMPLATE_DESC = "(1 - sortcust%2$s_option.order)";
 
         private CustomAttributeDefinition customAttributeDefinition;
 
+        /**
+         * Default constructor.
+         * 
+         * @param customAttributeDefinition
+         *            the custom attribute definition
+         */
         public SingleItemCustomAttributeFilterComponent(CustomAttributeDefinition customAttributeDefinition) {
             super(null, customAttributeDefinition.getValueHoldersCollectionForSingleItemCustomAttribute());
             this.customAttributeDefinition = customAttributeDefinition;
@@ -2340,22 +2584,26 @@ public class FilterConfig<T> {
         @Override
         public <T> void addEBeanSortExpression(OrderBy<T> orderby, SortStatusType sortStatusType, String fieldName) {
             if (sortStatusType != SortStatusType.NONE && sortStatusType != SortStatusType.UNSORTED) {
-                String sql = String.format(SORT_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id);
+                String template = null;
                 if (sortStatusType == SortStatusType.DESC) {
-                    orderby.desc(sql);
+                    template = SORT_EXPRESSION_TEMPLATE.replace("#value#", SORT_EXPRESSION_TEMPLATE_DESC);
                 } else {
-                    orderby.asc(sql);
+                    template = SORT_EXPRESSION_TEMPLATE.replace("#value#", SORT_EXPRESSION_TEMPLATE_ASC);
                 }
+                orderby.asc(String.format(template, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id));
             }
         }
 
+        /**
+         * Get the custom attribute definition.
+         */
         private CustomAttributeDefinition getCustomAttributeDefinition() {
             return customAttributeDefinition;
         }
     }
 
     /**
-     * A filter component for for a multi item custom attribute
+     * A filter component for for a multi item custom attribute.
      * 
      * @author Johann Kohler
      */
@@ -2369,6 +2617,12 @@ public class FilterConfig<T> {
 
         private CustomAttributeDefinition customAttributeDefinition;
 
+        /**
+         * Default constructor.
+         * 
+         * @param customAttributeDefinition
+         *            the custom attribute definition
+         */
         public MultiItemCustomAttributeFilterComponent(CustomAttributeDefinition customAttributeDefinition) {
             super(null, customAttributeDefinition.getValueHoldersCollectionForMultiItemCustomAttribute());
             this.customAttributeDefinition = customAttributeDefinition;
@@ -2401,11 +2655,19 @@ public class FilterConfig<T> {
         public <T> void addEBeanSortExpression(OrderBy<T> orderby, SortStatusType sortStatusType, String fieldName) {
         }
 
+        /**
+         * Get the custom attribute definition.
+         */
         private CustomAttributeDefinition getCustomAttributeDefinition() {
             return customAttributeDefinition;
         }
     }
 
+    /**
+     * A filter component for KPI (when displayed as a value).
+     * 
+     * @author Johann Kohler
+     */
     public static class KpiNumericFilterComponent extends NumericFieldFilterComponent {
 
         private static final String SEARCH_EXPRESSION_TEMPLATE = "(SELECT count(*) from kpi_data kdata%1$s"
@@ -2416,16 +2678,28 @@ public class FilterConfig<T> {
                 + " WHERE kdata_i%1$s.kpi_value_definition_id = kvd%1$s.id AND kdata_i%1$s.object_id = kdata%1$s.object_id)"
                 + " AND kd%1$s.uid = '%1$s' AND kdata%1$s.object_id = t0.id AND kdata%1$s.value %3$s %2$s)<>0";
 
-        private static final String SORT_EXPRESSION_TEMPLATE = "(SELECT kdatasort%1$s.value from kpi_data kdatasort%1$s"
+        private static final String SORT_EXPRESSION_TEMPLATE = "(SELECT #value# from kpi_data kdatasort%1$s"
                 + " JOIN kpi_value_definition kvdsort%1$s ON kdatasort%1$s.kpi_value_definition_id = kvdsort%1$s.id"
                 + " JOIN kpi_definition kdsort%1$s ON kvdsort%1$s.id = kdsort%1$s.main_kpi_value_definition_id"
                 + " WHERE kdatasort%1$s.deleted = 0 AND kvdsort%1$s.deleted = 0 AND kdsort%1$s.deleted = 0 AND"
                 + " kdatasort%1$s.timestamp = (SELECT MAX(kdata_isort%1$s.timestamp) FROM kpi_data kdata_isort%1$s"
                 + " WHERE kdata_isort%1$s.kpi_value_definition_id = kvdsort%1$s.id AND kdata_isort%1$s.object_id = kdatasort%1$s.object_id)"
                 + " AND kdsort%1$s.uid = '%1$s' AND kdatasort%1$s.object_id = t0.id)";
+        private static final String SORT_EXPRESSION_TEMPLATE_ASC = "kdatasort%1$s.value";
+        private static final String SORT_EXPRESSION_TEMPLATE_DESC = "(1 - kdatasort%1$s.value)";
 
         private Kpi kpi;
 
+        /**
+         * Default constructor.
+         * 
+         * @param defaultValue
+         *            the default value
+         * @param defaultComparator
+         *            the default comparator
+         * @param kpi
+         *            the KPI
+         */
         public KpiNumericFilterComponent(String defaultValue, String defaultComparator, Kpi kpi) {
             super(defaultValue, defaultComparator);
             this.kpi = kpi;
@@ -2439,7 +2713,7 @@ public class FilterConfig<T> {
                 String comparator = ((String[]) filterValue)[1];
                 try {
                     value = new BigDecimal(((String[]) filterValue)[0]);
-                } catch (Exception NumberFormatException) {
+                } catch (NumberFormatException e) {
                     Logger.warn("impossible to convert '" + filterValue + "' to a BigDecimal");
                 }
                 String sql = String.format(SEARCH_EXPRESSION_TEMPLATE, getKpi().getUid(), value.toPlainString(), comparator);
@@ -2451,16 +2725,20 @@ public class FilterConfig<T> {
         @Override
         public <T> void addEBeanSortExpression(OrderBy<T> orderby, SortStatusType sortStatusType, String fieldName) {
             if (sortStatusType != SortStatusType.NONE && sortStatusType != SortStatusType.UNSORTED) {
-                String sql = String.format(SORT_EXPRESSION_TEMPLATE, getKpi().getUid());
+                String template = null;
                 if (sortStatusType == SortStatusType.DESC) {
-                    orderby.desc(sql);
+                    template = SORT_EXPRESSION_TEMPLATE.replace("#value#", SORT_EXPRESSION_TEMPLATE_DESC);
                 } else {
-                    orderby.asc(sql);
+                    template = SORT_EXPRESSION_TEMPLATE.replace("#value#", SORT_EXPRESSION_TEMPLATE_ASC);
                 }
+                orderby.asc(String.format(template, getKpi().getUid()));
             }
 
         }
 
+        /**
+         * Get the KPI.
+         */
         private Kpi getKpi() {
             return kpi;
         }
@@ -2471,6 +2749,11 @@ public class FilterConfig<T> {
         }
     }
 
+    /**
+     * A filter component for KPI (when displayed as a label).
+     * 
+     * @author Johann Kohler
+     */
     public static class KpiSelectFilterComponent extends SelectFilterComponent {
 
         private static final String SEARCH_EXPRESSION_TEMPLATE = "(SELECT count(*) from kpi_data kdata%1$s"
@@ -2481,16 +2764,28 @@ public class FilterConfig<T> {
                 + " WHERE kdata_i%1$s.kpi_value_definition_id = kvd%1$s.id AND kdata_i%1$s.object_id = kdata%1$s.object_id)"
                 + " AND kd%1$s.uid = '%1$s' AND kdata%1$s.object_id = t0.id AND kdata%1$s.kpi_color_rule_id IN %2$s)<>0";
 
-        private static final String SORT_EXPRESSION_TEMPLATE = "(SELECT kdatasort%1$s.kpi_color_rule_id from kpi_data kdatasort%1$s"
+        private static final String SORT_EXPRESSION_TEMPLATE = "(SELECT #value# from kpi_data kdatasort%1$s"
                 + " JOIN kpi_value_definition kvdsort%1$s ON kdatasort%1$s.kpi_value_definition_id = kvdsort%1$s.id"
                 + " JOIN kpi_definition kdsort%1$s ON kvdsort%1$s.id = kdsort%1$s.main_kpi_value_definition_id"
                 + " WHERE kdatasort%1$s.deleted = 0 AND kvdsort%1$s.deleted = 0 AND kdsort%1$s.deleted = 0 AND"
                 + " kdatasort%1$s.timestamp = (SELECT MAX(kdata_isort%1$s.timestamp) FROM kpi_data kdata_isort%1$s"
                 + " WHERE kdata_isort%1$s.kpi_value_definition_id = kvdsort%1$s.id AND kdata_isort%1$s.object_id = kdatasort%1$s.object_id)"
                 + " AND kdsort%1$s.uid = '%1$s' AND kdatasort%1$s.object_id = t0.id)";
+        private static final String SORT_EXPRESSION_TEMPLATE_ASC = "kdatasort%1$s.kpi_color_rule_id";
+        private static final String SORT_EXPRESSION_TEMPLATE_DESC = "(1 - kdatasort%1$s.kpi_color_rule_id)";
 
         private Kpi kpi;
 
+        /**
+         * Default constructor.
+         * 
+         * @param defaultValue
+         *            the default value
+         * @param rules
+         *            the possible rules
+         * @param kpi
+         *            the KPI
+         */
         public KpiSelectFilterComponent(Long defaultValue, ISelectableValueHolderCollection<Long> rules, Kpi kpi) {
             super(defaultValue, rules);
             this.kpi = kpi;
@@ -2532,15 +2827,19 @@ public class FilterConfig<T> {
         @Override
         public <T> void addEBeanSortExpression(OrderBy<T> orderby, SortStatusType sortStatusType, String fieldName) {
             if (sortStatusType != SortStatusType.NONE && sortStatusType != SortStatusType.UNSORTED) {
-                String sql = String.format(SORT_EXPRESSION_TEMPLATE, getKpi().getUid());
+                String template = null;
                 if (sortStatusType == SortStatusType.DESC) {
-                    orderby.desc(sql);
+                    template = SORT_EXPRESSION_TEMPLATE.replace("#value#", SORT_EXPRESSION_TEMPLATE_DESC);
                 } else {
-                    orderby.asc(sql);
+                    template = SORT_EXPRESSION_TEMPLATE.replace("#value#", SORT_EXPRESSION_TEMPLATE_ASC);
                 }
+                orderby.asc(String.format(template, getKpi().getUid()));
             }
         }
 
+        /**
+         * Get the KPI.
+         */
         private Kpi getKpi() {
             return kpi;
         }
@@ -2551,6 +2850,11 @@ public class FilterConfig<T> {
         }
     }
 
+    /**
+     * A filter component for KPI when no filter is available.
+     * 
+     * @author Johann Kohler
+     */
     public static class KpiNoneFilterComponent extends NoneFilterComponent {
 
         @Override
@@ -2560,10 +2864,22 @@ public class FilterConfig<T> {
 
     }
 
+    /**
+     * Exception for filter config.
+     * 
+     * @author Johann Kohler
+     *
+     */
     public static class FilterConfigException extends Exception {
 
         private static final long serialVersionUID = 1L;
 
+        /**
+         * Default constructor.
+         * 
+         * @param message
+         *            the exception message
+         */
         public FilterConfigException(String message) {
             super(message);
         }

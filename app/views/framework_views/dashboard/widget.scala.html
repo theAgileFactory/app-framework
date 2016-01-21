@@ -18,7 +18,7 @@
 @(id: Long, title: String, color: String)(content: Html)
 <div id="maf_widget_widget_id_@id" class="panel panel-@color _maf_widget_widget _maf_widget_draggable">
   <div class="panel-heading">@title<div class="_maf_widget_widget_commands pull-right"></div></div>
-  <div class="panel-body">
+  <div class="panel-body" style="overflow-y: auto; overflow-x: hidden; max-height: 300px;">
   	<div class="_maf_widget_widget_message"></div>
   	<div class="_maf_widget_widget_content">
   	@content
