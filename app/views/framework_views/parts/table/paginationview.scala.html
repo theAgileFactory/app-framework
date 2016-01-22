@@ -15,10 +15,15 @@
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  *@
-@(pagination: framework.utils.Pagination[_],
+@(
+    pagination: framework.utils.Pagination[_],
     filterText: String = null, 
     filterColumn: String = null,
-    queryParams: String = null)
+    queryParams: String = null,
+    useAjax: Boolean = false,
+    tableContainerAsJQuery: String = null,
+    tableUrl: String = null
+)
     
 @import framework_views.parts
     
@@ -35,13 +40,13 @@
     <div class="col-md-12 text-center">
     <ul class="pagination no-margin">
     @if(pagination.hasLess()){
-        <li><a href="?@pagination.getPageQueryName=@{pagination.getLowerBound()-1}@otherParameters">&lt;&lt;</a></li>
+        <li><a data-page="@{pagination.getLowerBound()-1}" class="@(pagination.getPageQueryName)-link" href="?@pagination.getPageQueryName=@{pagination.getLowerBound()-1}@otherParameters">&lt;&lt;</a></li>
     }
     @for(pageIndex <- pagination.getLowerBound() to pagination.getUpperBound()){
-        <li @if(pageIndex==pagination.getCurrentPage()){class="active"}><a href="?@pagination.getPageQueryName=@pageIndex@otherParameters">@{pageIndex+1}</a></li>
+        <li @if(pageIndex==pagination.getCurrentPage()){class="active"}><a data-page="@pageIndex" class="@(pagination.getPageQueryName)-link" href="?@pagination.getPageQueryName=@pageIndex@otherParameters">@{pageIndex+1}</a></li>
     }
     @if(pagination.hasMore()){
-        <li><a href="?@pagination.getPageQueryName=@{pagination.getUpperBound()+1}@otherParameters">&gt;&gt;</a></li>
+        <li><a data-page="@{pagination.getUpperBound()+1}" class="@(pagination.getPageQueryName)-link" href="?@pagination.getPageQueryName=@{pagination.getUpperBound()+1}@otherParameters">&gt;&gt;</a></li>
     }
     </ul>
     </div>
@@ -49,6 +54,20 @@
         <small>@pagination.getRowCount() @parts.Msg("table.pagination.records")</small>
     </div>
     </div>
+    
+    @if(useAjax) {
+        <script>
+        $('.@(pagination.getPageQueryName)-link').on('click', function (e) {
+            e.preventDefault();
+            var page = $(this).data("page");
+            $.get("@tableUrl?@pagination.getPageQueryName=" + page + "@otherParameters", function(data) {
+                @(Html(tableContainerAsJQuery)).html(data);
+            }).fail(function() {
+                alert("Error");
+            }); 
+        })
+        </script>
+    }
 }
 @******************************************************
  Components to be used with the Table class (see utils)

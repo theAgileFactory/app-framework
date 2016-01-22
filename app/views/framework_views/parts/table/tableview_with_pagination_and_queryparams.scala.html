@@ -15,12 +15,18 @@
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  *@
-@(table: framework.utils.Table[_], pagination: framework.utils.Pagination[_],
-	filterText: String = null,
-	filterColumn: String = null,
-	queryParams: String = null)
+@(
+    table: framework.utils.Table[_],
+    pagination: framework.utils.Pagination[_],
+    filterText: String = null,
+    filterColumn: String = null,
+    queryParams: String = null,
+    useAjax: Boolean = false,
+    tableContainerAsJQuery: String = null,
+    tableUrl: String = null
+)
 @tableview(table)
-@paginationview(pagination, filterText, filterColumn, queryParams)
+@paginationview(pagination, filterText, filterColumn, queryParams, useAjax, tableContainerAsJQuery, tableUrl)
 @******************************************************
  Combine the tableview with a paginationview
  ******************************************************@ 
