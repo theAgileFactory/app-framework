@@ -164,7 +164,9 @@ public class FilterConfiguration extends Model implements IModel, ISelectableVal
                 String[] pairs = uri.getQuery().split("&");
                 for (String pair : pairs) {
                     int idx = pair.indexOf("=");
-                    queryPairs.put(URLDecoder.decode(pair.substring(0, idx), "UTF-8"), URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
+                    if (idx != -1) {
+                        queryPairs.put(URLDecoder.decode(pair.substring(0, idx), "UTF-8"), URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
+                    }
                 }
             }
             queryPairs.put("filterSharedKey", this.sharedKey);
@@ -181,6 +183,7 @@ public class FilterConfiguration extends Model implements IModel, ISelectableVal
 
         } catch (Exception e) {
             Logger.error("impossible to construct the link for the filter configuration " + this.id, e);
+            Logger.error("the route was: " + route);
             return null;
         }
 
