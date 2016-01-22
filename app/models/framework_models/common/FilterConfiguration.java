@@ -183,6 +183,7 @@ public class FilterConfiguration extends Model implements IModel, ISelectableVal
 
         } catch (Exception e) {
             Logger.error("impossible to construct the link for the filter configuration " + this.id, e);
+            Logger.error("the route was: " + route);
             return null;
         }
 
