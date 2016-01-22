@@ -98,6 +98,11 @@ public class ReadOnlyExtensionDescriptor implements IExtensionDescriptor {
         }
 
         @Override
+        public boolean autoRegister() {
+            return getPluginDescriptor().isAutoRegister();
+        }
+
+        @Override
         public String getName() {
             return getPluginDescriptor().getName();
         }
@@ -155,8 +160,7 @@ public class ReadOnlyExtensionDescriptor implements IExtensionDescriptor {
             if (registrationControllers == null) {
                 registrationControllers = Collections.synchronizedMap(new HashMap<>());
                 if (getPluginDescriptor().getRegistrationConfigurationControllerDescriptors() != null) {
-                    for (PluginRegistrationConfiguratorControllerDescriptor desc : getPluginDescriptor()
-                            .getRegistrationConfigurationControllerDescriptors()) {
+                    for (PluginRegistrationConfiguratorControllerDescriptor desc : getPluginDescriptor().getRegistrationConfigurationControllerDescriptors()) {
                         DataType dataType = DataType.getDataType(desc.getDataType());
                         registrationControllers.put(dataType, desc.getControllerClass());
                     }

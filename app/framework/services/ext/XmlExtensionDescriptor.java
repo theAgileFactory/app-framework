@@ -250,6 +250,10 @@ public class XmlExtensionDescriptor {
      * <li>vendorUrl : an URL pointing to the plugin documentation</li>
      * <li>multiInstance : true if the plugin can be instanciated multiple times
      * </li>
+     * <li>autoRegister : true if a plugin configuration is automatically
+     * created at system startup (such plugin cannot be removed by the end
+     * user).<br/>
+     * An auto-register plugin is necessarily "mono-instance".</li>
      * <li>eventInterface : tells if the plugin can received some invents from
      * BizDock or the outside world</li>
      * <li>pluginConfigurationBlockDescriptors : the list of "standard"
@@ -275,6 +279,7 @@ public class XmlExtensionDescriptor {
         private String version;
         private String vendorUrl;
         private boolean multiInstance;
+        private boolean autoRegister;
         private PluginEventInterfaceDescriptor eventInterface;
         private List<PluginConfigurationBlockDescriptor> pluginConfigurationBlockDescriptors;
         private List<String> supportedDataTypes;
@@ -347,6 +352,15 @@ public class XmlExtensionDescriptor {
 
         public void setMultiInstance(boolean multiInstance) {
             this.multiInstance = multiInstance;
+        }
+
+        @XmlElement(name = "auto-register", required = false, nillable = false)
+        public boolean isAutoRegister() {
+            return autoRegister;
+        }
+
+        public void setAutoRegister(boolean autoRegister) {
+            this.autoRegister = autoRegister;
         }
 
         @XmlElement(name = "event-interface", required = true, nillable = false)

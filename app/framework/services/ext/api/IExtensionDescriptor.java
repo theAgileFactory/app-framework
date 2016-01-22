@@ -95,6 +95,14 @@ public interface IExtensionDescriptor {
         public boolean multiInstanceAllowed();
 
         /**
+         * True if the plugin is automatically registered (created plugin
+         * configuration).
+         * 
+         * @return a boolean
+         */
+        public boolean autoRegister();
+
+        /**
          * The i18n key for the name of the plugin
          */
         public String getName();

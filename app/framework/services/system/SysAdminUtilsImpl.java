@@ -22,8 +22,6 @@ import java.lang.management.MemoryMXBean;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryUsage;
 import java.lang.management.ThreadMXBean;
-import java.sql.Timestamp;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -33,7 +31,6 @@ import javax.inject.Singleton;
 import org.apache.commons.lang3.ArrayUtils;
 
 import com.avaje.ebean.Ebean;
-import com.avaje.ebean.TxIsolation;
 
 import akka.actor.ActorSystem;
 import akka.actor.Cancellable;
@@ -84,7 +81,7 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
         log.info("SERVICE>>> SysAdminUtilsImpl starting...");
         this.actorSystem = actorSystem;
         this.configuration = configuration;
-        flushAllSchedulerStates();
+        initAutomatedSystemStatus();
         lifecycle.addStopHook(() -> {
             log.info("SERVICE>>> SysAdminUtilsImpl stopping...");
             if (automaticSystemStatus != null) {
@@ -109,30 +106,12 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
             @Override
             public void run() {
                 String transactionId = Utilities.getRandomID();
-                dumpSystemStatus("ASYNC ACTION START for " + scheduledActionUuid + " and transaction " + transactionId);
-                if (!exclusive) {
-                    log.debug("Not exclusive " + scheduledActionUuid);
-                    try {
-                        runnable.run();
-                    } catch (Exception e) {
-                        log.error("The job " + scheduledActionUuid + " raised an exception within the transaction " + transactionId, e);
-                    }
-                } else {
-                    if (checkRunAuthorization(transactionId, scheduledActionUuid)) {
-                        if (log.isDebugEnabled()) {
-                            log.debug("Exclusive but no other running instance for " + scheduledActionUuid);
-                        }
-                        try {
-                            runnable.run();
-                        } catch (Exception e) {
-                            log.error("The job " + scheduledActionUuid + " raised an exception within the transaction " + transactionId, e);
-                        }
-                        markAsCompleted(transactionId, scheduledActionUuid);
-                    } else {
-                        if (log.isDebugEnabled()) {
-                            log.debug("Conflict, job will not run " + scheduledActionUuid);
-                        }
-                    }
+                dumpSystemStatus(
+                        "ASYNC ACTION START for " + scheduledActionUuid + " [" + (exclusive ? "EXCLUSIVE" : "STANDARD") + "] and transaction " + transactionId);
+                try {
+                    runnable.run();
+                } catch (Exception e) {
+                    log.error("The job " + scheduledActionUuid + " raised an exception within the transaction " + transactionId, e);
                 }
                 dumpSystemStatus("ASYNC ACTION STOP for " + scheduledActionUuid + " and transaction " + transactionId);
             }
@@ -149,31 +128,16 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
             @Override
             public void run() {
                 String transactionId = Utilities.getRandomID();
-                dumpSystemStatus("SCHEDULER START for " + scheduledActionUuid + " and transaction " + transactionId, logInDebug);
-                if (!exclusive) {
-                    log.debug("Not exclusive " + scheduledActionUuid);
-                    try {
-                        runnable.run();
-                    } catch (Exception e) {
-                        log.error("The job " + scheduledActionUuid + " raised an exception within the transaction " + transactionId, e);
-                    }
-                } else {
-                    if (checkRunAuthorization(transactionId, scheduledActionUuid)) {
-                        if (log.isDebugEnabled()) {
-                            log.debug("Exclusive but no other running instance for " + scheduledActionUuid);
-                        }
-                        try {
-                            runnable.run();
-                        } catch (Exception e) {
-                            log.error("The job " + scheduledActionUuid + " raised an exception within the transaction " + transactionId, e);
-                        }
-                        markAsCompleted(transactionId, scheduledActionUuid);
-                    } else {
-                        if (log.isDebugEnabled()) {
-                            log.debug("Conflict, job will not run " + scheduledActionUuid);
-                        }
-                    }
+                dumpSystemStatus(
+                        "SCHEDULER START for " + scheduledActionUuid + " [" + (exclusive ? "EXCLUSIVE" : "STANDARD") + "] and transaction " + transactionId,
+                        logInDebug);
+                markAsStarted(transactionId, scheduledActionUuid);
+                try {
+                    runnable.run();
+                } catch (Exception e) {
+                    log.error("The job " + scheduledActionUuid + " raised an exception within the transaction " + transactionId, e);
                 }
+                markAsCompleted(transactionId, scheduledActionUuid);
                 dumpSystemStatus("SCHEDULER STOP for " + scheduledActionUuid + " and transaction " + transactionId, logInDebug);
             }
         }, getActorSystem().dispatcher());
@@ -185,80 +149,36 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
         return scheduleRecurring(exclusive, scheduledActionUuid, initialDelay, interval, runnable, false);
     }
 
-    @Override
-    public void flushAllSchedulerStates() {
-        try {
-            log.info("Flushing the scheduler state...");
-            Ebean.beginTransaction(TxIsolation.SERIALIZABLE);
-            SchedulerState.flushAllStates();
-            Ebean.commitTransaction();
-            log.info("...flushed");
-        } catch (Exception e) {
-            log.error("Failed to flush the scheduler states", e);
-            rollbackTransactionSilent();
-        } finally {
-            endTransactionSilent();
-        }
-    }
-
     /**
-     * Return true if the scheduled process is allowed to run false if another
-     * one is already running.
+     * Mark the specified action as completed
      * 
      * @param transactionId
      *            the unique transaction id for this action
      * @param scheduledActionUuid
      *            the unique name of an action
-     * @return
      */
-    private boolean checkRunAuthorization(String transactionId, String scheduledActionUuid) {
+    private void markAsStarted(String transactionId, String scheduledActionUuid) {
         try {
+            Ebean.beginTransaction();
+            SchedulerState schedulerState = new SchedulerState();
+            schedulerState.actionUuid = scheduledActionUuid;
+            schedulerState.transactionId = transactionId;
+            schedulerState.isRunning = true;
+            schedulerState.save();
             if (log.isDebugEnabled()) {
-                log.debug("Check the authorization for the scheduled action " + scheduledActionUuid);
+                log.debug(String.format("Scheduled action for %s with transaction id %s started", scheduledActionUuid, transactionId));
             }
-            Ebean.beginTransaction(TxIsolation.SERIALIZABLE);
-            SchedulerState schedulerState = SchedulerState.getRunningSchedulerStateFromActionUuid(scheduledActionUuid);
-            if (schedulerState == null) {
-                if (log.isDebugEnabled()) {
-                    log.debug("No scheduler state found for " + scheduledActionUuid);
-                }
-                schedulerState = new SchedulerState();
-                schedulerState.actionUuid = scheduledActionUuid;
-                schedulerState.isRunning = true;
-                schedulerState.transactionId = transactionId;
-                schedulerState.save();
-                Ebean.commitTransaction();
-                endTransactionSilent();
-                return true;
-            } else {
-                if (log.isDebugEnabled()) {
-                    log.debug("As scheduler state was found for " + scheduledActionUuid);
-                }
-                Timestamp lastUpdate = schedulerState.lastUpdate;
-                int numberOfMinutes = this.getConfiguration().getInt("maf.test.old.running.process");
-                Date currentMinus24Hours = new Date(System.currentTimeMillis() - (numberOfMinutes * 60 * 1000));
-                log.info(String.format(
-                        "Conflict notification : The scheduled process %s with transaction id %s will not run because another process is already running with transaction id %s",
-                        scheduledActionUuid, transactionId, schedulerState.transactionId));
-                if (lastUpdate.before(currentMinus24Hours)) {
-                    log.error(String.format("ERROR : the scheduled process %s with transaction id %s is still running after %d minutes", scheduledActionUuid,
-                            schedulerState.transactionId, numberOfMinutes));
-                }
-            }
+            Ebean.commitTransaction();
         } catch (Exception e) {
-            if (log.isDebugEnabled()) {
-                log.debug("Failed to update the scheduler state for " + scheduledActionUuid, e);
-            }
+            log.error("Failed to mark as started", e);
             rollbackTransactionSilent();
         } finally {
             endTransactionSilent();
         }
-        return false;
     }
 
     /**
-     * Mark the specified action as completed and flush the old transaction
-     * states
+     * Mark the specified action as completed
      * 
      * @param transactionId
      *            the unique transaction id for this action
@@ -267,8 +187,8 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
      */
     private void markAsCompleted(String transactionId, String scheduledActionUuid) {
         try {
-            Ebean.beginTransaction(TxIsolation.SERIALIZABLE);
-            SchedulerState schedulerState = SchedulerState.getRunningSchedulerStateFromActionUuid(scheduledActionUuid);
+            Ebean.beginTransaction();
+            SchedulerState schedulerState = SchedulerState.getRunningSchedulerStateFromTransactionId(transactionId);
             if (schedulerState == null) {
                 log.error(String.format(
                         "Strange ... No running scheduled action for %s with transaction id %s while one was running and mark as completed is requested",
@@ -276,13 +196,13 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
             } else {
                 schedulerState.isRunning = false;
                 schedulerState.save();
-                log.info(String.format("Scheduled action for %s with transaction id %s completed, scheduler state flushed", scheduledActionUuid,
-                        transactionId));
+                if (log.isDebugEnabled()) {
+                    log.debug(String.format("Scheduled action for %s with transaction id %s completed", scheduledActionUuid, transactionId));
+                }
             }
-            SchedulerState.flushOldStates(getConfiguration());
             Ebean.commitTransaction();
         } catch (Exception e) {
-            log.debug("Failed to mark as complete and flush the scheduler state", e);
+            log.error("Failed to mark as complete", e);
             rollbackTransactionSilent();
         } finally {
             endTransactionSilent();
@@ -360,6 +280,11 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
         }
     }
 
+    public void flushOldStates() {
+        int hours = getConfiguration().getInt("maf.flush.scheduler.states.interval");
+        SchedulerState.flushOldStates(hours);
+    }
+
     /**
      * Initialize the automated system status.
      */
@@ -371,9 +296,11 @@ public class SysAdminUtilsImpl implements ISysAdminUtils {
                     Duration.create(frequency, TimeUnit.SECONDS), new Runnable() {
                         @Override
                         public void run() {
-                            // Do nothing, the system will anyway
-                            // display the
-                            // status
+                            try {
+                                flushOldStates();
+                            } catch (Exception e) {
+                                log.error("Failed to flush the old states of recurring jobs", e);
+                            }
                         }
                     });
             log.info(">>>>>>>>>>>>>>>> Activate automated system status (end)");

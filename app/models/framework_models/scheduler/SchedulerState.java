@@ -29,12 +29,9 @@ import com.avaje.ebean.Model;
 import com.avaje.ebean.SqlUpdate;
 
 import models.framework_models.parent.IModelConstants;
-import play.Configuration;
 
 /**
- * An object which stores the status of an exclusive scheduled action. Exclusive
- * means that, at a defined time, only one instance of the action can run for a
- * MAF instance.
+ * An object which stores the status of execution of recurring jobs.
  * 
  * @author Pierre-Yves Cloux
  */
@@ -62,33 +59,22 @@ public class SchedulerState extends Model {
     public boolean isRunning;
 
     /**
-     * Return the SchedulerState associated with the specified actionUuid.<br/>
-     * In principle, only one actionUuid can run at a time.
+     * Return the SchedulerState associated with the specified transactionId.
+     * <br/>
      */
-    public static SchedulerState getRunningSchedulerStateFromActionUuid(String actionUuid) {
-        return SchedulerState.find.where().eq("actionUuid", actionUuid).eq("isRunning", true).findUnique();
+    public static SchedulerState getRunningSchedulerStateFromTransactionId(String transactionId) {
+        return SchedulerState.find.where().eq("transactionId", transactionId).eq("isRunning", true).findUnique();
     }
 
     /**
      * Flush the scheduler states which are older than 24 hours.<br/>
      * If the process is running it is removed from the database anyway.
      * 
-     * @param configuration
-     *            the application configuration
+     * @param hours
+     *            number of hours
      */
-    public static int flushOldStates(Configuration configuration) {
-        int hours = configuration.getInt("maf.flush.scheduler.states.interval");
+    public static int flushOldStates(int hours) {
         String sql = "delete from scheduler_state where last_update < DATE_SUB(NOW(), INTERVAL " + hours + " HOUR)";
-        SqlUpdate update = Ebean.createSqlUpdate(sql);
-        return Ebean.execute(update);
-    }
-
-    /**
-     * Flush all the scheduler states.<br/>
-     * WARNING: use with care.
-     */
-    public static int flushAllStates() {
-        String sql = "delete from scheduler_state";
         SqlUpdate update = Ebean.createSqlUpdate(sql);
         return Ebean.execute(update);
     }

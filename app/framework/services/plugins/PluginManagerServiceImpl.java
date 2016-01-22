@@ -310,6 +310,13 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
             throw new RuntimeException("UNEXPECTED ERROR : unable to check the plugin definitions", e);
         }
 
+        // Look for "auto-register" plugins
+        try {
+            createAutoRegisterPluginConfigurations();
+        } catch (Exception e) {
+            throw new RuntimeException("UNEXPECTED ERROR : unable to create auto-register plugins", e);
+        }
+
         // Start the actor which will receive the notifications from the actors
         // (I am started, I am stopped)
         this.pluginStatusCallbackActorRef = getActorSystem()
@@ -341,6 +348,36 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
 
         // Register the pluginStopper with the extension manager
         getExtensionManagerService().registerPluginStopper(this);
+    }
+
+    /**
+     * Parse the whole list of plugins and check if some are auto-register.<br/>
+     * If yes creates the corresponding {@link PluginConfiguration} instance
+     */
+    private void createAutoRegisterPluginConfigurations() {
+        log.info("Checking auto-register plugins");
+        Map<String, Triple<Boolean, IExtension, IPluginDescriptor>> extensionPlugins = getExtensionPlugins();
+        for (String identifier : extensionPlugins.keySet()) {
+            IPluginDescriptor descriptor = extensionPlugins.get(identifier).getRight();
+            if (log.isDebugEnabled()) {
+                log.debug("Plugin " + identifier + " auto-register : " + descriptor.autoRegister());
+            }
+            if (descriptor.autoRegister()) {
+                PluginConfiguration pluginConfiguration = PluginConfiguration.find.where().eq("pluginDefinition.identifier", identifier).findUnique();
+                if (log.isDebugEnabled()) {
+                    log.debug("Plugin " + identifier + " auto-register with "
+                            + (pluginConfiguration == null ? "no plugin configuration (need to create one)" : "an existing plugin configuration"));
+                }
+                if (pluginConfiguration == null) {
+                    pluginConfiguration = new PluginConfiguration();
+                    pluginConfiguration.isAutostart = true;
+                    pluginConfiguration.name = descriptor.getName();
+                    pluginConfiguration.pluginDefinition = PluginDefinition.getPluginDefinitionFromIdentifier(identifier);
+                    pluginConfiguration.save();
+                    log.info("Plugin configuration created for auto-register plugin " + identifier);
+                }
+            }
+        }
     }
 
     /**

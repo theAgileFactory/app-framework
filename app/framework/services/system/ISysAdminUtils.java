@@ -1,7 +1,7 @@
 package framework.services.system;
 
-import scala.concurrent.duration.FiniteDuration;
 import akka.actor.Cancellable;
+import scala.concurrent.duration.FiniteDuration;
 
 public interface ISysAdminUtils {
     /**
@@ -28,7 +28,8 @@ public interface ISysAdminUtils {
      * Schedules a function to be run repeatedly with an initial delay and a
      * frequency. E.g. if you would like the function to be run after 2 seconds
      * and thereafter every 100ms you would set delay = Duration(2,
-     * TimeUnit.SECONDS) and interval = Duration(100, TimeUnit.MILLISECONDS).<br/>
+     * TimeUnit.SECONDS) and interval = Duration(100, TimeUnit.MILLISECONDS).
+     * <br/>
      * <b>The start of the scheduled action and the stop is logged</b> <br/>
      * If the "exclusive" flag is set, the system will check with the db if
      * another action with the same uuid is already running. If yes, then the
@@ -60,13 +61,6 @@ public interface ISysAdminUtils {
      */
     public abstract Cancellable scheduleRecurring(boolean exclusive, String scheduledActionUuid, FiniteDuration initialDelay, FiniteDuration interval,
             Runnable runnable);
-
-    /**
-     * Flush all the scheduler status.<br/>
-     * This should be called in principle only at system startup.<br/>
-     * Use with care.
-     */
-    public abstract void flushAllSchedulerStates();
 
     /**
      * Log the VM memory and thread configuration (max values).
