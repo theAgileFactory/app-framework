@@ -77,6 +77,7 @@ public class DashboardServiceImpl implements IDashboardService {
                         entry.setIdentifier(identifier);
                         entry.setName(widgetDescriptor.getName());
                         entry.setDescription(widgetDescriptor.getDescription());
+                        entry.setHasEditMode(widgetDescriptor.getHasEditMode());
                         catalog.add(entry);
                     }
                 }
@@ -241,7 +242,8 @@ public class DashboardServiceImpl implements IDashboardService {
     }
 
     @Override
-    public Triple<String, Boolean, List<DashboardRowConfiguration>> getDashboardPageConfiguration(Long dashboardPageId, String uid) throws DashboardException {
+    public Triple<String, Boolean, List<DashboardRowConfiguration>> getDashboardPageConfiguration(Long dashboardPageId, String uid)
+            throws DashboardException {
         if (log.isDebugEnabled()) {
             log.debug("Request for dashboard page " + dashboardPageId + " configuration for user " + (uid == null ? "current" : uid));
         }

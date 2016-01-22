@@ -155,7 +155,8 @@ public class ReadOnlyExtensionDescriptor implements IExtensionDescriptor {
             if (registrationControllers == null) {
                 registrationControllers = Collections.synchronizedMap(new HashMap<>());
                 if (getPluginDescriptor().getRegistrationConfigurationControllerDescriptors() != null) {
-                    for (PluginRegistrationConfiguratorControllerDescriptor desc : getPluginDescriptor().getRegistrationConfigurationControllerDescriptors()) {
+                    for (PluginRegistrationConfiguratorControllerDescriptor desc : getPluginDescriptor()
+                            .getRegistrationConfigurationControllerDescriptors()) {
                         DataType dataType = DataType.getDataType(desc.getDataType());
                         registrationControllers.put(dataType, desc.getControllerClass());
                     }
@@ -257,6 +258,11 @@ public class ReadOnlyExtensionDescriptor implements IExtensionDescriptor {
 
         private WidgetDescriptor getWidgetDescriptor() {
             return widgetDescriptor;
+        }
+
+        @Override
+        public boolean getHasEditMode() {
+            return getWidgetDescriptor().getHasEditMode() != null ? getWidgetDescriptor().getHasEditMode() : true;
         }
     }
 }

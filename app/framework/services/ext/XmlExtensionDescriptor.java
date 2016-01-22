@@ -559,6 +559,7 @@ public class XmlExtensionDescriptor {
         private String clazz;
         private String name;
         private String description;
+        private Boolean hasEditMode;
 
         public WidgetDescriptor() {
             super();
@@ -598,6 +599,15 @@ public class XmlExtensionDescriptor {
 
         public void setDescription(String description) {
             this.description = description;
+        }
+
+        @XmlElement(name = "hasEditMode")
+        public Boolean getHasEditMode() {
+            return hasEditMode;
+        }
+
+        public void setHasEditMode(Boolean hasEditMode) {
+            this.hasEditMode = hasEditMode;
         }
     }
 

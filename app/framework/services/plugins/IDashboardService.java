@@ -231,15 +231,17 @@ public interface IDashboardService {
         public static class WidgetConfiguration {
             private Long id;
             private String url;
+            private String identifier;
 
             public WidgetConfiguration() {
                 super();
             }
 
-            public WidgetConfiguration(Long id, String url) {
+            public WidgetConfiguration(Long id, String url, String identifier) {
                 super();
                 this.id = id;
                 this.url = url;
+                this.identifier = identifier;
             }
 
             public Long getId() {
@@ -256,6 +258,14 @@ public interface IDashboardService {
 
             public void setUrl(String url) {
                 this.url = url;
+            }
+
+            public String getIdentifier() {
+                return identifier;
+            }
+
+            public void setIdentifier(String identifier) {
+                this.identifier = identifier;
             }
         }
     }
@@ -280,6 +290,7 @@ public interface IDashboardService {
         private String identifier;
         private String name;
         private String description;
+        private boolean hasEditMode;
 
         public String getPluginConfigurationName() {
             return pluginConfigurationName;
@@ -321,10 +332,19 @@ public interface IDashboardService {
             this.description = description;
         }
 
+        public boolean getHasEditMode() {
+            return hasEditMode;
+        }
+
+        public void setHasEditMode(boolean hasEditMode) {
+            this.hasEditMode = hasEditMode;
+        }
+
         @Override
         public String toString() {
             return "WidgetCatalogEntry [pluginConfigurationName=" + pluginConfigurationName + ", pluginConfigurationId=" + pluginConfigurationId
-                    + ", identifier=" + identifier + ", name=" + name + ", description=" + description + "]";
+                    + ", identifier=" + identifier + ", name=" + name + ", description=" + description + ", hasEditMode=" + hasEditMode + "]";
         }
+
     }
 }

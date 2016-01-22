@@ -237,5 +237,10 @@ public interface IExtensionDescriptor {
          * The name of the controller managing this widget
          */
         public String getControllerClassName();
+
+        /**
+         * Return true if the service has an edit mode.
+         */
+        public boolean getHasEditMode();
     }
 }
