@@ -164,7 +164,9 @@ public class FilterConfiguration extends Model implements IModel, ISelectableVal
                 String[] pairs = uri.getQuery().split("&");
                 for (String pair : pairs) {
                     int idx = pair.indexOf("=");
-                    queryPairs.put(URLDecoder.decode(pair.substring(0, idx), "UTF-8"), URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
+                    if (idx != -1) {
+                        queryPairs.put(URLDecoder.decode(pair.substring(0, idx), "UTF-8"), URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
+                    }
                 }
             }
             queryPairs.put("filterSharedKey", this.sharedKey);
