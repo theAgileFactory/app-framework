@@ -16,6 +16,7 @@
  * this program. If not, see <http://www.gnu.org/licenses/>.
  *@
 @(
+    tableId: String,
     pagination: framework.utils.Pagination[_],
     filterText: String = null, 
     filterColumn: String = null,
@@ -40,13 +41,13 @@
     <div class="col-md-12 text-center">
     <ul class="pagination no-margin">
     @if(pagination.hasLess()){
-        <li><a data-page="@{pagination.getLowerBound()-1}" class="@(pagination.getPageQueryName)-link" href="?@pagination.getPageQueryName=@{pagination.getLowerBound()-1}@otherParameters">&lt;&lt;</a></li>
+        <li><a data-page="@{pagination.getLowerBound()-1}" class="paginate-link-@(tableId)-@(pagination.getPageQueryName)" href="?@pagination.getPageQueryName=@{pagination.getLowerBound()-1}@otherParameters">&lt;&lt;</a></li>
     }
     @for(pageIndex <- pagination.getLowerBound() to pagination.getUpperBound()){
-        <li @if(pageIndex==pagination.getCurrentPage()){class="active"}><a data-page="@pageIndex" class="@(pagination.getPageQueryName)-link" href="?@pagination.getPageQueryName=@pageIndex@otherParameters">@{pageIndex+1}</a></li>
+        <li @if(pageIndex==pagination.getCurrentPage()){class="active"}><a data-page="@pageIndex" class="paginate-link-@(tableId)-@(pagination.getPageQueryName)" href="?@pagination.getPageQueryName=@pageIndex@otherParameters">@{pageIndex+1}</a></li>
     }
     @if(pagination.hasMore()){
-        <li><a data-page="@{pagination.getUpperBound()+1}" class="@(pagination.getPageQueryName)-link" href="?@pagination.getPageQueryName=@{pagination.getUpperBound()+1}@otherParameters">&gt;&gt;</a></li>
+        <li><a data-page="@{pagination.getUpperBound()+1}" class="paginate-link-@(tableId)-@(pagination.getPageQueryName)" href="?@pagination.getPageQueryName=@{pagination.getUpperBound()+1}@otherParameters">&gt;&gt;</a></li>
     }
     </ul>
     </div>
@@ -57,7 +58,7 @@
     
     @if(useAjax) {
         <script>
-        $('.@(pagination.getPageQueryName)-link').on('click', function (e) {
+        $('.paginate-link-@(tableId)-@(pagination.getPageQueryName)').on('click', function (e) {
             e.preventDefault();
             var page = $(this).data("page");
             $.get("@tableUrl?@pagination.getPageQueryName=" + page + "@otherParameters", function(data) {
