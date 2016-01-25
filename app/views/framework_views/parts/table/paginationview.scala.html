@@ -21,7 +21,7 @@
     filterColumn: String = null,
     queryParams: String = null,
     useAjax: Boolean = false,
-    tableContainerAsJQuery: String = null,
+    tableContainerId: String = null,
     tableUrl: String = null
 )
     
@@ -61,7 +61,7 @@
             e.preventDefault();
             var page = $(this).data("page");
             $.get("@tableUrl?@pagination.getPageQueryName=" + page + "@otherParameters", function(data) {
-                @(Html(tableContainerAsJQuery)).html(data);
+                $("#@(tableContainerId)").html(data);
             }).fail(function() {
                 alert("Error");
             }); 
