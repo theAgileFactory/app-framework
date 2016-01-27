@@ -943,7 +943,8 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
     public static class Extension implements IExtension {
         private static final List<Class<?>> AUTHORIZED_INJECTED_SERVICE = Arrays.asList(ISecurityService.class, IUserSessionManagerPlugin.class,
                 ILinkGenerationService.class, II18nMessagesPlugin.class, ISysAdminUtils.class, IPluginContext.class, IPluginRunner.class, WSClient.class,
-                IScriptService.class, IAuthenticationAccountWriterPlugin.class, INotificationManagerPlugin.class, IKpiService.class);
+                IScriptService.class, IAuthenticationAccountWriterPlugin.class, INotificationManagerPlugin.class, IKpiService.class,
+                IPreferenceManagerPlugin.class);
 
         private Date loadingTime;
         private File jarFile;
