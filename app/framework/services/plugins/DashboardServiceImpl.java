@@ -20,6 +20,7 @@ import framework.security.ISecurityService;
 import framework.services.account.IUserAccount;
 import framework.services.ext.api.IExtensionDescriptor.IWidgetDescriptor;
 import framework.services.plugins.IPluginManagerService.IPluginInfo;
+import framework.utils.Msg;
 import models.framework_models.account.Principal;
 import models.framework_models.plugin.DashboardPage;
 import models.framework_models.plugin.DashboardWidget;
@@ -75,8 +76,8 @@ public class DashboardServiceImpl implements IDashboardService {
                         entry.setPluginConfigurationId(pluginConfigurationId);
                         entry.setPluginConfigurationName(info.getPluginConfigurationName());
                         entry.setIdentifier(identifier);
-                        entry.setName(widgetDescriptor.getName());
-                        entry.setDescription(widgetDescriptor.getDescription());
+                        entry.setName(Msg.get(widgetDescriptor.getName()));
+                        entry.setDescription(Msg.get(widgetDescriptor.getDescription()));
                         entry.setHasEditMode(widgetDescriptor.getHasEditMode());
                         catalog.add(entry);
                     }
