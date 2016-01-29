@@ -216,9 +216,8 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
     @Inject
     public ExtensionManagerServiceImpl(ApplicationLifecycle lifecycle, Environment environment, Injector injector, Configuration configuration,
             II18nMessagesPlugin iI18nMessagesPlugin, ICustomRouterService customRouterService, ISysAdminUtils sysAdminUtils,
-            IDatabaseDependencyService databaseDependencyService, ISecurityService securityService,
-            ISecurityServiceConfiguration securityServiceConfiguration, IPreferenceManagerPlugin preferenceManagerPlugin,
-            ITopMenuBarService topMenuBarService, WSClient wsClient, IScriptService scriptService,
+            IDatabaseDependencyService databaseDependencyService, ISecurityService securityService, ISecurityServiceConfiguration securityServiceConfiguration,
+            IPreferenceManagerPlugin preferenceManagerPlugin, ITopMenuBarService topMenuBarService, WSClient wsClient, IScriptService scriptService,
             IAuthenticationAccountWriterPlugin authenticatonAccountWriter, INotificationManagerPlugin notificationManagerPlugin, IKpiService kpiService)
                     throws ExtensionManagerException {
         log.info("SERVICE>>> ExtensionManagerServiceImpl starting...");
@@ -605,8 +604,8 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         // Remove some menu items
         Menu mainPerspective = getTopMenuBarService().getMainPerspective();
         if (menuCustomizationDescriptor.getMenusToRemove() != null && menuCustomizationDescriptor.getMenusToRemove().size() != 0) {
-            mainPerspective.removeMenuItem(
-                    menuCustomizationDescriptor.getMenusToRemove().toArray(new String[menuCustomizationDescriptor.getMenusToRemove().size()]));
+            mainPerspective
+                    .removeMenuItem(menuCustomizationDescriptor.getMenusToRemove().toArray(new String[menuCustomizationDescriptor.getMenusToRemove().size()]));
             log.info("Remove the menus " + menuCustomizationDescriptor.getMenusToRemove());
         }
         // Add some new menu items
@@ -704,8 +703,9 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                             }
                             log.info("Loaded i18n keys [" + i18nMessage.getLanguage() + "] for the extension" + extension.getDescriptor().getName());
                         } catch (IOException e) {
-                            log.error("Unable to load the i18n keys [" + i18nMessage.getLanguage() + "] for the extension"
-                                    + extension.getDescriptor().getName(), e);
+                            log.error(
+                                    "Unable to load the i18n keys [" + i18nMessage.getLanguage() + "] for the extension" + extension.getDescriptor().getName(),
+                                    e);
                         }
                     }
                 }
@@ -974,7 +974,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             this.linkGenerationService = linkGenerationService;
             this.loadingTime = new Date();
             this.jarFile = jarFile;
-            this.internalPluginResources = new HashMap<>();
+            this.internalPluginResources = Collections.synchronizedMap(new HashMap<>());
             init(jarFile, environment);
         }
 
@@ -1060,8 +1060,8 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                 }
             }
 
-            InternalPluginResources internalPluginResources = new InternalPluginResources(pluginIdentifier, pluginConfigurationId,
-                    customConfiguratorController, registrationConfiguratorControllers, widgetControllers);
+            InternalPluginResources internalPluginResources = new InternalPluginResources(pluginIdentifier, pluginConfigurationId, customConfiguratorController,
+                    registrationConfiguratorControllers, widgetControllers);
             getPluginResources().put(internalPluginResources.getUniquePluginResourceKey(), internalPluginResources);
             return Pair.of(pluginRunner, internalPluginResources);
         }
@@ -1174,6 +1174,9 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             // Look for the constructor injection tag
             Pair<Object[], Class<?>[]> injectableParameters = getInjectableConstructorParameters(pluginRunnerClass, injectableValues);
             if (injectableParameters != null) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Creating the class with parameters to be injected " + objectClassName + " : " + injectableParameters.getRight());
+                }
                 return factory.create(getJarClassLoader(), objectClassName, injectableParameters.getLeft(), injectableParameters.getRight());
             }
             // Attempt to create using a default constructor
@@ -1208,8 +1211,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                     if (injectableConstructor == null) {
                         injectableConstructor = constructor;
                     } else {
-                        throw new IllegalArgumentException(
-                                "Multiple injectable constructor defined, please correct : only one injectable constructor allowed");
+                        throw new IllegalArgumentException("Multiple injectable constructor defined, please correct : only one injectable constructor allowed");
                     }
                 }
             }
