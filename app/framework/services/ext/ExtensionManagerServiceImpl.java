@@ -1124,6 +1124,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                 // Reading the descriptor
                 log.info("Loading extension " + jarFile);
                 this.jarClassLoader = new JarClassLoader();
+
                 PlayProxyClassLoader proxyClassLoader = new PlayProxyClassLoader(environment.classLoader());
                 proxyClassLoader.setOrder(6);// After the other default class
                                              // loaders
@@ -1170,9 +1171,12 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             if (log.isDebugEnabled()) {
                 log.debug("Attempting to create a class " + objectClassName);
             }
-            Class<?> pluginRunnerClass = getJarClassLoader().loadClass(objectClassName);
+            Class<?> dynamicClass = getJarClassLoader().loadClass(objectClassName);
+            if (log.isDebugEnabled()) {
+                log.debug("Class is created " + dynamicClass);
+            }
             // Look for the constructor injection tag
-            Pair<Object[], Class<?>[]> injectableParameters = getInjectableConstructorParameters(pluginRunnerClass, injectableValues);
+            Pair<Object[], Class<?>[]> injectableParameters = getInjectableConstructorParameters(dynamicClass, injectableValues);
             if (injectableParameters != null) {
                 if (log.isDebugEnabled()) {
                     log.debug("Creating the class with parameters to be injected " + objectClassName + " : " + injectableParameters.getRight());
