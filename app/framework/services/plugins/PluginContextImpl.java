@@ -553,7 +553,7 @@ public class PluginContextImpl implements IPluginContext {
 
     @Override
     public Map<String, Object> getSharedContext() {
-        return pluginManagerService.getSharedContext();
+        return getPluginManagerService().getSharedContext();
     }
 
     private String getPluginPrefix() {
