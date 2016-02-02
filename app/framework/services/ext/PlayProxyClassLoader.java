@@ -50,20 +50,22 @@ class PlayProxyClassLoader extends ProxyClassLoader {
     @Override
     public Class<?> loadClass(String name, boolean resolveIt) {
 
-        // if (log.isDebugEnabled()) {
-        log.info("START loadClass in PlayProxyClassLoader for " + name);
-        // }
+        if (log.isDebugEnabled()) {
+            log.info("START loadClass in PlayProxyClassLoader for " + name);
+        }
 
         Class<?> r = null;
         try {
             r = getEnvironmentClassLoader().loadClass(name);
         } catch (ClassNotFoundException e) {
-            log.error("Error with loadClass in PlayProxyClassLoader for " + name, e);
+            if (log.isDebugEnabled()) {
+                log.error("Error with loadClass in PlayProxyClassLoader for " + name, e);
+            }
         }
 
-        // if (log.isDebugEnabled()) {
-        log.info("END loadClass in PlayProxyClassLoader for " + name);
-        // }
+        if (log.isDebugEnabled()) {
+            log.info("END loadClass in PlayProxyClassLoader for " + name);
+        }
 
         return r;
     }
