@@ -19,7 +19,11 @@ package org.xeustechnologies.jcl;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -37,11 +41,15 @@ import org.xeustechnologies.jcl.utils.Utils;
  */
 @SuppressWarnings("unchecked")
 public abstract class AbstractClassLoader extends ClassLoader {
+    static play.Logger.ALogger LOG = play.Logger.of(AbstractClassLoader.class);
 
-    // we could use concurrent sorted set like ConcurrentSkipListSet here instead, which would be automatically sorted
+    // we could use concurrent sorted set like ConcurrentSkipListSet here
+    // instead, which would be automatically sorted
     // and wouldn't require the lock.
     // But that was added in 1.6, and according to Maven we're targeting 1.5+.
-    /** Note that all iterations over this list *must* synchronize on it first! */
+    /**
+     * Note that all iterations over this list *must* synchronize on it first!
+     */
     protected final List<ProxyClassLoader> loaders = Collections.synchronizedList(new ArrayList<ProxyClassLoader>());
 
     private final ProxyClassLoader systemLoader = new SystemLoader();
@@ -52,7 +60,9 @@ public abstract class AbstractClassLoader extends ClassLoader {
 
     /**
      * Build a new instance of AbstractClassLoader.java.
-     * @param parent parent class loader
+     * 
+     * @param parent
+     *            parent class loader
      */
     public AbstractClassLoader(ClassLoader parent) {
         super(parent);
@@ -108,16 +118,22 @@ public abstract class AbstractClassLoader extends ClassLoader {
 
         Class clazz = null;
 
+        LOG.debug("Before OSI BootLoader");
         // Check osgi boot delegation
         if (osgiBootLoader.isEnabled()) {
             clazz = osgiBootLoader.loadClass(className, resolveIt);
         }
 
+        LOG.debug("Testing all the possible class loaders");
         if (clazz == null) {
             synchronized (loaders) {
+                LOG.debug("Locking the class loaders and iterating");
                 for (ProxyClassLoader l : loaders) {
+                    LOG.debug("Class loader is " + l.getClass());
                     if (l.isEnabled()) {
+                        LOG.debug("Class loader is " + l.getClass() + " is enabled");
                         clazz = l.loadClass(className, resolveIt);
+                        LOG.debug("Class loader " + l.getClass() + " class is " + clazz);
                         if (clazz != null)
                             break;
                     }
@@ -315,8 +331,7 @@ public abstract class AbstractClassLoader extends ClassLoader {
                 return null;
             }
 
-            if (logger.isLoggable(Level.FINEST))
-                logger.finest("Returning class " + className + " loaded with parent classloader");
+            LOG.debug("Returning class " + className + " loaded with parent classloader");
 
             return result;
         }
@@ -333,7 +348,6 @@ public abstract class AbstractClassLoader extends ClassLoader {
             }
             return null;
         }
-
 
         @Override
         public URL findResource(String name) {
@@ -390,7 +404,6 @@ public abstract class AbstractClassLoader extends ClassLoader {
 
             return null;
         }
-
 
         @Override
         public URL findResource(String name) {
