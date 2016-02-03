@@ -125,6 +125,8 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
     private INotificationManagerPlugin notificationManagerPlugin;
     private Map<String, Object> sharedContext;
 
+    private static final int DELAY_BETWEEN_TWO_AUTOSTART_IN_SECONDS = 30;
+
     /**
      * Map : key=plugin id , value= {@link PluginRegistrationEntry}.
      */
@@ -329,8 +331,10 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
                     if (pluginConfiguration.isAutostart) {
                         // If the plugin is marked as "autostart" then
                         // auto-start
-                        // it
+                        // it and wait before launching another one to avoid
+                        // conflicts at startup
                         startPluginRunner(pluginConfiguration.id);
+                        Utilities.wait(DELAY_BETWEEN_TWO_AUTOSTART_IN_SECONDS * 1000);
                     }
                 } catch (Exception e) {
                     log.error("Error while starting the PluginManagerService", e);
@@ -831,8 +835,8 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
     }
 
     @Override
-    public Pair<IPluginConfigurationBlockDescriptor, byte[]> getPluginConfigurationBlock(Long pluginConfigurationId,
-            String pluginConfigurationBlockIdentifier) throws PluginException {
+    public Pair<IPluginConfigurationBlockDescriptor, byte[]> getPluginConfigurationBlock(Long pluginConfigurationId, String pluginConfigurationBlockIdentifier)
+            throws PluginException {
         PluginRegistrationEntry pluginRegistrationEntry = getPluginByIds().get(pluginConfigurationId);
         if (pluginRegistrationEntry == null) {
             throw new PluginException("Unknown plugin configuration :" + pluginConfigurationId);
@@ -965,8 +969,7 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
                             .getPluginConfigurationBlockFromIdentifier(pluginConfigurationId, xmlDesc.getIdentifier());
                     if (pluginConfigurationBlock == null) {
                         if (log.isDebugEnabled()) {
-                            log.debug(
-                                    String.format("Creating a new config block %s plugin %d configuration", xmlDesc.getIdentifier(), pluginConfigurationId));
+                            log.debug(String.format("Creating a new config block %s plugin %d configuration", xmlDesc.getIdentifier(), pluginConfigurationId));
                         }
                         pluginConfigurationBlock = new PluginConfigurationBlock();
                         pluginConfigurationBlock.configurationType = xmlDesc.getType();
@@ -1677,8 +1680,7 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
                         log.error(String.format("The plugin %d has reported an error while stopping, id of error is %s", pluginConfigurationId, uuid), e);
                         PluginLog.saveStopPluginLog(pluginConfigurationId, getMessagesPlugin().get("plugin.failed.stop", pluginConfigurationId, uuid), true);
                     }
-                    getPluginStatusCallbackActorRef().tell(new CallbackLifeCycleMessage(PluginStatus.STOPPED, getPluginConfigurationId()),
-                            ActorRef.noSender());
+                    getPluginStatusCallbackActorRef().tell(new CallbackLifeCycleMessage(PluginStatus.STOPPED, getPluginConfigurationId()), ActorRef.noSender());
                     break;
                 }
             } else {
@@ -1787,9 +1789,9 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
                     } else {
                         String errorMessage = String.format("[FAILURE] Transaction %s for event message processing actor for plugin %d failed",
                                 eventMessage.getTransactionId(), getPluginConfigurationId());
-                        PluginLog.saveOnEventHandlingPluginLog(eventMessage.getTransactionId(), getPluginConfigurationId(), true,
-                                eventMessage.getMessageType(), errorMessage + "\nMessage was : " + eventMessage.toString(), eventMessage.getDataType(),
-                                eventMessage.getInternalId(), eventMessage.getExternalId());
+                        PluginLog.saveOnEventHandlingPluginLog(eventMessage.getTransactionId(), getPluginConfigurationId(), true, eventMessage.getMessageType(),
+                                errorMessage + "\nMessage was : " + eventMessage.toString(), eventMessage.getDataType(), eventMessage.getInternalId(),
+                                eventMessage.getExternalId());
                         throw new PluginException(errorMessage, e);
                     }
                 }
