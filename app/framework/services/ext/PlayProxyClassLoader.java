@@ -59,7 +59,7 @@ class PlayProxyClassLoader extends ProxyClassLoader {
             r = getEnvironmentClassLoader().loadClass(name);
         } catch (ClassNotFoundException e) {
             if (log.isDebugEnabled()) {
-                log.error("Error with loadClass in PlayProxyClassLoader for " + name, e);
+                log.debug("Error with loadClass in PlayProxyClassLoader for " + name + " (" + e.getClass() + ":" + e.getMessage() + ")");
             }
         }
 
