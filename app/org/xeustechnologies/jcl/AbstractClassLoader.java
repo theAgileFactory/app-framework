@@ -121,13 +121,14 @@ public abstract class AbstractClassLoader extends ClassLoader {
         LOG.debug(">>>>>> [loadClass] Before OSI BootLoader for class name " + className);
         // Check osgi boot delegation
         if (osgiBootLoader.isEnabled()) {
+            LOG.debug(">>>>>> [loadClass] OSGI boot loader is enabler ????");
             clazz = osgiBootLoader.loadClass(className, resolveIt);
         }
 
         LOG.debug(">>>>>> [ENTER LOCKS] " + className);
         if (clazz == null) {
             synchronized (loaders) {
-                LOG.debug(">>>>>> [loadClass] Locking the class loaders and iterating for class name " + className);
+                LOG.debug(">>>>>> [LOADERS] " + loaders + " are LOCKED !");
                 for (ProxyClassLoader l : loaders) {
                     LOG.debug("Class loader is [" + l.getClass() + "] for class name " + className);
                     if (l.isEnabled()) {
