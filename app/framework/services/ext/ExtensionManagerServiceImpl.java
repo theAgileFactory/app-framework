@@ -1126,8 +1126,8 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                 this.jarClassLoader = new JarClassLoader();
 
                 PlayProxyClassLoader proxyClassLoader = new PlayProxyClassLoader(environment.classLoader());
-                proxyClassLoader.setOrder(6);// After the other default class
-                                             // loaders
+                proxyClassLoader.setOrder(100);// After the other default class
+                                               // loaders
                 this.jarClassLoader.addLoader(proxyClassLoader);
                 this.jarClassLoader.add(jarFile.getAbsolutePath());
                 InputStream inStream = jarClassLoader.getResourceAsStream(EXTENSION_MANAGER_DESCRIPTOR_FILE);
