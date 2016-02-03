@@ -118,22 +118,22 @@ public abstract class AbstractClassLoader extends ClassLoader {
 
         Class clazz = null;
 
-        LOG.debug("Before OSI BootLoader");
+        LOG.debug(">>>>>> [loadClass] Before OSI BootLoader for class name " + className);
         // Check osgi boot delegation
         if (osgiBootLoader.isEnabled()) {
             clazz = osgiBootLoader.loadClass(className, resolveIt);
         }
 
-        LOG.debug("Testing all the possible class loaders");
+        LOG.debug(">>>>>> [loadClass] Testing all the possible class loaders for class name " + className);
         if (clazz == null) {
             synchronized (loaders) {
-                LOG.debug("Locking the class loaders and iterating");
+                LOG.debug(">>>>>> [loadClass] Locking the class loaders and iterating for class name " + className);
                 for (ProxyClassLoader l : loaders) {
-                    LOG.debug("Class loader is " + l.getClass());
+                    LOG.debug("Class loader is [" + l.getClass() + "] for class name " + className);
                     if (l.isEnabled()) {
-                        LOG.debug("Class loader is " + l.getClass() + " is enabled");
+                        LOG.debug("Class loader  [" + l.getClass() + "] is enabled for class name " + className);
                         clazz = l.loadClass(className, resolveIt);
-                        LOG.debug("Class loader " + l.getClass() + " class is " + clazz);
+                        LOG.debug((clazz != null ? "[SUCCESS]" : "[NOT FOUND]") + " class loader [" + l.getClass() + "] class is " + clazz);
                         if (clazz != null)
                             break;
                     }

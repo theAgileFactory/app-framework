@@ -251,12 +251,14 @@ public class JarClassLoader extends AbstractClassLoader {
             /*
              * Preserve package name.
              */
+            LOG.debug("Load class from JAR data : " + className + " until package");
             if (result.getPackage() == null) {
                 int lastDotIndex = className.lastIndexOf('.');
                 String packageName = (lastDotIndex >= 0) ? className.substring(0, lastDotIndex) : "";
                 definePackage(packageName, null, null, null, null, null, null, null);
             }
 
+            LOG.debug("Load class from JAR data : " + className + " until resolve");
             if (resolveIt)
                 resolveClass(result);
 
