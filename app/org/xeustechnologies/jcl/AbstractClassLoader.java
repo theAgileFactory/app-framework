@@ -124,7 +124,7 @@ public abstract class AbstractClassLoader extends ClassLoader {
             clazz = osgiBootLoader.loadClass(className, resolveIt);
         }
 
-        LOG.debug(">>>>>> [loadClass] Testing all the possible class loaders for class name " + className);
+        LOG.debug(">>>>>> [ENTER LOCKS] " + className);
         if (clazz == null) {
             synchronized (loaders) {
                 LOG.debug(">>>>>> [loadClass] Locking the class loaders and iterating for class name " + className);
@@ -140,6 +140,7 @@ public abstract class AbstractClassLoader extends ClassLoader {
                 }
             }
         }
+        LOG.debug(">>>>>> [LOCKS ARE REMOVED] " + className);
 
         if (clazz == null)
             throw new ClassNotFoundException(className);
