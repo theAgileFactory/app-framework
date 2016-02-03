@@ -134,7 +134,7 @@ public abstract class AbstractClassLoader extends ClassLoader {
                     if (l.isEnabled()) {
                         LOG.debug("Class loader  [" + l.getClass() + "] is enabled for class name " + className);
                         clazz = l.loadClass(className, resolveIt);
-                        LOG.debug((clazz != null ? "[SUCCESS]" : "[NOT FOUND]") + " class loader [" + l.getClass() + "] class is " + clazz);
+                        LOG.debug((clazz != null ? "[SUCCESS]" : "[NOT FOUND]") + " class loader [" + className + "] class is " + clazz);
                         if (clazz != null)
                             break;
                     }

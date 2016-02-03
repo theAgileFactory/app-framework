@@ -245,6 +245,7 @@ public class JarClassLoader extends AbstractClassLoader {
             result = defineClass(className, classBytes, 0, classBytes.length);
 
             if (result == null) {
+                LOG.debug("Load class from JAR data : " + className + " until RETURN NULL");
                 return null;
             }
 
