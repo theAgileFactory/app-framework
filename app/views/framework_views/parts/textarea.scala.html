@@ -22,7 +22,7 @@
 <div class="form-group @if(field.hasErrors) {has-error}">
     <label class="control-label" for="@field.id">@parts.Msg(fieldLabel)@if(isRequired(field) || forceRequired){&nbsp;<i style="color: red;" class="fa fa-asterisk"></i>}</label>
     <div class="">
-        <textarea name="@field.name" id="@field.id" class="form-control" rows="6">@field.value</textarea>
+        <textarea name="@field.name" id="@field.id" class="form-control" rows="5">@field.value</textarea>
         <span class="help-block">
             @if(fieldDescription != null && !fieldDescription.equals("")){@parts.Msg(fieldDescription) <br/>}
             <strong>@{field.error.map { error => parts.Msg(error.message) }}</strong>
