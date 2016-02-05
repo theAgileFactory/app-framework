@@ -141,7 +141,8 @@ public abstract class AbstractAuthenticator extends SecureController implements 
             return redirectUrlCookie.value();
         }
         // If no redirect URL then redirect to the public URL
-        return getConfiguration().getString("maf.public.url");
+        return getPreferenceManagerPlugin().getPreferenceElseConfigurationValue(IFrameworkConstants.PUBLIC_URL_PREFERENCE, "maf.public.url")
+                + getLocalRoutes().getCallbackRoute().url();
     }
 
     /**
