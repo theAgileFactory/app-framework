@@ -38,13 +38,13 @@ import akka.actor.Cancellable;
 import framework.commons.DataType;
 import framework.commons.message.EventMessage;
 import framework.commons.message.EventMessage.MessageType;
-import framework.services.ServiceStaticAccessor;
 import framework.services.plugins.api.IPluginActionDescriptor;
 import framework.services.plugins.api.IPluginContext;
 import framework.services.plugins.api.IPluginContext.LogLevel;
 import framework.services.plugins.api.IPluginRunner;
 import framework.services.plugins.api.PluginException;
 import framework.services.plugins.loader.toolkit.GenericFileLoader.AllowedCharSet;
+import framework.services.system.ISysAdminUtils;
 import play.Logger;
 import scala.concurrent.duration.Duration;
 import scala.concurrent.duration.FiniteDuration;
@@ -158,6 +158,7 @@ public abstract class LoadableObjectPluginRunner<K extends ILoadableObject> impl
     });
 
     private IPluginContext pluginContext;
+    private ISysAdminUtils sysAdminUtils;
 
     private Cancellable currentScheduler;
     private String inputFilePath;
@@ -202,9 +203,12 @@ public abstract class LoadableObjectPluginRunner<K extends ILoadableObject> impl
      * 
      * @param pluginContext
      *            the plugin context (should be injected)
+     * @param sysAdminUtils
+     *            the system admin utils
      */
-    public LoadableObjectPluginRunner(IPluginContext pluginContext) {
+    public LoadableObjectPluginRunner(IPluginContext pluginContext, ISysAdminUtils sysAdminUtils) {
         this.pluginContext = pluginContext;
+        this.sysAdminUtils = sysAdminUtils;
         this.loadingStatusHolder = new LoadingStatusHolder();
     }
 
@@ -290,8 +294,9 @@ public abstract class LoadableObjectPluginRunner<K extends ILoadableObject> impl
             Pair<Boolean, byte[]> javascriptMappingConfiguration = getPluginContext().getConfiguration(
                     getPluginContext().getPluginDescriptor().getConfigurationBlockDescriptors().get(CSV_MAPPING_CONFIGURATION_IDENTIFIER), true);
             if (javascriptMappingConfiguration.getLeft()) {
-                throw new PluginException("WARNING: the javascript configuration may be outdated and the plugin might crash, please check it againt the current"
-                        + " documentation and save it before attempting to start the plugin");
+                throw new PluginException(
+                        "WARNING: the javascript configuration may be outdated and the plugin might crash, please check it againt the current"
+                                + " documentation and save it before attempting to start the plugin");
             }
 
             // Creates the generic file loader
@@ -305,7 +310,7 @@ public abstract class LoadableObjectPluginRunner<K extends ILoadableObject> impl
             if (isAutomaticLoadByScheduler()) {
                 long howMuchMinutesUntilStartTime = howMuchMinutesUntilStartTime();
 
-                setCurrentScheduler(ServiceStaticAccessor.getSysAdminUtils().scheduleRecurring(true,
+                setCurrentScheduler(getSysAdminUtils().scheduleRecurring(true,
                         getPluginContext().getPluginDescriptor().getName() + " plugin " + getPluginContext().getPluginConfigurationName(),
                         Duration.create(howMuchMinutesUntilStartTime, TimeUnit.MINUTES), getLoadFrequency(), new Runnable() {
                             @Override
@@ -360,6 +365,13 @@ public abstract class LoadableObjectPluginRunner<K extends ILoadableObject> impl
      */
     protected IPluginContext getPluginContext() {
         return pluginContext;
+    }
+
+    /**
+     * Get the system admin utils.
+     */
+    protected ISysAdminUtils getSysAdminUtils() {
+        return this.sysAdminUtils;
     }
 
     /**
