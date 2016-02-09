@@ -26,7 +26,6 @@ import framework.commons.IFrameworkConstants.AuthenticationMode;
 import framework.security.bizdock_sso.BizDockSSOAuthenticatorImpl;
 import framework.security.bizdock_sso.BizDockSSOClient;
 import framework.security.bizdock_sso.BizDockSSOProfileCreator;
-import framework.services.ServiceStaticAccessor;
 import framework.services.account.IAccountManagerPlugin;
 import framework.services.account.IAuthenticationAccountReaderPlugin;
 import framework.services.account.IPreferenceManagerPlugin;
@@ -385,7 +384,7 @@ public abstract class AbstractAuthenticator extends SecureController implements 
             // Set the user profile attribute defined in the configuration (if
             // any)
             if (cfg.containsKey("maf.saml.profile.attribute")) {
-                ServiceStaticAccessor.getUserSessionManagerPlugin().setUserProfileAttributeName(cfg.getString("maf.saml.profile.attribute"));
+                this.getUserSessionManagerPlugin().setUserProfileAttributeName(cfg.getString("maf.saml.profile.attribute"));
             }
 
             File configurationDirectory = samlConfigFile.getParentFile();
