@@ -20,6 +20,8 @@ package framework.services.account;
 import java.math.BigDecimal;
 import java.util.Date;
 
+import play.data.Form;
+
 /**
  * The interface to be implemented by the plugin which manages the preferences.
  * <br/>
@@ -81,7 +83,7 @@ public interface IPreferenceManagerPlugin {
     public Boolean getPreferenceElseConfigurationValueAsBoolean(String preferenceName, String configurationName);
 
     /**
-     * Get a String preference for the specified user
+     * Get a String preference for the specified user.
      * 
      * @param uuid
      *            the name of the preference
@@ -91,7 +93,7 @@ public interface IPreferenceManagerPlugin {
     public String getPreferenceValueAsString(String uuid) throws PreferenceManagementException;
 
     /**
-     * Get an Integer preference for the specified user
+     * Get an Integer preference for the specified user.
      * 
      * @param uuid
      *            the name of the preference
@@ -101,7 +103,7 @@ public interface IPreferenceManagerPlugin {
     public Integer getPreferenceValueAsInteger(String uuid) throws PreferenceManagementException;
 
     /**
-     * Get a Boolean preference for the specified user
+     * Get a Boolean preference for the specified user.
      * 
      * @param uuid
      *            the name of the preference
@@ -111,7 +113,7 @@ public interface IPreferenceManagerPlugin {
     public Boolean getPreferenceValueAsBoolean(String uuid) throws PreferenceManagementException;
 
     /**
-     * Get a Boolean preference for the specified user
+     * Get a Boolean preference for the specified user.
      * 
      * @param uuid
      *            the name of the preference
@@ -121,7 +123,7 @@ public interface IPreferenceManagerPlugin {
     public BigDecimal getPreferenceValueAsDecimal(String uuid) throws PreferenceManagementException;
 
     /**
-     * Get a Date preference for the specified user
+     * Get a Date preference for the specified user.
      * 
      * @param uuid
      *            the name of the preference
@@ -131,21 +133,88 @@ public interface IPreferenceManagerPlugin {
     public Date getPreferenceValueAsDate(String uuid) throws PreferenceManagementException;
 
     /**
-     * Update the value for a preference
+     * Update the value for a preference.
      * 
      * @param uuid
      *            the name of the preference
      * @param value
      *            a preference value (compatible with this preference)
-     * @return a preference value
+     * 
      * @throws PreferenceManagementException
      */
     public void updatePreferenceValue(String uuid, Object value) throws PreferenceManagementException;
 
+    /**
+     * Fill the specified form with the specified preference.
+     * 
+     * @param <T>
+     *            the object used for the form
+     * @param form
+     *            a form of a certain class
+     * @param preferenceUuid
+     *            a preference unique Id
+     */
+    public <T> void fillWithPreference(Form<T> form, String preferenceUuid);
+
+    /**
+     * Check the value of the preference associated with the specified uuid.
+     * 
+     * The value is expected to be stored in the form.
+     * 
+     * @param <T>
+     *            the object used for the form
+     * @param form
+     *            a form of a certain class
+     * @param preferenceUuid
+     *            the uuid of a preference
+     * @return true if an error is found
+     */
+    public <T> boolean validatePreference(Form<T> form, String preferenceUuid);
+
+    /**
+     * Check the value of the preference associated with the specified uuid AND
+     * (if it is valid) save it into the database.<br/>
+     * The value is expected to be stored in the form.
+     * <p>
+     * <b>Please wrap this method within a database transaction</b>
+     * </p>
+     * 
+     * @param <T>
+     *            the object used for the form
+     * @param form
+     *            a form of a certain class
+     * @param preferenceUuid
+     *            the uuid of a preference
+     * @return true if an error is found
+     */
+    public <T> boolean validateAndSavePreference(Form<T> form, String preferenceUuid);
+
+    /**
+     * Get a property value as a sting.
+     * 
+     * @param uuid
+     *            the preference uuid
+     * @param propertyKey
+     *            the property key
+     */
     public String getPropertyAsString(String uuid, String propertyKey) throws PreferenceManagementException;
 
+    /**
+     * Get a property value as a boolean.
+     * 
+     * @param uuid
+     *            the preference uuid
+     * @param propertyKey
+     *            the property key
+     */
     public Boolean getPropertyAsBoolean(String uuid, String propertyKey) throws PreferenceManagementException;
 
+    /**
+     * Return true if the preference is a system preference.
+     * 
+     * @param uuid
+     *            the preference uuid
+     */
     public boolean isPreferenceSystem(String uuid);
 
 }

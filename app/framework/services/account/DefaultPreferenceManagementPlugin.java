@@ -19,18 +19,22 @@ package framework.services.account;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.Map;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import framework.services.database.IDatabaseDependencyService;
 import framework.services.session.IUserSessionManagerPlugin;
+import framework.utils.CustomAttributeFormAndDisplayHandler;
+import framework.utils.Msg;
 import models.framework_models.account.Preference;
 import models.framework_models.common.CustomAttributeItemOption;
 import models.framework_models.common.ICustomAttributeValue;
 import play.Configuration;
 import play.Logger;
 import play.cache.CacheApi;
+import play.data.Form;
 import play.inject.ApplicationLifecycle;
 import play.libs.F.Promise;
 
@@ -49,11 +53,20 @@ public class DefaultPreferenceManagementPlugin implements IPreferenceManagerPlug
     private IAccountManagerPlugin accountManagerPlugin;
 
     /**
-     * Creates a new DefaultPreferenceManagementPlugin
+     * Creates a new DefaultPreferenceManagementPlugin.
      * 
+     * @param configuration
+     *            the play configuration service
      * @param lifecycle
      *            the play application lifecyle listener
+     * @param cacheApi
+     *            the play cache API
+     * @param userSessionManagerPlugin
+     *            the user session manager service
+     * @param accountManagerPlugin
+     *            the account manager service
      * @param databaseDependencyService
+     *            the database dependency serice.
      */
     @Inject
     public DefaultPreferenceManagementPlugin(Configuration configuration, ApplicationLifecycle lifecycle, CacheApi cacheApi,
@@ -247,8 +260,99 @@ public class DefaultPreferenceManagementPlugin implements IPreferenceManagerPlug
         return Preference.getPreferenceFromUuid(uuid).systemPreference;
     }
 
+    @Override
+    public <T> void fillWithPreference(Form<T> form, String preferenceUuid) {
+        ICustomAttributeValue customAttributeValue = Preference.getPreferenceValueFromUuid(preferenceUuid, this.getCacheApi(),
+                this.getUserSessionManagerPlugin(), this.getAccountManagerPlugin());
+        if (log.isDebugEnabled()) {
+            log.debug("Preference with uuid " + preferenceUuid + " is " + (customAttributeValue != null ? "not null" : "null"));
+        }
+        if (customAttributeValue != null) {
+            if (customAttributeValue.isNotReadFromDb()) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Preference with uuid " + preferenceUuid + " is not read from db, loading default value");
+                }
+                customAttributeValue.defaults();
+            }
+            String fieldId = CustomAttributeFormAndDisplayHandler.getFieldNameFromDefinitionUuid(customAttributeValue.getDefinition().uuid);
+            String customAttributeDisplayedValue = customAttributeValue.print();
+            if (log.isDebugEnabled()) {
+                log.debug("Preference with uuid " + preferenceUuid + " set in form with fieldName " + fieldId + " with displayed value "
+                        + customAttributeDisplayedValue);
+            }
+            form.data().put(fieldId, customAttributeDisplayedValue);
+        }
+    }
+
+    @Override
+    public <T> boolean validatePreference(Form<T> form, String preferenceUuid) {
+        return validateOrSavePreference(form, preferenceUuid, false);
+    }
+
+    @Override
+    public <T> boolean validateAndSavePreference(Form<T> form, String preferenceUuid) {
+        return validateOrSavePreference(form, preferenceUuid, true);
+    }
+
     /**
-     * Throw an exception is the customAttribute is null
+     * A private implementation of both previous methods.
+     * 
+     * @param <T>
+     *            the object used for the form
+     * @param form
+     *            the form
+     * @param preferenceUuid
+     *            the uuid of the preference
+     * @param saveValues
+     *            true if the value should be saved
+     */
+    private <T> boolean validateOrSavePreference(Form<T> form, String preferenceUuid, boolean saveValues) {
+        if (log.isDebugEnabled()) {
+            log.debug("Request validation " + (saveValues ? " and saving" : "") + " for preference with uuid " + preferenceUuid);
+        }
+        boolean hasErrors = false;
+        Map<String, String> data = form.data();
+        if (data != null) {
+            ICustomAttributeValue customAttributeValue = Preference.getPreferenceValueFromUuid(preferenceUuid, this.getCacheApi(),
+                    this.getUserSessionManagerPlugin(), this.getAccountManagerPlugin());
+            String fieldName = CustomAttributeFormAndDisplayHandler.getFieldNameFromDefinitionUuid(customAttributeValue.getDefinition().uuid);
+            if (log.isDebugEnabled()) {
+                log.debug("Readring preference with uuid " + preferenceUuid + " from form with field name " + fieldName);
+            }
+            if (!customAttributeValue.getAttributeType().isFileType() && data.get(fieldName) != null && data.get(fieldName).equals("")) {
+                hasErrors = true;
+                form.reject(fieldName, Msg.get("error.required"));
+            } else {
+                if (!customAttributeValue.getAttributeType().isFileType()) {
+                    String formValue = data.get(fieldName);
+                    if (log.isDebugEnabled()) {
+                        log.debug("Readring preference with uuid " + preferenceUuid + " from form, value is " + formValue);
+                    }
+                    customAttributeValue.parse(formValue);
+                } else {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Readring preference with uuid " + preferenceUuid + " from form, attribute is a file");
+                    }
+                    customAttributeValue.parseFile();
+                }
+                if (customAttributeValue.hasError()) {
+                    hasErrors = true;
+                    form.reject(fieldName, customAttributeValue.getErrorMessage());
+                } else {
+                    if (saveValues) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Readring preference with uuid " + preferenceUuid + " saved to database");
+                        }
+                        Preference.savePreferenceValue(customAttributeValue, this.getCacheApi());
+                    }
+                }
+            }
+        }
+        return hasErrors;
+    }
+
+    /**
+     * Throw an exception is the customAttribute is null.
      * 
      * @param uuid
      *            the uuid of the preference
@@ -261,18 +365,30 @@ public class DefaultPreferenceManagementPlugin implements IPreferenceManagerPlug
         }
     }
 
+    /**
+     * Get the play cache API.
+     */
     private CacheApi getCacheApi() {
         return cacheApi;
     }
 
+    /**
+     * Get the user session manager service.
+     */
     private IUserSessionManagerPlugin getUserSessionManagerPlugin() {
         return userSessionManagerPlugin;
     }
 
+    /**
+     * Get the account manager service.
+     */
     private IAccountManagerPlugin getAccountManagerPlugin() {
         return accountManagerPlugin;
     }
 
+    /**
+     * Get the play configuration service.
+     */
     private Configuration getConfiguration() {
         return configuration;
     }
