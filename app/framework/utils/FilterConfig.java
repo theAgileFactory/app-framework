@@ -42,7 +42,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import framework.services.ServiceStaticAccessor;
 import framework.services.kpi.IKpiService;
 import framework.services.kpi.Kpi;
 import framework.services.kpi.Kpi.DataType;
@@ -633,17 +632,18 @@ public class FilterConfig<T> {
     /**
      * Add all KPIs of an object type to a filter config.
      * 
+     * @param kpiService
+     *            the KPI service
      * @param tableIdFieldName
      *            the Id field name used by the table to be filtered
      * @param objectType
      *            the object type
      */
-    public synchronized void addKpis(String tableIdFieldName, Class<?> objectType) {
-        IKpiService kpiService = ServiceStaticAccessor.getKpiService();
+    public synchronized void addKpis(IKpiService kpiService, String tableIdFieldName, Class<?> objectType) {
         List<Kpi> kpis = kpiService.getActiveKpisOfObjectType(objectType);
         if (kpis != null) {
             for (Kpi kpi : kpis) {
-                addKpi(tableIdFieldName, kpi.getUid());
+                addKpi(kpiService, tableIdFieldName, kpi.getUid());
             }
         }
     }
@@ -653,13 +653,15 @@ public class FilterConfig<T> {
      * 
      * Note: the KPI is by default not displayed.
      * 
+     * @param kpiService
+     *            the KPI service
      * @param tableIdFieldName
      *            the Id field name used by the table to be filtered
      * @param kpiUid
      *            the KPI definition uid
      */
-    public synchronized void addKpi(String tableIdFieldName, String kpiUid) {
-        Kpi kpi = ServiceStaticAccessor.getKpiService().getKpi(kpiUid);
+    public synchronized void addKpi(IKpiService kpiService, String tableIdFieldName, String kpiUid) {
+        Kpi kpi = kpiService.getKpi(kpiUid);
         if (kpi != null) {
             if (kpi.isValueFromKpiData()) {
                 if (kpi.isLabelRenderType() && kpi.getKpiColorRuleLabels() != null) {

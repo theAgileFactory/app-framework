@@ -33,7 +33,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
-import framework.services.ServiceStaticAccessor;
 import framework.services.kpi.IKpiService;
 import framework.services.kpi.Kpi;
 import framework.services.kpi.Kpi.DataType;
@@ -257,16 +256,17 @@ public class Table<T> {
      * Note: the KPIs are by default not displayed. This method should be called
      * only for a table with filtering capability.
      * 
+     * @param kpiService
+     *            the KPI service
      * @param objectType
      *            the object type
      */
-    public void addKpis(Class<?> objectType) {
-        IKpiService kpiService = ServiceStaticAccessor.getKpiService();
+    public void addKpis(IKpiService kpiService, Class<?> objectType) {
         List<Kpi> kpis = kpiService.getActiveKpisOfObjectType(objectType);
         if (kpis != null) {
             for (Kpi kpi : kpis) {
                 notDisplayedCustomAttributeColumns.add(KPI_COLUMN_NAME_PREFIX + kpi.getUid());
-                addKpi(kpi.getUid());
+                addKpi(kpiService, kpi.getUid());
             }
         }
     }
@@ -274,16 +274,18 @@ public class Table<T> {
     /**
      * Add a specific KPI to the table.
      * 
+     * @param kpiService
+     *            the KPI service
      * @param kpiUid
      *            the KPI definition uid
      */
-    public void addKpi(String kpiUid) {
+    public void addKpi(IKpiService kpiService, String kpiUid) {
 
         if (getIdFieldName() == null) {
             throw new IllegalArgumentException("WARNING: this method requires the ID field name to be defined");
         }
 
-        Kpi kpi = ServiceStaticAccessor.getKpiService().getKpi(kpiUid);
+        Kpi kpi = kpiService.getKpi(kpiUid);
         if (kpi != null) {
             addColumn(KPI_COLUMN_NAME_PREFIX + kpi.getUid(), getIdFieldName(), kpi.getValueName(DataType.MAIN), Table.ColumnDef.SorterType.NONE);
             setJavaColumnFormatter(KPI_COLUMN_NAME_PREFIX + kpi.getUid(), new KpiColumnFormatter<T>(kpi.getUid()));
@@ -621,14 +623,9 @@ public class Table<T> {
      * Here is an example of usage in a Scala template :
      * 
      * <pre>
-     * &#64;table.setColumnFormatter("mail", {(anObject: models.sample.Person, mail: Option[String])   =>  {
-     *  if(mail.isEmpty){
-     *          ""
-     *          }else{
-     *              "<a href=\"mailto:"+mail.get+"\">"+mail.get+"</a>"
-     *          }
-     *      }
-     * })
+     * &#64;table.setColumnFormatter("mail", {(anObject: models.sample.Person,
+     * mail: Option[String]) => { if(mail.isEmpty){ "" }else{
+     * "<a href=\"mailto:"+mail.get+"\">"+mail.get+"</a>" } } })
      * </pre>
      * 
      * <b>WARNING:</b> please make sure that the type of the values to be
