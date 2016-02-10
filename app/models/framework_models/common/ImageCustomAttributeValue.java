@@ -36,7 +36,6 @@ import javax.persistence.Version;
 
 import com.avaje.ebean.Model;
 
-import framework.services.ServiceStaticAccessor;
 import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.custom_attribute.ICustomAttributeManagerService;
 import framework.services.session.IUserSessionManagerPlugin;
@@ -275,22 +274,19 @@ public class ImageCustomAttributeValue extends Model implements IModel, ICustomA
     }
 
     @Override
-    public void performSave(ICustomAttributeManagerService customAttributeManagerService) {
+    public void performSave(IUserSessionManagerPlugin userSessionManagerPlugin, IAttachmentManagerPlugin attachmentManagerPlugin, String fieldName) {
 
-        String fieldName = customAttributeManagerService.getFieldNameFromDefinitionUuid(getDefinition().uuid);
         if (FileAttachmentHelper.hasFileField(fieldName)) {
 
             save();
             this.isNotReadFromDb = false;
 
             try {
-                IUserSessionManagerPlugin userSessionManager = ServiceStaticAccessor.getUserSessionManagerPlugin();
-                IAttachmentManagerPlugin attachmentManagerPlugin = ServiceStaticAccessor.getAttachmentManagerPlugin();
                 // if exists, remove the current image
                 List<Attachment> attachments = FileAttachmentHelper.getFileAttachmentsForDisplay(ImageCustomAttributeValue.class, this.id,
-                        attachmentManagerPlugin, userSessionManager);
+                        attachmentManagerPlugin, userSessionManagerPlugin);
                 if (attachments != null && attachments.size() > 0) {
-                    FileAttachmentHelper.deleteFileAttachment(attachments.get(0).id, attachmentManagerPlugin, userSessionManager);
+                    FileAttachmentHelper.deleteFileAttachment(attachments.get(0).id, attachmentManagerPlugin, userSessionManagerPlugin);
                     attachments.get(0).doDelete();
                 }
 

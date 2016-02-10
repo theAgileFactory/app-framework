@@ -35,6 +35,8 @@ import com.avaje.ebean.Model;
 
 import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.custom_attribute.ICustomAttributeManagerService;
+import framework.services.session.IUserSessionManagerPlugin;
+import framework.services.storage.IAttachmentManagerPlugin;
 import framework.utils.Msg;
 import framework.utils.Utilities;
 import framework.utils.formats.DateType;
@@ -278,7 +280,7 @@ public class DateCustomAttributeValue extends Model implements IModel, ICustomAt
     }
 
     @Override
-    public void performSave(ICustomAttributeManagerService customAttributeManagerService) {
+    public void performSave(IUserSessionManagerPlugin userSessionManagerPlugin, IAttachmentManagerPlugin attachmentManagerPlugin, String fieldName) {
         save();
         this.isNotReadFromDb = false;
     }

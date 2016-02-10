@@ -36,6 +36,8 @@ import framework.services.ServiceStaticAccessor;
 import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.configuration.IImplementationDefinedObjectService;
 import framework.services.custom_attribute.ICustomAttributeManagerService;
+import framework.services.session.IUserSessionManagerPlugin;
+import framework.services.storage.IAttachmentManagerPlugin;
 import framework.utils.DefaultSelectableValueHolder;
 import framework.utils.ISelectableValueHolder;
 import framework.utils.ISelectableValueHolderCollection;
@@ -293,7 +295,7 @@ public class DynamicSingleItemCustomAttributeValue extends Model implements IMod
     }
 
     @Override
-    public void performSave(ICustomAttributeManagerService customAttributeManagerService) {
+    public void performSave(IUserSessionManagerPlugin userSessionManagerPlugin, IAttachmentManagerPlugin attachmentManagerPlugin, String fieldName) {
         save();
         this.isNotReadFromDb = false;
     }

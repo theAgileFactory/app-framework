@@ -14,6 +14,8 @@ import javax.inject.Singleton;
 import org.apache.commons.lang3.StringUtils;
 
 import framework.services.configuration.II18nMessagesPlugin;
+import framework.services.session.IUserSessionManagerPlugin;
+import framework.services.storage.IAttachmentManagerPlugin;
 import models.framework_models.common.CustomAttributeDefinition;
 import models.framework_models.common.ICustomAttributeValue;
 import play.Configuration;
@@ -33,6 +35,8 @@ public class CustomAttributeManagerServiceImpl implements ICustomAttributeManage
     private static Logger.ALogger log = Logger.of(CustomAttributeManagerServiceImpl.class);
 
     private II18nMessagesPlugin i18nMessagesPlugin;
+    private IUserSessionManagerPlugin userSessionManagerPlugin;
+    private IAttachmentManagerPlugin attachmentManagerPlugin;
 
     /**
      * Creates a new CustomAttributeManagerServiceImpl.
@@ -43,10 +47,17 @@ public class CustomAttributeManagerServiceImpl implements ICustomAttributeManage
      *            the play application lifecyle listener
      * @param i18nMessagesPlugin
      *            the i18n messages service
+     * @param userSessionManagerPlugin
+     *            the user session manager service
+     * @param attachmentManagerPlugin
+     *            the attachment manager service
      */
     @Inject
-    public CustomAttributeManagerServiceImpl(Configuration configuration, ApplicationLifecycle lifecycle, II18nMessagesPlugin i18nMessagesPlugin) {
+    public CustomAttributeManagerServiceImpl(Configuration configuration, ApplicationLifecycle lifecycle, II18nMessagesPlugin i18nMessagesPlugin,
+            IUserSessionManagerPlugin userSessionManagerPlugin, IAttachmentManagerPlugin attachmentManagerPlugin) {
         this.i18nMessagesPlugin = i18nMessagesPlugin;
+        this.userSessionManagerPlugin = userSessionManagerPlugin;
+        this.attachmentManagerPlugin = attachmentManagerPlugin;
         log.info("SERVICE>>> CustomAttributeManagerServiceImpl starting...");
         lifecycle.addStopHook(() -> {
             log.info("SERVICE>>> CustomAttributeManagerServiceImpl stopping...");
@@ -223,7 +234,7 @@ public class CustomAttributeManagerServiceImpl implements ICustomAttributeManage
                             form.reject(prefix + fieldName, customAttributeValue.getErrorMessage());
                         } else {
                             if (saveValues) {
-                                customAttributeValue.performSave(this);
+                                customAttributeValue.performSave(this.getUserSessionManagerPlugin(), this.getAttachmentManagerPlugin(), fieldName);
                             }
                         }
 
@@ -278,6 +289,20 @@ public class CustomAttributeManagerServiceImpl implements ICustomAttributeManage
      */
     private II18nMessagesPlugin getI18nMessagesPlugin() {
         return this.i18nMessagesPlugin;
+    }
+
+    /**
+     * Get the user session manager service.
+     */
+    private IUserSessionManagerPlugin getUserSessionManagerPlugin() {
+        return this.userSessionManagerPlugin;
+    }
+
+    /**
+     * Get the attachment manager service.
+     */
+    private IAttachmentManagerPlugin getAttachmentManagerPlugin() {
+        return this.attachmentManagerPlugin;
     }
 
 }

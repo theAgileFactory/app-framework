@@ -28,6 +28,7 @@ import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.custom_attribute.ICustomAttributeManagerService;
 import framework.services.database.IDatabaseDependencyService;
 import framework.services.session.IUserSessionManagerPlugin;
+import framework.services.storage.IAttachmentManagerPlugin;
 import framework.utils.Msg;
 import models.framework_models.account.Preference;
 import models.framework_models.common.CustomAttributeItemOption;
@@ -54,6 +55,7 @@ public class DefaultPreferenceManagementPlugin implements IPreferenceManagerPlug
     private IAccountManagerPlugin accountManagerPlugin;
     private II18nMessagesPlugin i18nMessagesPlugin;
     private ICustomAttributeManagerService customAttributeManagerService;
+    private IAttachmentManagerPlugin attachmentManagerPlugin;
 
     /**
      * Creates a new DefaultPreferenceManagementPlugin.
@@ -74,18 +76,21 @@ public class DefaultPreferenceManagementPlugin implements IPreferenceManagerPlug
      *            the i18n messages service
      * @param customAttributeManagerService
      *            the custom attribute manager service
+     * @param attachmentManagerPlugin
+     *            the attachment manager service
      */
     @Inject
     public DefaultPreferenceManagementPlugin(Configuration configuration, ApplicationLifecycle lifecycle, CacheApi cacheApi,
             IUserSessionManagerPlugin userSessionManagerPlugin, IAccountManagerPlugin accountManagerPlugin,
             IDatabaseDependencyService databaseDependencyService, II18nMessagesPlugin i18nMessagesPlugin,
-            ICustomAttributeManagerService customAttributeManagerService) {
+            ICustomAttributeManagerService customAttributeManagerService, IAttachmentManagerPlugin attachmentManagerPlugin) {
         this.configuration = configuration;
         this.cacheApi = cacheApi;
         this.userSessionManagerPlugin = userSessionManagerPlugin;
         this.accountManagerPlugin = accountManagerPlugin;
         this.i18nMessagesPlugin = i18nMessagesPlugin;
         this.customAttributeManagerService = customAttributeManagerService;
+        this.attachmentManagerPlugin = attachmentManagerPlugin;
         log.info("SERVICE>>> DefaultPreferenceManagementPlugin starting...");
         lifecycle.addStopHook(() -> {
             log.info("SERVICE>>> DefaultPreferenceManagementPlugin stopping...");
@@ -238,7 +243,8 @@ public class DefaultPreferenceManagementPlugin implements IPreferenceManagerPlug
                 getAccountManagerPlugin());
         isAttributeExists(uuid, customAttributeValue);
         customAttributeValue.setValueAsObject(value);
-        Preference.savePreferenceValue(this.getCustomAttributeManagerService(), customAttributeValue, getCacheApi());
+        Preference.savePreferenceValue(this.getCustomAttributeManagerService(), this.getUserSessionManagerPlugin(), this.getAttachmentManagerPlugin(),
+                customAttributeValue, getCacheApi());
     }
 
     @Override
@@ -353,7 +359,8 @@ public class DefaultPreferenceManagementPlugin implements IPreferenceManagerPlug
                         if (log.isDebugEnabled()) {
                             log.debug("Readring preference with uuid " + preferenceUuid + " saved to database");
                         }
-                        Preference.savePreferenceValue(this.getCustomAttributeManagerService(), customAttributeValue, this.getCacheApi());
+                        Preference.savePreferenceValue(this.getCustomAttributeManagerService(), this.getUserSessionManagerPlugin(),
+                                this.getAttachmentManagerPlugin(), customAttributeValue, this.getCacheApi());
                     }
                 }
             }
@@ -415,6 +422,13 @@ public class DefaultPreferenceManagementPlugin implements IPreferenceManagerPlug
      */
     private ICustomAttributeManagerService getCustomAttributeManagerService() {
         return this.customAttributeManagerService;
+    }
+
+    /**
+     * Get the attachment manager service.
+     */
+    private IAttachmentManagerPlugin getAttachmentManagerPlugin() {
+        return this.attachmentManagerPlugin;
     }
 
 }

@@ -34,6 +34,8 @@ import com.avaje.ebean.Model;
 
 import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.custom_attribute.ICustomAttributeManagerService;
+import framework.services.session.IUserSessionManagerPlugin;
+import framework.services.storage.IAttachmentManagerPlugin;
 import framework.utils.Msg;
 import models.framework_models.parent.IModel;
 import models.framework_models.parent.IModelConstants;
@@ -246,7 +248,7 @@ public class SingleItemCustomAttributeValue extends Model implements IModel, ICu
     }
 
     @Override
-    public void performSave(ICustomAttributeManagerService customAttributeManagerService) {
+    public void performSave(IUserSessionManagerPlugin userSessionManagerPlugin, IAttachmentManagerPlugin attachmentManagerPlugin, String fieldName) {
         save();
         this.isNotReadFromDb = false;
     }

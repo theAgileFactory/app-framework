@@ -39,6 +39,7 @@ import framework.services.account.IAccountManagerPlugin;
 import framework.services.account.IUserAccount;
 import framework.services.custom_attribute.ICustomAttributeManagerService;
 import framework.services.session.IUserSessionManagerPlugin;
+import framework.services.storage.IAttachmentManagerPlugin;
 import models.framework_models.common.CustomAttributeDefinition;
 import models.framework_models.common.ICustomAttributeValue;
 import models.framework_models.parent.IModel;
@@ -184,8 +185,8 @@ public class Preference extends Model implements IModel {
      * @param cacheApi
      *            the play cache service
      */
-    public static void savePreferenceValue(ICustomAttributeManagerService customAttributeManagerService, ICustomAttributeValue customAttributeValue,
-            CacheApi cacheApi) {
+    public static void savePreferenceValue(ICustomAttributeManagerService customAttributeManagerService, IUserSessionManagerPlugin userSessionManagerPlugin,
+            IAttachmentManagerPlugin attachmentManagerPlugin, ICustomAttributeValue customAttributeValue, CacheApi cacheApi) {
         String uuid = customAttributeValue.getDefinition().uuid;
         if (log.isDebugEnabled()) {
             log.debug("Saving preference with uuid " + uuid);
@@ -201,7 +202,10 @@ public class Preference extends Model implements IModel {
             }
             cacheApi.remove(IFrameworkConstants.SYSTEM_PREFERENCE_CACHE_PREFIX + uuid);
         }
-        customAttributeValue.performSave(customAttributeManagerService);
+
+        String fieldName = customAttributeManagerService.getFieldNameFromDefinitionUuid(customAttributeValue.getDefinition().uuid);
+
+        customAttributeValue.performSave(userSessionManagerPlugin, attachmentManagerPlugin, fieldName);
     }
 
     public static Preference getPreferenceFromUuid(String uuid) {
