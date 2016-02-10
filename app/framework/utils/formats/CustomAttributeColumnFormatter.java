@@ -18,6 +18,7 @@
 package framework.utils.formats;
 
 import framework.commons.IFrameworkConstants;
+import framework.services.configuration.II18nMessagesPlugin;
 import framework.utils.IColumnFormatter;
 import models.framework_models.common.CustomAttributeDefinition;
 import models.framework_models.common.ICustomAttributeValue;
@@ -38,8 +39,10 @@ import models.framework_models.common.ICustomAttributeValue;
 public class CustomAttributeColumnFormatter<T> implements IColumnFormatter<T> {
     private Class<?> objectType;
     private Long customAttributeDefinitionId;
+    private II18nMessagesPlugin i18nMessagesPlugin;
 
-    public CustomAttributeColumnFormatter(Class<?> objectType, Long customAttributeDefinitionId) {
+    public CustomAttributeColumnFormatter(II18nMessagesPlugin i18nMessagesPlugin, Class<?> objectType, Long customAttributeDefinitionId) {
+        this.i18nMessagesPlugin = i18nMessagesPlugin;
         this.objectType = objectType;
         this.customAttributeDefinitionId = customAttributeDefinitionId;
     }
@@ -51,7 +54,11 @@ public class CustomAttributeColumnFormatter<T> implements IColumnFormatter<T> {
         }
         Long id = (Long) cellValue;
         ICustomAttributeValue customAttributeValue = getCustomAttributeValue(id);
-        return customAttributeValue.renderDisplayNoDescription().body();
+        return customAttributeValue.renderDisplayNoDescription(this.getI18nMessagesPlugin()).body();
+    }
+
+    private II18nMessagesPlugin getI18nMessagesPlugin() {
+        return this.i18nMessagesPlugin;
     }
 
     private Class<?> getObjectType() {

@@ -18,4 +18,5 @@ trait ViewsInjector{
 	val _implementationDefinedObjectService=play.mvc.Http.Context.current().args.get(classOf[framework.services.configuration.IImplementationDefinedObjectService].getName).asInstanceOf[framework.services.configuration.IImplementationDefinedObjectService]
 	val _topMenuBar=play.mvc.Http.Context.current().args.get(classOf[framework.services.configuration.ITopMenuBarService].getName).asInstanceOf[framework.services.configuration.ITopMenuBarService]
     val _preferenceManagerPlugin=play.mvc.Http.Context.current().args.get(classOf[framework.services.account.IPreferenceManagerPlugin].getName).asInstanceOf[framework.services.account.IPreferenceManagerPlugin]
+    val _customAttributeManagerService=play.mvc.Http.Context.current().args.get(classOf[framework.services.custom_attribute.ICustomAttributeManagerService].getName).asInstanceOf[framework.services.custom_attribute.ICustomAttributeManagerService]
 }

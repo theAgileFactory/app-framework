@@ -33,6 +33,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
+import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.kpi.IKpiService;
 import framework.services.kpi.Kpi;
 import framework.services.kpi.Kpi.DataType;
@@ -228,10 +229,12 @@ public class Table<T> {
      * specified object type.<br/>
      * <b>WARNING</b>: the id field name MUST be set before using this method.
      * 
+     * @param i18nMessagesPlugin
+     *            the i18n messages services
      * @param objectType
      *            the list of the custom attribute definitions
      */
-    public void addCustomAttributeColumns(Class<?> objectType) {
+    public void addCustomAttributeColumns(II18nMessagesPlugin i18nMessagesPlugin, Class<?> objectType) {
         List<CustomAttributeDefinition> customAttributeDefinitions = CustomAttributeDefinition.getOrderedCustomAttributeDefinitions(objectType);
         if (customAttributeDefinitions != null) {
             if (getIdFieldName() == null) {
@@ -242,7 +245,8 @@ public class Table<T> {
                     notDisplayedCustomAttributeColumns.add(customAttributeDefinition.uuid);
                 }
                 addColumn(customAttributeDefinition.uuid, getIdFieldName(), customAttributeDefinition.name, SorterType.NONE);
-                setColumnFormatter(customAttributeDefinition.uuid, new CustomAttributeColumnFormatter<T>(objectType, customAttributeDefinition.id));
+                setColumnFormatter(customAttributeDefinition.uuid,
+                        new CustomAttributeColumnFormatter<T>(i18nMessagesPlugin, objectType, customAttributeDefinition.id));
                 if (customAttributeDefinition.attributeType.equals(ICustomAttributeValue.AttributeType.URL.name())) {
                     setColumnValueCssClass(customAttributeDefinition.uuid, "rowlink-skip");
                 }

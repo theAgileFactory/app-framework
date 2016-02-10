@@ -17,7 +17,8 @@
  */
 package models.framework_models.common;
 
-import framework.utils.CustomAttributeFormAndDisplayHandler;
+import framework.services.configuration.II18nMessagesPlugin;
+import framework.services.custom_attribute.ICustomAttributeManagerService;
 import framework.utils.Msg;
 import play.api.data.Field;
 import play.twirl.api.Html;
@@ -59,7 +60,7 @@ public interface ICustomAttributeValue {
     /**
      * Save the object into the db
      */
-    public void performSave();
+    public void performSave(ICustomAttributeManagerService customAttributeManagerService);
 
     /**
      * Return the definition for a custom attribute
@@ -89,8 +90,6 @@ public interface ICustomAttributeValue {
 
     /**
      * Returns a String representation of the value.<br/>
-     * This method is to be used by the
-     * {@link CustomAttributeFormAndDisplayHandler}.<br/>
      * <p>
      * <b>WARNING</b><br/>
      * In case of multi-valued attributes, the print method should return a
@@ -101,8 +100,6 @@ public interface ICustomAttributeValue {
 
     /**
      * Read the value of the object from the specified String representation
-     * This method is to be used by the
-     * {@link CustomAttributeFormAndDisplayHandler}.
      * <p>
      * <b>WARNING</b><br/>
      * In case of multi-valued attributes, provided value is a comma separated
@@ -112,7 +109,7 @@ public interface ICustomAttributeValue {
      * @return true if parsing was successful, false otherwise (this means that
      *         hasError() will return true)
      */
-    public boolean parse(String text);
+    public boolean parse(II18nMessagesPlugin i18nMessagesPlugin, String text);
 
     /**
      * Read the value of the object from the specified File representation
@@ -120,7 +117,7 @@ public interface ICustomAttributeValue {
      * @return true if parsing was successful, false otherwise (this means that
      *         hasError() will return true)
      */
-    public boolean parseFile();
+    public boolean parseFile(ICustomAttributeManagerService customAttributeManagerService);
 
     /**
      * Return true if the custom attribute is in error
@@ -154,21 +151,21 @@ public interface ICustomAttributeValue {
      *            exists
      * @return an Html display of the form field attached to the specified value
      */
-    public Html renderFormField(Field field, boolean displayDescription);
+    public Html renderFormField(II18nMessagesPlugin i18nMessagesPlugin, Field field, boolean displayDescription);
 
     /**
      * Render a display.
      * 
      * The description (if it exists) is displayed.
      */
-    public Html renderDisplay();
+    public Html renderDisplay(II18nMessagesPlugin i18nMessagesPlugin);
 
     /**
      * Render a display.
      * 
      * The description (if it exists) is not displayed.
      */
-    public Html renderDisplayNoDescription();
+    public Html renderDisplayNoDescription(II18nMessagesPlugin i18nMessagesPlugin);
 
     /**
      * An enumeration which tells about the type of the attribute.

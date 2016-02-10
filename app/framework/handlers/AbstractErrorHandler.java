@@ -9,6 +9,7 @@ import framework.services.account.IPreferenceManagerPlugin;
 import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.configuration.IImplementationDefinedObjectService;
 import framework.services.configuration.ITopMenuBarService;
+import framework.services.custom_attribute.ICustomAttributeManagerService;
 import framework.services.kpi.IKpiService;
 import framework.services.session.IUserSessionManagerPlugin;
 import framework.services.storage.IAttachmentManagerPlugin;
@@ -44,6 +45,8 @@ public class AbstractErrorHandler extends DefaultHttpErrorHandler {
     private ITopMenuBarService topMenuBarService;
     @Inject(optional = true)
     private IPreferenceManagerPlugin preferenceManagerPlugin;
+    @Inject(optional = true)
+    private ICustomAttributeManagerService customAttributeManagerService;
 
     @Inject
     public AbstractErrorHandler(Configuration configuration, Environment environment, OptionalSourceMapper optionalSourceMapper,
@@ -63,7 +66,7 @@ public class AbstractErrorHandler extends DefaultHttpErrorHandler {
     protected void injectCommonServicesIncontext(Http.Context context) {
         ContextArgsInjector.injectCommonServicesIncontext(context, getConfiguration(), getMessagesPlugin(), getUserSessionManagerPlugin(),
                 getAttachmentManagerPlugin(), getAccountManagerPlugin(), getCacheApi(), getKpiService(), getImplementationDefinedObjectService(),
-                getTopMenuBarService(), getPreferenceManagerPlugin());
+                getTopMenuBarService(), getPreferenceManagerPlugin(), this.getCustomAttributeManagerService());
     }
 
     protected Configuration getConfiguration() {
@@ -104,5 +107,9 @@ public class AbstractErrorHandler extends DefaultHttpErrorHandler {
 
     private IPreferenceManagerPlugin getPreferenceManagerPlugin() {
         return preferenceManagerPlugin;
+    }
+
+    private ICustomAttributeManagerService getCustomAttributeManagerService() {
+        return this.customAttributeManagerService;
     }
 }

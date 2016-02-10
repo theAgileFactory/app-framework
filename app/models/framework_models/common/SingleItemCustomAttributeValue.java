@@ -32,6 +32,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.avaje.ebean.Model;
 
+import framework.services.configuration.II18nMessagesPlugin;
+import framework.services.custom_attribute.ICustomAttributeManagerService;
 import framework.utils.Msg;
 import models.framework_models.parent.IModel;
 import models.framework_models.parent.IModelConstants;
@@ -91,8 +93,8 @@ public class SingleItemCustomAttributeValue extends Model implements IModel, ICu
 
     @Override
     public String audit() {
-        return "SingleItemCustomAttributeValue [id=" + id + ", deleted=" + deleted + ", lastUpdate=" + lastUpdate + ", objectType=" + objectType + ", objectId="
-                + objectId + ", value=" + value + "]";
+        return "SingleItemCustomAttributeValue [id=" + id + ", deleted=" + deleted + ", lastUpdate=" + lastUpdate + ", objectType=" + objectType
+                + ", objectId=" + objectId + ", value=" + value + "]";
     }
 
     @Override
@@ -159,7 +161,7 @@ public class SingleItemCustomAttributeValue extends Model implements IModel, ICu
     }
 
     @Override
-    public boolean parse(String text) {
+    public boolean parse(II18nMessagesPlugin i18nMessagesPlugin, String text) {
         if (StringUtils.isBlank(text)) {
 
             if (customAttributeDefinition.isRequired()) {
@@ -185,7 +187,7 @@ public class SingleItemCustomAttributeValue extends Model implements IModel, ICu
     }
 
     @Override
-    public boolean parseFile() {
+    public boolean parseFile(ICustomAttributeManagerService customAttributeManagerService) {
         return false;
     }
 
@@ -198,8 +200,8 @@ public class SingleItemCustomAttributeValue extends Model implements IModel, ICu
             this.value = null;
         } else {
             if (!(newValue instanceof Long)) {
-                throw new IllegalArgumentException(
-                        "This custom attribute " + this.customAttributeDefinition.uuid + " is a Long attribute and is not compatible with value : " + newValue);
+                throw new IllegalArgumentException("This custom attribute " + this.customAttributeDefinition.uuid
+                        + " is a Long attribute and is not compatible with value : " + newValue);
             }
             CustomAttributeItemOption itemOption = CustomAttributeItemOption.getCustomAttributeItemOptionById((Long) newValue);
             this.value = itemOption;
@@ -223,7 +225,7 @@ public class SingleItemCustomAttributeValue extends Model implements IModel, ICu
     }
 
     @Override
-    public Html renderFormField(Field field, boolean displayDescription) {
+    public Html renderFormField(II18nMessagesPlugin i18nMessagesPlugin, Field field, boolean displayDescription) {
         String description = "";
         if (displayDescription) {
             description = Msg.get(customAttributeDefinition.description);
@@ -234,17 +236,17 @@ public class SingleItemCustomAttributeValue extends Model implements IModel, ICu
     }
 
     @Override
-    public Html renderDisplay() {
+    public Html renderDisplay(II18nMessagesPlugin i18nMessagesPlugin) {
         return views.html.framework_views.parts.formats.display_value_holder.render(value, false);
     }
 
     @Override
-    public Html renderDisplayNoDescription() {
+    public Html renderDisplayNoDescription(II18nMessagesPlugin i18nMessagesPlugin) {
         return views.html.framework_views.parts.formats.display_value_holder.render(value, true);
     }
 
     @Override
-    public void performSave() {
+    public void performSave(ICustomAttributeManagerService customAttributeManagerService) {
         save();
         this.isNotReadFromDb = false;
     }

@@ -24,9 +24,10 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import framework.services.configuration.II18nMessagesPlugin;
+import framework.services.custom_attribute.ICustomAttributeManagerService;
 import framework.services.database.IDatabaseDependencyService;
 import framework.services.session.IUserSessionManagerPlugin;
-import framework.utils.CustomAttributeFormAndDisplayHandler;
 import framework.utils.Msg;
 import models.framework_models.account.Preference;
 import models.framework_models.common.CustomAttributeItemOption;
@@ -51,6 +52,8 @@ public class DefaultPreferenceManagementPlugin implements IPreferenceManagerPlug
     private CacheApi cacheApi;
     private IUserSessionManagerPlugin userSessionManagerPlugin;
     private IAccountManagerPlugin accountManagerPlugin;
+    private II18nMessagesPlugin i18nMessagesPlugin;
+    private ICustomAttributeManagerService customAttributeManagerService;
 
     /**
      * Creates a new DefaultPreferenceManagementPlugin.
@@ -66,16 +69,23 @@ public class DefaultPreferenceManagementPlugin implements IPreferenceManagerPlug
      * @param accountManagerPlugin
      *            the account manager service
      * @param databaseDependencyService
-     *            the database dependency serice.
+     *            the database dependency service.
+     * @param i18nMessagesPlugin
+     *            the i18n messages service
+     * @param customAttributeManagerService
+     *            the custom attribute manager service
      */
     @Inject
     public DefaultPreferenceManagementPlugin(Configuration configuration, ApplicationLifecycle lifecycle, CacheApi cacheApi,
             IUserSessionManagerPlugin userSessionManagerPlugin, IAccountManagerPlugin accountManagerPlugin,
-            IDatabaseDependencyService databaseDependencyService) {
+            IDatabaseDependencyService databaseDependencyService, II18nMessagesPlugin i18nMessagesPlugin,
+            ICustomAttributeManagerService customAttributeManagerService) {
         this.configuration = configuration;
         this.cacheApi = cacheApi;
         this.userSessionManagerPlugin = userSessionManagerPlugin;
         this.accountManagerPlugin = accountManagerPlugin;
+        this.i18nMessagesPlugin = i18nMessagesPlugin;
+        this.customAttributeManagerService = customAttributeManagerService;
         log.info("SERVICE>>> DefaultPreferenceManagementPlugin starting...");
         lifecycle.addStopHook(() -> {
             log.info("SERVICE>>> DefaultPreferenceManagementPlugin stopping...");
@@ -228,7 +238,7 @@ public class DefaultPreferenceManagementPlugin implements IPreferenceManagerPlug
                 getAccountManagerPlugin());
         isAttributeExists(uuid, customAttributeValue);
         customAttributeValue.setValueAsObject(value);
-        Preference.savePreferenceValue(customAttributeValue, getCacheApi());
+        Preference.savePreferenceValue(this.getCustomAttributeManagerService(), customAttributeValue, getCacheApi());
     }
 
     @Override
@@ -274,7 +284,7 @@ public class DefaultPreferenceManagementPlugin implements IPreferenceManagerPlug
                 }
                 customAttributeValue.defaults();
             }
-            String fieldId = CustomAttributeFormAndDisplayHandler.getFieldNameFromDefinitionUuid(customAttributeValue.getDefinition().uuid);
+            String fieldId = this.getCustomAttributeManagerService().getFieldNameFromDefinitionUuid(customAttributeValue.getDefinition().uuid);
             String customAttributeDisplayedValue = customAttributeValue.print();
             if (log.isDebugEnabled()) {
                 log.debug("Preference with uuid " + preferenceUuid + " set in form with fieldName " + fieldId + " with displayed value "
@@ -315,7 +325,7 @@ public class DefaultPreferenceManagementPlugin implements IPreferenceManagerPlug
         if (data != null) {
             ICustomAttributeValue customAttributeValue = Preference.getPreferenceValueFromUuid(preferenceUuid, this.getCacheApi(),
                     this.getUserSessionManagerPlugin(), this.getAccountManagerPlugin());
-            String fieldName = CustomAttributeFormAndDisplayHandler.getFieldNameFromDefinitionUuid(customAttributeValue.getDefinition().uuid);
+            String fieldName = this.getCustomAttributeManagerService().getFieldNameFromDefinitionUuid(customAttributeValue.getDefinition().uuid);
             if (log.isDebugEnabled()) {
                 log.debug("Readring preference with uuid " + preferenceUuid + " from form with field name " + fieldName);
             }
@@ -328,12 +338,12 @@ public class DefaultPreferenceManagementPlugin implements IPreferenceManagerPlug
                     if (log.isDebugEnabled()) {
                         log.debug("Readring preference with uuid " + preferenceUuid + " from form, value is " + formValue);
                     }
-                    customAttributeValue.parse(formValue);
+                    customAttributeValue.parse(this.getI18nMessagesPlugin(), formValue);
                 } else {
                     if (log.isDebugEnabled()) {
                         log.debug("Readring preference with uuid " + preferenceUuid + " from form, attribute is a file");
                     }
-                    customAttributeValue.parseFile();
+                    customAttributeValue.parseFile(this.getCustomAttributeManagerService());
                 }
                 if (customAttributeValue.hasError()) {
                     hasErrors = true;
@@ -343,7 +353,7 @@ public class DefaultPreferenceManagementPlugin implements IPreferenceManagerPlug
                         if (log.isDebugEnabled()) {
                             log.debug("Readring preference with uuid " + preferenceUuid + " saved to database");
                         }
-                        Preference.savePreferenceValue(customAttributeValue, this.getCacheApi());
+                        Preference.savePreferenceValue(this.getCustomAttributeManagerService(), customAttributeValue, this.getCacheApi());
                     }
                 }
             }
@@ -391,6 +401,20 @@ public class DefaultPreferenceManagementPlugin implements IPreferenceManagerPlug
      */
     private Configuration getConfiguration() {
         return configuration;
+    }
+
+    /**
+     * Get the i18n messages service.
+     */
+    private II18nMessagesPlugin getI18nMessagesPlugin() {
+        return this.i18nMessagesPlugin;
+    }
+
+    /**
+     * Get the custom attribute manager service.
+     */
+    private ICustomAttributeManagerService getCustomAttributeManagerService() {
+        return this.customAttributeManagerService;
     }
 
 }

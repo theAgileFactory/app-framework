@@ -37,9 +37,10 @@ import javax.persistence.Version;
 import com.avaje.ebean.Model;
 
 import framework.services.ServiceStaticAccessor;
+import framework.services.configuration.II18nMessagesPlugin;
+import framework.services.custom_attribute.ICustomAttributeManagerService;
 import framework.services.session.IUserSessionManagerPlugin;
 import framework.services.storage.IAttachmentManagerPlugin;
-import framework.utils.CustomAttributeFormAndDisplayHandler;
 import framework.utils.FileAttachmentHelper;
 import framework.utils.Msg;
 import models.framework_models.parent.IModel;
@@ -173,14 +174,14 @@ public class ImageCustomAttributeValue extends Model implements IModel, ICustomA
     }
 
     @Override
-    public boolean parse(String text) {
+    public boolean parse(II18nMessagesPlugin i18nMessagesPlugin, String text) {
         return false;
     }
 
     @Override
-    public boolean parseFile() {
+    public boolean parseFile(ICustomAttributeManagerService customAttributeManagerService) {
 
-        String fieldName = CustomAttributeFormAndDisplayHandler.getFieldNameFromDefinitionUuid(getDefinition().uuid);
+        String fieldName = customAttributeManagerService.getFieldNameFromDefinitionUuid(getDefinition().uuid);
         if (FileAttachmentHelper.hasFileField(fieldName)) {
 
             FilePart filePart = FileAttachmentHelper.getFilePart(fieldName);
@@ -251,7 +252,7 @@ public class ImageCustomAttributeValue extends Model implements IModel, ICustomA
     }
 
     @Override
-    public Html renderFormField(Field field, boolean displayDescription) {
+    public Html renderFormField(II18nMessagesPlugin i18nMessagesPlugin, Field field, boolean displayDescription) {
         String description = "";
         if (displayDescription) {
             description = customAttributeDefinition.description;
@@ -260,7 +261,7 @@ public class ImageCustomAttributeValue extends Model implements IModel, ICustomA
     }
 
     @Override
-    public Html renderDisplay() {
+    public Html renderDisplay(II18nMessagesPlugin i18nMessagesPlugin) {
         if (value.equals("#attachment")) {
             return views.html.framework_views.parts.formats.display_image_from_file_attachment.render(ImageCustomAttributeValue.class, this.id);
         } else {
@@ -269,14 +270,14 @@ public class ImageCustomAttributeValue extends Model implements IModel, ICustomA
     }
 
     @Override
-    public Html renderDisplayNoDescription() {
-        return renderDisplay();
+    public Html renderDisplayNoDescription(II18nMessagesPlugin i18nMessagesPlugin) {
+        return renderDisplay(i18nMessagesPlugin);
     }
 
     @Override
-    public void performSave() {
+    public void performSave(ICustomAttributeManagerService customAttributeManagerService) {
 
-        String fieldName = CustomAttributeFormAndDisplayHandler.getFieldNameFromDefinitionUuid(getDefinition().uuid);
+        String fieldName = customAttributeManagerService.getFieldNameFromDefinitionUuid(getDefinition().uuid);
         if (FileAttachmentHelper.hasFileField(fieldName)) {
 
             save();

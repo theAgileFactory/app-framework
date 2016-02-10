@@ -37,6 +37,7 @@ import framework.commons.IFrameworkConstants;
 import framework.services.account.AccountManagementException;
 import framework.services.account.IAccountManagerPlugin;
 import framework.services.account.IUserAccount;
+import framework.services.custom_attribute.ICustomAttributeManagerService;
 import framework.services.session.IUserSessionManagerPlugin;
 import models.framework_models.common.CustomAttributeDefinition;
 import models.framework_models.common.ICustomAttributeValue;
@@ -183,7 +184,8 @@ public class Preference extends Model implements IModel {
      * @param cacheApi
      *            the play cache service
      */
-    public static void savePreferenceValue(ICustomAttributeValue customAttributeValue, CacheApi cacheApi) {
+    public static void savePreferenceValue(ICustomAttributeManagerService customAttributeManagerService, ICustomAttributeValue customAttributeValue,
+            CacheApi cacheApi) {
         String uuid = customAttributeValue.getDefinition().uuid;
         if (log.isDebugEnabled()) {
             log.debug("Saving preference with uuid " + uuid);
@@ -199,7 +201,7 @@ public class Preference extends Model implements IModel {
             }
             cacheApi.remove(IFrameworkConstants.SYSTEM_PREFERENCE_CACHE_PREFIX + uuid);
         }
-        customAttributeValue.performSave();
+        customAttributeValue.performSave(customAttributeManagerService);
     }
 
     public static Preference getPreferenceFromUuid(String uuid) {

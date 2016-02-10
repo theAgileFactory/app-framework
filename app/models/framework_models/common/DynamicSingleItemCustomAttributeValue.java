@@ -33,7 +33,9 @@ import org.apache.commons.lang3.StringUtils;
 import com.avaje.ebean.Model;
 
 import framework.services.ServiceStaticAccessor;
+import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.configuration.IImplementationDefinedObjectService;
+import framework.services.custom_attribute.ICustomAttributeManagerService;
 import framework.utils.DefaultSelectableValueHolder;
 import framework.utils.ISelectableValueHolder;
 import framework.utils.ISelectableValueHolderCollection;
@@ -195,7 +197,7 @@ public class DynamicSingleItemCustomAttributeValue extends Model implements IMod
     }
 
     @Override
-    public boolean parse(String text) {
+    public boolean parse(II18nMessagesPlugin i18nMessagesPlugin, String text) {
         if (StringUtils.isBlank(text) && customAttributeDefinition.isRequired()) {
             this.hasError = true;
             this.errorMessage = Msg.get(customAttributeDefinition.getRequiredMessage());
@@ -206,7 +208,7 @@ public class DynamicSingleItemCustomAttributeValue extends Model implements IMod
         } else {
             try {
                 Long itemId = Long.parseLong(text);
-                String name = customAttributeDefinition.getNameFromValue(itemId);
+                String name = customAttributeDefinition.getNameFromValue(i18nMessagesPlugin, itemId);
                 if (name != null) {
                     this.value = itemId;
                 }
@@ -220,7 +222,7 @@ public class DynamicSingleItemCustomAttributeValue extends Model implements IMod
     }
 
     @Override
-    public boolean parseFile() {
+    public boolean parseFile(ICustomAttributeManagerService customAttributeManagerService) {
         return false;
     }
 
@@ -233,8 +235,8 @@ public class DynamicSingleItemCustomAttributeValue extends Model implements IMod
             this.value = null;
         } else {
             if (!(newValue instanceof Long)) {
-                throw new IllegalArgumentException(
-                        "This custom attribute " + this.customAttributeDefinition.uuid + " is a Long attribute and is not compatible with value : " + newValue);
+                throw new IllegalArgumentException("This custom attribute " + this.customAttributeDefinition.uuid
+                        + " is a Long attribute and is not compatible with value : " + newValue);
             }
             this.value = (Long) newValue;
         }
@@ -257,7 +259,7 @@ public class DynamicSingleItemCustomAttributeValue extends Model implements IMod
     }
 
     @Override
-    public Html renderFormField(Field field, boolean displayDescription) {
+    public Html renderFormField(II18nMessagesPlugin i18nMessagesPlugin, Field field, boolean displayDescription) {
 
         String description = "";
         if (displayDescription) {
@@ -267,30 +269,31 @@ public class DynamicSingleItemCustomAttributeValue extends Model implements IMod
         if (!customAttributeDefinition.isAutoComplete()) {
             String uid = ServiceStaticAccessor.getUserSessionManagerPlugin().getUserSessionId(Controller.ctx());
             return views.html.framework_views.parts.dropdownlist.render(field, Msg.get(customAttributeDefinition.name),
-                    customAttributeDefinition.getValueHoldersCollectionFromNameForDynamicSingleItemCustomAttribute("%", uid), description, true,
-                    customAttributeDefinition.isRequired());
+                    customAttributeDefinition.getValueHoldersCollectionFromNameForDynamicSingleItemCustomAttribute(i18nMessagesPlugin, "%", uid), description,
+                    true, customAttributeDefinition.isRequired());
         }
         IImplementationDefinedObjectService implementationDefinedObjects = ServiceStaticAccessor.getImplementationDefinedObjectService();
         return views.html.framework_views.parts.autocomplete.render(field, Msg.get(customAttributeDefinition.name), description,
-                implementationDefinedObjects.getRouteForDynamicSingleCustomAttributeApi().url(), customAttributeDefinition.getContextParametersForDynamicApi());
+                implementationDefinedObjects.getRouteForDynamicSingleCustomAttributeApi().url(),
+                customAttributeDefinition.getContextParametersForDynamicApi());
     }
 
     @Override
-    public Html renderDisplay() {
+    public Html renderDisplay(II18nMessagesPlugin i18nMessagesPlugin) {
         DefaultSelectableValueHolder<Long> valueHolder = null;
         if (value != null) {
-            valueHolder = new DefaultSelectableValueHolder<Long>(value, customAttributeDefinition.getNameFromValue(value));
+            valueHolder = new DefaultSelectableValueHolder<Long>(value, customAttributeDefinition.getNameFromValue(i18nMessagesPlugin, value));
         }
         return views.html.framework_views.parts.formats.display_value_holder.render(valueHolder, true);
     }
 
     @Override
-    public Html renderDisplayNoDescription() {
-        return renderDisplay();
+    public Html renderDisplayNoDescription(II18nMessagesPlugin i18nMessagesPlugin) {
+        return renderDisplay(i18nMessagesPlugin);
     }
 
     @Override
-    public void performSave() {
+    public void performSave(ICustomAttributeManagerService customAttributeManagerService) {
         save();
         this.isNotReadFromDb = false;
     }
@@ -306,7 +309,7 @@ public class DynamicSingleItemCustomAttributeValue extends Model implements IMod
      * 
      * @return a JSON response
      */
-    public static Result jsonQueryApi() {
+    public static Result jsonQueryApi(II18nMessagesPlugin i18nMessagesPlugin) {
         // Retrieve the right custom attribute definition
         String customAttributeDefinitionIdAsString = Controller.request().queryString()
                 .get(CustomAttributeDefinition.DYNAMIC_SINGLE_CUSTOM_ATTRIBUTE_DEFINITION_ID_CTX_PARAMETER) != null
@@ -332,14 +335,14 @@ public class DynamicSingleItemCustomAttributeValue extends Model implements IMod
             // Perform a search according to the specified query
             String uid = ServiceStaticAccessor.getUserSessionManagerPlugin().getUserSessionId(Controller.ctx());
             ISelectableValueHolderCollection<Long> valueHolders = customAttributeDefinition
-                    .getValueHoldersCollectionFromNameForDynamicSingleItemCustomAttribute(query, uid);
+                    .getValueHoldersCollectionFromNameForDynamicSingleItemCustomAttribute(i18nMessagesPlugin, query, uid);
             return Controller.ok(Utilities.marshallAsJson(valueHolders.getValues()));
         }
         if (value != null) {
             try {
                 // Find the name associated with the specified value
                 Long valueAsLong = Long.parseLong(value);
-                String name = customAttributeDefinition.getNameFromValue(valueAsLong);
+                String name = customAttributeDefinition.getNameFromValue(i18nMessagesPlugin, valueAsLong);
                 ISelectableValueHolder<Long> valueHolder = new DefaultSelectableValueHolder<Long>(valueAsLong, name);
                 return Controller.ok(Utilities.marshallAsJson(valueHolder, 0));
             } catch (NumberFormatException e) {

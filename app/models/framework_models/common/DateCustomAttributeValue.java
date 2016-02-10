@@ -33,6 +33,8 @@ import javax.persistence.Version;
 
 import com.avaje.ebean.Model;
 
+import framework.services.configuration.II18nMessagesPlugin;
+import framework.services.custom_attribute.ICustomAttributeManagerService;
 import framework.utils.Msg;
 import framework.utils.Utilities;
 import framework.utils.formats.DateType;
@@ -175,7 +177,7 @@ public class DateCustomAttributeValue extends Model implements IModel, ICustomAt
     }
 
     @Override
-    public boolean parse(String text) {
+    public boolean parse(II18nMessagesPlugin i18nMessagesPlugin, String text) {
         if (text == null || text.trim().isEmpty()) {
             this.value = null;
             if (customAttributeDefinition.isRequired()) {
@@ -209,7 +211,7 @@ public class DateCustomAttributeValue extends Model implements IModel, ICustomAt
     }
 
     @Override
-    public boolean parseFile() {
+    public boolean parseFile(ICustomAttributeManagerService customAttributeManagerService) {
         return false;
     }
 
@@ -222,8 +224,8 @@ public class DateCustomAttributeValue extends Model implements IModel, ICustomAt
             this.value = null;
         } else {
             if (!(newValue instanceof Date)) {
-                throw new IllegalArgumentException(
-                        "This custom attribute " + this.customAttributeDefinition.uuid + " is a Date attribute and is not compatible with value : " + newValue);
+                throw new IllegalArgumentException("This custom attribute " + this.customAttributeDefinition.uuid
+                        + " is a Date attribute and is not compatible with value : " + newValue);
             }
             this.value = (Date) newValue;
             if (!customAttributeDefinition.isDateAfter(this.value)) {
@@ -256,7 +258,7 @@ public class DateCustomAttributeValue extends Model implements IModel, ICustomAt
     }
 
     @Override
-    public Html renderFormField(Field field, boolean displayDescription) {
+    public Html renderFormField(II18nMessagesPlugin i18nMessagesPlugin, Field field, boolean displayDescription) {
         String description = "";
         if (displayDescription) {
             description = customAttributeDefinition.description;
@@ -266,17 +268,17 @@ public class DateCustomAttributeValue extends Model implements IModel, ICustomAt
     }
 
     @Override
-    public Html renderDisplay() {
+    public Html renderDisplay(II18nMessagesPlugin i18nMessagesPlugin) {
         return views.html.framework_views.parts.formats.display_date.render(value, null, false);
     }
 
     @Override
-    public Html renderDisplayNoDescription() {
-        return renderDisplay();
+    public Html renderDisplayNoDescription(II18nMessagesPlugin i18nMessagesPlugin) {
+        return renderDisplay(i18nMessagesPlugin);
     }
 
     @Override
-    public void performSave() {
+    public void performSave(ICustomAttributeManagerService customAttributeManagerService) {
         save();
         this.isNotReadFromDb = false;
     }

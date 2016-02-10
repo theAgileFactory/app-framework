@@ -35,6 +35,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.avaje.ebean.Model;
 
+import framework.services.configuration.II18nMessagesPlugin;
+import framework.services.custom_attribute.ICustomAttributeManagerService;
 import framework.utils.Msg;
 import models.framework_models.parent.IModel;
 import models.framework_models.parent.IModelConstants;
@@ -167,7 +169,7 @@ public class UrlCustomAttributeValue extends Model implements IModel, ICustomAtt
     }
 
     @Override
-    public boolean parse(String text) {
+    public boolean parse(II18nMessagesPlugin i18nMessagesPlugin, String text) {
         this.value = text;
         if (StringUtils.isBlank(text) && customAttributeDefinition.isRequired()) {
             this.hasError = true;
@@ -183,7 +185,7 @@ public class UrlCustomAttributeValue extends Model implements IModel, ICustomAtt
     }
 
     @Override
-    public boolean parseFile() {
+    public boolean parseFile(ICustomAttributeManagerService customAttributeManagerService) {
         return false;
     }
 
@@ -196,8 +198,8 @@ public class UrlCustomAttributeValue extends Model implements IModel, ICustomAtt
             this.value = null;
         } else {
             if (!(newValue instanceof String)) {
-                throw new IllegalArgumentException(
-                        "This custom attribute " + this.customAttributeDefinition.uuid + " is an url attribute and is not compatible with value : " + newValue);
+                throw new IllegalArgumentException("This custom attribute " + this.customAttributeDefinition.uuid
+                        + " is an url attribute and is not compatible with value : " + newValue);
             }
             String text = (String) newValue;
             if (text != null && !text.equals("") && !isValidUrl(text)) {
@@ -225,7 +227,7 @@ public class UrlCustomAttributeValue extends Model implements IModel, ICustomAtt
     }
 
     @Override
-    public Html renderFormField(Field field, boolean displayDescription) {
+    public Html renderFormField(II18nMessagesPlugin i18nMessagesPlugin, Field field, boolean displayDescription) {
         String description = "";
         if (displayDescription) {
             description = customAttributeDefinition.description;
@@ -235,7 +237,7 @@ public class UrlCustomAttributeValue extends Model implements IModel, ICustomAtt
     }
 
     @Override
-    public Html renderDisplay() {
+    public Html renderDisplay(II18nMessagesPlugin i18nMessagesPlugin) {
 
         if (value != null && !value.equals("")) {
 
@@ -253,12 +255,12 @@ public class UrlCustomAttributeValue extends Model implements IModel, ICustomAtt
     }
 
     @Override
-    public Html renderDisplayNoDescription() {
-        return renderDisplay();
+    public Html renderDisplayNoDescription(II18nMessagesPlugin i18nMessagesPlugin) {
+        return renderDisplay(i18nMessagesPlugin);
     }
 
     @Override
-    public void performSave() {
+    public void performSave(ICustomAttributeManagerService customAttributeManagerService) {
         save();
         this.isNotReadFromDb = false;
     }

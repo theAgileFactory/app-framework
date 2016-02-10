@@ -18,6 +18,7 @@
 @(objectType: Class[_], objectId: Long, formDataObject: Object = null)
 
 @import framework_views.parts
+@import framework_views.parts.commons._
 
 @customAttributeValues=@{
 models.framework_models.common.CustomAttributeDefinition.getOrderedCustomAttributeValues(objectType, objectId);
@@ -37,7 +38,7 @@ models.framework_models.common.CustomAttributeDefinition.getOrderedCustomAttribu
                             @parts.Msg(customAttributeValue.getDefinition().name)
                         </th>
                         <td>
-                            @customAttributeValue.renderDisplay()
+                            @customAttributeValue.renderDisplay(_messagesPluginService)
                         </td>
                     </tr>
                 }

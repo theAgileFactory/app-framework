@@ -16,9 +16,11 @@
  * this program. If not, see <http://www.gnu.org/licenses/>.
  *@
 @(objectForm: Form[_], preferenceUuid: String)
+
 @import commons._
+
 @customAttributeValue=@{models.framework_models.account.Preference.getPreferenceValueFromUuid(preferenceUuid, _cache, _usession, _accmngr);}
-@customAttributeValue.renderFormField(objectForm(framework.utils.CustomAttributeFormAndDisplayHandler.getFieldNameFromDefinitionUuid(customAttributeValue.getDefinition().uuid)), true)
+@customAttributeValue.renderFormField(_messagesPluginService, objectForm(_customAttributeManagerService.getFieldNameFromDefinitionUuid(customAttributeValue.getDefinition().uuid)), true)
 @*********************************************************
  * Display the input field to edit a preference
  *********************************************************@

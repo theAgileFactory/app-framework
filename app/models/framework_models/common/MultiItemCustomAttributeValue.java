@@ -35,6 +35,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.avaje.ebean.Model;
 
+import framework.services.configuration.II18nMessagesPlugin;
+import framework.services.custom_attribute.ICustomAttributeManagerService;
 import framework.utils.DefaultSelectableValueHolderCollection;
 import framework.utils.Msg;
 import models.framework_models.parent.IModel;
@@ -94,8 +96,8 @@ public class MultiItemCustomAttributeValue extends Model implements IModel, ICus
 
     @Override
     public String audit() {
-        return "MultiItemCustomAttributeValue [id=" + id + ", deleted=" + deleted + ", lastUpdate=" + lastUpdate + ", objectType=" + objectType + ", objectId="
-                + objectId + "]";
+        return "MultiItemCustomAttributeValue [id=" + id + ", deleted=" + deleted + ", lastUpdate=" + lastUpdate + ", objectType=" + objectType
+                + ", objectId=" + objectId + "]";
     }
 
     @Override
@@ -176,7 +178,7 @@ public class MultiItemCustomAttributeValue extends Model implements IModel, ICus
     }
 
     @Override
-    public boolean parse(String text) {
+    public boolean parse(II18nMessagesPlugin i18nMessagesPlugin, String text) {
         if (StringUtils.isBlank(text)) {
             if (customAttributeDefinition.isRequired()) {
                 this.hasError = true;
@@ -205,7 +207,7 @@ public class MultiItemCustomAttributeValue extends Model implements IModel, ICus
     }
 
     @Override
-    public boolean parseFile() {
+    public boolean parseFile(ICustomAttributeManagerService customAttributeManagerService) {
         return false;
     }
 
@@ -254,7 +256,7 @@ public class MultiItemCustomAttributeValue extends Model implements IModel, ICus
     }
 
     @Override
-    public Html renderFormField(Field field, boolean displayDescription) {
+    public Html renderFormField(II18nMessagesPlugin i18nMessagesPlugin, Field field, boolean displayDescription) {
         String description = "";
         if (displayDescription) {
             description = customAttributeDefinition.description;
@@ -265,19 +267,19 @@ public class MultiItemCustomAttributeValue extends Model implements IModel, ICus
     }
 
     @Override
-    public Html renderDisplay() {
+    public Html renderDisplay(II18nMessagesPlugin i18nMessagesPlugin) {
         DefaultSelectableValueHolderCollection<Long> selectableValueHolderCollection = new DefaultSelectableValueHolderCollection<Long>(values);
         return views.html.framework_views.parts.formats.display_value_holder_collection.render(selectableValueHolderCollection, false);
     }
 
     @Override
-    public Html renderDisplayNoDescription() {
+    public Html renderDisplayNoDescription(II18nMessagesPlugin i18nMessagesPlugin) {
         DefaultSelectableValueHolderCollection<Long> selectableValueHolderCollection = new DefaultSelectableValueHolderCollection<Long>(values);
         return views.html.framework_views.parts.formats.display_value_holder_collection.render(selectableValueHolderCollection, true);
     }
 
     @Override
-    public void performSave() {
+    public void performSave(ICustomAttributeManagerService customAttributeManagerService) {
         save();
         // Convert temporary values into values
         if (this.values != null) {

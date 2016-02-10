@@ -32,6 +32,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.avaje.ebean.Model;
 
+import framework.services.configuration.II18nMessagesPlugin;
+import framework.services.custom_attribute.ICustomAttributeManagerService;
 import framework.utils.Msg;
 import models.framework_models.parent.IModel;
 import models.framework_models.parent.IModelConstants;
@@ -145,7 +147,7 @@ public class BooleanCustomAttributeValue extends Model implements IModel, ICusto
     }
 
     @Override
-    public boolean parse(String text) {
+    public boolean parse(II18nMessagesPlugin i18nMessagesPlugin, String text) {
         if (StringUtils.isBlank(text)) {
             this.value = false;
             return true;
@@ -155,7 +157,7 @@ public class BooleanCustomAttributeValue extends Model implements IModel, ICusto
     }
 
     @Override
-    public boolean parseFile() {
+    public boolean parseFile(ICustomAttributeManagerService customAttributeManagerService) {
         return false;
     }
 
@@ -179,7 +181,7 @@ public class BooleanCustomAttributeValue extends Model implements IModel, ICusto
     }
 
     @Override
-    public Html renderFormField(Field field, boolean displayDescription) {
+    public Html renderFormField(II18nMessagesPlugin i18nMessagesPlugin, Field field, boolean displayDescription) {
         String description = "";
         if (displayDescription) {
             description = Msg.get(customAttributeDefinition.description);
@@ -188,17 +190,17 @@ public class BooleanCustomAttributeValue extends Model implements IModel, ICusto
     }
 
     @Override
-    public Html renderDisplay() {
+    public Html renderDisplay(II18nMessagesPlugin i18nMessagesPlugin) {
         return views.html.framework_views.parts.formats.display_boolean.render(value);
     }
 
     @Override
-    public Html renderDisplayNoDescription() {
-        return renderDisplay();
+    public Html renderDisplayNoDescription(II18nMessagesPlugin i18nMessagesPlugin) {
+        return renderDisplay(i18nMessagesPlugin);
     }
 
     @Override
-    public void performSave() {
+    public void performSave(ICustomAttributeManagerService customAttributeManagerService) {
         save();
         this.isNotReadFromDb = false;
     }

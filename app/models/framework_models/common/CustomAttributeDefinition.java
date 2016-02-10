@@ -48,8 +48,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
 import framework.commons.DataType;
-import framework.services.ServiceStaticAccessor;
-import framework.utils.CustomAttributeFormAndDisplayHandler;
+import framework.services.configuration.II18nMessagesPlugin;
+import framework.services.custom_attribute.ICustomAttributeManagerService;
 import framework.utils.DefaultSelectableValueHolder;
 import framework.utils.DefaultSelectableValueHolderCollection;
 import framework.utils.ISelectableValueHolderCollection;
@@ -344,7 +344,7 @@ public class CustomAttributeDefinition extends Model implements IModel {
             if (dataType.getConditionalRuleAuthorizedFields().containsKey(fieldId)) {
                 return fieldId;
             } else {
-                return CustomAttributeFormAndDisplayHandler.CUSTOM_ATTRIBUTE_FORM_FIELD_NAME_EXTENSION + fieldId;
+                return ICustomAttributeManagerService.CUSTOM_ATTRIBUTE_FORM_FIELD_NAME_EXTENSION + fieldId;
             }
         }
         return null;
@@ -684,7 +684,7 @@ public class CustomAttributeDefinition extends Model implements IModel {
     }
 
     /**
-     * Return the default value as a "value" (instead of name)
+     * Return the default value as a "value" (instead of name).
      * 
      * @return if not found 0 is returned
      */
@@ -700,14 +700,17 @@ public class CustomAttributeDefinition extends Model implements IModel {
 
     /**
      * Return the list of values for a
-     * {@link DynamicSingleItemCustomAttributeValue}
+     * {@link DynamicSingleItemCustomAttributeValue}.
      * 
+     * @param i18nMessagesPlugin
+     *            the i18n messages service
      * @param searchstring
      *            the string entered by the user in the autocomplete field
      * @param uid
      *            the uid of the current user
      */
-    public ISelectableValueHolderCollection<Long> getValueHoldersCollectionFromNameForDynamicSingleItemCustomAttribute(String searchstring, String uid) {
+    public ISelectableValueHolderCollection<Long> getValueHoldersCollectionFromNameForDynamicSingleItemCustomAttribute(II18nMessagesPlugin i18nMessagesPlugin,
+            String searchstring, String uid) {
         String sql = getSelectionQuery() + " " + getFilterWhereClause();
         if (getDynamicSingleMaxRecords() != 0 && isAutoComplete()) {
             sql = sql + " LIMIT " + getDynamicSingleMaxRecords();
@@ -718,7 +721,7 @@ public class CustomAttributeDefinition extends Model implements IModel {
         SqlQuery sqlQuery = Ebean.createSqlQuery(sql);
         sqlQuery.setParameter("searchstring", searchstring + "%");
         sqlQuery.setParameter("uid", uid);
-        sqlQuery.setParameter("lang", ServiceStaticAccessor.getMessagesPlugin().getCurrentLanguage().getCode());
+        sqlQuery.setParameter("lang", i18nMessagesPlugin.getCurrentLanguage().getCode());
         if (log.isDebugEnabled()) {
             log.debug("uid passed as a parameter : " + uid);
         }
@@ -734,19 +737,22 @@ public class CustomAttributeDefinition extends Model implements IModel {
 
     /**
      * Return the list of values for a
-     * {@link DynamicMultiItemCustomAttributeValue}
+     * {@link DynamicMultiItemCustomAttributeValue}.
      * 
+     * @param i18nMessagesPlugin
+     *            the i18n messages service
      * @param uid
      *            the uid of the current user
      */
-    public ISelectableValueHolderCollection<Long> getValueHoldersCollectionFromNameForDynamicMultiItemCustomAttribute(String uid) {
+    public ISelectableValueHolderCollection<Long> getValueHoldersCollectionFromNameForDynamicMultiItemCustomAttribute(II18nMessagesPlugin i18nMessagesPlugin,
+            String uid) {
         String sql = getSelectionQuery();
         if (log.isDebugEnabled()) {
             log.debug("SQL Query : " + sql);
         }
         SqlQuery sqlQuery = Ebean.createSqlQuery(sql);
         sqlQuery.setParameter("uid", uid);
-        sqlQuery.setParameter("lang", ServiceStaticAccessor.getMessagesPlugin().getCurrentLanguage().getCode());
+        sqlQuery.setParameter("lang", i18nMessagesPlugin.getCurrentLanguage().getCode());
         if (log.isDebugEnabled()) {
             log.debug("uid passed as a parameter : " + uid);
         }
@@ -762,9 +768,7 @@ public class CustomAttributeDefinition extends Model implements IModel {
 
     /**
      * Returns the list of valid values for a
-     * {@link SingleItemCustomAttributeValue}
-     * 
-     * @return
+     * {@link SingleItemCustomAttributeValue}.
      */
     public ISelectableValueHolderCollection<Long> getValueHoldersCollectionForSingleItemCustomAttribute() {
         return CustomAttributeItemOption.getSelectableValuesForDefinitionId(id);
@@ -772,15 +776,17 @@ public class CustomAttributeDefinition extends Model implements IModel {
 
     /**
      * Returns the list of valid values for a
-     * {@link MultiItemCustomAttributeValue}
+     * {@link MultiItemCustomAttributeValue}.
      */
     public ISelectableValueHolderCollection<Long> getValueHoldersCollectionForMultiItemCustomAttribute() {
         return CustomAttributeMultiItemOption.getSelectableValuesForDefinitionId(id);
     }
 
     /**
-     * Return a value from the specified name using the configured SQL queries
+     * Return a value from the specified name using the configured SQL queries.
      * 
+     * @param nameOfValueHolder
+     *            the name of the value holder
      * @return a long value
      */
     public Long getValueFromName(String nameOfValueHolder) {
@@ -800,18 +806,21 @@ public class CustomAttributeDefinition extends Model implements IModel {
     }
 
     /**
-     * Return a value from the specified name using the configured SQL queries
+     * Return a value from the specified name using the configured SQL queries.
      * 
-     * @return a long value
+     * @param i18nMessagesPlugin
+     *            the i18n messages service
+     * @param valueOfValueHolder
+     *            the value of the value holder
      */
-    public String getNameFromValue(Long valueOfValueHolder) {
+    public String getNameFromValue(II18nMessagesPlugin i18nMessagesPlugin, Long valueOfValueHolder) {
         try {
             String sql = getSelectionQuery() + " " + getNameFromValueWhereClause();
             if (log.isDebugEnabled()) {
                 log.debug("SQL Query : " + sql);
             }
             SqlQuery sqlQuery = Ebean.createSqlQuery(sql);
-            sqlQuery.setParameter("lang", ServiceStaticAccessor.getMessagesPlugin().getCurrentLanguage().getCode());
+            sqlQuery.setParameter("lang", i18nMessagesPlugin.getCurrentLanguage().getCode());
             sqlQuery.setParameter("valuetofind", valueOfValueHolder);
             SqlRow row = sqlQuery.findUnique();
             return row != null ? row.getString("name") : null;
@@ -831,7 +840,7 @@ public class CustomAttributeDefinition extends Model implements IModel {
 
     /**
      * Return the ordered (against the order attribute) list of custom attribute
-     * definitions for the specified object type
+     * definitions for the specified object type.
      * 
      * @param objectType
      *            an object type
@@ -843,7 +852,7 @@ public class CustomAttributeDefinition extends Model implements IModel {
 
     /**
      * Return the ordered (against the order attribute) list of custom attribute
-     * definitions for the specified object type
+     * definitions for the specified object type.
      * 
      * @param objectType
      *            an object type
@@ -858,15 +867,8 @@ public class CustomAttributeDefinition extends Model implements IModel {
         return find.where().eq("deleted", false).eq("objectType", objectType.getName() + ":" + filter).orderBy("order").findList();
     }
 
-    /*
-     * 
-     * 
-     * 
-     * 
-     */
-
     /**
-     * Return the definition associated with the specified uuid and objectType
+     * Return the definition associated with the specified uuid and objectType.
      * 
      * @param id
      *            the id of a definition
@@ -880,7 +882,7 @@ public class CustomAttributeDefinition extends Model implements IModel {
     /**
      * Get the custom attribute of an object type with the previous order.
      * 
-     * @param objecType
+     * @param objectType
      *            the object type
      * @param order
      *            the current order
@@ -892,7 +894,7 @@ public class CustomAttributeDefinition extends Model implements IModel {
     /**
      * Get the custom attribute of an object type with the next order.
      * 
-     * @param objecType
+     * @param objectType
      *            the object type
      * @param order
      *            the current order
@@ -904,7 +906,7 @@ public class CustomAttributeDefinition extends Model implements IModel {
     /**
      * Get the last order for an object type.
      * 
-     * @param objecType
+     * @param objectType
      *            the object type
      */
     public static Integer getLastOrder(Class<?> objectType) {
@@ -919,7 +921,7 @@ public class CustomAttributeDefinition extends Model implements IModel {
 
     /**
      * Return the ordered (against the order attribute) list of custom
-     * attributes for the specified object type
+     * attributes for the specified object type.
      * 
      * @param objectType
      *            an object type
@@ -991,6 +993,15 @@ public class CustomAttributeDefinition extends Model implements IModel {
         return false;
     }
 
+    /**
+     * Return true if the given object type with a filter has at least on custom
+     * attribute.
+     * 
+     * @param objectType
+     *            the object type
+     * @param filter
+     *            the filter
+     */
     public static Boolean hasCustomAttributes(Class<?> objectType, String filter) {
         List<CustomAttributeDefinition> customAttributeDefinitions = getOrderedCustomAttributeDefinitions(objectType, filter);
         if (customAttributeDefinitions != null && customAttributeDefinitions.size() > 0) {
@@ -1000,7 +1011,7 @@ public class CustomAttributeDefinition extends Model implements IModel {
     }
 
     /**
-     * Return an attribute value associated with the specified definition
+     * Return an attribute value associated with the specified definition.
      * 
      * @param attributeDefinitionId
      *            the id of the {@link CustomAttributeDefinition}
@@ -1017,7 +1028,7 @@ public class CustomAttributeDefinition extends Model implements IModel {
     }
 
     /**
-     * Return an attribute value associated with the specified definition
+     * Return an attribute value associated with the specified definition.
      * 
      * @param attributeDefinitionId
      *            the id of the {@link CustomAttributeDefinition}
@@ -1039,7 +1050,7 @@ public class CustomAttributeDefinition extends Model implements IModel {
     }
 
     /**
-     * Return an attribute value associated with the specified definition
+     * Return an attribute value associated with the specified definition.
      * 
      * @param attributeDefinitionUuid
      *            the uuid of the {@link CustomAttributeDefinition}
@@ -1055,6 +1066,19 @@ public class CustomAttributeDefinition extends Model implements IModel {
         return getOrCreateCustomAttributeValue(objectType, objectId, customAttributeDefinition);
     }
 
+    /**
+     * Return an attribute value associated with the specified definition.
+     * 
+     * @param attributeDefinitionUuid
+     *            the uuid of the {@link CustomAttributeDefinition}
+     * @param objectType
+     *            an object type
+     * @param filter
+     *            the filter
+     * @param objectId
+     *            the id of an object
+     * @return a value
+     */
     public static ICustomAttributeValue getCustomAttributeValue(String attributeDefinitionUuid, Class<?> objectType, String filter, Long objectId) {
         CustomAttributeDefinition customAttributeDefinition = find.where().eq("deleted", false).eq("objectType", objectType.getName() + ":" + filter)
                 .eq("uuid", attributeDefinitionUuid).findUnique();
@@ -1095,7 +1119,7 @@ public class CustomAttributeDefinition extends Model implements IModel {
 
     /**
      * Returns the {@link ICustomAttributeValue} associated with the specified
-     * objectType and objectId couple
+     * objectType and objectId couple.
      * 
      * @param objectType
      *            an object type (java object name)
@@ -1110,6 +1134,20 @@ public class CustomAttributeDefinition extends Model implements IModel {
         return getOrCreateCustomAttributeValue(objectType, null, objectId, customAttributeDefinition);
     }
 
+    /**
+     * Returns the {@link ICustomAttributeValue} associated with the specified
+     * objectType and objectId couple.
+     * 
+     * @param objectType
+     *            an object type (java object name)
+     * @param filter
+     *            the filter
+     * @param objectId
+     *            the id of an object
+     * @param customAttributeDefinition
+     *            the definition of a custom attribute
+     * @return an custom attribute instance
+     */
     private static ICustomAttributeValue getOrCreateCustomAttributeValue(Class<?> objectType, String filter, Long objectId,
             CustomAttributeDefinition customAttributeDefinition) {
         if (log.isDebugEnabled()) {

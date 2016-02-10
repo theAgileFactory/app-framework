@@ -35,6 +35,8 @@ import org.apache.commons.lang3.StringUtils;
 import com.avaje.ebean.Model;
 
 import framework.services.ServiceStaticAccessor;
+import framework.services.configuration.II18nMessagesPlugin;
+import framework.services.custom_attribute.ICustomAttributeManagerService;
 import framework.utils.DefaultSelectableValueHolderCollection;
 import framework.utils.Msg;
 import models.framework_models.parent.IModel;
@@ -211,7 +213,7 @@ public class DynamicMultiItemCustomAttributeValue extends Model implements IMode
     }
 
     @Override
-    public boolean parse(String text) {
+    public boolean parse(II18nMessagesPlugin i18nMessagesPlugin, String text) {
         if (StringUtils.isBlank(text)) {
             if (customAttributeDefinition.isRequired()) {
                 this.hasError = true;
@@ -226,7 +228,7 @@ public class DynamicMultiItemCustomAttributeValue extends Model implements IMode
     }
 
     @Override
-    public boolean parseFile() {
+    public boolean parseFile(ICustomAttributeManagerService customAttributeManagerService) {
         return false;
     }
 
@@ -267,7 +269,7 @@ public class DynamicMultiItemCustomAttributeValue extends Model implements IMode
     }
 
     @Override
-    public Html renderFormField(Field field, boolean displayDescription) {
+    public Html renderFormField(II18nMessagesPlugin i18nMessagesPlugin, Field field, boolean displayDescription) {
 
         String description = "";
         if (displayDescription) {
@@ -277,25 +279,25 @@ public class DynamicMultiItemCustomAttributeValue extends Model implements IMode
         String uid = ServiceStaticAccessor.getUserSessionManagerPlugin().getUserSessionId(Controller.ctx());
 
         return views.html.framework_views.parts.checkboxlist.render(field, Msg.get(customAttributeDefinition.name), description,
-                customAttributeDefinition.getValueHoldersCollectionFromNameForDynamicMultiItemCustomAttribute(uid), true, false,
+                customAttributeDefinition.getValueHoldersCollectionFromNameForDynamicMultiItemCustomAttribute(i18nMessagesPlugin, uid), true, false,
                 customAttributeDefinition.isRequired());
 
     }
 
     @Override
-    public Html renderDisplay() {
+    public Html renderDisplay(II18nMessagesPlugin i18nMessagesPlugin) {
         DefaultSelectableValueHolderCollection<Long> selectableValueHolderCollection = new DefaultSelectableValueHolderCollection<Long>(
                 convertToList(this.values));
         return views.html.framework_views.parts.formats.display_value_holder_collection.render(selectableValueHolderCollection, false);
     }
 
     @Override
-    public Html renderDisplayNoDescription() {
-        return renderDisplay();
+    public Html renderDisplayNoDescription(II18nMessagesPlugin i18nMessagesPlugin) {
+        return renderDisplay(i18nMessagesPlugin);
     }
 
     @Override
-    public void performSave() {
+    public void performSave(ICustomAttributeManagerService customAttributeManagerService) {
         save();
         this.isNotReadFromDb = false;
     }

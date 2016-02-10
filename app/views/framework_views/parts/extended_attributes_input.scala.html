@@ -17,6 +17,8 @@
  *@
 @(objectForm: Any, objectType: Class[_], objectId: Long, activeConditionalRule: Boolean = true, onlyDisplayedOrRequired: Boolean = false, displayAsRow: Boolean = false)
 
+@import commons._
+
 @customAttributeValues=@{
 models.framework_models.common.CustomAttributeDefinition.getOrderedCustomAttributeValues(objectType, objectId);
 }
@@ -27,10 +29,10 @@ models.framework_models.common.CustomAttributeDefinition.getOrderedCustomAttribu
     
         @if(!onlyDisplayedOrRequired || customAttributeValue.getDefinition.isDisplayed || customAttributeValue.getDefinition.isRequired) {
 
-            @defining(framework.utils.CustomAttributeFormAndDisplayHandler.getFieldNameFromDefinitionUuid(customAttributeValue.getDefinition().uuid)) { fieldId =>
+            @defining(_customAttributeManagerService.getFieldNameFromDefinitionUuid(customAttributeValue.getDefinition().uuid)) { fieldId =>
                 
                 @if(displayAsRow) { <td> }
-                    @customAttributeValue.renderFormField(if(objectForm.isInstanceOf[Form[_]]) objectForm.asInstanceOf[Form[_]](fieldId) else objectForm.asInstanceOf[Field](fieldId), !displayAsRow)
+                    @customAttributeValue.renderFormField(_messagesPluginService, if(objectForm.isInstanceOf[Form[_]]) objectForm.asInstanceOf[Form[_]](fieldId) else objectForm.asInstanceOf[Field](fieldId), !displayAsRow)
                 @if(displayAsRow) { </td> }
                 
                 @if(activeConditionalRule && customAttributeValue.getDefinition.hasValidConditionalRule) {

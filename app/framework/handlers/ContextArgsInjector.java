@@ -5,6 +5,7 @@ import framework.services.account.IPreferenceManagerPlugin;
 import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.configuration.IImplementationDefinedObjectService;
 import framework.services.configuration.ITopMenuBarService;
+import framework.services.custom_attribute.ICustomAttributeManagerService;
 import framework.services.kpi.IKpiService;
 import framework.services.session.IUserSessionManagerPlugin;
 import framework.services.storage.IAttachmentManagerPlugin;
@@ -43,7 +44,8 @@ abstract class ContextArgsInjector {
     public static void injectCommonServicesIncontext(Http.Context context, Configuration configuration, II18nMessagesPlugin messagesPlugin,
             IUserSessionManagerPlugin userSessionManagerPlugin, IAttachmentManagerPlugin attachmentManagerPlugin, IAccountManagerPlugin accountManagerPlugin,
             CacheApi cacheApi, IKpiService kpiService, IImplementationDefinedObjectService implementationDefinedObjectService,
-            ITopMenuBarService topMenuBarService, IPreferenceManagerPlugin preferenceManagerPlugin) {
+            ITopMenuBarService topMenuBarService, IPreferenceManagerPlugin preferenceManagerPlugin,
+            ICustomAttributeManagerService customAttributeManagerService) {
         if (context == null) {
             return;
         }
@@ -76,6 +78,9 @@ abstract class ContextArgsInjector {
         }
         if (preferenceManagerPlugin != null) {
             context.args.put(IPreferenceManagerPlugin.class.getName(), preferenceManagerPlugin);
+        }
+        if (customAttributeManagerService != null) {
+            context.args.put(ICustomAttributeManagerService.class.getName(), customAttributeManagerService);
         }
     }
 }
