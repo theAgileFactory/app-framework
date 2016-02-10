@@ -19,12 +19,11 @@ package framework.utils;
 
 import java.util.List;
 
-import play.Play;
-
 import com.avaje.ebean.ExpressionList;
 
 import framework.commons.IFrameworkConstants;
-import framework.services.ServiceStaticAccessor;
+import framework.services.account.IPreferenceManagerPlugin;
+import play.Play;
 
 /**
  * Utility class which deals with pagination management.<br/>
@@ -66,25 +65,29 @@ public class Pagination<T> {
     /**
      * Creates a Pagination object using the specified ExpressionList.<br/>
      * 
+     * @param the
+     *            preference manager service
      * @param expressionList
      *            an Expression list
      */
-    public Pagination(ExpressionList<T> expressionList) {
-        this(expressionList, ServiceStaticAccessor.getPreferenceManagerPlugin().getPreferenceValueAsInteger(
-                IFrameworkConstants.DISPLAY_LIST_PAGE_SIZE_PREFERENCE), Play.application().configuration().getInt("maf.number_page_links"));
+    public Pagination(IPreferenceManagerPlugin preferenceManagerPlugin, ExpressionList<T> expressionList) {
+        this(expressionList, preferenceManagerPlugin.getPreferenceValueAsInteger(IFrameworkConstants.DISPLAY_LIST_PAGE_SIZE_PREFERENCE),
+                Play.application().configuration().getInt("maf.number_page_links"));
     }
 
     /**
      * Creates a Pagination object using the specified ExpressionList but by
      * specifying the number of rows
      * 
+     * @param the
+     *            preference manager service
      * @param rowCount
      *            the total number of records
      * @param expressionList
      *            an Expression list
      */
-    public Pagination(int rowCount, ExpressionList<T> expressionList) {
-        this(rowCount, ServiceStaticAccessor.getPreferenceManagerPlugin().getPreferenceValueAsInteger(IFrameworkConstants.DISPLAY_LIST_PAGE_SIZE_PREFERENCE),
+    public Pagination(IPreferenceManagerPlugin preferenceManagerPlugin, int rowCount, ExpressionList<T> expressionList) {
+        this(rowCount, preferenceManagerPlugin.getPreferenceValueAsInteger(IFrameworkConstants.DISPLAY_LIST_PAGE_SIZE_PREFERENCE),
                 Play.application().configuration().getInt("maf.number_page_links"));
         this.expressionList = expressionList;
     }
@@ -92,11 +95,13 @@ public class Pagination<T> {
     /**
      * Creates a Pagination object using the specified number of row (rowCount)
      * 
+     * @param the
+     *            preference manager service
      * @param rowCount
      *            the total number of records
      */
-    public Pagination(int rowCount) {
-        this(rowCount, ServiceStaticAccessor.getPreferenceManagerPlugin().getPreferenceValueAsInteger(IFrameworkConstants.DISPLAY_LIST_PAGE_SIZE_PREFERENCE),
+    public Pagination(IPreferenceManagerPlugin preferenceManagerPlugin, int rowCount) {
+        this(rowCount, preferenceManagerPlugin.getPreferenceValueAsInteger(IFrameworkConstants.DISPLAY_LIST_PAGE_SIZE_PREFERENCE),
                 Play.application().configuration().getInt("maf.number_page_links"));
     }
 
