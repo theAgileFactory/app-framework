@@ -147,7 +147,7 @@
         var id = $(this).data('id');
 
         //set waiting icon
-        $("#_@(tableId)_filterConfiguration").html('<img src="@framework.utils.Utilities.getAjaxWaitImageUrl()"/>');
+        $("#_@(tableId)_filterConfiguration").html('<img src="@_fattach.getAjaxWaitImageUrl()"/>');
 
         $.ajax({
             type: 'POST',
@@ -178,7 +178,7 @@
         $("#_@(tableId)_filter_configuration_dropdown").dropdown("toggle");
 
         //set waiting icon
-        $("#_@(tableId)_filterConfiguration").html('<img src="@framework.utils.Utilities.getAjaxWaitImageUrl()"/>');
+        $("#_@(tableId)_filterConfiguration").html('<img src="@_fattach.getAjaxWaitImageUrl()"/>');
 
         $.ajax({
             type: 'POST',
@@ -211,7 +211,7 @@
         success: function(response, name) {
             
             //set waiting icon
-            $("#_@(tableId)_filterConfiguration").html('<img src="@framework.utils.Utilities.getAjaxWaitImageUrl()"/>');
+            $("#_@(tableId)_filterConfiguration").html('<img src="@_fattach.getAjaxWaitImageUrl()"/>');
    
             $.ajax({
                 type: 'POST',
@@ -271,7 +271,7 @@
         success: function(response, name) {
             
             //set waiting icon
-            $("#_@(tableId)_filterConfiguration").html('<img src="@framework.utils.Utilities.getAjaxWaitImageUrl()"/>');
+            $("#_@(tableId)_filterConfiguration").html('<img src="@_fattach.getAjaxWaitImageUrl()"/>');
 
             $.ajax({
                 type: 'POST',
@@ -313,7 +313,7 @@
         if(confirm("@parts.Msg("object.filter_configuration.delete.confirmation")")) {
             
             //set waiting icon
-            $("#_@(tableId)_filterConfiguration").html('<img src="@framework.utils.Utilities.getAjaxWaitImageUrl()"/>');
+            $("#_@(tableId)_filterConfiguration").html('<img src="@_fattach.getAjaxWaitImageUrl()"/>');
 
             $.ajax({
                 type: 'POST',

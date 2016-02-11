@@ -34,8 +34,8 @@
         <ul>
         @for(fileAttachment <- fileAttachments){
             <li id="_fileUpdateBlock_@fileAttachment.id">
-                <a href="@framework.utils.Utilities.getAttachmentDownloadUrl(fileAttachment.id)"><i class="fa fa-floppy-o"></i></a>&nbsp;@Msg(fileAttachment.name)&nbsp;
-                <a id="_fileDelete_@fileAttachment.id" href="@framework.utils.Utilities.getAttachmentDeleteUrl(fileAttachment.id)"><i class="fa fa-trash"></i></a>
+                <a href="@_fattach.getAttachmentDownloadUrl(fileAttachment.id)"><i class="fa fa-floppy-o"></i></a>&nbsp;@Msg(fileAttachment.name)&nbsp;
+                <a id="_fileDelete_@fileAttachment.id" href="@_fattach.getAttachmentDeleteUrl(fileAttachment.id)"><i class="fa fa-trash"></i></a>
             </li>
         }
         </ul>

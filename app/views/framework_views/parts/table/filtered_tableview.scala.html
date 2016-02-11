@@ -139,7 +139,7 @@ function _@table.getId()_drawCurrentFilterConfiguration() {
 
 function _@table.getId()_refreshTable(){
 
-    $('#_@table.getId()_ajax_wait').html('<img src="@framework.utils.Utilities.getAjaxWaitImageUrl()"/>');
+    $('#_@table.getId()_ajax_wait').html('<img src="@_fattach.getAjaxWaitImageUrl()"/>');
 
     maf_performPostJsonReceiveHtml(
     '@filterUrl', 
@@ -231,7 +231,7 @@ function _@table.getId()_getData(){
     
         _@table.getId()_correctCheckedRowsForAction(
             function() {
-                $("#" + domContainerId).html('<img src="@framework.utils.Utilities.getAjaxWaitImageUrl()"/>');
+                $("#" + domContainerId).html('<img src="@_fattach.getAjaxWaitImageUrl()"/>');
             },
             function() {
     
@@ -255,7 +255,7 @@ function _@table.getId()_getData(){
     
         _@table.getId()_correctCheckedRowsForAction(
             function() {
-                $('#_@table.getId()_ajax_wait').html('<img src="@framework.utils.Utilities.getAjaxWaitImageUrl()"/>');
+                $('#_@table.getId()_ajax_wait').html('<img src="@_fattach.getAjaxWaitImageUrl()"/>');
             },
             function() {
 

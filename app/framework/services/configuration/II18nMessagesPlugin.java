@@ -23,6 +23,7 @@ import java.util.Map;
 import framework.utils.DefaultSelectableValueHolderCollection;
 import play.i18n.Lang;
 import play.i18n.Messages;
+import play.twirl.api.Html;
 
 /**
  * Interface to be implemented by the service which manages the I18Messages.
@@ -188,4 +189,33 @@ public interface II18nMessagesPlugin {
      *            the key
      */
     public boolean isAuthorizedKey(String key);
+
+    /**
+     * Select a view using the specified viewPrefix and render it.<br/>
+     * The "real view" will be found by appending the current user language to
+     * the view prefix.<br/>
+     * The signature of this view must match the types of the provided
+     * parameters. For instance if the view prefix is "myview" and the current
+     * language "english", the real view which is to be looked for is
+     * "myview_en".<br/>
+     * The specified parameters are passed to the view.
+     * 
+     * @param viewPrefix
+     *            the name of the view to be rendered
+     * @param parameters
+     *            a variable number of values to be used as place holders
+     * @return an {@link Html}
+     */
+    Html renderViewI18n(String viewPrefix, Object... parameters);
+
+    /**
+     * Select a view and render it.
+     * 
+     * @param viewPath
+     *            the full name of the view to be rendered (including the
+     *            language)
+     * @param parameters
+     *            a variable number of values to be used as place holders
+     */
+    Html renderFullViewI18n(String viewPath, Object... parameters);
 }

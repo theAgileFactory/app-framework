@@ -276,7 +276,7 @@ public abstract class Utilities {
     }
 
     /**
-     * Get the URL to an ajax wait animated gif
+     * TODO remove Get the URL to an ajax wait animated gif
      */
     public static String getAjaxWaitImageUrl() {
         IImplementationDefinedObjectService implementationDefinedObjectService = ServiceStaticAccessor.getImplementationDefinedObjectService();
@@ -284,7 +284,7 @@ public abstract class Utilities {
     }
 
     /**
-     * Get the URL to download an attachment
+     * TODO remove Get the URL to download an attachment
      * 
      * @param attachmentId
      *            the attachment id
@@ -295,7 +295,7 @@ public abstract class Utilities {
     }
 
     /**
-     * Get the URL to delete an attachment
+     * TODO remove Get the URL to delete an attachment
      * 
      * @param attachmentId
      *            the attachment id
@@ -349,6 +349,8 @@ public abstract class Utilities {
     }
 
     /**
+     * TODO remove
+     * 
      * Select a view using the specified viewPrefix and render it.<br/>
      * The "real view" will be found by appending the current user language to
      * the view prefix.<br/>
@@ -369,6 +371,8 @@ public abstract class Utilities {
     }
 
     /**
+     * TODO remove
+     * 
      * Select a view and render it.
      * 
      * @param viewPath

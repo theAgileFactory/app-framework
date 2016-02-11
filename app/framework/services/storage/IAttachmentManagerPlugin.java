@@ -240,4 +240,25 @@ public interface IAttachmentManagerPlugin {
      * Get the size (bytes) of the attachments folder.
      */
     public Long getSize();
+
+    /**
+     * Get the URL to an ajax wait animated gif.
+     */
+    String getAjaxWaitImageUrl();
+
+    /**
+     * Get the URL to download an attachment.
+     * 
+     * @param attachmentId
+     *            the attachment id
+     */
+    String getAttachmentDownloadUrl(Long attachmentId);
+
+    /**
+     * Get the URL to delete an attachment.
+     * 
+     * @param attachmentId
+     *            the attachment id
+     */
+    String getAttachmentDeleteUrl(Long attachmentId);
 }

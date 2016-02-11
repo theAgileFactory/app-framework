@@ -40,6 +40,7 @@ import framework.utils.DefaultSelectableValueHolderCollection;
 import play.Configuration;
 import play.Environment;
 import play.Logger;
+import play.Play;
 import play.i18n.Lang;
 import play.i18n.MessagesApi;
 import play.inject.ApplicationLifecycle;
@@ -371,6 +372,27 @@ public class I18nMessagesPluginImpl implements II18nMessagesPlugin {
     @Override
     public boolean isAuthorizedKey(String key) {
         return this.i18nMessages.getAuthorizedKeys().contains(key);
+    }
+
+    @Override
+    public Html renderViewI18n(String viewPrefix, Object... parameters) {
+        return renderFullViewI18n(String.format("%s_%s", viewPrefix, this.getCurrentLanguage().getCode()), parameters);
+    }
+
+    @Override
+    public Html renderFullViewI18n(String viewPath, Object... parameters) {
+        try {
+            Class<?> viewClass = Play.application().classloader().loadClass(viewPath);
+            @SuppressWarnings("rawtypes")
+            Class[] signature = new Class[parameters.length];
+            for (int i = 0; i < parameters.length; i++) {
+                signature[i] = parameters[i].getClass();
+            }
+            return (Html) viewClass.getMethod("render", signature).invoke(viewClass, parameters);
+        } catch (Exception e) {
+            log.error("Error while rendering the view " + viewPath, e);
+            throw new RuntimeException("Error while rendering the view " + viewPath, e);
+        }
     }
 
     /**

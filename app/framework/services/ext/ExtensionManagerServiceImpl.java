@@ -82,6 +82,7 @@ import framework.services.plugins.api.IPluginRunner;
 import framework.services.router.ICustomRouterService;
 import framework.services.script.IScriptService;
 import framework.services.session.IUserSessionManagerPlugin;
+import framework.services.storage.IAttachmentManagerPlugin;
 import framework.services.system.ISysAdminUtils;
 import framework.utils.Menu;
 import framework.utils.Menu.ClickableMenuItem;
@@ -221,7 +222,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             ISecurityServiceConfiguration securityServiceConfiguration, IPreferenceManagerPlugin preferenceManagerPlugin,
             ITopMenuBarService topMenuBarService, WSClient wsClient, IScriptService scriptService,
             IAuthenticationAccountWriterPlugin authenticatonAccountWriter, INotificationManagerPlugin notificationManagerPlugin, IKpiService kpiService,
-            ICustomAttributeManagerService customAttributeManagerService) throws ExtensionManagerException {
+            ICustomAttributeManagerService customAttributeManagerService, IAttachmentManagerPlugin attachmentManagerPlugin) throws ExtensionManagerException {
         log.info("SERVICE>>> ExtensionManagerServiceImpl starting...");
         this.autoRefreshMode = configuration.getBoolean(Config.AUTO_REFRESH_ACTIVE.getConfigurationKey());
         this.autoRefreshFrequency = configuration.getInt(Config.AUTO_REFRESH_FREQUENCY.getConfigurationKey());
@@ -945,7 +946,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         private static final List<Class<?>> AUTHORIZED_INJECTED_SERVICE = Arrays.asList(ISecurityService.class, IUserSessionManagerPlugin.class,
                 ILinkGenerationService.class, II18nMessagesPlugin.class, ISysAdminUtils.class, IPluginContext.class, IPluginRunner.class, WSClient.class,
                 IScriptService.class, IAuthenticationAccountWriterPlugin.class, INotificationManagerPlugin.class, IKpiService.class,
-                IPreferenceManagerPlugin.class, ICustomAttributeManagerService.class);
+                IPreferenceManagerPlugin.class, ICustomAttributeManagerService.class, IAttachmentManagerPlugin.class);
 
         private Date loadingTime;
         private File jarFile;

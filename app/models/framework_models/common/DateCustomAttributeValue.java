@@ -74,7 +74,6 @@ import play.twirl.api.Html;
  */
 @Entity
 public class DateCustomAttributeValue extends Model implements IModel, ICustomAttributeValue {
-    private static final long serialVersionUID = -676104249012732234L;
 
     public static Finder<Long, DateCustomAttributeValue> find = new Finder<Long, DateCustomAttributeValue>(DateCustomAttributeValue.class);
 

@@ -25,13 +25,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import framework.services.storage.IAttachmentManagerPlugin;
 import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Http.Request;
 import play.mvc.Result;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * A class which handle the AJAX calls from a picker (either multivalue or
@@ -79,7 +80,7 @@ public class PickerHandler<T> {
         SEARCH_ENABLED, AJAX_WAIT_IMAGE_URL, MODAL_TITLE_I18N, MODAL_OK_BUTTON_LABEL_I18N, MODAL_CANCEL_BUTTON_LABEL_I18N, AJAX_WAIT_MESSAGE_I18N, AJAX_COMMUNICATION_FAILED_I18N, NO_VALUE_FOUND_I18N, ALREADY_SELECTED_VALUE_I18N;
     }
 
-    public PickerHandler(Class<T> clazz, PickerHandler.Handle<T> handle) {
+    public PickerHandler(IAttachmentManagerPlugin attachmentManagerPlugin, Class<T> clazz, PickerHandler.Handle<T> handle) {
         this.handle = handle;
         this.clazz = clazz;
         if (handle.isPickerMulti()) {
@@ -87,7 +88,7 @@ public class PickerHandler<T> {
         } else {
             getParameters().put(Parameters.MODAL_TITLE_I18N, "picker.title.single");
         }
-        getParameters().put(Parameters.AJAX_WAIT_IMAGE_URL, Utilities.getAjaxWaitImageUrl());
+        getParameters().put(Parameters.AJAX_WAIT_IMAGE_URL, attachmentManagerPlugin.getAjaxWaitImageUrl());
         getParameters().put(Parameters.MODAL_OK_BUTTON_LABEL_I18N, "button.save");
         getParameters().put(Parameters.MODAL_CANCEL_BUTTON_LABEL_I18N, "button.close");
         getParameters().put(Parameters.AJAX_COMMUNICATION_FAILED_I18N, "picker.ajax.failure.message");
@@ -243,7 +244,8 @@ public class PickerHandler<T> {
     }
 
     /**
-     * The JSON requests can contain a "context" attribute which is an object.<br/>
+     * The JSON requests can contain a "context" attribute which is an object.
+     * <br/>
      * 
      * @param json
      *            a JSON request

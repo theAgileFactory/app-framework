@@ -44,8 +44,8 @@ import framework.services.account.IAccountManagerPlugin;
 import framework.services.account.IPreferenceManagerPlugin;
 import framework.services.account.IUserAccount;
 import framework.services.actor.IActorSystemPlugin;
+import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.email.IEmailService;
-import framework.utils.Utilities;
 import models.framework_models.account.Notification;
 import models.framework_models.account.NotificationCategory;
 import models.framework_models.account.Principal;
@@ -101,10 +101,12 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
     private IPreferenceManagerPlugin preferenceManagerPlugin;
 
     private IAccountManagerPlugin accountManagerPlugin;
-    
+
     private IEmailService emailService;
 
     private ActorRef supervisorActor;
+
+    private II18nMessagesPlugin i18nMessagesPlugin;
 
     /**
      * The service configurations.
@@ -154,7 +156,8 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
      */
     @Inject
     public DefaultNotificationManagerPlugin(ApplicationLifecycle lifecycle, Configuration configuration, IActorSystemPlugin actorSystemPlugin,
-            IPreferenceManagerPlugin preferenceManagerPlugin, IAccountManagerPlugin accountManagerPlugin, IEmailService emailService) {
+            IPreferenceManagerPlugin preferenceManagerPlugin, IAccountManagerPlugin accountManagerPlugin, IEmailService emailService,
+            II18nMessagesPlugin i18nMessagesPlugin) {
         log.info("SERVICE>>> DefaultNotificationManagerPlugin starting...");
         this.poolSize = configuration.getInt(Config.NOTIFICATION_POOL_SIZE.getConfigurationKey());
         this.notificationRetryDuration = configuration.getString(Config.RETRY_DURATION.getConfigurationKey());
@@ -163,6 +166,7 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
         this.preferenceManagerPlugin = preferenceManagerPlugin;
         this.accountManagerPlugin = accountManagerPlugin;
         this.emailService = emailService;
+        this.i18nMessagesPlugin = i18nMessagesPlugin;
         createActors(actorSystemPlugin.getActorSystem());
         lifecycle.addStopHook(() -> {
             log.info("SERVICE>>> DefaultNotificationManagerPlugin stopping...");
@@ -185,7 +189,9 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
     private void createActors(ActorSystem actorSystem) {
         SupervisorStrategy strategy = getSupervisorStrategy(getNotificationRetryNumber(), getNotificationRetryDuration());
         this.supervisorActor = actorSystem.actorOf((new RoundRobinPool(getPoolSize())).withSupervisorStrategy(strategy)
-                .props(Props.create(new NotificationMessageProcessingActorCreator(getConfiguration(), getPreferenceManagerPlugin(), getEmailService()))), SUPERVISOR_ACTOR_NAME);
+                .props(Props.create(new NotificationMessageProcessingActorCreator(getConfiguration(), getPreferenceManagerPlugin(), getEmailService(),
+                        this.getI18nMessagesPlugin()))),
+                SUPERVISOR_ACTOR_NAME);
         log.info("Actor based notification system is started");
     }
 
@@ -390,11 +396,14 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
     private Configuration getConfiguration() {
         return configuration;
     }
-    
+
     private IEmailService getEmailService() {
         return emailService;
     }
-   
+
+    private II18nMessagesPlugin getI18nMessagesPlugin() {
+        return this.i18nMessagesPlugin;
+    }
 
     /**
      * A creator class for the actor {@link NotificationMessageProcessingActor}
@@ -406,16 +415,19 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
         private IPreferenceManagerPlugin preferenceManagerPlugin;
         private Configuration configuration;
         private IEmailService emailService;
+        private II18nMessagesPlugin i18nMessagesPlugin;
 
-        public NotificationMessageProcessingActorCreator(Configuration configuration, IPreferenceManagerPlugin preferenceManagerPlugin, IEmailService emailService) {
+        public NotificationMessageProcessingActorCreator(Configuration configuration, IPreferenceManagerPlugin preferenceManagerPlugin,
+                IEmailService emailService, II18nMessagesPlugin i18nMessagesPlugin) {
             this.configuration = configuration;
             this.preferenceManagerPlugin = preferenceManagerPlugin;
             this.emailService = emailService;
+            this.i18nMessagesPlugin = i18nMessagesPlugin;
         }
 
         @Override
         public NotificationMessageProcessingActor create() throws Exception {
-            return new NotificationMessageProcessingActor(getConfiguration(), getPreferenceManagerPlugin(), getEmailService());
+            return new NotificationMessageProcessingActor(getConfiguration(), getPreferenceManagerPlugin(), getEmailService(), this.getI18nMessagesPlugin());
         }
 
         private IPreferenceManagerPlugin getPreferenceManagerPlugin() {
@@ -425,11 +437,15 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
         private Configuration getConfiguration() {
             return configuration;
         }
-        
+
         private IEmailService getEmailService() {
             return emailService;
         }
-        
+
+        private II18nMessagesPlugin getI18nMessagesPlugin() {
+            return this.i18nMessagesPlugin;
+        }
+
     }
 
     /**
@@ -443,11 +459,14 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
         private Configuration configuration;
         private IPreferenceManagerPlugin preferenceManagerPlugin;
         private IEmailService emailService;
+        private II18nMessagesPlugin i18nMessagesPlugin;
 
-        public NotificationMessageProcessingActor(Configuration configuration, IPreferenceManagerPlugin preferenceManagerPlugin, IEmailService emailService) {
+        public NotificationMessageProcessingActor(Configuration configuration, IPreferenceManagerPlugin preferenceManagerPlugin, IEmailService emailService,
+                II18nMessagesPlugin i18nMessagesPlugin) {
             this.configuration = configuration;
             this.preferenceManagerPlugin = preferenceManagerPlugin;
             this.emailService = emailService;
+            this.i18nMessagesPlugin = i18nMessagesPlugin;
         }
 
         @Override
@@ -487,11 +506,13 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
                             }
                         }
 
-                         getEmailService().sendEmail("BizDock - " + notificationToSend.getTitle(),
-                                getConfiguration().getString("maf.email.from"),
-                                Utilities.renderFullViewI18n("views.html.framework_views.parts.mail.notification_html", userAccount.getFirstName(),
-                                        notificationToSend.getMessage(), link).body(),
-                                userAccount.getMail());
+                        getEmailService()
+                                .sendEmail("BizDock - " + notificationToSend.getTitle(),
+                                        getConfiguration()
+                                                .getString("maf.email.from"),
+                                        this.getI18nMessagesPlugin().renderFullViewI18n("views.html.framework_views.parts.mail.notification_html",
+                                                userAccount.getFirstName(), notificationToSend.getMessage(), link).body(),
+                                        userAccount.getMail());
 
                         break;
 
@@ -532,11 +553,15 @@ public class DefaultNotificationManagerPlugin implements INotificationManagerPlu
         private Configuration getConfiguration() {
             return configuration;
         }
-        
+
         private IEmailService getEmailService() {
             return emailService;
         }
-        
+
+        private II18nMessagesPlugin getI18nMessagesPlugin() {
+            return this.i18nMessagesPlugin;
+        }
+
     }
 
     /**

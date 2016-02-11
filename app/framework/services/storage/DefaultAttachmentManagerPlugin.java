@@ -29,19 +29,19 @@ import java.util.UUID;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import models.framework_models.common.Attachment;
-import models.framework_models.common.StructuredDocument;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
+import framework.services.configuration.IImplementationDefinedObjectService;
+import framework.services.database.IDatabaseDependencyService;
+import framework.utils.FileAttachmentHelper;
+import framework.utils.Utilities;
+import models.framework_models.common.Attachment;
+import models.framework_models.common.StructuredDocument;
 import play.Configuration;
 import play.Logger;
 import play.inject.ApplicationLifecycle;
 import play.libs.F.Promise;
-import framework.services.database.IDatabaseDependencyService;
-import framework.utils.FileAttachmentHelper;
-import framework.utils.Utilities;
 
 /**
  * Default implementation for the {@link IAttachmentManagerPlugin} interface.
@@ -55,6 +55,7 @@ public class DefaultAttachmentManagerPlugin implements IAttachmentManagerPlugin 
      * The directory in which the attachments are stored
      */
     private String attachmentRootDirectoryPath;
+    private IImplementationDefinedObjectService implementationDefinedObjectService;
 
     public enum Config {
         ATTACHMENT_ROOT("maf.attachments.root");
@@ -80,8 +81,10 @@ public class DefaultAttachmentManagerPlugin implements IAttachmentManagerPlugin 
      * @param databaseDependencyService
      */
     @Inject
-    public DefaultAttachmentManagerPlugin(ApplicationLifecycle lifecycle, Configuration configuration, IDatabaseDependencyService databaseDependencyService) {
+    public DefaultAttachmentManagerPlugin(ApplicationLifecycle lifecycle, Configuration configuration, IDatabaseDependencyService databaseDependencyService,
+            IImplementationDefinedObjectService implementationDefinedObjectService) {
         log.info("SERVICE>>> DefaultAttachmentManagerPlugin starting...");
+        this.implementationDefinedObjectService = implementationDefinedObjectService;
         this.attachmentRootDirectoryPath = configuration.getString(Config.ATTACHMENT_ROOT.getConfigurationKey());
         File attachmentDirectory = new File(attachmentRootDirectoryPath);
         if (!attachmentDirectory.exists() || !attachmentDirectory.isDirectory()) {
@@ -154,7 +157,8 @@ public class DefaultAttachmentManagerPlugin implements IAttachmentManagerPlugin 
     }
 
     @Override
-    public Long addStructuredDocumentAttachment(InputStream inputStream, String mimeType, String name, Class<?> objectType, Long objectId) throws IOException {
+    public Long addStructuredDocumentAttachment(InputStream inputStream, String mimeType, String name, Class<?> objectType, Long objectId)
+            throws IOException {
         return addStructuredDocumentAttachment(IOUtils.toByteArray(inputStream), mimeType, name, objectType, objectId);
     }
 
@@ -274,7 +278,8 @@ public class DefaultAttachmentManagerPlugin implements IAttachmentManagerPlugin 
                 }
             } else {
                 if (existingAttachment.structuredDocument == null || existingAttachment.structuredDocument.content == null) {
-                    throw new IOException(String.format("Attachment object %s is not linked to a file nor a structured document", String.valueOf(attachmentId)));
+                    throw new IOException(
+                            String.format("Attachment object %s is not linked to a file nor a structured document", String.valueOf(attachmentId)));
                 }
                 int structuredAttachmentCount = Attachment.getNumberOfAttachments(existingAttachment.structuredDocument.id);
                 if (structuredAttachmentCount == 1) {
@@ -314,6 +319,21 @@ public class DefaultAttachmentManagerPlugin implements IAttachmentManagerPlugin 
     public Long getSize() {
         File root = new java.io.File(this.getAttachmentRootDirectoryPath());
         return Utilities.folderSize(root);
+    }
+
+    @Override
+    public String getAjaxWaitImageUrl() {
+        return this.getImplementationDefinedObjectService().getRouteForAjaxWaitImage().url();
+    }
+
+    @Override
+    public String getAttachmentDownloadUrl(Long attachmentId) {
+        return this.getImplementationDefinedObjectService().getRouteForDownloadAttachedFile(attachmentId).url();
+    }
+
+    @Override
+    public String getAttachmentDeleteUrl(Long attachmentId) {
+        return this.getImplementationDefinedObjectService().getRouteForDeleteAttachedFile(attachmentId).url();
     }
 
     private Long moveOrLinkAttachment(Long existingAttachmentId, Class<?> objectType, Long objectId, boolean move) throws IOException {
@@ -368,5 +388,12 @@ public class DefaultAttachmentManagerPlugin implements IAttachmentManagerPlugin 
 
     private String getAttachmentRootDirectoryPath() {
         return attachmentRootDirectoryPath;
+    }
+
+    /**
+     * Get the implementation defined object service.
+     */
+    private IImplementationDefinedObjectService getImplementationDefinedObjectService() {
+        return this.implementationDefinedObjectService;
     }
 }
