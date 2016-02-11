@@ -18,6 +18,7 @@
 package models.framework_models.common;
 
 import framework.services.configuration.II18nMessagesPlugin;
+import framework.services.configuration.IImplementationDefinedObjectService;
 import framework.services.custom_attribute.ICustomAttributeManagerService;
 import framework.services.session.IUserSessionManagerPlugin;
 import framework.services.storage.IAttachmentManagerPlugin;
@@ -153,7 +154,8 @@ public interface ICustomAttributeValue {
      *            exists
      * @return an Html display of the form field attached to the specified value
      */
-    public Html renderFormField(II18nMessagesPlugin i18nMessagesPlugin, Field field, boolean displayDescription);
+    public Html renderFormField(II18nMessagesPlugin i18nMessagesPlugin, IUserSessionManagerPlugin userSessionManagerPlugin,
+            IImplementationDefinedObjectService implementationDefinedObjectService, Field field, boolean displayDescription);
 
     /**
      * Render a display.

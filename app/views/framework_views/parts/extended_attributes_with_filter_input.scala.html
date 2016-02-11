@@ -25,7 +25,7 @@ models.framework_models.common.CustomAttributeDefinition.getOrderedCustomAttribu
 
 @if(customAttributeValues!=null && customAttributeValues.size()!=0){
     @for(customAttributeValue <- customAttributeValues){
-        @customAttributeValue.renderFormField(_messagesPluginService, objectForm(_customAttributeManagerService.getFieldNameFromDefinitionUuid(customAttributeValue.getDefinition().uuid)), true)
+        @customAttributeValue.renderFormField(_messagesPluginService, _usession, _implementationDefinedObjectService, objectForm(_customAttributeManagerService.getFieldNameFromDefinitionUuid(customAttributeValue.getDefinition().uuid)), true)
     }
 }
 

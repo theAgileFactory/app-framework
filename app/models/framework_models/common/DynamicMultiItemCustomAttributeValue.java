@@ -34,8 +34,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.avaje.ebean.Model;
 
-import framework.services.ServiceStaticAccessor;
 import framework.services.configuration.II18nMessagesPlugin;
+import framework.services.configuration.IImplementationDefinedObjectService;
 import framework.services.custom_attribute.ICustomAttributeManagerService;
 import framework.services.session.IUserSessionManagerPlugin;
 import framework.services.storage.IAttachmentManagerPlugin;
@@ -271,14 +271,15 @@ public class DynamicMultiItemCustomAttributeValue extends Model implements IMode
     }
 
     @Override
-    public Html renderFormField(II18nMessagesPlugin i18nMessagesPlugin, Field field, boolean displayDescription) {
+    public Html renderFormField(II18nMessagesPlugin i18nMessagesPlugin, IUserSessionManagerPlugin userSessionManagerPlugin,
+            IImplementationDefinedObjectService implementationDefinedObjectService, Field field, boolean displayDescription) {
 
         String description = "";
         if (displayDescription) {
             description = Msg.get(customAttributeDefinition.description);
         }
 
-        String uid = ServiceStaticAccessor.getUserSessionManagerPlugin().getUserSessionId(Controller.ctx());
+        String uid = userSessionManagerPlugin.getUserSessionId(Controller.ctx());
 
         return views.html.framework_views.parts.checkboxlist.render(field, Msg.get(customAttributeDefinition.name), description,
                 customAttributeDefinition.getValueHoldersCollectionFromNameForDynamicMultiItemCustomAttribute(i18nMessagesPlugin, uid), true, false,

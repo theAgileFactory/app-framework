@@ -32,7 +32,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.avaje.ebean.Model;
 
-import framework.services.ServiceStaticAccessor;
 import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.configuration.IImplementationDefinedObjectService;
 import framework.services.custom_attribute.ICustomAttributeManagerService;
@@ -261,7 +260,8 @@ public class DynamicSingleItemCustomAttributeValue extends Model implements IMod
     }
 
     @Override
-    public Html renderFormField(II18nMessagesPlugin i18nMessagesPlugin, Field field, boolean displayDescription) {
+    public Html renderFormField(II18nMessagesPlugin i18nMessagesPlugin, IUserSessionManagerPlugin userSessionManagerPlugin,
+            IImplementationDefinedObjectService implementationDefinedObjectService, Field field, boolean displayDescription) {
 
         String description = "";
         if (displayDescription) {
@@ -269,14 +269,13 @@ public class DynamicSingleItemCustomAttributeValue extends Model implements IMod
         }
 
         if (!customAttributeDefinition.isAutoComplete()) {
-            String uid = ServiceStaticAccessor.getUserSessionManagerPlugin().getUserSessionId(Controller.ctx());
+            String uid = userSessionManagerPlugin.getUserSessionId(Controller.ctx());
             return views.html.framework_views.parts.dropdownlist.render(field, Msg.get(customAttributeDefinition.name),
                     customAttributeDefinition.getValueHoldersCollectionFromNameForDynamicSingleItemCustomAttribute(i18nMessagesPlugin, "%", uid), description,
                     true, customAttributeDefinition.isRequired());
         }
-        IImplementationDefinedObjectService implementationDefinedObjects = ServiceStaticAccessor.getImplementationDefinedObjectService();
         return views.html.framework_views.parts.autocomplete.render(field, Msg.get(customAttributeDefinition.name), description,
-                implementationDefinedObjects.getRouteForDynamicSingleCustomAttributeApi().url(),
+                implementationDefinedObjectService.getRouteForDynamicSingleCustomAttributeApi().url(),
                 customAttributeDefinition.getContextParametersForDynamicApi());
     }
 
@@ -311,7 +310,7 @@ public class DynamicSingleItemCustomAttributeValue extends Model implements IMod
      * 
      * @return a JSON response
      */
-    public static Result jsonQueryApi(II18nMessagesPlugin i18nMessagesPlugin) {
+    public static Result jsonQueryApi(II18nMessagesPlugin i18nMessagesPlugin, IUserSessionManagerPlugin userSessionManagerPlugin) {
         // Retrieve the right custom attribute definition
         String customAttributeDefinitionIdAsString = Controller.request().queryString()
                 .get(CustomAttributeDefinition.DYNAMIC_SINGLE_CUSTOM_ATTRIBUTE_DEFINITION_ID_CTX_PARAMETER) != null
@@ -335,7 +334,7 @@ public class DynamicSingleItemCustomAttributeValue extends Model implements IMod
 
         if (query != null) {
             // Perform a search according to the specified query
-            String uid = ServiceStaticAccessor.getUserSessionManagerPlugin().getUserSessionId(Controller.ctx());
+            String uid = userSessionManagerPlugin.getUserSessionId(Controller.ctx());
             ISelectableValueHolderCollection<Long> valueHolders = customAttributeDefinition
                     .getValueHoldersCollectionFromNameForDynamicSingleItemCustomAttribute(i18nMessagesPlugin, query, uid);
             return Controller.ok(Utilities.marshallAsJson(valueHolders.getValues()));

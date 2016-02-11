@@ -20,7 +20,7 @@
 @import commons._
 
 @customAttributeValue=@{models.framework_models.account.Preference.getPreferenceValueFromUuid(preferenceUuid, _cache, _usession, _accmngr);}
-@customAttributeValue.renderFormField(_messagesPluginService, objectForm(_customAttributeManagerService.getFieldNameFromDefinitionUuid(customAttributeValue.getDefinition().uuid)), true)
+@customAttributeValue.renderFormField(_messagesPluginService, _usession, _implementationDefinedObjectService, objectForm(_customAttributeManagerService.getFieldNameFromDefinitionUuid(customAttributeValue.getDefinition().uuid)), true)
 @*********************************************************
  * Display the input field to edit a preference
  *********************************************************@
