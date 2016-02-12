@@ -6,7 +6,6 @@ import com.google.inject.AbstractModule;
 
 import framework.commons.DataType;
 import framework.commons.IFrameworkConstants;
-import framework.security.SecurityUtils;
 import framework.utils.Msg;
 import framework.utils.formats.AnnotationDateTypeFormatter;
 import play.Logger;
@@ -44,7 +43,6 @@ public abstract class FrameworkModule extends AbstractModule {
     protected void configure() {
         log.info(">>> Static dependency injected start...");
         requestStaticInjection(Msg.class);
-        requestStaticInjection(SecurityUtils.class);
         log.info("...Static dependency injected end");
     }
 }

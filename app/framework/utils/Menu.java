@@ -27,9 +27,9 @@ import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 
 import framework.commons.IFrameworkConstants;
-import framework.security.SecurityUtils;
+import framework.security.ISecurityService;
+import play.Play;
 import play.mvc.Call;
-import play.mvc.Http.Context;
 
 /**
  * Root class for the various navigation structures.<br/>
@@ -266,8 +266,11 @@ public abstract class Menu {
         }
 
         public boolean restrict() {
+
+            ISecurityService securityService = Play.application().injector().instanceOf(ISecurityService.class);
+
             try {
-                return this.isAlwaysDisplayed || SecurityUtils.restrict(this.getAuthorizedPermissions(), Context.current());
+                return this.isAlwaysDisplayed || securityService.restrict(this.getAuthorizedPermissions());
             } catch (Exception e) {
                 return false;
             }
