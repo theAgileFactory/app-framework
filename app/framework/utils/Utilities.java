@@ -49,8 +49,6 @@ import com.avaje.ebean.OrderBy.Property;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import framework.commons.IFrameworkConstants;
-import framework.services.ServiceStaticAccessor;
-import framework.services.configuration.IImplementationDefinedObjectService;
 import models.framework_models.parent.IModelConstants;
 import play.Logger;
 import play.Play;
@@ -59,7 +57,6 @@ import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Http.Context;
-import play.twirl.api.Html;
 
 /**
  * An abstract class which gathers useful features
@@ -276,36 +273,6 @@ public abstract class Utilities {
     }
 
     /**
-     * TODO remove Get the URL to an ajax wait animated gif
-     */
-    public static String getAjaxWaitImageUrl() {
-        IImplementationDefinedObjectService implementationDefinedObjectService = ServiceStaticAccessor.getImplementationDefinedObjectService();
-        return implementationDefinedObjectService.getRouteForAjaxWaitImage().url();
-    }
-
-    /**
-     * TODO remove Get the URL to download an attachment
-     * 
-     * @param attachmentId
-     *            the attachment id
-     */
-    public static String getAttachmentDownloadUrl(Long attachmentId) {
-        IImplementationDefinedObjectService implementationDefinedObjectService = ServiceStaticAccessor.getImplementationDefinedObjectService();
-        return implementationDefinedObjectService.getRouteForDownloadAttachedFile(attachmentId).url();
-    }
-
-    /**
-     * TODO remove Get the URL to delete an attachment
-     * 
-     * @param attachmentId
-     *            the attachment id
-     */
-    public static String getAttachmentDeleteUrl(Long attachmentId) {
-        IImplementationDefinedObjectService implementationDefinedObjectService = ServiceStaticAccessor.getImplementationDefinedObjectService();
-        return implementationDefinedObjectService.getRouteForDeleteAttachedFile(attachmentId).url();
-    }
-
-    /**
      * Get a by array by serializing the specified object as XML
      * 
      * @param object
@@ -345,54 +312,6 @@ public abstract class Utilities {
             if (decoder != null) {
                 decoder.close();
             }
-        }
-    }
-
-    /**
-     * TODO remove
-     * 
-     * Select a view using the specified viewPrefix and render it.<br/>
-     * The "real view" will be found by appending the current user language to
-     * the view prefix.<br/>
-     * The signature of this view must match the types of the provided
-     * parameters. For instance if the view prefix is "myview" and the current
-     * language "english", the real view which is to be looked for is
-     * "myview_en".<br/>
-     * The specified parameters are passed to the view.
-     * 
-     * @param viewPrefix
-     *            the name of the view to be rendered
-     * @param parameters
-     *            a variable number of values to be used as place holders
-     * @return an {@link Html}
-     */
-    public static Html renderViewI18n(String viewPrefix, Object... parameters) {
-        return renderFullViewI18n(String.format("%s_%s", viewPrefix, ServiceStaticAccessor.getMessagesPlugin().getCurrentLanguage().getCode()), parameters);
-    }
-
-    /**
-     * TODO remove
-     * 
-     * Select a view and render it.
-     * 
-     * @param viewPath
-     *            the full name of the view to be rendered (including the
-     *            language)
-     * @param parameters
-     *            a variable number of values to be used as place holders
-     */
-    public static Html renderFullViewI18n(String viewPath, Object... parameters) {
-        try {
-            Class<?> viewClass = Play.application().classloader().loadClass(viewPath);
-            @SuppressWarnings("rawtypes")
-            Class[] signature = new Class[parameters.length];
-            for (int i = 0; i < parameters.length; i++) {
-                signature[i] = parameters[i].getClass();
-            }
-            return (Html) viewClass.getMethod("render", signature).invoke(viewClass, parameters);
-        } catch (Exception e) {
-            log.error("Error while rendering the view " + viewPath, e);
-            throw new RuntimeException("Error while rendering the view " + viewPath, e);
         }
     }
 
