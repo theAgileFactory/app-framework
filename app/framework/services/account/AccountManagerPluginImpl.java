@@ -45,6 +45,7 @@ import models.framework_models.account.SystemLevelRoleType;
 import models.framework_models.account.SystemPermission;
 import play.Configuration;
 import play.Logger;
+import play.Play;
 import play.cache.CacheApi;
 import play.inject.ApplicationLifecycle;
 import play.libs.F.Promise;
@@ -84,7 +85,6 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
     private boolean selfMailUpdateAllowed;
     private IAuthenticationAccountWriterPlugin authenticationAccountWriterPlugin;
     private IAuthenticationAccountReaderPlugin authenticationAccountReaderPlugin;
-    private IEventBroadcastingService eventBroadcastingService;
     private CacheApi cacheApi;
     private int validationKeyValidity;
     private int userAccountCacheDurationInSeconds;
@@ -127,8 +127,7 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
             @Named("UserAccountClassName") String commonUserAccountClassName,
             @Named("AuthenticationRepositoryMasterMode") Boolean authenticationRepositoryMasterMode,
             IAuthenticationAccountWriterPlugin authenticationAccountWriterPlugin, IAuthenticationAccountReaderPlugin authenticationAccountReaderPlugin,
-            IEventBroadcastingService eventBroadcastingService, IDatabaseDependencyService databaseDependencyService, CacheApi cacheApi)
-                    throws ClassNotFoundException {
+            IDatabaseDependencyService databaseDependencyService, CacheApi cacheApi) throws ClassNotFoundException {
         log.info("SERVICE>>> AccountManagerPluginImpl starting...");
         this.authenticationRepositoryMasterMode = authenticationRepositoryMasterMode;
         this.userAccountCacheDurationInSeconds = configuration.getInt(Config.ACCOUNT_CACHE_DURATION.getConfigurationKey());
@@ -145,7 +144,6 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
         }
         this.authenticationAccountWriterPlugin = authenticationAccountWriterPlugin;
         this.authenticationAccountReaderPlugin = authenticationAccountReaderPlugin;
-        this.eventBroadcastingService = eventBroadcastingService;
         lifecycle.addStopHook(() -> {
             log.info("SERVICE>>> AccountManagerPluginImpl stopping...");
             log.info("SERVICE>>> AccountManagerPluginImpl stopped");
@@ -217,8 +215,8 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
     }
 
     @Override
-    public void createNewUserAccount(String uid, AccountType accountType, String firstName, String lastName, String mail, List<String> systemLevelRoleTypeNames)
-            throws AccountManagementException {
+    public void createNewUserAccount(String uid, AccountType accountType, String firstName, String lastName, String mail,
+            List<String> systemLevelRoleTypeNames) throws AccountManagementException {
         if (log.isDebugEnabled()) {
             log.debug("Creating a new user account  " + uid + " with " + firstName + " " + lastName + " " + mail + " " + accountType + " "
                     + systemLevelRoleTypeNames);
@@ -278,7 +276,8 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
 
         Principal principal = findPrincipalFromUid(uid);
         // Notify the MAF modules for resync
-        UserEventMessage eventMessage = new UserEventMessage(principal.id, DataType.getDataType(IFrameworkConstants.User), UserEventMessage.MessageType.RESYNC);
+        UserEventMessage eventMessage = new UserEventMessage(principal.id, DataType.getDataType(IFrameworkConstants.User),
+                UserEventMessage.MessageType.RESYNC);
         postToPlugginManagerService(eventMessage);
     }
 
@@ -725,6 +724,7 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
      * @param eventMessage
      */
     private void postToPlugginManagerService(EventMessage eventMessage) {
+        IEventBroadcastingService eventBroadcastingService = Play.application().injector().instanceOf(IEventBroadcastingService.class);
         if (eventBroadcastingService != null) {
             eventBroadcastingService.postOutMessage(eventMessage);
         }
