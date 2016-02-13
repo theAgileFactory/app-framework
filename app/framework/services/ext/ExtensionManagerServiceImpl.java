@@ -218,9 +218,8 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
     @Inject
     public ExtensionManagerServiceImpl(ApplicationLifecycle lifecycle, Environment environment, Injector injector, Configuration configuration,
             II18nMessagesPlugin iI18nMessagesPlugin, ICustomRouterService customRouterService, ISysAdminUtils sysAdminUtils,
-            IDatabaseDependencyService databaseDependencyService, ISecurityService securityService,
-            ISecurityServiceConfiguration securityServiceConfiguration, IPreferenceManagerPlugin preferenceManagerPlugin,
-            ITopMenuBarService topMenuBarService, WSClient wsClient, IScriptService scriptService,
+            IDatabaseDependencyService databaseDependencyService, ISecurityService securityService, ISecurityServiceConfiguration securityServiceConfiguration,
+            IPreferenceManagerPlugin preferenceManagerPlugin, ITopMenuBarService topMenuBarService, WSClient wsClient, IScriptService scriptService,
             IAuthenticationAccountWriterPlugin authenticatonAccountWriter, INotificationManagerPlugin notificationManagerPlugin, IKpiService kpiService,
             ICustomAttributeManagerService customAttributeManagerService, IAttachmentManagerPlugin attachmentManagerPlugin) throws ExtensionManagerException {
         log.info("SERVICE>>> ExtensionManagerServiceImpl starting...");
@@ -607,8 +606,8 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         // Remove some menu items
         Menu mainPerspective = getTopMenuBarService().getMainPerspective();
         if (menuCustomizationDescriptor.getMenusToRemove() != null && menuCustomizationDescriptor.getMenusToRemove().size() != 0) {
-            mainPerspective.removeMenuItem(
-                    menuCustomizationDescriptor.getMenusToRemove().toArray(new String[menuCustomizationDescriptor.getMenusToRemove().size()]));
+            mainPerspective
+                    .removeMenuItem(menuCustomizationDescriptor.getMenusToRemove().toArray(new String[menuCustomizationDescriptor.getMenusToRemove().size()]));
             log.info("Remove the menus " + menuCustomizationDescriptor.getMenusToRemove());
         }
         // Add some new menu items
@@ -706,8 +705,9 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                             }
                             log.info("Loaded i18n keys [" + i18nMessage.getLanguage() + "] for the extension" + extension.getDescriptor().getName());
                         } catch (IOException e) {
-                            log.error("Unable to load the i18n keys [" + i18nMessage.getLanguage() + "] for the extension"
-                                    + extension.getDescriptor().getName(), e);
+                            log.error(
+                                    "Unable to load the i18n keys [" + i18nMessage.getLanguage() + "] for the extension" + extension.getDescriptor().getName(),
+                                    e);
                         }
                     }
                 }
@@ -950,12 +950,18 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
 
         private Date loadingTime;
         private File jarFile;
-        private JarClassLoader jarClassLoader;
+        /*
+         * The "standaloneJarClassLoader" is only used to load the extension
+         * descriptor, the controllers not attached to any plugin or the images
+         * and resources from the extension.
+         */
+        private JarClassLoader standaloneJarClassLoader;
         private ReadOnlyExtensionDescriptor descriptor;
         private Injector injector;
         private ILinkGenerationService linkGenerationService;
         private List<Object> standaloneControllers;
         private Map<String, InternalPluginResources> internalPluginResources;
+        private Environment environment;
 
         /**
          * Creates an extension using the specified JAR file
@@ -977,13 +983,14 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             this.loadingTime = new Date();
             this.jarFile = jarFile;
             this.internalPluginResources = Collections.synchronizedMap(new HashMap<>());
-            init(jarFile, environment);
+            this.environment = environment;
+            init(jarFile);
         }
 
         @Override
         public synchronized InputStream getResourceAsStream(String name) {
             try {
-                InputStream inStream = getJarClassLoader().getResourceAsStream(name);
+                InputStream inStream = getStandaloneJarClassLoader().getResourceAsStream(name);
                 if (inStream == null) {
                     log.warn("Resource " + name + " not founf in extension " + getDescriptor().getName());
                 }
@@ -1018,15 +1025,17 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
          */
         public synchronized Pair<IPluginRunner, InternalPluginResources> loadPluginInstance(String pluginIdentifier, Long pluginConfigurationId,
                 IPluginContext pluginContext, IPluginDescriptor pluginDescriptor) throws ClassNotFoundException {
-            JclObjectFactory factory = JclObjectFactory.getInstance();
             String pluginRunnerClassName = pluginDescriptor.getClazz();
 
             Map<Class<?>, Object> injectableValues = new HashMap<>();
             injectableValues.put(ILinkGenerationService.class, getLinkGenerationService());
             injectableValues.put(IPluginContext.class, pluginContext);
 
+            // Creates the jar class loader for this plugin runner
+            JarClassLoader pluginClassLoader = createJarClassLoader();
+
             // Creates the plugin runner
-            IPluginRunner pluginRunner = IPluginRunner.class.cast(createInstanceOfClass(pluginRunnerClassName, factory, injectableValues));
+            IPluginRunner pluginRunner = IPluginRunner.class.cast(createInstanceOfClass(pluginClassLoader, pluginRunnerClassName, injectableValues));
 
             // Add the plugin runner to the injectable values for the
             // configuration controllers
@@ -1037,7 +1046,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             if (pluginDescriptor.getCustomConfiguratorControllerClassName() != null) {
                 String controllerClassName = pluginDescriptor.getCustomConfiguratorControllerClassName();
                 log.info("Loading custom configuration controller " + controllerClassName);
-                customConfiguratorController = createInstanceOfClass(controllerClassName, factory, injectableValues);
+                customConfiguratorController = createInstanceOfClass(pluginClassLoader, controllerClassName, injectableValues);
             }
 
             // Creates the registration configuration controllers (if any)
@@ -1047,7 +1056,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                 for (DataType dataType : pluginDescriptor.getRegistrationConfiguratorControllerClassNames().keySet()) {
                     String controllerClassName = pluginDescriptor.getRegistrationConfiguratorControllerClassNames().get(dataType);
                     log.info("Loading registration controller " + controllerClassName);
-                    registrationConfiguratorControllers.put(dataType, createInstanceOfClass(controllerClassName, factory, injectableValues));
+                    registrationConfiguratorControllers.put(dataType, createInstanceOfClass(pluginClassLoader, controllerClassName, injectableValues));
                 }
             }
 
@@ -1058,11 +1067,11 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                 for (String identifier : pluginDescriptor.getWidgetDescriptors().keySet()) {
                     String controllerClassName = pluginDescriptor.getWidgetDescriptors().get(identifier).getControllerClassName();
                     log.info("Loading widget controller " + controllerClassName);
-                    widgetControllers.put(identifier, createInstanceOfClass(controllerClassName, factory, injectableValues));
+                    widgetControllers.put(identifier, createInstanceOfClass(pluginClassLoader, controllerClassName, injectableValues));
                 }
             }
 
-            InternalPluginResources internalPluginResources = new InternalPluginResources(pluginIdentifier, pluginConfigurationId,
+            InternalPluginResources internalPluginResources = new InternalPluginResources(pluginIdentifier, pluginConfigurationId, pluginClassLoader,
                     customConfiguratorController, registrationConfiguratorControllers, widgetControllers);
             getPluginResources().put(internalPluginResources.getUniquePluginResourceKey(), internalPluginResources);
             return Pair.of(pluginRunner, internalPluginResources);
@@ -1117,22 +1126,14 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
          * 
          * @param jarFile
          *            an extension JAR file
-         * @param environment
-         *            the play environment used to get the play classloader
          * @throws ExtensionManagerException
          */
-        private synchronized void init(File jarFile, Environment environment) throws ExtensionManagerException {
+        private synchronized void init(File jarFile) throws ExtensionManagerException {
             try {
                 // Reading the descriptor
                 log.info("Loading extension " + jarFile);
-                this.jarClassLoader = new JarClassLoader();
-
-                PlayProxyClassLoader proxyClassLoader = new PlayProxyClassLoader(environment.classLoader());
-                proxyClassLoader.setOrder(100);// After the other default class
-                                               // loaders
-                this.jarClassLoader.addLoader(proxyClassLoader);
-                this.jarClassLoader.add(jarFile.getAbsolutePath());
-                InputStream inStream = jarClassLoader.getResourceAsStream(EXTENSION_MANAGER_DESCRIPTOR_FILE);
+                this.standaloneJarClassLoader = createJarClassLoader();
+                InputStream inStream = this.standaloneJarClassLoader.getResourceAsStream(EXTENSION_MANAGER_DESCRIPTOR_FILE);
                 if (inStream == null) {
                     throw new ExtensionManagerException("No descriptor file in the JAR");
                 }
@@ -1143,12 +1144,11 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
 
                 // Loading the standalone web standaloneControllers
                 this.standaloneControllers = Collections.synchronizedList(new ArrayList<Object>());
-                JclObjectFactory factory = JclObjectFactory.getInstance();
                 for (String controllerClassName : getDescriptor().getDeclaredStandaloneControllers()) {
                     log.info("Loading controller " + controllerClassName);
                     Map<Class<?>, Object> injectableValues = new HashMap<>();
                     injectableValues.put(ILinkGenerationService.class, getLinkGenerationService());
-                    this.standaloneControllers.add(createInstanceOfClass(controllerClassName, factory, injectableValues));
+                    this.standaloneControllers.add(createInstanceOfClass(this.standaloneJarClassLoader, controllerClassName, injectableValues));
                 }
             } catch (Exception e) {
                 throw new ExtensionManagerException("Unable to read the JAR extension : " + jarFile, e);
@@ -1158,35 +1158,36 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
         /**
          * Create dynamically an instance of the specified object class
          * 
+         * @param jarClassLoader
+         *            the class loader to be used
          * @param objectClass
          *            an object class name
-         * @param factory
-         *            a JCL factory
          * @param injectableValues
          *            some values to be dynamically injected into the created
          *            classes
          * @return an instance of object
          * @throws ClassNotFoundException
          */
-        private Object createInstanceOfClass(String objectClassName, JclObjectFactory factory, Map<Class<?>, Object> injectableValues)
+        private Object createInstanceOfClass(JarClassLoader jarClassLoader, String objectClassName, Map<Class<?>, Object> injectableValues)
                 throws ClassNotFoundException {
             if (log.isDebugEnabled()) {
                 log.debug("Attempting to create a class " + objectClassName);
             }
-            Class<?> dynamicClass = getJarClassLoader().loadClass(objectClassName);
+            Class<?> dynamicClass = jarClassLoader.loadClass(objectClassName);
             if (log.isDebugEnabled()) {
                 log.debug("Class is created " + dynamicClass);
             }
+            JclObjectFactory factory = JclObjectFactory.getInstance();
             // Look for the constructor injection tag
             Pair<Object[], Class<?>[]> injectableParameters = getInjectableConstructorParameters(dynamicClass, injectableValues);
             if (injectableParameters != null) {
                 if (log.isDebugEnabled()) {
                     log.debug("Creating the class with parameters to be injected " + objectClassName + " : " + injectableParameters.getRight());
                 }
-                return factory.create(getJarClassLoader(), objectClassName, injectableParameters.getLeft(), injectableParameters.getRight());
+                return factory.create(jarClassLoader, objectClassName, injectableParameters.getLeft(), injectableParameters.getRight());
             }
             // Attempt to create using a default constructor
-            return factory.create(getJarClassLoader(), objectClassName);
+            return factory.create(jarClassLoader, objectClassName);
         }
 
         /**
@@ -1217,8 +1218,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
                     if (injectableConstructor == null) {
                         injectableConstructor = constructor;
                     } else {
-                        throw new IllegalArgumentException(
-                                "Multiple injectable constructor defined, please correct : only one injectable constructor allowed");
+                        throw new IllegalArgumentException("Multiple injectable constructor defined, please correct : only one injectable constructor allowed");
                     }
                 }
             }
@@ -1275,12 +1275,24 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
             return null;
         }
 
-        private ReadOnlyExtensionDescriptor getDescriptorInternal() {
-            return descriptor;
+        /**
+         * Creates a JAR class loader
+         * 
+         * @return a class loader
+         */
+        private JarClassLoader createJarClassLoader() {
+            JarClassLoader jarClassLoader = new JarClassLoader();
+
+            PlayProxyClassLoader proxyClassLoader = new PlayProxyClassLoader(getEnvironment().classLoader());
+            proxyClassLoader.setOrder(100);// After the other default class
+                                           // loaders
+            jarClassLoader.addLoader(proxyClassLoader);
+            jarClassLoader.add(jarFile.getAbsolutePath());
+            return jarClassLoader;
         }
 
-        private JarClassLoader getJarClassLoader() {
-            return jarClassLoader;
+        private ReadOnlyExtensionDescriptor getDescriptorInternal() {
+            return descriptor;
         }
 
         private Injector getInjector() {
@@ -1289,6 +1301,14 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
 
         private ILinkGenerationService getLinkGenerationService() {
             return linkGenerationService;
+        }
+
+        private JarClassLoader getStandaloneJarClassLoader() {
+            return standaloneJarClassLoader;
+        }
+
+        private Environment getEnvironment() {
+            return environment;
         }
     }
 
@@ -1581,14 +1601,16 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
      * @author Pierre-Yves Cloux
      */
     private static class InternalPluginResources {
+        private JarClassLoader pluginClassLoader;
         private String uniquePluginResourceKey;
         private Object customConfigurationController;
         private Map<DataType, Object> registrationConfigurationControllers;
         private Map<String, Object> widgetControllers;
 
-        public InternalPluginResources(String pluginIdentifier, Long pluginConfigurationId, Object customConfigurationController,
-                Map<DataType, Object> registrationConfigurationControllers, Map<String, Object> widgetControllers) {
+        public InternalPluginResources(String pluginIdentifier, Long pluginConfigurationId, JarClassLoader pluginClassLoader,
+                Object customConfigurationController, Map<DataType, Object> registrationConfigurationControllers, Map<String, Object> widgetControllers) {
             super();
+            this.pluginClassLoader = pluginClassLoader;
             this.uniquePluginResourceKey = createUniqueResourceKey(pluginIdentifier, pluginConfigurationId);
             this.customConfigurationController = customConfigurationController;
             this.registrationConfigurationControllers = registrationConfigurationControllers;
@@ -1609,6 +1631,10 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
 
         public Map<String, Object> getWidgetControllers() {
             return widgetControllers;
+        }
+
+        public JarClassLoader getPluginClassLoader() {
+            return pluginClassLoader;
         }
 
         /**
