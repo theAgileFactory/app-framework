@@ -125,8 +125,6 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
     private INotificationManagerPlugin notificationManagerPlugin;
     private Map<String, Object> sharedContext;
 
-    private static final int DELAY_BETWEEN_TWO_AUTOSTART_IN_SECONDS = 30;
-
     /**
      * Map : key=plugin id , value= {@link PluginRegistrationEntry}.
      */
@@ -334,8 +332,6 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
                         // it and wait before launching another one to avoid
                         // conflicts at startup
                         startPluginRunner(pluginConfiguration.id);
-                        // Utilities.wait(DELAY_BETWEEN_TWO_AUTOSTART_IN_SECONDS
-                        // * 1000);
                     }
                 } catch (Exception e) {
                     log.error("Error while starting the PluginManagerService", e);
