@@ -34,11 +34,11 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.directory.ModificationItem;
 
+import framework.services.database.IDatabaseDependencyService;
 import play.Configuration;
 import play.Logger;
 import play.inject.ApplicationLifecycle;
 import play.libs.F.Promise;
-import framework.services.database.IDatabaseDependencyService;
 
 /**
  * Default implementation for the interface
@@ -58,7 +58,8 @@ import framework.services.database.IDatabaseDependencyService;
  * users (example: uid=%s,ou=People) the DN is relative to the initial context
  * defined in ldapUrl</li>
  * <li>groupDnTemplate : a template to generate the DN for a group (example:
- * cn=%s,ou=Group) the DN is relative to the initial context defined in ldapUrl</li>
+ * cn=%s,ou=Group) the DN is relative to the initial context defined in ldapUrl
+ * </li>
  * <li>objectClasses : an array of objectclasses to be used to create the LDAP
  * entry (defined as a constant in the class implementation)</li>
  * <li>activationLdapAttr : the name of the attribute which contains the
@@ -74,11 +75,11 @@ import framework.services.database.IDatabaseDependencyService;
 public class DefaultAuthenticationAccountWriterPlugin implements IAuthenticationAccountWriterPlugin {
     private Hashtable<String, String> environment;
 
-    private String userDnTemplate;
-    private String groupDnTemplate;
-    private String activationLdapAttr;
-    private String activationLdapActiveValue;
-    private String activationLdapLockedValue;
+    private String userDnTemplate = "uid=%s,ou=people";
+    private String groupDnTemplate = "cn=%s,ou=groups";
+    private String activationLdapAttr = "description";
+    private String activationLdapActiveValue = "status=active";
+    private String activationLdapLockedValue = "status=locked";
     private String[] objectClasses = { "top", "person", "organizationalPerson", "inetOrgPerson" };
 
     private static Logger.ALogger log = Logger.of(DefaultAuthenticationAccountWriterPlugin.class);
@@ -86,7 +87,7 @@ public class DefaultAuthenticationAccountWriterPlugin implements IAuthentication
     public enum Config {
         LDAP_URL("maf.ldap_url"), LDAP_USER("maf.user"), LDAP_PASSWORD("maf.password"), USER_DN_TEMPLATE("maf.user_dn_template"), GROUP_DN_TEMPLATE(
                 "maf.group_dn_template"), ACTIVATION_ATTRIBUTE_NAME("maf.activation_ldap_attribute"), ACTIVATION_ATTRIBUTE_VALUE(
-                "maf.activation_ldap_attribute_activated"), ACTIVATION_ATTRIBUTE_VALUE_LOCKED("maf.activation_ldap_attribute_locked");
+                        "maf.activation_ldap_attribute_activated"), ACTIVATION_ATTRIBUTE_VALUE_LOCKED("maf.activation_ldap_attribute_locked");
 
         private String configurationKey;
 
@@ -132,6 +133,29 @@ public class DefaultAuthenticationAccountWriterPlugin implements IAuthentication
             return Promise.pure(null);
         });
         log.info("SERVICE>>> DefaultAuthenticationAccountWriterPlugin started");
+    }
+
+    /**
+     * Creates manually an account writer
+     * 
+     * @param ldapUrl
+     *            a LDAP URL (ex: ldap://host:389)
+     * @param ldapUser
+     *            a LDAP user allowed to write the directory
+     * @param ldapPassword
+     *            the password for the LDAP user
+     */
+    public DefaultAuthenticationAccountWriterPlugin(String ldapUrl, String ldapUser, String ldapPassword) {
+        log.info("SERVICE>>> DefaultAuthenticationAccountWriterPlugin starting...");
+        environment = new Hashtable<String, String>();
+        environment.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
+        environment.put(Context.PROVIDER_URL, ldapUrl);
+        environment.put(Context.SECURITY_PRINCIPAL, ldapUser);
+        environment.put(Context.SECURITY_CREDENTIALS, ldapPassword);
+        environment.put("com.sun.jndi.ldap.connect.pool", "true");
+        if (log.isDebugEnabled()) {
+            log.debug("Initialized with " + environment.toString());
+        }
     }
 
     private Hashtable<String, String> getEnvironment() {
@@ -377,27 +401,51 @@ public class DefaultAuthenticationAccountWriterPlugin implements IAuthentication
         }
     }
 
-    private String getUserDnTemplate() {
+    public String getUserDnTemplate() {
         return userDnTemplate;
     }
 
-    private String getActivationLdapActiveValue() {
+    public String getActivationLdapActiveValue() {
         return activationLdapActiveValue;
     }
 
-    private String[] getObjectClasses() {
+    public String[] getObjectClasses() {
         return objectClasses;
     }
 
-    private String getActivationLdapAttr() {
+    public String getActivationLdapAttr() {
         return activationLdapAttr;
     }
 
-    private String getActivationLdapLockedValue() {
+    public String getActivationLdapLockedValue() {
         return activationLdapLockedValue;
     }
 
-    private String getGroupDnTemplate() {
+    public String getGroupDnTemplate() {
         return groupDnTemplate;
+    }
+
+    public void setUserDnTemplate(String userDnTemplate) {
+        this.userDnTemplate = userDnTemplate;
+    }
+
+    public void setGroupDnTemplate(String groupDnTemplate) {
+        this.groupDnTemplate = groupDnTemplate;
+    }
+
+    public void setActivationLdapAttr(String activationLdapAttr) {
+        this.activationLdapAttr = activationLdapAttr;
+    }
+
+    public void setActivationLdapActiveValue(String activationLdapActiveValue) {
+        this.activationLdapActiveValue = activationLdapActiveValue;
+    }
+
+    public void setActivationLdapLockedValue(String activationLdapLockedValue) {
+        this.activationLdapLockedValue = activationLdapLockedValue;
+    }
+
+    public void setObjectClasses(String[] objectClasses) {
+        this.objectClasses = objectClasses;
     }
 }

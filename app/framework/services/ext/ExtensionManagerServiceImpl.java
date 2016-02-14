@@ -59,6 +59,7 @@ import framework.commons.DataType;
 import framework.commons.IFrameworkConstants;
 import framework.security.ISecurityService;
 import framework.security.ISecurityServiceConfiguration;
+import framework.services.account.IAccountManagerPlugin;
 import framework.services.account.IAuthenticationAccountWriterPlugin;
 import framework.services.account.IPreferenceManagerPlugin;
 import framework.services.configuration.II18nMessagesPlugin;
@@ -945,8 +946,8 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
     public static class Extension implements IExtension {
         private static final List<Class<?>> AUTHORIZED_INJECTED_SERVICE = Arrays.asList(ISecurityService.class, IUserSessionManagerPlugin.class,
                 ILinkGenerationService.class, II18nMessagesPlugin.class, ISysAdminUtils.class, IPluginContext.class, IPluginRunner.class, WSClient.class,
-                IScriptService.class, IAuthenticationAccountWriterPlugin.class, INotificationManagerPlugin.class, IKpiService.class,
-                IPreferenceManagerPlugin.class, ICustomAttributeManagerService.class, IAttachmentManagerPlugin.class);
+                IScriptService.class, IAccountManagerPlugin.class, INotificationManagerPlugin.class, IKpiService.class, IPreferenceManagerPlugin.class,
+                ICustomAttributeManagerService.class, IAttachmentManagerPlugin.class);
 
         private Date loadingTime;
         private File jarFile;

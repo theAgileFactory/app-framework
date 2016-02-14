@@ -32,16 +32,37 @@ import javax.naming.directory.InitialDirContext;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 
+import framework.services.database.IDatabaseDependencyService;
 import play.Configuration;
 import play.Logger;
 import play.inject.ApplicationLifecycle;
 import play.libs.F.Promise;
-import framework.services.database.IDatabaseDependencyService;
 
 /**
  * The default implementation for the class which performs the queries on the
  * authentication back-end.<br/>
- * The present implementation is using LDAP.
+ * The present implementation is using LDAP.<br/>
+ * Here are the configuration properties:
+ * <ul>
+ * <li><b>userSearchBase</b> : The base path for searching users, relative to
+ * the LDAP URL (ex: "ou=people")</li>
+ * <li><b>userUniqueIdAttribute</b> The attribute to be used as UID for a user
+ * (ex: "uid")</li>
+ * <li><b>userSearchFilter</b> The search filter template for a user (ex:
+ * "(uid=%s)"), the parameter "%s" is replaced by the "uid" value to be searched
+ * </li>
+ * <li><b>userEmailSearchFilter</b> The search filter template for a user when
+ * searching by e-mail (ex: "(mail=%s)"). The parameter "%s" is replaced by the
+ * value to be searched.</li>
+ * <li><b>userFullNameSearchFilter</b> The search filter template for a user
+ * when searching by name (ex: "(cn=%s)"). The parameter "%s" is replaced by the
+ * value to be searched.</li>
+ * <li><b>activationLdapAttr</b> The attribute to be used to store the
+ * active/locked status for a user (ex: "description")</li>
+ * <li><b>activationLdapActiveValue</b> The value to be stored in the
+ * "activationLdapAttr" which tells that a user is active (ex: "status=active")
+ * </li>
+ * </ul>
  * 
  * @author Pierre-Yves Cloux
  * 
@@ -49,20 +70,20 @@ import framework.services.database.IDatabaseDependencyService;
 @Singleton
 public class DefaultAuthenticationAccountReaderPlugin implements IAuthenticationAccountReaderPlugin {
     private static Logger.ALogger log = Logger.of(DefaultAuthenticationAccountReaderPlugin.class);
-    private String userSearchBase;
+    private String userSearchBase = "ou=people";
     private Hashtable<String, String> environment;
-    private String userUniqueIdAttribute;
-    private String userSearchFilter;
-    private String userEmailSearchFilter;
-    private String userFullNameSearchFilter;
-    private String activationLdapAttr;
-    private String activationLdapActiveValue;
+    private String userUniqueIdAttribute = "uid";
+    private String userSearchFilter = "(uid=%s)";
+    private String userEmailSearchFilter = "(mail=%s)";
+    private String userFullNameSearchFilter = "(cn=%s)";
+    private String activationLdapAttr = "description";
+    private String activationLdapActiveValue = "status=active";
 
     public enum Config {
         LDAP_URL("maf.ldap_url"), LDAP_USER("maf.user"), LDAP_PASSWORD("maf.password"), SEARCH_BASE("maf.user_searchbase"), SEARCH_FILTER(
-                "maf.user_searchfilter"), SEARCH_MAIL_FILTER("maf.user_searchmailfilter"), SEARCH_CN_FILTER("maf.user_searchcnfilter"), UNIQUE_ID_ATTRIBUTE_NAME(
-                "maf.user_unique_id_attribute"), ACTIVATION_ATTRIBUTE_NAME("maf.activation_ldap_attribute"), ACTIVATION_ATTRIBUTE_VALUE(
-                "maf.activation_ldap_attribute_activated");
+                "maf.user_searchfilter"), SEARCH_MAIL_FILTER("maf.user_searchmailfilter"), SEARCH_CN_FILTER(
+                        "maf.user_searchcnfilter"), UNIQUE_ID_ATTRIBUTE_NAME("maf.user_unique_id_attribute"), ACTIVATION_ATTRIBUTE_NAME(
+                                "maf.activation_ldap_attribute"), ACTIVATION_ATTRIBUTE_VALUE("maf.activation_ldap_attribute_activated");
         private String configurationKey;
 
         private Config(String configurationKey) {
@@ -109,6 +130,29 @@ public class DefaultAuthenticationAccountReaderPlugin implements IAuthentication
             return Promise.pure(null);
         });
         log.info("SERVICE>>> DefaultAuthenticationAccountReaderPlugin started");
+    }
+
+    /**
+     * Creates manually an account reader
+     * 
+     * @param ldapUrl
+     *            a LDAP URL (ex: ldap://host:389)
+     * @param ldapUser
+     *            a LDAP user allowed to search the directory
+     * @param ldapPassword
+     *            the password for the LDAP user
+     */
+    public DefaultAuthenticationAccountReaderPlugin(String ldapUrl, String ldapUser, String ldapPassword) {
+        log.info("SERVICE>>> DefaultAuthenticationAccountReaderPlugin manually initialized...");
+        environment = new Hashtable<String, String>();
+        environment.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
+        environment.put(Context.PROVIDER_URL, ldapUrl);
+        environment.put(Context.SECURITY_PRINCIPAL, ldapUser);
+        environment.put(Context.SECURITY_CREDENTIALS, ldapPassword);
+        environment.put("com.sun.jndi.ldap.connect.pool", "true");
+        if (log.isDebugEnabled()) {
+            log.debug("Initialized with " + environment.toString());
+        }
     }
 
     @Override
@@ -348,35 +392,63 @@ public class DefaultAuthenticationAccountReaderPlugin implements IAuthentication
         return userAccounts;
     }
 
-    private String getActivationLdapAttr() {
-        return activationLdapAttr;
-    }
-
-    private String getActivationLdapActiveValue() {
-        return activationLdapActiveValue;
-    }
-
-    private String getUserSearchFilter() {
-        return userSearchFilter;
-    }
-
-    private String getUserUniqueIdAttribute() {
-        return userUniqueIdAttribute;
-    }
-
-    private String getUserEmailSearchFilter() {
-        return userEmailSearchFilter;
-    }
-
     private Hashtable<String, String> getEnvironment() {
         return environment;
     }
 
-    private String getUserSearchBase() {
+    public String getActivationLdapAttr() {
+        return activationLdapAttr;
+    }
+
+    public String getActivationLdapActiveValue() {
+        return activationLdapActiveValue;
+    }
+
+    public String getUserSearchFilter() {
+        return userSearchFilter;
+    }
+
+    public String getUserUniqueIdAttribute() {
+        return userUniqueIdAttribute;
+    }
+
+    public String getUserEmailSearchFilter() {
+        return userEmailSearchFilter;
+    }
+
+    public String getUserSearchBase() {
         return userSearchBase;
     }
 
-    private String getUserFullNameSearchFilter() {
+    public String getUserFullNameSearchFilter() {
         return userFullNameSearchFilter;
+    }
+
+    public void setUserSearchBase(String userSearchBase) {
+        this.userSearchBase = userSearchBase;
+    }
+
+    public void setUserUniqueIdAttribute(String userUniqueIdAttribute) {
+        this.userUniqueIdAttribute = userUniqueIdAttribute;
+    }
+
+    public void setUserSearchFilter(String userSearchFilter) {
+        this.userSearchFilter = userSearchFilter;
+    }
+
+    public void setUserEmailSearchFilter(String userEmailSearchFilter) {
+        this.userEmailSearchFilter = userEmailSearchFilter;
+    }
+
+    public void setUserFullNameSearchFilter(String userFullNameSearchFilter) {
+        this.userFullNameSearchFilter = userFullNameSearchFilter;
+    }
+
+    public void setActivationLdapAttr(String activationLdapAttr) {
+        this.activationLdapAttr = activationLdapAttr;
+    }
+
+    public void setActivationLdapActiveValue(String activationLdapActiveValue) {
+        this.activationLdapActiveValue = activationLdapActiveValue;
     }
 }
