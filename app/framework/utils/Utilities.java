@@ -642,7 +642,11 @@ public abstract class Utilities {
     public static Long getId(Http.Context context) {
         Long id = null;
 
-        if (context.request().getQueryString("id") != null) {
+        if (context.args.containsKey(IFrameworkConstants.ID_NAME_FOR_CONTEXT)) {
+            // get the id as a context argument
+
+            id = (Long) context.args.get(IFrameworkConstants.ID_NAME_FOR_CONTEXT);
+        } else if (context.request().getQueryString("id") != null) {
             // get the id as a query parameter
 
             id = Long.valueOf(context.request().getQueryString("id"));

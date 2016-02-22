@@ -68,6 +68,11 @@ public interface IFrameworkConstants {
      */
     public static final int MINIMAL_PASSWORD_LENGTH = 8;
 
+    /**
+     * The name of the context argument that is used to inject an object id.
+     */
+    public static final String ID_NAME_FOR_CONTEXT = "_maf_object_id";
+
     // -------------------------------------------------------------------------------------
     // Prefix for the data stored into the Play Cache
     // -------------------------------------------------------------------------------------

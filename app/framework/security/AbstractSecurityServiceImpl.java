@@ -126,23 +126,14 @@ public abstract class AbstractSecurityServiceImpl implements HandlerCache, ISecu
 
     @Override
     public boolean dynamic(String name, String meta) {
-        if (log.isDebugEnabled()) {
-            log.debug("Check dynamic permission with Handler [" + get() + "]");
-            log.debug("Check dynamic permission with Dynamic Handler [" + get().getDynamicResourceHandler(Http.Context.current()) + "]");
-        }
-        try {
-            DeadboltHandler handler = get();
-            DynamicResourceHandler dynamicResourceHandler = handler.getDynamicResourceHandler(Http.Context.current()).get(DEFAULT_TIMEOUT).get();
-            return dynamicResourceHandler.isAllowed(name, meta, get(), Http.Context.current()).get(DEFAULT_TIMEOUT);
-        } catch (Exception e) {
-            log.error("Error while trying to check if a user is allowed for the permission name " + name + " and the meta information " + meta, e);
-        }
-        return false;
+        return getDefaultHandler().isAllowed(name, meta, get()).get(DEFAULT_TIMEOUT);
     }
 
     @Override
     public boolean dynamic(String name, String meta, Long id) {
-        return getDefaultHandler().isAllowed(name, meta, get(), id).get(DEFAULT_TIMEOUT);
+        Context context = Http.Context.current();
+        context.args.put(IFrameworkConstants.ID_NAME_FOR_CONTEXT, id);
+        return getDefaultHandler().isAllowed(name, meta, get()).get(DEFAULT_TIMEOUT);
     }
 
     @Override
@@ -467,8 +458,8 @@ public abstract class AbstractSecurityServiceImpl implements HandlerCache, ISecu
          *            a context
          * @return a promise of a boolean
          */
-        public Promise<Boolean> isAllowed(String name, String meta, DeadboltHandler deadboltHandler, Long id) {
-            return getDynamicResourceHandler().isAllowed(name, meta, deadboltHandler, id, Http.Context.current());
+        public Promise<Boolean> isAllowed(String name, String meta, DeadboltHandler deadboltHandler) {
+            return getDynamicResourceHandler().isAllowed(name, meta, deadboltHandler, Http.Context.current());
         }
 
         private DefaultDynamicResourceHandler getDynamicResourceHandler() {
@@ -540,24 +531,9 @@ public abstract class AbstractSecurityServiceImpl implements HandlerCache, ISecu
 
         @Override
         public Promise<Boolean> isAllowed(String name, String meta, DeadboltHandler deadboltHandler, Context context) {
-            return isAllowed(name, meta, deadboltHandler, Utilities.getId(context), context);
-        }
 
-        /**
-         * Check if the dynamic permission is allowed for the specified id
-         * 
-         * @param name
-         *            a dynamic permission name
-         * @param meta
-         * @param deadboltHandler
-         *            a deadbolt handler
-         * @param id
-         *            a unique id for an object
-         * @param context
-         *            a context
-         * @return a promise of a boolean
-         */
-        private Promise<Boolean> isAllowed(String name, String meta, DeadboltHandler deadboltHandler, Long id, Http.Context context) {
+            Long id = Utilities.getId(context);
+
             String cacheKey = getCacheKey(name, id);
             Boolean isAllowed = (Boolean) getCacheApi().get(cacheKey);
             if (isAllowed != null) {
