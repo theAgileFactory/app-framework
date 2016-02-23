@@ -126,24 +126,7 @@ public abstract class AbstractSecurityServiceImpl implements HandlerCache, ISecu
 
     @Override
     public boolean dynamic(String name, String meta) {
-        /*
-         * if (log.isDebugEnabled()) { log.debug(
-         * "Check dynamic permission with Handler [" + get() + "]"); log.debug(
-         * "Check dynamic permission with Dynamic Handler [" +
-         * get().getDynamicResourceHandler(Http.Context.current()) + "]"); } try
-         * { DeadboltHandler handler = get(); DynamicResourceHandler
-         * dynamicResourceHandler =
-         * handler.getDynamicResourceHandler(Http.Context.current()).get(
-         * DEFAULT_TIMEOUT).get(); return dynamicResourceHandler.isAllowed(name,
-         * meta, get(), Http.Context.current()).get(DEFAULT_TIMEOUT);
-         */
-
         return getDefaultHandler().isAllowed(name, meta, get()).get(DEFAULT_TIMEOUT);
-        /*
-         * } catch (Exception e) { log.error(
-         * "Error while trying to check if a user is allowed for the permission name "
-         * + name + " and the meta information " + meta, e); } return false;
-         */
     }
 
     @Override
