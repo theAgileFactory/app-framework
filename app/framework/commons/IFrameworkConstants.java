@@ -82,11 +82,6 @@ public interface IFrameworkConstants {
     public static final String MAF_CACHE_PREFIX = "maf.cache.";
 
     /**
-     * Cache configuration for the {@link AdPanelUtils}.
-     */
-    public static final String AD_CACHE_PREFIX = IFrameworkConstants.MAF_CACHE_PREFIX + "ad_panel.";
-
-    /**
      * Prefix for the user authorization token.<br/>
      * This part of the cache may contains some temporary authorization for a
      * user to access a resource

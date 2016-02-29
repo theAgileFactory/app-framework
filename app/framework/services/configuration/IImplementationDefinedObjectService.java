@@ -65,12 +65,6 @@ public interface IImplementationDefinedObjectService {
     public Call getRouteForDeleteAttachedFile(Long attachmentId);
 
     /**
-     * Get the route to the ad-panel URL.<br/>
-     * This URL is used to retrieve an AdPanel asynchronously
-     */
-    public Call getRouteForAdPanelContent(String page);
-
-    /**
      * Return true if the save capability is active for the filter config tables
      * (the corresponding "getRouteForFilterConfiguration" should return the
      * filterConfigController actions).
