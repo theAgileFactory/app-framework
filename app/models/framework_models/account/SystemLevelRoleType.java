@@ -29,19 +29,24 @@ import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.persistence.Version;
 
-import models.framework_models.parent.IModel;
-import models.framework_models.parent.IModelConstants;
-
 import org.apache.poi.ss.formula.functions.T;
 
 import com.avaje.ebean.Model;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.wordnik.swagger.annotations.ApiModelProperty;
 
 import framework.services.account.IUserAccount;
 import framework.services.account.IUserAccount.AccountType;
+import framework.services.api.commons.IApiObject;
 import framework.utils.DefaultSelectableValueHolder;
 import framework.utils.DefaultSelectableValueHolderCollection;
 import framework.utils.ISelectableValueHolder;
 import framework.utils.Msg;
+import models.framework_models.parent.IModel;
+import models.framework_models.parent.IModelConstants;
 
 /**
  * A system level role type defines a specified role to be allocated to a
@@ -55,7 +60,10 @@ import framework.utils.Msg;
  * @author Pierre-Yves Cloux
  */
 @Entity
-public class SystemLevelRoleType extends Model implements IModel, ISelectableValueHolder<Long> {
+@JsonAutoDetect(fieldVisibility = Visibility.NONE, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE, isGetterVisibility = Visibility.NONE, creatorVisibility = Visibility.NONE)
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class SystemLevelRoleType extends Model implements IModel, IApiObject, ISelectableValueHolder<Long> {
+
     private static final long serialVersionUID = -9129168665390850805L;
 
     public boolean deleted = false;
@@ -65,15 +73,21 @@ public class SystemLevelRoleType extends Model implements IModel, ISelectableVal
     public Timestamp lastUpdate;
 
     @Id
+    @JsonProperty
+    @ApiModelProperty(required = true)
     public Long id;
 
     @Column(length = IModelConstants.SMALL_STRING)
+    @JsonProperty
+    @ApiModelProperty(required = true)
     public String name;
 
     @Column(length = IModelConstants.LARGE_STRING)
+    @JsonProperty
     public String description;
 
     @Column(length = IModelConstants.VLARGE_STRING)
+    @JsonProperty
     public String accountTypeDefaults;
 
     @OneToMany(cascade = CascadeType.ALL)
@@ -213,6 +227,20 @@ public class SystemLevelRoleType extends Model implements IModel, ISelectableVal
         @SuppressWarnings("unchecked")
         ISelectableValueHolder<T> v = (ISelectableValueHolder<T>) o;
         return this.getName().compareTo(v.getName());
+    }
+
+    /* API Methods */
+
+    @Override
+    @ApiModelProperty(required = true)
+    @JsonProperty(value = "name")
+    public String getApiName() {
+        return getName();
+    }
+
+    @Override
+    public boolean getApiDeleted() {
+        return this.deleted;
     }
 
 }
