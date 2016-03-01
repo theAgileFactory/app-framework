@@ -156,14 +156,12 @@
 			<scope>provided</scope>
 		</dependency>
 
-		<!-- Application deps -->
-		<!-- 
+		<!-- Application deps --> 
 		<dependency>
 			<groupId>org.xeustechnologies</groupId>
 			<artifactId>jcl-core</artifactId> 
 			<version>${jcl-core.version}</version>
 		</dependency>
-		 -->
 		<dependency>
 			<groupId>org.objenesis</groupId>
 			<artifactId>objenesis</artifactId>
