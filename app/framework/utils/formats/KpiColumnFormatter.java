@@ -18,6 +18,7 @@
 package framework.utils.formats;
 
 import framework.commons.IFrameworkConstants;
+import framework.services.kpi.Kpi.DataType;
 import framework.utils.IColumnFormatter;
 
 /**
@@ -30,9 +31,11 @@ import framework.utils.IColumnFormatter;
 public class KpiColumnFormatter<T> implements IColumnFormatter<T> {
 
     private String kpiUid;
+    private DataType dataType;
 
-    public KpiColumnFormatter(String kpiUid) {
+    public KpiColumnFormatter(String kpiUid, DataType dataType) {
         this.kpiUid = kpiUid;
+        this.dataType = dataType;
     }
 
     @Override
@@ -41,7 +44,7 @@ public class KpiColumnFormatter<T> implements IColumnFormatter<T> {
             return IFrameworkConstants.DEFAULT_VALUE_EMPTY_DATA;
         }
         Long id = (Long) cellValue;
-        return views.html.framework_views.parts.kpi.display_kpi_cell.render(kpiUid, id).body();
+        return views.html.framework_views.parts.kpi.display_kpi_cell.render(kpiUid, id, dataType).body();
     }
 
 }

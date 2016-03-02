@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  *@
-@(uid: String, objectId: Long)
+@(uid: String, objectId: Long, dataType: framework.services.kpi.Kpi.DataType)
 
 @import framework_views.parts
 @import framework.services.kpi.IKpiService
@@ -25,9 +25,9 @@
 
     @if(kpiRender != null) {
         @if(kpiRender.getLink != null) {
-            <a href="@kpiRender.getLink" class="label label-@kpiRender.getCssColor">@kpiRender.getMainValueRender</a>
+            <a href="@kpiRender.getLink" class="label label-@kpiRender.getCssColor">@kpiRender.getValueRender(dataType)</a>
         } else {
-            <span class="label label-@kpiRender.getCssColor">@kpiRender.getMainValueRender</span>
+            <span class="label label-@kpiRender.getCssColor">@kpiRender.getValueRender(dataType)</span>
         }
     }
 

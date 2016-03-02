@@ -125,6 +125,24 @@ public class KpiRender {
     }
 
     /**
+     * Get the render for a value given a data type.
+     * 
+     * @param dataType
+     *            the data type
+     */
+    public String getValueRender(DataType dataType) {
+        switch (dataType) {
+        case ADDITIONAL1:
+            return getAdditional1ValueRender();
+        case ADDITIONAL2:
+            return getAdditional2ValueRender();
+        case MAIN:
+            return getMainValueRender();
+        }
+        return null;
+    }
+
+    /**
      * Get the render for the main value.
      * 
      * @return

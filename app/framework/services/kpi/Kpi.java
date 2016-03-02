@@ -460,10 +460,43 @@ public class Kpi {
     }
 
     /**
-     * Return true if the render type of the main value is LABEL.
+     * Return true if the render type of the given data type value is LABEL.
+     * 
+     * @param dataType
+     *            the data type
      */
-    public boolean isLabelRenderType() {
-        return kpiDefinition.mainKpiValueDefinition.renderType.equals(RenderType.LABEL);
+    public boolean isLabelRenderType(DataType dataType) {
+
+        switch (dataType) {
+        case ADDITIONAL1:
+            return kpiDefinition.additional1KpiValueDefinition.renderType.equals(RenderType.LABEL);
+        case ADDITIONAL2:
+            return kpiDefinition.additional2KpiValueDefinition.renderType.equals(RenderType.LABEL);
+        case MAIN:
+            return kpiDefinition.mainKpiValueDefinition.renderType.equals(RenderType.LABEL);
+        }
+
+        return false;
+
+    }
+
+    /**
+     * Return true if the isTrendDisplayed of the given data type is true.
+     * 
+     * @param dataType
+     *            the data type
+     */
+    public boolean isTrendDisplayed(DataType dataType) {
+        switch (dataType) {
+        case ADDITIONAL1:
+            return kpiDefinition.additional1KpiValueDefinition.isTrendDisplayed;
+        case ADDITIONAL2:
+            return kpiDefinition.additional2KpiValueDefinition.isTrendDisplayed;
+        case MAIN:
+            return kpiDefinition.mainKpiValueDefinition.isTrendDisplayed;
+        }
+
+        return false;
     }
 
     /*
@@ -680,7 +713,17 @@ public class Kpi {
      * @author Johann Kohler
      */
     public static enum DataType {
-        MAIN, ADDITIONAL1, ADDITIONAL2;
+        MAIN("main_kpi_value_definition_id"), ADDITIONAL1("additional1kpi_value_definition_id"), ADDITIONAL2("additional2kpi_value_definition_id");
+
+        private String idFieldName;
+
+        DataType(String idFieldName) {
+            this.idFieldName = idFieldName;
+        }
+
+        public String getIdFieldName() {
+            return this.idFieldName;
+        }
     }
 
     /**

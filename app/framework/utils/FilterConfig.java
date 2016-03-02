@@ -497,7 +497,16 @@ public class FilterConfig<T> {
      */
     public synchronized void addColumnConfiguration(String columnId, String fieldName, String columnLabel, IFilterComponent filterComponent,
             boolean isDisplayed, boolean isFiltered, SortStatusType sortStatusType) {
-        SelectableColumn selectableColumn = new SelectableColumn(columnId, fieldName, columnLabel, filterComponent);
+        SelectableColumn selectableColumn = new SelectableColumn(columnId, fieldName, columnLabel, null, filterComponent);
+        getSelectableColumns().put(columnId, selectableColumn);
+        UserColumnConfiguration userColumnConfiguration = new UserColumnConfiguration(columnId, sortStatusType, isDisplayed, isFiltered,
+                selectableColumn.getFilterComponent().getDefaultFilterValueAsObject());
+        getUserColumnConfigurations().put(columnId, userColumnConfiguration);
+    }
+
+    public synchronized void addColumnConfiguration(String columnId, String fieldName, String columnLabel, String columnSubLabel,
+            IFilterComponent filterComponent, boolean isDisplayed, boolean isFiltered, SortStatusType sortStatusType) {
+        SelectableColumn selectableColumn = new SelectableColumn(columnId, fieldName, columnLabel, columnSubLabel, filterComponent);
         getSelectableColumns().put(columnId, selectableColumn);
         UserColumnConfiguration userColumnConfiguration = new UserColumnConfiguration(columnId, sortStatusType, isDisplayed, isFiltered,
                 selectableColumn.getFilterComponent().getDefaultFilterValueAsObject());
@@ -663,21 +672,40 @@ public class FilterConfig<T> {
     public synchronized void addKpi(IKpiService kpiService, String tableIdFieldName, String kpiUid) {
         Kpi kpi = kpiService.getKpi(kpiUid);
         if (kpi != null) {
-            if (kpi.isValueFromKpiData()) {
-                if (kpi.isLabelRenderType() && kpi.getKpiColorRuleLabels() != null) {
-                    ISelectableValueHolderCollection<Long> rules = kpi.getKpiColorRuleLabels();
-                    addColumnConfiguration(Table.KPI_COLUMN_NAME_PREFIX + kpi.getUid(), tableIdFieldName, kpi.getValueName(DataType.MAIN),
-                            new KpiSelectFilterComponent(rules.getSortedValues().get(0).getValue(), rules, kpi), false, false, SortStatusType.UNSORTED);
-                } else {
-                    addColumnConfiguration(Table.KPI_COLUMN_NAME_PREFIX + kpi.getUid(), tableIdFieldName, kpi.getValueName(DataType.MAIN),
-                            new KpiNumericFilterComponent("0", "=", kpi), false, false, SortStatusType.UNSORTED);
-                }
-            } else {
-                addColumnConfiguration(Table.KPI_COLUMN_NAME_PREFIX + kpi.getUid(), tableIdFieldName, kpi.getValueName(DataType.MAIN),
-                        new KpiNoneFilterComponent(), false, false, SortStatusType.NONE);
+            if (kpi.isTrendDisplayed(DataType.MAIN)) {
+                addKpiValueDefinition(kpi, tableIdFieldName, DataType.MAIN);
+            }
+            if (kpi.isTrendDisplayed(DataType.ADDITIONAL1)) {
+                addKpiValueDefinition(kpi, tableIdFieldName, DataType.ADDITIONAL1);
+            }
+            if (kpi.isTrendDisplayed(DataType.ADDITIONAL2)) {
+                addKpiValueDefinition(kpi, tableIdFieldName, DataType.ADDITIONAL2);
             }
         }
 
+    }
+
+    private synchronized void addKpiValueDefinition(Kpi kpi, String tableIdFieldName, DataType dataType) {
+
+        String columnId = Table.KPI_COLUMN_NAME_PREFIX + dataType.name() + kpi.getUid();
+        String subLabel = null;
+        if (!dataType.equals(DataType.MAIN)) {
+            subLabel = kpi.getValueName(dataType);
+        }
+
+        if (kpi.isValueFromKpiData()) {
+            if (kpi.isLabelRenderType(dataType) && kpi.getKpiColorRuleLabels() != null) {
+                ISelectableValueHolderCollection<Long> rules = kpi.getKpiColorRuleLabels();
+                addColumnConfiguration(columnId, tableIdFieldName, kpi.getValueName(DataType.MAIN), subLabel,
+                        new KpiSelectFilterComponent(dataType, rules.getSortedValues().get(0).getValue(), rules, kpi), false, false, SortStatusType.UNSORTED);
+            } else {
+                addColumnConfiguration(columnId, tableIdFieldName, kpi.getValueName(DataType.MAIN), subLabel,
+                        new KpiNumericFilterComponent(dataType, "0", "=", kpi), false, false, SortStatusType.UNSORTED);
+            }
+        } else {
+            addColumnConfiguration(columnId, tableIdFieldName, kpi.getValueName(DataType.MAIN), subLabel, new KpiNoneFilterComponent(), false, false,
+                    SortStatusType.NONE);
+        }
     }
 
     /**
@@ -985,6 +1013,7 @@ public class FilterConfig<T> {
         private String columnId;
         private String fieldName;
         private String columnLabel;
+        private String columnSubLabel;
         private IFilterComponent filterComponent;
 
         /**
@@ -1000,11 +1029,12 @@ public class FilterConfig<T> {
          * @param filterComponent
          *            the filter configuration component
          */
-        public SelectableColumn(String columnId, String fieldName, String columnLabel, IFilterComponent filterComponent) {
+        public SelectableColumn(String columnId, String fieldName, String columnLabel, String columnSubLabel, IFilterComponent filterComponent) {
             super();
             this.columnId = columnId;
             this.fieldName = fieldName;
             this.columnLabel = columnLabel;
+            this.columnSubLabel = columnSubLabel;
             this.filterComponent = filterComponent;
         }
 
@@ -1029,6 +1059,10 @@ public class FilterConfig<T> {
             return columnLabel;
         }
 
+        public String getColumnSubLabel() {
+            return this.columnSubLabel;
+        }
+
         /**
          * Get the filter component.
          */
@@ -1043,7 +1077,11 @@ public class FilterConfig<T> {
          */
         public ObjectNode marshall() {
             ObjectNode asJson = Json.newObject();
-            asJson.put(JSON_NAME_FIELD, Msg.get(getColumnLabel()));
+            String label = Msg.get(getColumnLabel());
+            if (getColumnSubLabel() != null) {
+                label += " / " + Msg.get(getColumnSubLabel());
+            }
+            asJson.put(JSON_NAME_FIELD, label);
             asJson.put(JSON_VALUE_FIELD, getColumnId());
             asJson.put("isKpi", getFilterComponent().isKpi());
             getFilterComponent().marshallMetaData(asJson);
@@ -2674,7 +2712,7 @@ public class FilterConfig<T> {
 
         private static final String SEARCH_EXPRESSION_TEMPLATE = "(SELECT count(*) from kpi_data kdata%1$s"
                 + " JOIN kpi_value_definition kvd%1$s ON kdata%1$s.kpi_value_definition_id = kvd%1$s.id"
-                + " JOIN kpi_definition kd%1$s ON kvd%1$s.id = kd%1$s.main_kpi_value_definition_id"
+                + " JOIN kpi_definition kd%1$s ON kvd%1$s.id = kd%1$s.%4$s"
                 + " WHERE kdata%1$s.deleted = 0 AND kvd%1$s.deleted = 0 AND kd%1$s.deleted = 0 AND"
                 + " kdata%1$s.timestamp = (SELECT MAX(kdata_i%1$s.timestamp) FROM kpi_data kdata_i%1$s"
                 + " WHERE kdata_i%1$s.kpi_value_definition_id = kvd%1$s.id AND kdata_i%1$s.object_id = kdata%1$s.object_id)"
@@ -2682,19 +2720,23 @@ public class FilterConfig<T> {
 
         private static final String SORT_EXPRESSION_TEMPLATE = "(SELECT #value# from kpi_data kdatasort%1$s"
                 + " JOIN kpi_value_definition kvdsort%1$s ON kdatasort%1$s.kpi_value_definition_id = kvdsort%1$s.id"
-                + " JOIN kpi_definition kdsort%1$s ON kvdsort%1$s.id = kdsort%1$s.main_kpi_value_definition_id"
+                + " JOIN kpi_definition kdsort%1$s ON kvdsort%1$s.id = kdsort%1$s.%2$s"
                 + " WHERE kdatasort%1$s.deleted = 0 AND kvdsort%1$s.deleted = 0 AND kdsort%1$s.deleted = 0 AND"
                 + " kdatasort%1$s.timestamp = (SELECT MAX(kdata_isort%1$s.timestamp) FROM kpi_data kdata_isort%1$s"
                 + " WHERE kdata_isort%1$s.kpi_value_definition_id = kvdsort%1$s.id AND kdata_isort%1$s.object_id = kdatasort%1$s.object_id)"
                 + " AND kdsort%1$s.uid = '%1$s' AND kdatasort%1$s.object_id = t0.id)";
+
         private static final String SORT_EXPRESSION_TEMPLATE_ASC = "kdatasort%1$s.value";
         private static final String SORT_EXPRESSION_TEMPLATE_DESC = "(1 - kdatasort%1$s.value)";
 
+        private DataType dataType;
         private Kpi kpi;
 
         /**
          * Default constructor.
          * 
+         * @param dataType
+         *            the data type
          * @param defaultValue
          *            the default value
          * @param defaultComparator
@@ -2702,8 +2744,9 @@ public class FilterConfig<T> {
          * @param kpi
          *            the KPI
          */
-        public KpiNumericFilterComponent(String defaultValue, String defaultComparator, Kpi kpi) {
+        public KpiNumericFilterComponent(DataType dataType, String defaultValue, String defaultComparator, Kpi kpi) {
             super(defaultValue, defaultComparator);
+            this.dataType = dataType;
             this.kpi = kpi;
         }
 
@@ -2718,7 +2761,7 @@ public class FilterConfig<T> {
                 } catch (NumberFormatException e) {
                     Logger.warn("impossible to convert '" + filterValue + "' to a BigDecimal");
                 }
-                String sql = String.format(SEARCH_EXPRESSION_TEMPLATE, getKpi().getUid(), value.toPlainString(), comparator);
+                String sql = String.format(SEARCH_EXPRESSION_TEMPLATE, getKpi().getUid(), value.toPlainString(), comparator, this.dataType.getIdFieldName());
                 return Expr.raw(sql);
             }
             return null;
@@ -2733,7 +2776,7 @@ public class FilterConfig<T> {
                 } else {
                     template = SORT_EXPRESSION_TEMPLATE.replace("#value#", SORT_EXPRESSION_TEMPLATE_ASC);
                 }
-                orderby.asc(String.format(template, getKpi().getUid()));
+                orderby.asc(String.format(template, getKpi().getUid(), this.dataType.getIdFieldName()));
             }
 
         }
@@ -2760,7 +2803,7 @@ public class FilterConfig<T> {
 
         private static final String SEARCH_EXPRESSION_TEMPLATE = "(SELECT count(*) from kpi_data kdata%1$s"
                 + " JOIN kpi_value_definition kvd%1$s ON kdata%1$s.kpi_value_definition_id = kvd%1$s.id"
-                + " JOIN kpi_definition kd%1$s ON kvd%1$s.id = kd%1$s.main_kpi_value_definition_id"
+                + " JOIN kpi_definition kd%1$s ON kvd%1$s.id = kd%1$s.%3$s"
                 + " WHERE kdata%1$s.deleted = 0 AND kvd%1$s.deleted = 0 AND kd%1$s.deleted = 0 AND"
                 + " kdata%1$s.timestamp = (SELECT MAX(kdata_i%1$s.timestamp) FROM kpi_data kdata_i%1$s"
                 + " WHERE kdata_i%1$s.kpi_value_definition_id = kvd%1$s.id AND kdata_i%1$s.object_id = kdata%1$s.object_id)"
@@ -2768,19 +2811,23 @@ public class FilterConfig<T> {
 
         private static final String SORT_EXPRESSION_TEMPLATE = "(SELECT #value# from kpi_data kdatasort%1$s"
                 + " JOIN kpi_value_definition kvdsort%1$s ON kdatasort%1$s.kpi_value_definition_id = kvdsort%1$s.id"
-                + " JOIN kpi_definition kdsort%1$s ON kvdsort%1$s.id = kdsort%1$s.main_kpi_value_definition_id"
+                + " JOIN kpi_definition kdsort%1$s ON kvdsort%1$s.id = kdsort%1$s.%2$s"
                 + " WHERE kdatasort%1$s.deleted = 0 AND kvdsort%1$s.deleted = 0 AND kdsort%1$s.deleted = 0 AND"
                 + " kdatasort%1$s.timestamp = (SELECT MAX(kdata_isort%1$s.timestamp) FROM kpi_data kdata_isort%1$s"
                 + " WHERE kdata_isort%1$s.kpi_value_definition_id = kvdsort%1$s.id AND kdata_isort%1$s.object_id = kdatasort%1$s.object_id)"
                 + " AND kdsort%1$s.uid = '%1$s' AND kdatasort%1$s.object_id = t0.id)";
+
         private static final String SORT_EXPRESSION_TEMPLATE_ASC = "kdatasort%1$s.kpi_color_rule_id";
         private static final String SORT_EXPRESSION_TEMPLATE_DESC = "(1 - kdatasort%1$s.kpi_color_rule_id)";
 
+        private DataType dataType;
         private Kpi kpi;
 
         /**
          * Default constructor.
          * 
+         * @param dataType
+         *            the data type
          * @param defaultValue
          *            the default value
          * @param rules
@@ -2788,8 +2835,9 @@ public class FilterConfig<T> {
          * @param kpi
          *            the KPI
          */
-        public KpiSelectFilterComponent(Long defaultValue, ISelectableValueHolderCollection<Long> rules, Kpi kpi) {
+        public KpiSelectFilterComponent(DataType dataType, Long defaultValue, ISelectableValueHolderCollection<Long> rules, Kpi kpi) {
             super(defaultValue, rules);
+            this.dataType = dataType;
             this.kpi = kpi;
         }
 
@@ -2816,7 +2864,7 @@ public class FilterConfig<T> {
 
                 if (finalListValue.size() > 0) {
                     String value = "(" + String.join(",", finalListValue) + ")";
-                    sql = String.format(SEARCH_EXPRESSION_TEMPLATE, getKpi().getUid(), value);
+                    sql = String.format(SEARCH_EXPRESSION_TEMPLATE, getKpi().getUid(), value, this.dataType.getIdFieldName());
                 } else {
                     sql = "1=0";
                 }
@@ -2835,7 +2883,7 @@ public class FilterConfig<T> {
                 } else {
                     template = SORT_EXPRESSION_TEMPLATE.replace("#value#", SORT_EXPRESSION_TEMPLATE_ASC);
                 }
-                orderby.asc(String.format(template, getKpi().getUid()));
+                orderby.asc(String.format(template, getKpi().getUid(), this.dataType.getIdFieldName()));
             }
         }
 

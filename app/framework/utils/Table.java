@@ -165,6 +165,12 @@ public class Table<T> {
         return this.lineAction;
     }
 
+    public void addColumn(String name, String valueFieldName, String label, String subLabel, SorterType sorterType) {
+        ColumnDef columnDef = new ColumnDef(name, valueFieldName, label, subLabel, sorterType);
+        this.columnDefs.add(columnDef);
+        this.columnDefsMap.put(name, columnDef);
+    }
+
     /**
      * Add a column to the table.<br/>
      * <b>WARNING</b>: The name of the column must not start with "_"
@@ -180,7 +186,7 @@ public class Table<T> {
      *            associated with this column
      */
     public void addColumn(String name, String valueFieldName, String label, SorterType sorterType) {
-        ColumnDef columnDef = new ColumnDef(name, valueFieldName, label, sorterType);
+        ColumnDef columnDef = new ColumnDef(name, valueFieldName, label, null, sorterType);
         this.columnDefs.add(columnDef);
         this.columnDefsMap.put(name, columnDef);
     }
@@ -202,7 +208,7 @@ public class Table<T> {
      *            if true the content is escaped to prevent HTML injection
      */
     public void addColumn(String name, String valueFieldName, String label, SorterType sorterType, boolean escape) {
-        ColumnDef columnDef = new ColumnDef(name, valueFieldName, label, sorterType, escape);
+        ColumnDef columnDef = new ColumnDef(name, valueFieldName, label, null, sorterType, escape);
         this.columnDefs.add(columnDef);
         this.columnDefsMap.put(name, columnDef);
     }
@@ -269,7 +275,9 @@ public class Table<T> {
         List<Kpi> kpis = kpiService.getActiveKpisOfObjectType(objectType);
         if (kpis != null) {
             for (Kpi kpi : kpis) {
-                notDisplayedCustomAttributeColumns.add(KPI_COLUMN_NAME_PREFIX + kpi.getUid());
+                notDisplayedCustomAttributeColumns.add(KPI_COLUMN_NAME_PREFIX + DataType.MAIN.name() + kpi.getUid());
+                notDisplayedCustomAttributeColumns.add(KPI_COLUMN_NAME_PREFIX + DataType.ADDITIONAL1.name() + kpi.getUid());
+                notDisplayedCustomAttributeColumns.add(KPI_COLUMN_NAME_PREFIX + DataType.ADDITIONAL2.name() + kpi.getUid());
                 addKpi(kpiService, kpi.getUid());
             }
         }
@@ -291,11 +299,30 @@ public class Table<T> {
 
         Kpi kpi = kpiService.getKpi(kpiUid);
         if (kpi != null) {
-            addColumn(KPI_COLUMN_NAME_PREFIX + kpi.getUid(), getIdFieldName(), kpi.getValueName(DataType.MAIN), Table.ColumnDef.SorterType.NONE);
-            setJavaColumnFormatter(KPI_COLUMN_NAME_PREFIX + kpi.getUid(), new KpiColumnFormatter<T>(kpi.getUid()));
-            if (kpi.hasLink()) {
-                setColumnValueCssClass(KPI_COLUMN_NAME_PREFIX + kpi.getUid(), "rowlink-skip");
+            if (kpi.isTrendDisplayed(DataType.MAIN)) {
+                addKpiValueDefinition(kpi, DataType.MAIN);
             }
+            if (kpi.isTrendDisplayed(DataType.ADDITIONAL1)) {
+                addKpiValueDefinition(kpi, DataType.ADDITIONAL1);
+            }
+            if (kpi.isTrendDisplayed(DataType.ADDITIONAL2)) {
+                addKpiValueDefinition(kpi, DataType.ADDITIONAL2);
+            }
+        }
+    }
+
+    private void addKpiValueDefinition(Kpi kpi, DataType dataType) {
+
+        String columnId = KPI_COLUMN_NAME_PREFIX + dataType.name() + kpi.getUid();
+        String subLabel = null;
+        if (!dataType.equals(DataType.MAIN)) {
+            subLabel = kpi.getValueName(dataType);
+        }
+
+        addColumn(columnId, getIdFieldName(), kpi.getValueName(DataType.MAIN), subLabel, Table.ColumnDef.SorterType.NONE);
+        setJavaColumnFormatter(columnId, new KpiColumnFormatter<T>(kpi.getUid(), dataType));
+        if (kpi.hasLink()) {
+            setColumnValueCssClass(columnId, "rowlink-skip");
         }
     }
 
@@ -397,7 +424,7 @@ public class Table<T> {
      *            the name of a field
      */
     public void setIdFieldName(String idFieldName) {
-        this.idFieldDef = new ColumnDef(ID_COLUMN_NAME, idFieldName, idFieldName, SorterType.NONE);
+        this.idFieldDef = new ColumnDef(ID_COLUMN_NAME, idFieldName, idFieldName, null, SorterType.NONE);
     }
 
     public List<T> getValues() {
@@ -642,6 +669,7 @@ public class Table<T> {
     public static class ColumnDef implements Comparable<ColumnDef> {
         private String name;
         private String label;
+        private String subLabel;
         private String fieldName;
         private Object formatter;
         private SorterType sorterType;
@@ -688,8 +716,8 @@ public class Table<T> {
          *            the type of client side sort to be associated with this
          *            column
          */
-        public ColumnDef(String name, String fieldName, String label, SorterType sorterType) {
-            this(name, fieldName, label, sorterType, true);
+        public ColumnDef(String name, String fieldName, String label, String subLabel, SorterType sorterType) {
+            this(name, fieldName, label, subLabel, sorterType, true);
         }
 
         /**
@@ -707,10 +735,11 @@ public class Table<T> {
          * @param escape
          *            if true the content is escaped to prevent HTML injection
          */
-        public ColumnDef(String name, String fieldName, String label, SorterType sorterType, boolean escape) {
+        public ColumnDef(String name, String fieldName, String label, String subLabel, SorterType sorterType, boolean escape) {
             super();
             this.name = name;
             this.label = label;
+            this.subLabel = subLabel;
             this.fieldName = fieldName;
             this.sorterType = sorterType;
             this.escape = escape;
@@ -777,6 +806,10 @@ public class Table<T> {
 
         public String getLabel() {
             return label;
+        }
+
+        public String getSubLabel() {
+            return subLabel;
         }
 
         public String getSorterJsFunction() {
