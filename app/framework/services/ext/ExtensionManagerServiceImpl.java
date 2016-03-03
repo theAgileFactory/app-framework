@@ -944,7 +944,7 @@ public class ExtensionManagerServiceImpl implements IExtensionManagerService {
      * @author Pierre-Yves Cloux
      */
     public static class Extension implements IExtension {
-        private static final List<Class<?>> AUTHORIZED_INJECTED_SERVICE = Arrays.asList(ISecurityService.class, IUserSessionManagerPlugin.class,
+        private static final List<Class<?>> AUTHORIZED_INJECTED_SERVICE = Arrays.asList(Configuration.class, ISecurityService.class, IUserSessionManagerPlugin.class,
                 ILinkGenerationService.class, II18nMessagesPlugin.class, ISysAdminUtils.class, IPluginContext.class, IPluginRunner.class, WSClient.class,
                 IScriptService.class, IAccountManagerPlugin.class, INotificationManagerPlugin.class, IKpiService.class, IPreferenceManagerPlugin.class,
                 ICustomAttributeManagerService.class, IAttachmentManagerPlugin.class);
