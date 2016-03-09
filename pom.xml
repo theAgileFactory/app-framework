@@ -67,7 +67,7 @@
 		<commons-codec.version>1.10</commons-codec.version>
 		<commons-io.version>2.4</commons-io.version>
 		<poi.version>3.12</poi.version>
-		<commons-collections.version>3.2.1</commons-collections.version>
+		<commons-collections.version>3.2.2</commons-collections.version>
 		<commons-lang3.version>3.4</commons-lang3.version>
 		<commons-configuration.version>1.10</commons-configuration.version>
 		<jericho-html.version>3.3</jericho-html.version>
