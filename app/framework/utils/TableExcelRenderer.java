@@ -18,6 +18,7 @@
 package framework.utils;
 
 import java.io.ByteArrayOutputStream;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Iterator;
 
@@ -172,17 +173,22 @@ public class TableExcelRenderer {
                             cell.setCellType(Cell.CELL_TYPE_BOOLEAN);
                             cell.setCellValue((Boolean) cellValue);
                         } else {
-                            if (cellValue instanceof Iterable<?>) {
-                                StringBuffer sb = new StringBuffer();
-                                for (Object item : (Iterable<?>) cellValue) {
-                                    sb.append(item).append(',');
-                                }
-                                if (sb.length() != 0 && sb.charAt(sb.length() - 1) == ',') {
-                                    sb.delete(sb.length() - 1, sb.length());
-                                }
-                                cell.setCellValue(sb.toString());
+                            if (cellValue.getClass().equals(BigDecimal.class)) {
+                                cell.setCellType(Cell.CELL_TYPE_NUMERIC);
+                                cell.setCellValue(((BigDecimal) cellValue).doubleValue());
                             } else {
-                                cell.setCellValue(cellValue.toString());
+                                if (cellValue instanceof Iterable<?>) {
+                                    StringBuffer sb = new StringBuffer();
+                                    for (Object item : (Iterable<?>) cellValue) {
+                                        sb.append(item).append(',');
+                                    }
+                                    if (sb.length() != 0 && sb.charAt(sb.length() - 1) == ',') {
+                                        sb.delete(sb.length() - 1, sb.length());
+                                    }
+                                    cell.setCellValue(sb.toString());
+                                } else {
+                                    cell.setCellValue(cellValue.toString());
+                                }
                             }
                         }
                     }
@@ -218,35 +224,41 @@ public class TableExcelRenderer {
                         cell.setCellType(Cell.CELL_TYPE_BOOLEAN);
                         cell.setCellValue((Boolean) cellvalueAsObject);
                     } else {
-                        // If date use native value
-                        if (cellvalueAsObject.getClass().equals(Date.class)) {
-                            cell.setCellValue((Date) cellvalueAsObject);
-                            cell.setCellStyle(dateCellStyle);
+                        if (cellvalueAsObject.getClass().equals(BigDecimal.class)) {
+                            cell.setCellType(Cell.CELL_TYPE_NUMERIC);
+                            cell.setCellValue(((BigDecimal) cellvalueAsObject).doubleValue());
                         } else {
-                            // Any other type of column is "rendered"
-                            Source htmlSource = new Source(cellValue);
-                            Renderer renderer = htmlSource.getRenderer();
-                            renderer.setListBullets(new char[] { INVISIBLE_BULLET_CHAR, '-', '#', '*' });
-                            renderer.setBlockIndentSize(0);
-                            renderer.setListIndentSize(0);
-                            renderer.setIncludeFirstElementTopMargin(false);
-                            String stringRepresentation = renderer.toString();
-                            if (stringRepresentation.indexOf(INVISIBLE_BULLET_CHAR) != -1) {
-                                // Special action of the content is a <UL></UL>
-                                StringBuffer sb = new StringBuffer();
-                                String[] lines = stringRepresentation.split("" + INVISIBLE_BULLET_CHAR);
-                                for (String line : lines) {
-                                    if (!StringUtils.isBlank(line)) {
-                                        sb.append(line.trim());
-                                        sb.append(';');
-                                    }
-                                }
-                                if (sb.length() > 1) {
-                                    sb.deleteCharAt(sb.length() - 1);
-                                }
-                                cell.setCellValue(sb.toString());
+                            // If date use native value
+                            if (cellvalueAsObject.getClass().equals(Date.class)) {
+                                cell.setCellValue((Date) cellvalueAsObject);
+                                cell.setCellStyle(dateCellStyle);
                             } else {
-                                cell.setCellValue(stringRepresentation.trim());
+                                // Any other type of column is "rendered"
+                                Source htmlSource = new Source(cellValue);
+                                Renderer renderer = htmlSource.getRenderer();
+                                renderer.setListBullets(new char[] { INVISIBLE_BULLET_CHAR, '-', '#', '*' });
+                                renderer.setBlockIndentSize(0);
+                                renderer.setListIndentSize(0);
+                                renderer.setIncludeFirstElementTopMargin(false);
+                                String stringRepresentation = renderer.toString();
+                                if (stringRepresentation.indexOf(INVISIBLE_BULLET_CHAR) != -1) {
+                                    // Special action of the content is a
+                                    // <UL></UL>
+                                    StringBuffer sb = new StringBuffer();
+                                    String[] lines = stringRepresentation.split("" + INVISIBLE_BULLET_CHAR);
+                                    for (String line : lines) {
+                                        if (!StringUtils.isBlank(line)) {
+                                            sb.append(line.trim());
+                                            sb.append(';');
+                                        }
+                                    }
+                                    if (sb.length() > 1) {
+                                        sb.deleteCharAt(sb.length() - 1);
+                                    }
+                                    cell.setCellValue(sb.toString());
+                                } else {
+                                    cell.setCellValue(stringRepresentation.trim());
+                                }
                             }
                         }
                     }
