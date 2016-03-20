@@ -273,13 +273,12 @@ public abstract class LoadableObjectPluginRunner<K extends ILoadableObject> impl
             if (properties.getLong(LOAD_FREQUENCY_IN_MINUTES_PARAMETER) < MINIMAL_FREQUENCY) {
                 throw new IllegalArgumentException("Invalid frequency " + LOAD_FREQUENCY_IN_MINUTES_PARAMETER + " must be more than 5 minutes");
             }
-            setUnactivateNotFoundObjects(properties.getBoolean(UNACTIVATE_NOT_FOUND_PARAMETER));
-            setUnactivationSelectionClause(properties.getString(UNACTIVATION_SELECTION_CLAUSE_PARAMETER));
+            setUnactivateNotFoundObjects(properties.getBoolean(UNACTIVATE_NOT_FOUND_PARAMETER, false));
+            setUnactivationSelectionClause(properties.getString(UNACTIVATION_SELECTION_CLAUSE_PARAMETER, ""));
             if (!StringUtils.isBlank(getUnactivationSelectionClause())) {
                 Pattern pattern = Pattern.compile("\\s?\\(?(\\S*)\\s?(=|like)\\s*'");
                 Matcher matcher = pattern.matcher(getUnactivationSelectionClause());
                 while (matcher.find()) {
-                    System.out.println(matcher.group(1));
                     if (!getAllowedFieldsForUnactivationWhereClause().contains(matcher.group(1))) {
                         throw new IllegalArgumentException("Field not allowed in " + UNACTIVATION_SELECTION_CLAUSE_PARAMETER + " please use only "
                                 + getAllowedFieldsForUnactivationWhereClause());
@@ -294,16 +293,15 @@ public abstract class LoadableObjectPluginRunner<K extends ILoadableObject> impl
             Pair<Boolean, byte[]> javascriptMappingConfiguration = getPluginContext().getConfiguration(
                     getPluginContext().getPluginDescriptor().getConfigurationBlockDescriptors().get(CSV_MAPPING_CONFIGURATION_IDENTIFIER), true);
             if (javascriptMappingConfiguration.getLeft()) {
-                throw new PluginException(
-                        "WARNING: the javascript configuration may be outdated and the plugin might crash, please check it againt the current"
-                                + " documentation and save it before attempting to start the plugin");
+                throw new PluginException("WARNING: the javascript configuration may be outdated and the plugin might crash, please check it againt the current"
+                        + " documentation and save it before attempting to start the plugin");
             }
 
             // Creates the generic file loader
             this.genericFileLoader = new GenericFileLoader<K>(createGenericFileLoaderMapper(new String(javascriptMappingConfiguration.getRight())),
                     GenericFileLoader.CSVFormatType.valueOf(properties.getString(CSV_FORMAT_PARAMETER)),
                     AllowedCharSet.getFromCharset(properties.getString(INPUT_FILE_CHARSET_PARAMETER)), log, properties.getBoolean(TEST_MODE_PARAMETER),
-                    properties.getBoolean(IGNORE_INVALID_ROWS_PARAMETER));
+                    properties.getBoolean(IGNORE_INVALID_ROWS_PARAMETER, false));
 
             // If scheduled, start the scheduler
             // Find the right FiniteDuration before starting the plugin
