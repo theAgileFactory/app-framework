@@ -7,6 +7,9 @@ env:
     ACTIVATOR_ZIP_URL=http://downloads.typesafe.com/typesafe-activator/${ACTIVATOR_VERSION}/${ACTIVATOR_ZIP_FILE} \
     PLAY2_HOME=${TRAVIS_BUILD_DIR}/activator-${ACTIVATOR_VERSION}-minimal \
     SBT_EXECUTABLE_NAME=activator
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install --only-upgrade -y oracle-java8-installer
 install:
   - wget ${ACTIVATOR_ZIP_URL}
   - unzip -q ${ACTIVATOR_ZIP_FILE}
