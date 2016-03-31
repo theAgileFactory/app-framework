@@ -7,6 +7,8 @@ env:
     ACTIVATOR_ZIP_URL=http://downloads.typesafe.com/typesafe-activator/${ACTIVATOR_VERSION}/${ACTIVATOR_ZIP_FILE} \
     PLAY2_HOME=${TRAVIS_BUILD_DIR}/activator-${ACTIVATOR_VERSION}-minimal \
     SBT_EXECUTABLE_NAME=activator
+  - GH_REF: github.com/AblionGE/app-framework
+  - secure: "UEul/1iXkBra6ezvCsOjqkED/6+dUhEkJ9oG74i4EMxNrjBaEUWhgJ57nxt7KSJ9LqcY49FB0F3WgYeAe5ktDahPEfrJihol3yIHWLI9la9DyPkO3sKcSuMoIFxlHortD1MxdqHSbxRtfdoLGdGh0h+ZHvMqEtpjl0+CLYWneM4D7/9gi8ZLvOeaSOC7Mz5RBB8luA+ddRhS0RgSboMN9zKDgWhPzFY/fcZ28nXGdb79DZLTGLoE4IfQfK3JOhCI0SzzowHgv8eJAYfcvUt7fZaoXzZVdPDeDGfoncSZgGKD3124D56XAemBZplE7x3f8pLfE31C9vaGtMROAOgt3Bio4U46gDwxU+lh8lOJhtoA4iQM2cJQ1H+9bno/vJeQ0t97HSRpM2bWFgUBeLvJyzdGfpIpA+W7iw3RtFWS3LbZ59g7yWy7laxrDAepFIIYxPd7R5d322upt/uzkvPKasxB2YKB35QepAJGDsT4L62kK7/nSNN8aAQquVhiPzktnBAl7ryj0cZJQQPlPG8Lm9qJoDhPkQPk5mMEzMzBmGUOt10a3mU8XJbmJhk0sLHrUmDZKHZAmx+OxuWoO4e3gJLuHb3p2P8q849PCP+HmKeQJ92tZvS0PoO3DNCwaaZRYlDVtT+c6AfoX8/2Qroi/kOflDSohOXOKi6KPcy4ybo="
 before_install:
   - sudo apt-get update
   - sudo apt-get install --only-upgrade -y oracle-java8-installer
@@ -15,16 +17,17 @@ install:
   - unzip -q ${ACTIVATOR_ZIP_FILE}
 script:
   - mvn clean install
+  - bash travis/deploy.sh
 notifications:
   email: false
 branches:
   only:
-  - master
+    - master
 scala:
-   - 2.11.8
+  - 2.11.8
 cache:
   directories:
-  - .autoconf
+    - .autoconf
   - $HOME/.m2
   - $HOME/.sbt
   - $HOME/.ivy
