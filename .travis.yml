@@ -1,33 +1,34 @@
 language: java
 jdk:
-  - oraclejdk8
+- oraclejdk8
 env:
-  - ACTIVATOR_VERSION=1.3.7 \
-    ACTIVATOR_ZIP_FILE=typesafe-activator-${ACTIVATOR_VERSION}-minimal.zip \
-    ACTIVATOR_ZIP_URL=http://downloads.typesafe.com/typesafe-activator/${ACTIVATOR_VERSION}/${ACTIVATOR_ZIP_FILE} \
-    PLAY2_HOME=${TRAVIS_BUILD_DIR}/activator-${ACTIVATOR_VERSION}-minimal \
-    SBT_EXECUTABLE_NAME=activator
-  - GH_REF: github.com/AblionGE/app-framework
-  - secure: "UEul/1iXkBra6ezvCsOjqkED/6+dUhEkJ9oG74i4EMxNrjBaEUWhgJ57nxt7KSJ9LqcY49FB0F3WgYeAe5ktDahPEfrJihol3yIHWLI9la9DyPkO3sKcSuMoIFxlHortD1MxdqHSbxRtfdoLGdGh0h+ZHvMqEtpjl0+CLYWneM4D7/9gi8ZLvOeaSOC7Mz5RBB8luA+ddRhS0RgSboMN9zKDgWhPzFY/fcZ28nXGdb79DZLTGLoE4IfQfK3JOhCI0SzzowHgv8eJAYfcvUt7fZaoXzZVdPDeDGfoncSZgGKD3124D56XAemBZplE7x3f8pLfE31C9vaGtMROAOgt3Bio4U46gDwxU+lh8lOJhtoA4iQM2cJQ1H+9bno/vJeQ0t97HSRpM2bWFgUBeLvJyzdGfpIpA+W7iw3RtFWS3LbZ59g7yWy7laxrDAepFIIYxPd7R5d322upt/uzkvPKasxB2YKB35QepAJGDsT4L62kK7/nSNN8aAQquVhiPzktnBAl7ryj0cZJQQPlPG8Lm9qJoDhPkQPk5mMEzMzBmGUOt10a3mU8XJbmJhk0sLHrUmDZKHZAmx+OxuWoO4e3gJLuHb3p2P8q849PCP+HmKeQJ92tZvS0PoO3DNCwaaZRYlDVtT+c6AfoX8/2Qroi/kOflDSohOXOKi6KPcy4ybo="
+  global:
+  - ACTIVATOR_VERSION=1.3.7
+  - ACTIVATOR_ZIP_FILE=typesafe-activator-${ACTIVATOR_VERSION}-minimal.zip
+  - ACTIVATOR_ZIP_URL=http://downloads.typesafe.com/typesafe-activator/${ACTIVATOR_VERSION}/${ACTIVATOR_ZIP_FILE}
+  - PLAY2_HOME=${TRAVIS_BUILD_DIR}/activator-${ACTIVATOR_VERSION}-minimal
+  - SBT_EXECUTABLE_NAME=activator
+  - GH_REF=github.com/AblionGE/app-framework
+  - secure: RsFRVl4K1srrjLq2oUksY9vpjBSLyw6TT/Wv5jCKske+BI0XUzHXYvZavTstaR9whOzjQocu35LyJtT+1AsQlzpeoJ+vqt5V5oD+wx7VZuiKgvh2wnlyQsouXJTRThymqbh2iUA0LKklUH+oH/CPlo9GktUBAB0CEQA3zjEeKNV8RRbRehCH/jrIQ1RLPi+SuArn/Kvqh7Lvqjjoxux6xHH8ClG74NcNepZNXrg4a9+n8m/t0/sn6Iuu9jBr+n+T/Upv4e9taslrlBWTKlbpfDsvt9G29cp39Clnmu9SsBokSUJvse66X/Qb9L2RT9npBLqdS4CbU9vGK4q/xyU7wFGZkXT243k+4j56s9X2IKr53bHPtGWAAzV/ZpP6kBKOCACITJC8rQN+hp7N2IOuXWlxhx+po6rWNVbtkFe8bG/LTpT8FbKBpLS3ZSLOr6zHw6OtF+lZoqshCxUUAAgDlSlkZsXC20r8B+jrxRtgJnXI5PRENbIo1wxD1AKb3WdtUK8K3aJs3+N2qAC6JCX0wTmccVuWrmXZ1b+jYLOCCtG1Gi8Ev2DHzgJ71R/W1rOTbL44lorsp2QirRipMYDCOw8wpB9kSpz8yypFmnGIBRmUo0nFo398aJbtQRlIuYkqjIVgLmJnjvU3i/nlUJ2A5jgc9Km+zGOGQICxSh0OuO4=
 before_install:
-  - sudo apt-get update
-  - sudo apt-get install --only-upgrade -y oracle-java8-installer
+- sudo apt-get update
+- sudo apt-get install --only-upgrade -y oracle-java8-installer
 install:
-  - wget ${ACTIVATOR_ZIP_URL}
-  - unzip -q ${ACTIVATOR_ZIP_FILE}
+- wget ${ACTIVATOR_ZIP_URL}
+- unzip -q ${ACTIVATOR_ZIP_FILE}
 script:
-  - mvn clean install
-  - bash travis/deploy.sh
+- mvn clean install
+- bash travis/deploy.sh "12.1.1-SNAPSHOT"
 notifications:
   email: false
 branches:
   only:
-    - master
+  - master
 scala:
-  - 2.11.8
+- 2.11.8
 cache:
   directories:
-    - .autoconf
-  - $HOME/.m2
-  - $HOME/.sbt
-  - $HOME/.ivy
+  - ".autoconf"
+  - "$HOME/.m2"
+  - "$HOME/.sbt"
+  - "$HOME/.ivy"
