@@ -19,7 +19,7 @@ install:
   - unzip -q ${ACTIVATOR_ZIP_FILE}
 script:
   - mvn clean install
-  - bash travis/deploy.sh $APP_FRAMEWORK_VERSIOn
+  - bash travis/deploy.sh $APP_FRAMEWORK_VERSION
 notifications:
   email: false
 branches:
