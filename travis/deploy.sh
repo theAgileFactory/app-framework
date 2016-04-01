@@ -18,9 +18,9 @@ git init
 git config user.name "Travis CI"
 git config user.email "marc.schar@the-agile-factory.com"
 
-git lfs install
-git lfs track *.zip
-git lfs track *.jar
+git-lfs-1.2.2/git-lfs install
+git-lfs-1.2.2/git-lfs track *.zip
+git-lfs-1.2.2/git-lfs track *.jar
 
 git add snapshots
 git commit -m "Deploy to GitHub Pages"
