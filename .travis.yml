@@ -8,6 +8,7 @@ env:
   - ACTIVATOR_ZIP_URL=http://downloads.typesafe.com/typesafe-activator/${ACTIVATOR_VERSION}/${ACTIVATOR_ZIP_FILE}
   - PLAY2_HOME=${TRAVIS_BUILD_DIR}/activator-${ACTIVATOR_VERSION}-minimal
   - SBT_EXECUTABLE_NAME=activator
+  - APP_FRAMEWORK_VERSION="12.1.1-SNAPSHOT"
   - GH_REF=github.com/AblionGE/app-framework
   - secure: RsFRVl4K1srrjLq2oUksY9vpjBSLyw6TT/Wv5jCKske+BI0XUzHXYvZavTstaR9whOzjQocu35LyJtT+1AsQlzpeoJ+vqt5V5oD+wx7VZuiKgvh2wnlyQsouXJTRThymqbh2iUA0LKklUH+oH/CPlo9GktUBAB0CEQA3zjEeKNV8RRbRehCH/jrIQ1RLPi+SuArn/Kvqh7Lvqjjoxux6xHH8ClG74NcNepZNXrg4a9+n8m/t0/sn6Iuu9jBr+n+T/Upv4e9taslrlBWTKlbpfDsvt9G29cp39Clnmu9SsBokSUJvse66X/Qb9L2RT9npBLqdS4CbU9vGK4q/xyU7wFGZkXT243k+4j56s9X2IKr53bHPtGWAAzV/ZpP6kBKOCACITJC8rQN+hp7N2IOuXWlxhx+po6rWNVbtkFe8bG/LTpT8FbKBpLS3ZSLOr6zHw6OtF+lZoqshCxUUAAgDlSlkZsXC20r8B+jrxRtgJnXI5PRENbIo1wxD1AKb3WdtUK8K3aJs3+N2qAC6JCX0wTmccVuWrmXZ1b+jYLOCCtG1Gi8Ev2DHzgJ71R/W1rOTbL44lorsp2QirRipMYDCOw8wpB9kSpz8yypFmnGIBRmUo0nFo398aJbtQRlIuYkqjIVgLmJnjvU3i/nlUJ2A5jgc9Km+zGOGQICxSh0OuO4=
 before_install:
@@ -18,7 +19,7 @@ install:
   - unzip -q ${ACTIVATOR_ZIP_FILE}
 script:
   - mvn clean install
-  - bash travis/deploy.sh "12.1.1-SNAPSHOT"
+  - bash travis/deploy.sh $APP_FRAMEWORK_VERSIOn
 notifications:
   email: false
 branches:
