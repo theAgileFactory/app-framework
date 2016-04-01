@@ -1,6 +1,6 @@
 language: java
 jdk:
-- oraclejdk8
+  - oraclejdk8
 env:
   global:
   - ACTIVATOR_VERSION=1.3.7
@@ -11,20 +11,21 @@ env:
   - GH_REF=github.com/AblionGE/app-framework
   - secure: RsFRVl4K1srrjLq2oUksY9vpjBSLyw6TT/Wv5jCKske+BI0XUzHXYvZavTstaR9whOzjQocu35LyJtT+1AsQlzpeoJ+vqt5V5oD+wx7VZuiKgvh2wnlyQsouXJTRThymqbh2iUA0LKklUH+oH/CPlo9GktUBAB0CEQA3zjEeKNV8RRbRehCH/jrIQ1RLPi+SuArn/Kvqh7Lvqjjoxux6xHH8ClG74NcNepZNXrg4a9+n8m/t0/sn6Iuu9jBr+n+T/Upv4e9taslrlBWTKlbpfDsvt9G29cp39Clnmu9SsBokSUJvse66X/Qb9L2RT9npBLqdS4CbU9vGK4q/xyU7wFGZkXT243k+4j56s9X2IKr53bHPtGWAAzV/ZpP6kBKOCACITJC8rQN+hp7N2IOuXWlxhx+po6rWNVbtkFe8bG/LTpT8FbKBpLS3ZSLOr6zHw6OtF+lZoqshCxUUAAgDlSlkZsXC20r8B+jrxRtgJnXI5PRENbIo1wxD1AKb3WdtUK8K3aJs3+N2qAC6JCX0wTmccVuWrmXZ1b+jYLOCCtG1Gi8Ev2DHzgJ71R/W1rOTbL44lorsp2QirRipMYDCOw8wpB9kSpz8yypFmnGIBRmUo0nFo398aJbtQRlIuYkqjIVgLmJnjvU3i/nlUJ2A5jgc9Km+zGOGQICxSh0OuO4=
 before_install:
-- sudo apt-get update
-- sudo apt-get install --only-upgrade -y oracle-java8-installer
+  - sudo apt-get update
+  - sudo apt-get install --only-upgrade -y oracle-java8-installer
 install:
-- wget ${ACTIVATOR_ZIP_URL}
-- unzip -q ${ACTIVATOR_ZIP_FILE}
+  - wget ${ACTIVATOR_ZIP_URL}
+  - unzip -q ${ACTIVATOR_ZIP_FILE}
 script:
-- bash travis/deploy.sh "12.1.1-SNAPSHOT"
+  - mvn clean install
+  - bash travis/deploy.sh "12.1.1-SNAPSHOT"
 notifications:
   email: false
 branches:
   only:
-  - master
+    - master
 scala:
-- 2.11.8
+  - 2.11.8
 cache:
   directories:
   - ".autoconf"
