@@ -17,7 +17,6 @@ install:
 - wget ${ACTIVATOR_ZIP_URL}
 - unzip -q ${ACTIVATOR_ZIP_FILE}
 script:
-- mvn clean install
 - bash travis/deploy.sh "12.1.1-SNAPSHOT"
 notifications:
   email: false
