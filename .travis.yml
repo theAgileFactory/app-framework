@@ -1,0 +1,44 @@
+language: java
+jdk:
+- oraclejdk8
+env:
+  global:
+  - ACTIVATOR_VERSION=1.3.7
+  - ACTIVATOR_ZIP_FILE=typesafe-activator-${ACTIVATOR_VERSION}-minimal.zip
+  - ACTIVATOR_ZIP_URL=http://downloads.typesafe.com/typesafe-activator/${ACTIVATOR_VERSION}/${ACTIVATOR_ZIP_FILE}
+  - PLAY2_HOME=${TRAVIS_BUILD_DIR}/activator-${ACTIVATOR_VERSION}-minimal
+  - SBT_EXECUTABLE_NAME=activator
+  - APP_FRAMEWORK_VERSION="12.1.1-SNAPSHOT"
+  - GH_REF=github.com/AblionGE/app-framework
+  - secure: RsFRVl4K1srrjLq2oUksY9vpjBSLyw6TT/Wv5jCKske+BI0XUzHXYvZavTstaR9whOzjQocu35LyJtT+1AsQlzpeoJ+vqt5V5oD+wx7VZuiKgvh2wnlyQsouXJTRThymqbh2iUA0LKklUH+oH/CPlo9GktUBAB0CEQA3zjEeKNV8RRbRehCH/jrIQ1RLPi+SuArn/Kvqh7Lvqjjoxux6xHH8ClG74NcNepZNXrg4a9+n8m/t0/sn6Iuu9jBr+n+T/Upv4e9taslrlBWTKlbpfDsvt9G29cp39Clnmu9SsBokSUJvse66X/Qb9L2RT9npBLqdS4CbU9vGK4q/xyU7wFGZkXT243k+4j56s9X2IKr53bHPtGWAAzV/ZpP6kBKOCACITJC8rQN+hp7N2IOuXWlxhx+po6rWNVbtkFe8bG/LTpT8FbKBpLS3ZSLOr6zHw6OtF+lZoqshCxUUAAgDlSlkZsXC20r8B+jrxRtgJnXI5PRENbIo1wxD1AKb3WdtUK8K3aJs3+N2qAC6JCX0wTmccVuWrmXZ1b+jYLOCCtG1Gi8Ev2DHzgJ71R/W1rOTbL44lorsp2QirRipMYDCOw8wpB9kSpz8yypFmnGIBRmUo0nFo398aJbtQRlIuYkqjIVgLmJnjvU3i/nlUJ2A5jgc9Km+zGOGQICxSh0OuO4=
+  - secure: oeebXOv/edDejn/ddBGI8ZSx+yRXR+UVgruH6H3qRe0WsHlitX2HX77Bx/+U6PAL1WKoO+pxR2aBVMwYiUIEEjuS6vnXqHmJPVtoG62fGTQYtD2hM64eNlecXRBvimPxFNOBHAZmVdLXHexNLQIzOiDNG9hnN7vjb2cxMnCCfIdzIAxs1yTVDAWX5MkqrcYNJYzLox5AF53CcWdgTC7Cp5myyUy3x6bjMJ/f6RrDNZB10hWkBSvr/ozU6yZlpalo3HSVqFPjtYzhj9OUohiAEenzeLi+b7CqIdZrY9rhdW8tFhyBBGusrevUe9XBp7VW19Z6TJMOCOm63z50VIBmOpvOmqIAMBkAu8dJxUQmh/uFoCCOJx5NexxbHKhuPYruuCuW/oiVbKLNloMwRCF9Oe1+3hlkb91E56W7t64nRS4+evHfc98M/FaQ26X52+Z1iD/oJ/bN9QzrK6rz/rgvJI+4XXK2ETRcawiKGKqscndF29OkHm1zIxbMgzFgVsKqAaAjHlyRpU8Dg/Ff7fMzThCoMgpxOSQZOzlZGVD9cYQ+UgKXt2SKzFH333e5ai24n6ho2u6mfghjFtufwfRb9ybK7IJjFxI61/Ezy8hfyUQYen5WAgerWij6Yw3dhiL9EOf58fLkdy7RkVRoGSq9ijBHmDbdHdqmcmqKGwApsGg=
+before_install:
+- sudo apt-get update
+- sudo apt-get install --only-upgrade -y oracle-java8-installer
+install:
+- wget ${ACTIVATOR_ZIP_URL}
+- unzip -q ${ACTIVATOR_ZIP_FILE}
+script:
+- mvn clean install
+- bash travis/deploy.sh $APP_FRAMEWORK_VERSION
+after_success:
+  - |
+      if [[ ($TRAVIS_BRANCH == master) &&
+            ($TRAVIS_PULL_REQUEST == false) &&
+            ( (! $TRAVIS_JOB_NUMBER == *.*) || ($TRAVIS_JOB_NUMBER == *.1) ) ]] ; then
+        curl -LO https://raw.github.com/mernst/plume-lib/master/bin/trigger-travis.sh
+        sh trigger-travis.sh AblionGE maf-desktop-datamodel $TRAVIS_ACCESS_TOKEN
+      fi
+notifications:
+  email: false
+branches:
+  only:
+  - master
+scala:
+- 2.11.8
+cache:
+  directories:
+  - .autoconf
+  - $HOME/.m2
+  - $HOME/.sbt
+  - $HOME/.ivy
