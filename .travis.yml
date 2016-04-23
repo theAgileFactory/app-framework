@@ -1,0 +1,33 @@
+language: java
+jdk:
+- oraclejdk8
+env:
+  global:
+  - ACTIVATOR_VERSION=1.3.7
+  - ACTIVATOR_ZIP_FILE=typesafe-activator-${ACTIVATOR_VERSION}-minimal.zip
+  - ACTIVATOR_ZIP_URL=http://downloads.typesafe.com/typesafe-activator/${ACTIVATOR_VERSION}/${ACTIVATOR_ZIP_FILE}
+  - PLAY2_HOME=${TRAVIS_BUILD_DIR}/activator-${ACTIVATOR_VERSION}-minimal
+  - SBT_EXECUTABLE_NAME=activator
+  - GH_REF=github.com/theAgileFactory/app-framework
+  - secure: z6R9MBtV6Qrxk3FXQhYDzdbXTUsFcSNMwgtbo1O5Ev5VjsUeDijDrjMo8Z6Sl2pE1cqOomi69OxkH/axv6Goi2jPw5vNOwguh63Yr6F3FoletbdUf7gW58sYN17K5e6Lon12YLgCGjM6YqrtQR+qNvn+O319Wa61Kg/lyX6f+wOX4dmy9X4woMcjH6IX1c6SRDt6ukff/sxmPJpzP/1o+KS2sKVrYVKV7roh4Mhpkm3dO8PXKNj6pKXX2N4rd8lkSB2UGuh4zH8Zhkt8hdGLE3lvw0d/YL5Me67EGQvrEBWTiXI6p1gFvIXsM9Dq0vX9AasUo0Yy0FeTGd8YRgRXmmwmxA0xv86C04nStyOoXdiGWInejrBbCFoteR2En0zHvov82cYs/SoMnqXAOO0NoUspW35A3CaKJ/5RcA3dg2I8t2jIa5nefHf5tJizkaQaJDUFkzbkz8jU/7nb2DcjQUdfnYlEjzZLPpohoIzV4TsqCjklLbc8HdD5GuHHV6zXX1oqLJ0d6lRfBuauPdqmk7tDAW+jiUuuiOD9gUmQklVUZuuYhchyVvSBOx2mCYlbheGU/j9+eQ5os/avuZcIr7sH5Hq327FMyw1PH2xtTEMk9gozb4ZTMt0ocV6b4eaJ5Qaqh4q3xTGkgvrGENWAcoMcBckoMQmzUUglvCi3wGU=
+before_install:
+- sudo apt-get update
+- sudo apt-get install --only-upgrade -y oracle-java8-installer
+install:
+- wget ${ACTIVATOR_ZIP_URL}
+- unzip -q ${ACTIVATOR_ZIP_FILE}
+script:
+- mvn clean install
+notifications:
+  email: true
+branches:
+  only:
+  - master
+scala:
+- 2.11.8
+cache:
+  directories:
+  - .autoconf
+  - $HOME/.m2
+  - $HOME/.sbt
+  - $HOME/.ivy
