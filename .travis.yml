@@ -17,7 +17,7 @@ install:
 - wget ${ACTIVATOR_ZIP_URL}
 - unzip -q ${ACTIVATOR_ZIP_FILE}
 script:
-- mvn clean install
+- mvn -f pom2.xml clean install
 notifications:
   email: true
 branches:
