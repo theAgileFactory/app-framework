@@ -25,7 +25,7 @@ install:
 - wget ${ACTIVATOR_ZIP_URL}
 - unzip -q ${ACTIVATOR_ZIP_FILE}
 script:
-- mvn -f pom2.xml -Dgpg.defaultKeyring=false -Dgpg-keyname=F79C926B -Dgpg.passphrase=${GPG_PASSPHRASE} -Dgpg.publicKeyring=pubring.gpg -Dgpg.secretKeyring=secring.gpg clean install
+- mvn -f pom2.xml clean install -Dgpg.defaultKeyring=false -Dgpg-keyname=F79C926B -Dgpg.passphrase=${GPG_PASSPHRASE} -Dgpg.publicKeyring=pubring.gpg -Dgpg.secretKeyring=secring.gpg
 after_script:
 - rm secring.gpg
 - rm pubring.gpg
