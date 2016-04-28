@@ -1,4 +1,4 @@
-![TravisCI status](https://travis-ci.org/theAgileFactory/app-framework.svg?branch=master)
+[![Build Status](https://travis-ci.org/theAgileFactory/app-framework.svg?branch=master)](https://travis-ci.org/theAgileFactory/app-framework)
 
 # Framework App
 The Framework App component is a set of utilities for the BizDock software.
