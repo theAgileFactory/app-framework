@@ -20,7 +20,6 @@ before_install:
 - openssl aes-256-cbc -pass pass:$ENCRYPTION_PASSWORD -in secring.gpg.enc -out ~/secring.gpg -d
 - openssl aes-256-cbc -pass pass:$ENCRYPTION_PASSWORD -in pubring.gpg.enc -out ~/pubring.gpg -d
 - echo "<settings><servers><server><id>ossrh</id><username>\${OSSRH_JIRA_USERNAME}</username><password>\${OSSRH_JIRA_PASSWORD}</password></server></servers></settings>" > ~/.m2/settings.xml
-
 install:
 - wget ${ACTIVATOR_ZIP_URL}
 - unzip -q ${ACTIVATOR_ZIP_FILE}
