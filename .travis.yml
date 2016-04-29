@@ -29,7 +29,7 @@ install:
 script:
 - pwd
 - ls *.gpg
-- mvn -f pom2.xml clean install -Dgpg.defaultKeyring=false -Dgpg-keyname=F79C926B -Dgpg.passphrase=${GPG_PASSPHRASE} -Dgpg.publicKeyring=pubring.gpg -Dgpg.secretKeyring=secring.gpg
+- mvn -f pom2.xml clean install -Darguments="-Dgpg.defaultKeyring=false -Dgpg-keyname=F79C926B -Dgpg.passphrase=${GPG_PASSPHRASE} -Dgpg.publicKeyring=pubring.gpg -Dgpg.secretKeyring=secring.gpg"
 after_script:
 - rm secring.gpg
 - rm pubring.gpg
