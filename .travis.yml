@@ -17,17 +17,18 @@ env:
 before_install:
 - sudo apt-get update
 - sudo apt-get install --only-upgrade -y oracle-java8-installer
-- openssl aes-256-cbc -pass pass:$ENCRYPTION_PASSWORD -in secring.gpg.enc -out ~/secring.gpg -d
-- openssl aes-256-cbc -pass pass:$ENCRYPTION_PASSWORD -in pubring.gpg.enc -out ~/pubring.gpg -d
+- mkdir -p ~/.gnupg
+- openssl aes-256-cbc -pass pass:$ENCRYPTION_PASSWORD -in secring.gpg.enc -out ~/.gnupg/secring.gpg -d
+- openssl aes-256-cbc -pass pass:$ENCRYPTION_PASSWORD -in pubring.gpg.enc -out ~/.gnupg/pubring.gpg -d
 - echo "<settings><servers><server><id>ossrh</id><username>\${OSSRH_JIRA_USERNAME}</username><password>\${OSSRH_JIRA_PASSWORD}</password></server></servers></settings>" > ~/.m2/settings.xml
 install:
 - wget ${ACTIVATOR_ZIP_URL}
 - unzip -q ${ACTIVATOR_ZIP_FILE}
 script:
-- mvn -f pom2.xml clean install -Darguments="-Dgpg.defaultKeyring=false -Dgpg-keyname=F79C926B -Dgpg.passphrase=${GPG_PASSPHRASE} -Dgpg.publicKeyring=~/pubring.gpg -Dgpg.secretKeyring=~/secring.gpg" --settings ~/.m2/settings.xml
+- mvn -f pom2.xml clean install gpg:sign -Dgpg.passphrase=${GPG_PASSPHRASE} --settings ~/.m2/settings.xml
 after_script:
-- rm ~/secring.gpg
-- rm ~/pubring.gpg
+- rm ~/.gnupg/secring.gpg
+- rm ~/.gnupg/pubring.gpg
 - rm ~/.m2/settings.xml
 notifications:
   email: true
