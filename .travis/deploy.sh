@@ -6,4 +6,4 @@ then
 else
     echo "not on a tag -> keep snapshot version in pom.xml"
 fi
-mvn clean deploy --settings ~/.m2/settings.xml -DskipTests=true -B -U
+mvn -f pom2.xml clean deploy --settings ~/.m2/settings.xml -DskipTests=true -B -U
