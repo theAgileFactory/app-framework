@@ -1,9 +1,8 @@
 #!/bin/bash
 if [ ! -z "$TRAVIS_TAG" ]
 then
-    echo "on a tag -> set pom.xml <version> to $TRAVIS_TAG"
-    mvn -f pom2.xml --settings ~/.m2/settings.xml versions:set -DnewVersion=$TRAVIS_TAG 1>/dev/null 2>/dev/null
+    echo "TAG : releasing $TRAVIS_TAG to Maven Central"
 else
-    echo "not on a tag -> keep snapshot version in pom.xml"
+    echo "SNAPSHOT : releasing to Sonatype snapshot repository"
 fi
-mvn -f pom2.xml clean deploy --settings ~/.m2/settings.xml -DskipTests=true -B -U
+mvn -f pom2.xml deploy --settings ~/.m2/settings.xml -DskipTests=true -B -U
