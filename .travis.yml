@@ -28,7 +28,7 @@ install:
 - wget ${ACTIVATOR_ZIP_URL}
 - unzip -q ${ACTIVATOR_ZIP_FILE}
 script:
-- mvn -f pom2.xml clean install gpg:sign -Dgpg.passphrase="${GPG_PASSPHRASE}" --settings
+- mvn -f pom2.xml clean install -Dgpg.passphrase="${GPG_PASSPHRASE}" --settings
   ~/.m2/settings.xml
 after_success:
 - .travis/deploy.sh

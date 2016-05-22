@@ -5,4 +5,4 @@ then
 else
     echo "SNAPSHOT : releasing to Sonatype snapshot repository"
 fi
-mvn -f pom2.xml deploy --settings ~/.m2/settings.xml -DskipTests=true -B -U
+mvn -f pom2.xml deploy  -Dgpg.passphrase="${GPG_PASSPHRASE}" --settings ~/.m2/settings.xml -DskipTests=true -B -U
