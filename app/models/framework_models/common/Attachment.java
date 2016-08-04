@@ -26,6 +26,9 @@ import javax.persistence.Id;
 import javax.persistence.OneToOne;
 import javax.persistence.Version;
 
+import framework.utils.DefaultSelectableValueHolder;
+import framework.utils.DefaultSelectableValueHolderCollection;
+import framework.utils.ISelectableValueHolderCollection;
 import models.framework_models.parent.IModel;
 import models.framework_models.parent.IModelConstants;
 
@@ -221,5 +224,26 @@ public class Attachment extends Model implements IModel {
      */
     public static List<Attachment> getAttachmentsFromStructuredDocumentId(Long structuredDocumentId) {
         return Attachment.find.where().eq("deleted", false).eq("structuredDocument.id", structuredDocumentId).findList();
+    }
+
+    /**
+     * Returns the list of distinct object types linked to an attachment
+     */
+    public static ISelectableValueHolderCollection<String> getAttachmentsObjectTypes() {
+        DefaultSelectableValueHolderCollection<String> collection = new DefaultSelectableValueHolderCollection<>();
+
+        List<Attachment> attachments = new Finder<>(Attachment.class).select("objectType").setDistinct(true).findList();
+        for (Attachment attachment : attachments) {
+            collection.add(new DefaultSelectableValueHolder<>(attachment.objectType, attachment.objectType));
+        }
+
+        return collection;
+    }
+
+    /**
+     * Get all attachments as expression.
+     */
+    public static ExpressionList<Attachment> getAttachmentsAsExpression() {
+        return Attachment.find.where().eq("deleted", false);
     }
 }

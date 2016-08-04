@@ -22,9 +22,11 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.inject.Singleton;
 
+import com.avaje.ebean.ExpressionList;
 import org.apache.commons.io.IOUtils;
 
 import framework.commons.IFrameworkConstants;
@@ -240,6 +242,23 @@ public class FileAttachmentHelper {
     }
 
     /**
+     * Get all the attachments as ExpressionList and authorize them for display.
+     *
+     * @param sessionManagerPlugin the user session management plugin
+     */
+    public static ExpressionList<Attachment> getAllAttachmentsForDisplay(IUserSessionManagerPlugin sessionManagerPlugin) {
+        ExpressionList<Attachment> attachments = Attachment.getAttachmentsAsExpression();
+
+        // Authorize the attachments for read and update
+        Set<Long> allowedIds = attachments.findList().stream().map(attachment -> attachment.id).collect(Collectors.toSet());
+        String uid = sessionManagerPlugin.getUserSessionId(Controller.ctx());
+
+        allocateReadAuthorization(allowedIds, uid);
+
+        return attachments;
+    }
+
+    /**
      * Get attachments for display.<br/>
      * Return a list of attachments which is to be displayed to the end user.
      * <br/>
@@ -394,7 +413,7 @@ public class FileAttachmentHelper {
      * allowed to erase it.<br/>
      * It is to be called by an AJAX GET with a single attribute : the id of the
      * attachment.
-     * 
+     *
      * @param attachmentId
      *            the id of an attachment
      * @param attachmentManagerPlugin
