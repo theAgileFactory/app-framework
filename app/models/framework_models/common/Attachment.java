@@ -26,14 +26,15 @@ import javax.persistence.Id;
 import javax.persistence.OneToOne;
 import javax.persistence.Version;
 
+import com.avaje.ebean.ExpressionList;
+import com.avaje.ebean.Model;
+
+import framework.commons.DataType;
 import framework.utils.DefaultSelectableValueHolder;
 import framework.utils.DefaultSelectableValueHolderCollection;
 import framework.utils.ISelectableValueHolderCollection;
 import models.framework_models.parent.IModel;
 import models.framework_models.parent.IModelConstants;
-
-import com.avaje.ebean.ExpressionList;
-import com.avaje.ebean.Model;
 
 /**
  * An attachment is a file or a {@link StructuredDocument} attached to another
@@ -52,8 +53,6 @@ import com.avaje.ebean.Model;
  */
 @Entity
 public class Attachment extends Model implements IModel {
-    private static final long serialVersionUID = -7414585552634927718L;
-
     /**
      * Default finder for the entity class
      */
@@ -227,14 +226,22 @@ public class Attachment extends Model implements IModel {
     }
 
     /**
-     * Returns the list of distinct object types linked to an attachment
+     * Returns the list of distinct object types linked to the attachments.
+     * The returned value is a {@link ISelectableValueHolderCollection} which:
+     * <ul>
+     * <li>value = the object type name</li>
+     * <li>name = the corresponding label taken from the {@link DataType}</li>
+     * </ul>
      */
-    public static ISelectableValueHolderCollection<String> getAttachmentsObjectTypes() {
+    public static ISelectableValueHolderCollection<String> getDistinctAttachmentsObjectTypes() {
         DefaultSelectableValueHolderCollection<String> collection = new DefaultSelectableValueHolderCollection<>();
 
         List<Attachment> attachments = new Finder<>(Attachment.class).select("objectType").setDistinct(true).findList();
         for (Attachment attachment : attachments) {
-            collection.add(new DefaultSelectableValueHolder<>(attachment.objectType, attachment.objectType));
+        	DataType dt=DataType.getDataTypeFromClassName(attachment.objectType);
+        	if(dt!=null){
+        		collection.add(new DefaultSelectableValueHolder<>(attachment.objectType, dt.getLabel()));
+        	}
         }
 
         return collection;
