@@ -19,6 +19,15 @@ package framework.commons;
 
 public interface IFrameworkConstants {
     // -------------------------------------------------------------------------------------
+    // Framework objects type constant
+    // -------------------------------------------------------------------------------------
+	/*
+	 The prefix for all the objects (models) which are framework objects.
+	 This is used to identity certain category of objects in some processes (see attachements for instance)
+	 */
+	public static final String FRAMEWORK_OBJECT_TYPE_PREFIX="models.framework_models.";
+	
+    // -------------------------------------------------------------------------------------
     // DataType name constants
     // -------------------------------------------------------------------------------------
 

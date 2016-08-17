@@ -26,10 +26,12 @@ import javax.persistence.Id;
 import javax.persistence.OneToOne;
 import javax.persistence.Version;
 
+import com.avaje.ebean.Expr;
 import com.avaje.ebean.ExpressionList;
 import com.avaje.ebean.Model;
 
 import framework.commons.DataType;
+import framework.commons.IFrameworkConstants;
 import framework.utils.DefaultSelectableValueHolder;
 import framework.utils.DefaultSelectableValueHolderCollection;
 import framework.utils.ISelectableValueHolderCollection;
@@ -252,5 +254,14 @@ public class Attachment extends Model implements IModel {
      */
     public static ExpressionList<Attachment> getAttachmentsAsExpression() {
         return Attachment.find.where().eq("deleted", false);
+    }
+    
+    /**
+     * Get all document attachments attached to business objects.<br/>
+     * WARNING: the current rule is based on testing the "prefix" of the objects (see {@link IFrameworkConstants}).
+     * Framework objects are excluded by default.
+     */
+    public static ExpressionList<Attachment> getAllBusinessObjectsAttachmentsAsExpression() {
+        return Attachment.find.where().eq("deleted", false).not(Expr.istartsWith("objectType", IFrameworkConstants.FRAMEWORK_OBJECT_TYPE_PREFIX));
     }
 }

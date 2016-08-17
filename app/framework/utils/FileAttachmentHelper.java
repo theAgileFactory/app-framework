@@ -22,11 +22,9 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.inject.Singleton;
 
-import com.avaje.ebean.ExpressionList;
 import org.apache.commons.io.IOUtils;
 
 import framework.commons.IFrameworkConstants;
@@ -240,22 +238,33 @@ public class FileAttachmentHelper {
             IOUtils.closeQuietly(fIn);
         }
     }
-
+    
     /**
-     * Get all the attachments as ExpressionList and authorize them for display.
-     *
-     * @param sessionManagerPlugin the user session management plugin
+     * Ensure that the specified attachment can be displayed by the end user.<br/>
+     * WARNING: this process is overwriting any previously set authorizations.
+     * @param attachementId an attachment id
+     * @param sessionManagerPlugin
+     *            the service which is managing user sessions
      */
-    public static ExpressionList<Attachment> getAllAttachmentsForDisplay(IUserSessionManagerPlugin sessionManagerPlugin) {
-        ExpressionList<Attachment> attachments = Attachment.getAttachmentsAsExpression();
-
-        // Authorize the attachments for read and update
-        Set<Long> allowedIds = attachments.findList().stream().map(attachment -> attachment.id).collect(Collectors.toSet());
-        String uid = sessionManagerPlugin.getUserSessionId(Controller.ctx());
-
+    public static void authorizeFileAttachementForDisplay(Long attachementId, IUserSessionManagerPlugin sessionManagerPlugin){
+    	Set<Long> allowedIds=new HashSet<Long>();
+    	allowedIds.add(attachementId);
+    	String uid = sessionManagerPlugin.getUserSessionId(Controller.ctx());
         allocateReadAuthorization(allowedIds, uid);
-
-        return attachments;
+    }
+    
+    /**
+     * Ensure that the specified attachment can be displayed by the end user.<br/>
+     * WARNING: this process is overwriting any previously set authorizations.
+     * @param attachementId an attachment id
+     * @param sessionManagerPlugin
+     *            the service which is managing user sessions
+     */
+    public static void authorizeFileAttachementForUpdate(Long attachementId, IUserSessionManagerPlugin sessionManagerPlugin){
+    	Set<Long> allowedIds=new HashSet<Long>();
+    	allowedIds.add(attachementId);
+    	String uid = sessionManagerPlugin.getUserSessionId(Controller.ctx());
+        allocateUpdateAuthorization(allowedIds, uid);
     }
 
     /**
