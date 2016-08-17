@@ -32,6 +32,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.eclipse.core.resources.IFolder;
+
 import com.avaje.ebean.Expr;
 import com.avaje.ebean.Expression;
 import com.avaje.ebean.ExpressionList;
@@ -1973,6 +1975,57 @@ public class FilterConfig<T> {
         public boolean isKpi() {
             return false;
         }
+    }
+    
+    /**
+     * A filter component which "unactivates" the database filtering and sorting capability while the rest of the
+     * filter remains functional.
+     * @author Pierre-Yves Cloux
+     */
+    public static class NoDbFilterComponentWrapper implements IFilterComponent{
+    	private IFilterComponent wrappedFilterComponent;
+    	
+    	public NoDbFilterComponentWrapper(IFilterComponent wrappedFilterComponent) {
+			this.wrappedFilterComponent=wrappedFilterComponent;
+		}
+
+		@Override
+		public void marshallMetaData(ObjectNode selectableColumnFilterComponentMetaData) {
+			getWrappedFilterComponent().marshallMetaData(selectableColumnFilterComponentMetaData);
+		}
+
+		@Override
+		public void marshallFilterValue(ObjectNode userColumnConfiguration, Object filterValue) {
+			getWrappedFilterComponent().marshallFilterValue(userColumnConfiguration, filterValue);
+		}
+
+		@Override
+		public Expression getEBeanSearchExpression(Object filterValue, String fieldName) {
+			return null;
+		}
+
+		@Override
+		public <T> void addEBeanSortExpression(OrderBy<T> orderby, SortStatusType sortStatusType, String fieldName) {
+		}
+
+		@Override
+		public Object getFilterValueFromJson(JsonNode json) throws FilterConfigException {
+			return getWrappedFilterComponent().getFilterValueFromJson(json);
+		}
+
+		@Override
+		public Object getDefaultFilterValueAsObject() {
+			return getWrappedFilterComponent().getDefaultFilterValueAsObject();
+		}
+
+		@Override
+		public boolean isKpi() {
+			return getWrappedFilterComponent().isKpi();
+		}
+
+		private IFilterComponent getWrappedFilterComponent() {
+			return wrappedFilterComponent;
+		}
     }
 
     /**
