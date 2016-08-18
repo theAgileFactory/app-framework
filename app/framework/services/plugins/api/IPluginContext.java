@@ -22,7 +22,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.lang3.tuple.Pair;
@@ -392,12 +391,31 @@ public interface IPluginContext {
     public Object getState() throws PluginException;
 
     /**
-     * Provide access to an in-memory context allowing different plugins to
-     * share some data
+     * Store some data into a persistent storage which is shared 
+     * between the plugins.<br/>
+     * If the record already exists it will be overwritten.
      * 
-     * @return the shared context
+     * @param key a unique key identifying the record
+     * @param stateObject
+     *            an object which must be {@link Serializable}
      */
-    public Map<String, Object> getSharedContext();
+    public void setSharedRecord(String key, Object stateObject) throws PluginException;
+
+    /**
+     * Retrieve the data associated with the specified key.
+     * If the record is not found, the method returns null.
+     * 
+     * @param key a unique key identifying the record
+     * @return the state object
+     */
+    public Object getSharedRecord(String key) throws PluginException;
+    
+    /**
+     * Delete the object associated with the specified key
+     * 
+     * @param key a unique key identifying the record
+     */
+    public void deleteSharedRecord(String key) throws PluginException;
 
     /**
      * Return the configuration content associated with the specified
