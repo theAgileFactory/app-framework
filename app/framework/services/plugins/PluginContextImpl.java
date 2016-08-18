@@ -26,7 +26,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.configuration.ConfigurationException;
@@ -47,12 +46,14 @@ import framework.services.plugins.api.IPluginContext;
 import framework.services.plugins.api.PluginException;
 import framework.services.storage.ISharedStorageService;
 import framework.utils.Utilities;
+import models.framework_models.parent.IModelConstants;
 import models.framework_models.plugin.DashboardWidget;
 import models.framework_models.plugin.PluginConfiguration;
 import models.framework_models.plugin.PluginConfigurationBlock;
 import models.framework_models.plugin.PluginIdentificationLink;
 import models.framework_models.plugin.PluginLog;
 import models.framework_models.plugin.PluginRegistration;
+import models.framework_models.plugin.PluginSharedRecord;
 import play.Configuration;
 import play.Logger;
 
@@ -552,11 +553,46 @@ public class PluginContextImpl implements IPluginContext {
     }
 
     @Override
-    public Map<String, Object> getSharedContext() {
-        return getPluginManagerService().getSharedContext();
-    }
+	public void setSharedRecord(String key, Object stateObject) throws PluginException {
+    	if(stateObject==null){
+    		throw new PluginException("Cannot store a null object with the key : "+key);
+    	}
+    	PluginSharedRecord psr=PluginSharedRecord.getRecordByName(key);
+    	if(psr==null){
+    		psr=new PluginSharedRecord();
+    		psr.name=key;
+    	}
+    	if((stateObject instanceof String) && ((String) stateObject).length()<IModelConstants.VLARGE_STRING){
+    		psr.smallDataStorage=(String) stateObject;
+    		psr.bigDataStorage=null;
+    	}else{
+    		psr.setBigData(stateObject);
+    		psr.smallDataStorage=null;
+    	}
+    	psr.save();
+	}
 
-    private String getPluginPrefix() {
+	@Override
+	public Object getSharedRecord(String key) throws PluginException {
+		PluginSharedRecord psr=PluginSharedRecord.getRecordByName(key);
+		if(psr!=null){
+			if(psr.smallDataStorage!=null){
+				return psr.smallDataStorage;
+			}
+			return psr.getBigData();
+		}
+		return null;
+	}
+
+	@Override
+	public void deleteSharedRecord(String key) throws PluginException {
+		PluginSharedRecord psr=PluginSharedRecord.getRecordByName(key);
+		if(psr!=null){
+			psr.delete();
+		}
+	}
+
+	private String getPluginPrefix() {
         return pluginPrefix;
     }
 

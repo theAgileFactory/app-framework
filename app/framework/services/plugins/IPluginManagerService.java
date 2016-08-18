@@ -360,13 +360,4 @@ public interface IPluginManagerService extends IPluginStopper {
      * @return an input stream to the image
      */
     public InputStream getPluginBigImageSrc(String pluginDefinitionIdentifier);
-
-    /**
-     * Provide an access to the Plugins shared context.<br/>
-     * This allow a plugin do exchange some information without another plugin
-     * at runtime.
-     * 
-     * @return the shared context
-     */
-    public Map<String, Object> getSharedContext();
 }
