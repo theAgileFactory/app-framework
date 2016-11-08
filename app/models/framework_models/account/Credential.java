@@ -63,7 +63,7 @@ public class Credential extends Model {
     public boolean isActive = true;
 
     @Version
-    public Timestamp lastUpdate; //123
+    public Timestamp lastUpdate;
 
     public int failedLogin;
 
