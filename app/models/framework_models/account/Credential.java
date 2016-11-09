@@ -20,6 +20,7 @@ package models.framework_models.account;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -145,8 +146,9 @@ public class Credential extends Model {
                 credential.save();
             }
         } else {
-            credential.failedLogin = 0;
-            credential.save();
+        	 credential.failedLogin = 0;
+       	  	 credential.lastLoginDate = Timestamp.valueOf(LocalDateTime.now());
+             credential.save();
         }
         return success;
     }
