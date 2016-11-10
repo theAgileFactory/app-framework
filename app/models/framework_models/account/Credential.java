@@ -31,12 +31,15 @@ import javax.persistence.Id;
 import javax.persistence.Version;
 
 import models.framework_models.parent.IModelConstants;
+import play.Logger;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.avaje.ebean.Model;
+
+import framework.services.account.LightAuthenticationAccountReaderPlugin;
 
 /**
  * A class to be used for the light version of BizDock.<br/>
@@ -51,6 +54,8 @@ public class Credential extends Model {
     private static final long serialVersionUID = 1157762908933366941L;
 
     private static final int MAX_LOGIN_ATTEMPT = 3;
+    
+    private static Logger.ALogger log = Logger.of(Credential.class);
 
     /**
      * Default finder for the entity class
@@ -64,8 +69,11 @@ public class Credential extends Model {
 
     @Version
     public Timestamp lastUpdate;
+    
+    public Timestamp lastLoginDate;
 
     public int failedLogin;
+    
 
     @Column(length = IModelConstants.LARGE_STRING)
     public String uid;
@@ -128,6 +136,7 @@ public class Credential extends Model {
      * @return
      */
     public static boolean checkCredentialPassword(String uid, String password) {
+    	
         boolean success = false;
         if (StringUtils.isBlank(password))
             return false;
@@ -146,9 +155,9 @@ public class Credential extends Model {
                 credential.save();
             }
         } else {
-        	 credential.failedLogin = 0;
-       	  	 credential.lastLoginDate = Timestamp.valueOf(LocalDateTime.now());
-             credential.save();
+        	  credential.failedLogin = 0;
+        	  credential.lastLoginDate = Timestamp.valueOf(LocalDateTime.now());
+              credential.save();
         }
         return success;
     }
