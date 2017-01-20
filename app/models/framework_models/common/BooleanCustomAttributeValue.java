@@ -71,7 +71,7 @@ public class BooleanCustomAttributeValue extends Model implements IModel, ICusto
 
     public Long objectId;
 
-    public boolean value;
+    public Boolean value;
 
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     public CustomAttributeDefinition customAttributeDefinition;
