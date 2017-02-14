@@ -20,6 +20,7 @@ package framework.services.account;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 
 import be.objectify.deadbolt.core.models.Permission;
@@ -39,6 +40,7 @@ public abstract class AbstractDefaultCommonUserAccount implements ICommonUserAcc
     protected AccountType accountType;
     protected boolean markedForDeletion;
     protected boolean isActive;
+    protected Date lastLoginDate;
     protected Boolean isDisplayed;
     protected List<Role> roles = Collections.synchronizedList(new ArrayList<Role>());
     protected List<Role> selectableRoles = Collections.synchronizedList(new ArrayList<Role>());
@@ -77,6 +79,11 @@ public abstract class AbstractDefaultCommonUserAccount implements ICommonUserAcc
     @Override
     public boolean isActive() {
         return this.isActive;
+    }
+    
+    @Override
+    public Date getLastLoginDate() {
+    	return this.lastLoginDate;
     }
 
     @Override
@@ -164,6 +171,7 @@ public abstract class AbstractDefaultCommonUserAccount implements ICommonUserAcc
         this.mail = credential.mail;
         this.uid = credential.uid;
         this.isActive = credential.isActive;
+        this.lastLoginDate = credential.lastLoginDate;
     }
 
     @Override
@@ -179,6 +187,7 @@ public abstract class AbstractDefaultCommonUserAccount implements ICommonUserAcc
         this.preferredLanguage = preferredLanguage;
         this.markedForDeletion = markedForDeletion;
         this.isDisplayed = isDisplayed;
+        this.lastLoginDate = userAuthenticationAccount.getLastLoginDate();
     }
 
     @Override
@@ -255,5 +264,9 @@ public abstract class AbstractDefaultCommonUserAccount implements ICommonUserAcc
 
     void setMail(String mail) {
         this.mail = mail;
+    }
+    
+    void setLastLoginDate(Date lastLoginDate) {
+    	this.lastLoginDate = lastLoginDate;
     }
 }
