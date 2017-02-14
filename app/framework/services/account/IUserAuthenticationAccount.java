@@ -17,6 +17,8 @@
  */
 package framework.services.account;
 
+import java.util.Date;
+
 /**
  * The interface to be implemented by the objects which holds user account
  * authentication information.
@@ -34,4 +36,6 @@ public interface IUserAuthenticationAccount {
     public String getMail();
 
     public boolean isActive();
+    
+    public Date getLastLoginDate();
 }

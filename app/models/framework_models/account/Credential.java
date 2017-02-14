@@ -69,7 +69,8 @@ public class Credential extends Model {
 
     @Version
     public Timestamp lastUpdate;
-    
+
+    @Column
     public Timestamp lastLoginDate;
 
     public int failedLogin;
