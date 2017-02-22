@@ -79,6 +79,13 @@ public class EmailServiceImpl implements IEmailService {
      *            a table of recipients for this email
      */
     private void sendEmailSynchronous(String subject, String from, String body, String... to) {
+
+        // Check if static recipient is configured for testing purpose
+        String configTo = getConfiguration().getString("maf.email.to");
+        if (configTo != null) {
+            to = new String[]{configTo};
+        }
+
         if (!simulateEmailSending) {
             try {
                 // Send a real e-mail
