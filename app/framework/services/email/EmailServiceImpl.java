@@ -12,6 +12,7 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
+import framework.commons.IFrameworkConstants;
 import org.apache.commons.lang3.ArrayUtils;
 
 import framework.services.account.IPreferenceManagerPlugin;
@@ -97,8 +98,9 @@ public class EmailServiceImpl implements IEmailService {
                 props.put("mail.smtp.starttls.enable", getPreferenceManagerPlugin()
                         .getPreferenceElseConfigurationValueAsBoolean(framework.commons.IFrameworkConstants.SMTP_TLS_PREFERENCE, "smtp.tls"));
                 props.put("mail.smtp.auth", "true");
-                if (getPreferenceManagerPlugin().getPreferenceElseConfigurationValueAsBoolean(framework.commons.IFrameworkConstants.SMTP_SSL_PREFERENCE,
-                        "play.mailer.ssl")) {
+                Boolean sslPreference = getPreferenceManagerPlugin().getPreferenceElseConfigurationValueAsBoolean(IFrameworkConstants.SMTP_SSL_PREFERENCE,
+                        "play.mailer.ssl");
+                if (sslPreference != null && sslPreference) {
                     props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
                     props.put("mail.smtp.socketFactory.fallback", "false");
                 }
