@@ -2,7 +2,7 @@
 
 body='{
 "request": {
-  "branch":"$TRAVIS_BRANCH"
+  "branch":$TRAVIS_BRANCH
 }}'
 
 echo "Building the dependent project : maf-desktop-datamodel"
