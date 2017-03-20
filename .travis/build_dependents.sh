@@ -1,9 +1,9 @@
 #!/bin/bash
 
-body='{
-"request": {
-  "branch":$TRAVIS_BRANCH
-}}'
+body="{
+\"request\": {
+  \"branch\":\"$TRAVIS_BRANCH\"
+}}"
 
 echo "Building the dependent project : maf-desktop-datamodel"
 curl -s -X POST \
