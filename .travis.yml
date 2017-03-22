@@ -41,7 +41,7 @@ notifications:
   email: true
 branches:
   only:
-  - R-14.1.1
+  - master
 scala:
 - 2.11.8
 cache:
