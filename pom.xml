@@ -29,6 +29,11 @@
 			<name>Pierre-Yves Cloux</name>
 			<email>dev@pycloux.com</email>
 		</developer>
+		<developer>
+			<id>mes</id>
+			<name>Salah Mezaache</name>
+			<email>salah.mezaache@sword-group.com</email>
+		</developer>
 	</developers>
 
 	<repositories>
@@ -47,7 +52,7 @@
 	<properties>
 		<!-- Global properties -->
 		<project.build.sourceEncoding>latin1</project.build.sourceEncoding>
-		<play.version>2.4.2</play.version>
+		<play.version>2.5.13</play.version>
 		<play.java.ebean.version>1.0.0</play.java.ebean.version>
 		<java.source>1.8</java.source>
 		<java.target>1.8</java.target>
