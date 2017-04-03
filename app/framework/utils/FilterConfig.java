@@ -1470,7 +1470,12 @@ public class FilterConfig<T> {
                     value = value.replaceAll("\\" + JOKER, "%");
                     return Expr.like(fieldName, value);
                 } else {
-                    return Expr.eq(fieldName, value);
+                    Expression expr = Expr.eq(fieldName, value);
+                    if (value.isEmpty()) {
+                        return Expr.or(expr, Expr.isNull(fieldName));
+                    } else {
+                        return expr;
+                    }
                 }
             }
             return null;
@@ -2231,7 +2236,7 @@ public class FilterConfig<T> {
                 if (value.contains(JOKER)) {
                     value = value.replaceAll("\\" + JOKER, "%");
                     String sql = String.format(SEARCH_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id,
-                            " like '" + value + "'");
+                            " like '" + value + "' or " + value + " = ''");
                     return Expr.raw(sql);
                 } else {
                     String sql = String.format(SEARCH_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id,
@@ -2342,7 +2347,7 @@ public class FilterConfig<T> {
     public static class BooleanCustomAttributeFilterComponent extends CheckboxFilterComponent {
         private static final String SEARCH_EXPRESSION_TEMPLATE = "(select count(*) from boolean_custom_attribute_value as cust%2$s "
                 + "where cust%2$s.deleted=0 and cust%2$s.object_type='%1$s' and cust%2$s.object_id=t0.id and cust%2$s.custom_attribute_definition_id=%2$s "
-                + "and cust%2$s.value=%3$s)<>0";
+                + "and cust%2$s.value=%3$s)<>0 or %3$s = 0";
 
         private static final String SORT_EXPRESSION_TEMPLATE = "(select #value# from boolean_custom_attribute_value as sortcust%2$s "
                 + "where sortcust%2$s.deleted=0 and sortcust%2$s.object_type='%1$s' and sortcust%2$s.object_id=t0.id "
@@ -2479,7 +2484,7 @@ public class FilterConfig<T> {
     public static class IntegerCustomAttributeFilterComponent extends NumericFieldFilterComponent {
         private static final String SEARCH_EXPRESSION_TEMPLATE = "(select count(*) from integer_custom_attribute_value as cust%2$s "
                 + "where cust%2$s.deleted=0 and cust%2$s.object_type='%1$s' and cust%2$s.object_id=t0.id and cust%2$s.custom_attribute_definition_id=%2$s "
-                + "and cust%2$s.value %4$s %3$s)<>0";
+                + "and cust%2$s.value %4$s %3$s)<>0 or %3$s = 0";
 
         private static final String SORT_EXPRESSION_TEMPLATE = "(select #value# from integer_custom_attribute_value as sortcust%2$s "
                 + "where sortcust%2$s.deleted=0 and sortcust%2$s.object_type='%1$s' and sortcust%2$s.object_id=t0.id "
@@ -2552,7 +2557,7 @@ public class FilterConfig<T> {
     public static class DecimalCustomAttributeFilterComponent extends NumericFieldFilterComponent {
         private static final String SEARCH_EXPRESSION_TEMPLATE = "(select count(*) from decimal_custom_attribute_value as cust%2$s "
                 + "where cust%2$s.deleted=0 and cust%2$s.object_type='%1$s' and cust%2$s.object_id=t0.id and cust%2$s.custom_attribute_definition_id=%2$s "
-                + "and cust%2$s.value %4$s %3$s)<>0";
+                + "and cust%2$s.value %4$s %3$s)<>0 or %3$s = 0";
 
         private static final String SORT_EXPRESSION_TEMPLATE = "(select #value# from decimal_custom_attribute_value as sortcust%2$s "
                 + "where sortcust%2$s.deleted=0 and sortcust%2$s.object_type='%1$s' and sortcust%2$s.object_id=t0.id "
