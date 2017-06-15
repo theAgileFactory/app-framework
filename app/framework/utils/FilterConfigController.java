@@ -130,7 +130,7 @@ public class FilterConfigController extends Controller {
 
             FilterConfiguration selectedFilter = FilterConfiguration.getById(filterConfigurationId);
 
-            if (!selectedFilter.principal.uid.equals(uid) || selectedFilter.isDefault) {
+            if (!selectedFilter.principal.uid.equalsIgnoreCase(uid) || selectedFilter.isDefault) {
                 return forbidden();
             }
 
@@ -168,7 +168,7 @@ public class FilterConfigController extends Controller {
 
             FilterConfiguration selectedFilter = FilterConfiguration.getById(filterConfigurationId);
 
-            if (!selectedFilter.principal.uid.equals(uid)) {
+            if (!selectedFilter.principal.uid.equalsIgnoreCase(uid)) {
                 return forbidden();
             }
 
@@ -216,7 +216,7 @@ public class FilterConfigController extends Controller {
 
             FilterConfiguration selectedFilter = FilterConfiguration.getById(filterConfigurationId);
 
-            if (!selectedFilter.principal.uid.equals(uid) || selectedFilter.isDefault) {
+            if (!selectedFilter.principal.uid.equalsIgnoreCase(uid) || selectedFilter.isDefault) {
                 return forbidden();
             }
 
@@ -249,7 +249,7 @@ public class FilterConfigController extends Controller {
 
             FilterConfiguration selectedFilter = FilterConfiguration.getById(filterConfigurationId);
 
-            if (!selectedFilter.principal.uid.equals(uid) || selectedFilter.isDefault) {
+            if (!selectedFilter.principal.uid.equalsIgnoreCase(uid) || selectedFilter.isDefault) {
                 return forbidden();
             }
 
@@ -281,7 +281,7 @@ public class FilterConfigController extends Controller {
 
             FilterConfiguration selectedFilter = FilterConfiguration.getById(filterConfigurationId);
 
-            if (!selectedFilter.principal.uid.equals(uid) || selectedFilter.isDefault) {
+            if (!selectedFilter.principal.uid.equalsIgnoreCase(uid) || selectedFilter.isDefault) {
                 return forbidden();
             }
 
