@@ -20,17 +20,13 @@ package models.framework_models.kpi;
 import java.sql.Timestamp;
 import java.util.List;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
-import javax.persistence.OrderBy;
-import javax.persistence.Version;
+import javax.persistence.*;
 
 import com.avaje.ebean.Model;
 import com.avaje.ebean.annotation.Where;
 
+import models.framework_models.account.SystemLevelRoleType;
+import models.framework_models.account.SystemPermission;
 import models.framework_models.parent.IModelConstants;
 
 /**
@@ -253,6 +249,10 @@ public class KpiDefinition extends Model {
     @Where(clause = "${ta}.deleted=0")
     @OrderBy("order")
     public List<KpiColorRule> kpiColorRules;
+
+    @ManyToMany(cascade = CascadeType.ALL)
+    @JoinTable(name = "kpi_definition_has_system_permission")
+    public List<SystemPermission> systemPermissions;
 
     /**
      * Default constructor.

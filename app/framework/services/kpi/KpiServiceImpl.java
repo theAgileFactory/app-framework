@@ -29,6 +29,8 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import framework.security.ISecurityService;
+import framework.services.account.AccountManagementException;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
@@ -70,6 +72,7 @@ public class KpiServiceImpl implements IKpiService {
     private II18nMessagesPlugin messagesPlugin;
     private IScriptService scriptService;
     private Provider<IPreferenceManagerPlugin> preferenceManagerPlugin;
+    private ISecurityService securityService;
 
     /**
      * Create a new KpiServiceImpl.
@@ -98,7 +101,7 @@ public class KpiServiceImpl implements IKpiService {
     public KpiServiceImpl(ApplicationLifecycle lifecycle, Environment environment, Configuration configuration,
             IImplementationDefinedObjectService implementationDefinedObjectService, II18nMessagesPlugin messagesPlugin,
             IDatabaseDependencyService databaseDependencyService, ISysAdminUtils sysAdminUtils, IScriptService scriptService,
-            Provider<IPreferenceManagerPlugin> preferenceManagerPlugin) {
+            Provider<IPreferenceManagerPlugin> preferenceManagerPlugin, ISecurityService securityService) {
         log.info("SERVICE>>> KpiServiceImpl starting...");
         this.messagesPlugin = messagesPlugin;
         this.environment = environment;
@@ -106,6 +109,7 @@ public class KpiServiceImpl implements IKpiService {
         this.scriptService = scriptService;
         this.preferenceManagerPlugin = preferenceManagerPlugin;
         this.defaultCurrencyCode = implementationDefinedObjectService.getDefaultCurrencyCode();
+        this.securityService = securityService;
         init();
         lifecycle.addStopHook(() -> {
             log.info("SERVICE>>> KpiServiceImpl stopping...");
@@ -332,14 +336,20 @@ public class KpiServiceImpl implements IKpiService {
     public List<Kpi> getActiveAndToDisplayKpisOfObjectType(Class<?> objectType) {
         List<KpiDefinition> kpiDefinitions = KpiDefinition.getActiveAndToDisplayOfObjectType(objectType);
 
-        List<Kpi> kpis = new ArrayList<Kpi>();
+        List<Kpi> kpis = new ArrayList<>();
         for (KpiDefinition kpiDefinition : kpiDefinitions) {
-            if (getKpis().containsKey(kpiDefinition.uid)) {
+            if (getKpis().containsKey(kpiDefinition.uid) && kpiDefinition.systemPermissions.stream().filter(permission -> {
+                try {
+                    return securityService.restrict(permission.name);
+                } catch (AccountManagementException e) {
+                    log.error("Impossible to restrict KPI [" + kpiDefinition.uid + "]", e);
+                    return false;
+                }
+            }).count() > 0) {
                 kpis.add(getKpi(kpiDefinition.uid));
             }
 
         }
-
         return kpis;
     }
 
