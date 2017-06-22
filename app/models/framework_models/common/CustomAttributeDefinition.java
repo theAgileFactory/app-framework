@@ -930,7 +930,7 @@ public class CustomAttributeDefinition extends Model implements IModel {
             customAttributeDefinitions.stream().forEach(customAttributeDefinition -> {
                 CustomAttributeGroup group = customAttributeDefinition.customAttributeGroup;
                 if (group == null) {
-                    group = CustomAttributeGroup.createDefaultGroup(objectType.getName());
+                    group = CustomAttributeGroup.getOrCreateDefaultGroup(objectType.getName());
                 }
                 List<ICustomAttributeValue> values = customAttributeValuesMap.get(group.id);
                 if (values == null) {

@@ -149,7 +149,11 @@ public class CustomAttributeGroup extends Model implements IModel, ISelectableVa
      *
      * @param objectType the custom attribute object type
      */
-    public static CustomAttributeGroup createDefaultGroup(String objectType) {
+    public static CustomAttributeGroup getOrCreateDefaultGroup(String objectType) {
+        List<CustomAttributeGroup> groups = getOrderedCustomAttributeGroupsByObjectType(objectType);
+        if (groups != null && groups.size() > 0) {
+            return groups.get(0);
+        }
         CustomAttributeGroup group = new CustomAttributeGroup(objectType);
         try {
             List<CustomAttributeDefinition> customAttributeDefinitions = CustomAttributeDefinition.getOrderedCustomAttributeDefinitions(Class.forName(objectType));
