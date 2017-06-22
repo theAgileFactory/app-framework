@@ -1,48 +1,63 @@
 @* LICENSE
- *
- * Copyright (c) 2015, The Agile Factory SA and/or its affiliates. All rights
- * reserved.
- *
- * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; version 2 of the License.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
- * details.
- *
- * You should have received a copy of the GNU General Public License along with
- * this program. If not, see <http://www.gnu.org/licenses/>.
- *@
+*
+* Copyright (c) 2015, The Agile Factory SA and/or its affiliates. All rights
+* reserved.
+*
+* This program is free software; you can redistribute it and/or modify it under
+* the terms of the GNU General Public License as published by the Free Software
+* Foundation; version 2 of the License.
+*
+* This program is distributed in the hope that it will be useful, but WITHOUT
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+* FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+* details.
+*
+* You should have received a copy of the GNU General Public License along with
+* this program. If not, see <http://www.gnu.org/licenses/>.
+*@
+@import models.framework_models.common.CustomAttributeGroup
 @(objectType: Class[_], objectId: Long, formDataObject: Object = null)
 
 @import framework_views.parts
 @import framework_views.parts.commons._
 
-@customAttributeValues=@{
-models.framework_models.common.CustomAttributeDefinition.getOrderedCustomAttributeValues(objectType, objectId);
+@customAttributeValuesMap=@{
+    models.framework_models.common.CustomAttributeDefinition.getOrderedCustomAttributeValuesMappedByGroup(objectType, objectId)
 }
 
-@if(customAttributeValues!=null && customAttributeValues.size()!=0){
-    <table class="table table-condensed table-hover">
-        <colgroup>
-            <col class="col-md-3">
-            <col class="col-md-9">
-        </colgroup>
-        <tbody>
-            @for(customAttributeValue <- customAttributeValues){
-                @if(customAttributeValue.getDefinition.isDisplayedForConditionalRule(formDataObject, objectId)) {
-                    <tr>
-                        <th>
-                            @parts.Msg(customAttributeValue.getDefinition().name)
-                        </th>
-                        <td>
-                            @customAttributeValue.renderDisplay(_messagesPluginService)
-                        </td>
-                    </tr>
-                }
-            }
-        </tbody>
-    </table>
+@if(customAttributeValuesMap!=null){
+
+    @for(customAttributeGroupId <- customAttributeValuesMap.keySet()){
+        <div class="panel panel-default">
+
+            <div class="panel-heading">
+            @parts.Msg(CustomAttributeGroup.getById(customAttributeGroupId).label)
+            </div>
+
+            <div class="panel-body">
+
+                <table class="table table-condensed table-hover">
+                    <colgroup>
+                        <col class="col-md-3">
+                        <col class="col-md-9">
+                    </colgroup>
+                    <tbody>
+                    @for(customAttributeValue <- customAttributeValuesMap.get(customAttributeGroupId)){
+                        @if(customAttributeValue.getDefinition.isDisplayedForConditionalRule(formDataObject, objectId)) {
+                            <tr>
+                                <th>
+                                @parts.Msg(customAttributeValue.getDefinition.name)
+                                </th>
+                                <td>
+                                @customAttributeValue.renderDisplay(_messagesPluginService)
+                                </td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+    }
 }

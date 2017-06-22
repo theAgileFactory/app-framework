@@ -15,150 +15,174 @@
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  *@
+@import models.framework_models.common.CustomAttributeGroup
 @(objectForm: Any, objectType: Class[_], objectId: Long, activeConditionalRule: Boolean = true, onlyDisplayedOrRequired: Boolean = false, displayAsRow: Boolean = false)
 
 @import commons._
+@import framework_views.parts
 
-@customAttributeValues=@{
-models.framework_models.common.CustomAttributeDefinition.getOrderedCustomAttributeValues(objectType, objectId);
+@customAttributeValuesMap=@{
+    models.framework_models.common.CustomAttributeDefinition.getOrderedCustomAttributeValuesMappedByGroup(objectType, objectId)
 }
 
-@if(customAttributeValues!=null && customAttributeValues.size()!=0) {
+@if(customAttributeValuesMap!=null) {
 
-    @for(customAttributeValue <- customAttributeValues) {
-    
-        @if(!onlyDisplayedOrRequired || customAttributeValue.getDefinition.isDisplayed || customAttributeValue.getDefinition.isRequired) {
+    @for(customAttributeGroupId <- customAttributeValuesMap.keySet()){
+        <div class="panel panel-default">
 
-            @defining(_customAttributeManagerService.getFieldNameFromDefinitionUuid(customAttributeValue.getDefinition().uuid)) { fieldId =>
-                
-                @if(displayAsRow) { <td> }
-                    @customAttributeValue.renderFormField(_messagesPluginService, _usession, _implementationDefinedObjectService, if(objectForm.isInstanceOf[Form[_]]) objectForm.asInstanceOf[Form[_]](fieldId) else objectForm.asInstanceOf[Field](fieldId), !displayAsRow)
-                @if(displayAsRow) { </td> }
-                
-                @if(activeConditionalRule && customAttributeValue.getDefinition.hasValidConditionalRule) {
-                    <script>
-                        
-                        function _@(fieldId)_hide() {
-                            
-                            var $field = $("#@(fieldId)");
-                            
-                            @models.framework_models.common.ICustomAttributeValue.AttributeType.valueOf(customAttributeValue.getDefinition.attributeType) match {
-                                case models.framework_models.common.ICustomAttributeValue.AttributeType.BOOLEAN => {
-                                    $field.prop('checked', false);
-                                    $field.closest(".checkbox").hide();
-                                }
-                                case _ => {
-                                    $field.val('');
-                                    $field.closest(".form-group").hide();
-                                }
-                            }
-                
-                        }
-                        
-                        function _@(fieldId)_show() {
-                            var $field = $("#@(fieldId)");
-                            
-                            @models.framework_models.common.ICustomAttributeValue.AttributeType.valueOf(customAttributeValue.getDefinition.attributeType) match {
-                                case models.framework_models.common.ICustomAttributeValue.AttributeType.BOOLEAN => {
-                                    $field.closest(".checkbox").show();
-                                }
-                                case _ => {
-                                    $field.closest(".form-group").show();
-                                }
-                            }
-                        }
-                        
-                        $( document ).ready(function() {
-                        
-                            var $dependingField = $("#@(customAttributeValue.getDefinition.getConditionalRuleFieldIdForManagingForm)");
-                
-                            // check the depending field exist
-                            if($dependingField.length > 0) {
-                                
-                                var conditionalRuleValue = @Html(customAttributeValue.getDefinition.getConditionalRuleValueAsJson);
-                                var tagName = $dependingField.prop("tagName").toLowerCase();
-                                
-                                if (tagName == "input") {
-                                    var inputType = $dependingField.prop("type").toLowerCase();
-                                    var isPrimitive = $dependingField.data("primitive");
-                                    
-                                    //input text primitive (string, numeric)
-                                    if ((inputType == "text" || inputType == "hidden") && isPrimitive != null && isPrimitive) {
-                
-                                        $dependingField.change(function() {
-                                            
-                                            var dependingValue = $(this).val().toLowerCase().trim();
-                                            
-                                            if ($.inArray(dependingValue, conditionalRuleValue) == -1) {
-                                                _@(fieldId)_hide();
-                                            } else {
-                                                _@(fieldId)_show();
+            <div class="panel-heading">
+            @parts.Msg(CustomAttributeGroup.getById(customAttributeGroupId).label)
+            </div>
+
+            <div class="panel-body">
+
+                <table class="table table-condensed table-hover">
+                    <colgroup>
+                        <col class="col-md-3">
+                        <col class="col-md-9">
+                    </colgroup>
+                    <tbody>
+                    @for(customAttributeValue <- customAttributeValuesMap.get(customAttributeGroupId)) {
+
+                        @if(!onlyDisplayedOrRequired || customAttributeValue.getDefinition.isDisplayed || customAttributeValue.getDefinition.isRequired) {
+
+                            @defining(_customAttributeManagerService.getFieldNameFromDefinitionUuid(customAttributeValue.getDefinition().uuid)) { fieldId =>
+
+                                @if(displayAsRow) { <td> }
+                                    @customAttributeValue.renderFormField(_messagesPluginService, _usession, _implementationDefinedObjectService, if(objectForm.isInstanceOf[Form[_]]) objectForm.asInstanceOf[Form[_]](fieldId) else objectForm.asInstanceOf[Field](fieldId), !displayAsRow)
+                                @if(displayAsRow) { </td> }
+
+                                @if(activeConditionalRule && customAttributeValue.getDefinition.hasValidConditionalRule) {
+                                    <script>
+
+                                        function _@(fieldId)_hide() {
+
+                                            var $field = $("#@(fieldId)");
+
+                                            @models.framework_models.common.ICustomAttributeValue.AttributeType.valueOf(customAttributeValue.getDefinition.attributeType) match {
+                                                case models.framework_models.common.ICustomAttributeValue.AttributeType.BOOLEAN => {
+                                                    $field.prop('checked', false);
+                                                    $field.closest(".checkbox").hide();
+                                                }
+                                                case _ => {
+                                                    $field.val('');
+                                                    $field.closest(".form-group").hide();
+                                                }
                                             }
-                
-                                        });
-                 
-                                    }
-                                    
-                                    //input checkbox
-                                    if (inputType == "checkbox") {
-                
-                                        $dependingField.change(function() {
-                                            
-                                            var dependingValue = $(this).prop("checked");
-                 
-                                            if (dependingValue != (conditionalRuleValue[0] === 'true')) {
-                                                _@(fieldId)_hide();
-                                            } else {
-                                                _@(fieldId)_show();
-                                            }
-                
-                                        });
-                                    }
-                                    
-                                    //input checkbox
-                                    if (inputType == "radio") {
-    
-                                        $('input[name=@(customAttributeValue.getDefinition.getConditionalRuleFieldIdForManagingForm)]').change(function() {
-                                            
-                                            var dependingValue = $('input[name=@(customAttributeValue.getDefinition.getConditionalRuleFieldIdForManagingForm)]:checked').val();
-                                            
-                                            if ($.inArray(dependingValue, conditionalRuleValue) == -1) {
-                                                _@(fieldId)_hide();
-                                            } else {
-                                                _@(fieldId)_show();
-                                            }
-                
-                                        });
-                                    }
-    
-                                }
-                                
-                                //select
-                                if (tagName == "select") {
-                                    
-                                    $dependingField.change(function() {
-                                        
-                                        var dependingValue = $(this).val().toLowerCase().trim();
-                                        
-                                        if ($.inArray(dependingValue, conditionalRuleValue) == -1) {
-                                            _@(fieldId)_hide();
-                                        } else {
-                                            _@(fieldId)_show();
+
                                         }
-                                        
-                                    });
+
+                                        function _@(fieldId)_show() {
+                                            var $field = $("#@(fieldId)");
+
+                                            @models.framework_models.common.ICustomAttributeValue.AttributeType.valueOf(customAttributeValue.getDefinition.attributeType) match {
+                                                case models.framework_models.common.ICustomAttributeValue.AttributeType.BOOLEAN => {
+                                                    $field.closest(".checkbox").show();
+                                                }
+                                                case _ => {
+                                                    $field.closest(".form-group").show();
+                                                }
+                                            }
+                                        }
+
+                                        $( document ).ready(function() {
+
+                                            var $dependingField = $("#@(customAttributeValue.getDefinition.getConditionalRuleFieldIdForManagingForm)");
+
+                                            // check the depending field exist
+                                            if($dependingField.length > 0) {
+
+                                                var conditionalRuleValue = @Html(customAttributeValue.getDefinition.getConditionalRuleValueAsJson);
+                                                var tagName = $dependingField.prop("tagName").toLowerCase();
+
+                                                if (tagName == "input") {
+                                                    var inputType = $dependingField.prop("type").toLowerCase();
+                                                    var isPrimitive = $dependingField.data("primitive");
+
+                                                    //input text primitive (string, numeric)
+                                                    if ((inputType == "text" || inputType == "hidden") && isPrimitive != null && isPrimitive) {
+
+                                                        $dependingField.change(function() {
+
+                                                            var dependingValue = $(this).val().toLowerCase().trim();
+
+                                                            if ($.inArray(dependingValue, conditionalRuleValue) == -1) {
+                                                                _@(fieldId)_hide();
+                                                            } else {
+                                                                _@(fieldId)_show();
+                                                            }
+
+                                                        });
+
+                                                    }
+
+                                                    //input checkbox
+                                                    if (inputType == "checkbox") {
+
+                                                        $dependingField.change(function() {
+
+                                                            var dependingValue = $(this).prop("checked");
+
+                                                            if (dependingValue != (conditionalRuleValue[0] === 'true')) {
+                                                                _@(fieldId)_hide();
+                                                            } else {
+                                                                _@(fieldId)_show();
+                                                            }
+
+                                                        });
+                                                    }
+
+                                                    //input checkbox
+                                                    if (inputType == "radio") {
+
+                                                        $('input[name=@(customAttributeValue.getDefinition.getConditionalRuleFieldIdForManagingForm)]').change(function() {
+
+                                                            var dependingValue = $('input[name=@(customAttributeValue.getDefinition.getConditionalRuleFieldIdForManagingForm)]:checked').val();
+
+                                                            if ($.inArray(dependingValue, conditionalRuleValue) == -1) {
+                                                                _@(fieldId)_hide();
+                                                            } else {
+                                                                _@(fieldId)_show();
+                                                            }
+
+                                                        });
+                                                    }
+
+                                                }
+
+                                                //select
+                                                if (tagName == "select") {
+
+                                                    $dependingField.change(function() {
+
+                                                        var dependingValue = $(this).val().toLowerCase().trim();
+
+                                                        if ($.inArray(dependingValue, conditionalRuleValue) == -1) {
+                                                            _@(fieldId)_hide();
+                                                        } else {
+                                                            _@(fieldId)_show();
+                                                        }
+
+                                                    });
+                                                }
+
+                                            }
+
+                                            $dependingField.trigger("change");
+
+                                        });
+                                    </script>
                                 }
-                
+
                             }
-                            
-                            $dependingField.trigger("change");
-                
-                        });
-                    </script>
-                }
-                
-            }
-        
-        }
+
+                        }
+                    }
+
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
     }
 }

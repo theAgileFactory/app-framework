@@ -17,27 +17,6 @@
  */
 package models.framework_models.common;
 
-import java.io.ByteArrayInputStream;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.Lob;
-import javax.persistence.OneToMany;
-import javax.persistence.Version;
-
-import org.apache.commons.lang3.StringUtils;
-
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.Model;
 import com.avaje.ebean.SqlQuery;
@@ -46,20 +25,20 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-
 import framework.commons.DataType;
 import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.custom_attribute.ICustomAttributeManagerService;
-import framework.utils.DefaultSelectableValueHolder;
-import framework.utils.DefaultSelectableValueHolderCollection;
-import framework.utils.ISelectableValueHolderCollection;
-import framework.utils.Msg;
-import framework.utils.PropertiesLoader;
-import framework.utils.Utilities;
+import framework.utils.*;
 import models.framework_models.common.ICustomAttributeValue.AttributeType;
 import models.framework_models.parent.IModel;
 import models.framework_models.parent.IModelConstants;
+import org.apache.commons.lang3.StringUtils;
 import play.Logger;
+
+import javax.persistence.*;
+import java.io.ByteArrayInputStream;
+import java.sql.Timestamp;
+import java.util.*;
 
 /**
  * The definition for a set of {@link BooleanCustomAttributeValue}.<br/>
@@ -140,6 +119,9 @@ public class CustomAttributeDefinition extends Model implements IModel {
 
     @Column(length = IModelConstants.LARGE_STRING)
     public String objectType;
+
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    public CustomAttributeGroup customAttributeGroup;
 
     @Column(length = IModelConstants.VLARGE_STRING)
     public String conditionalRule;
@@ -937,6 +919,27 @@ public class CustomAttributeDefinition extends Model implements IModel {
                 customAttributeValues.add(getOrCreateCustomAttributeValue(objectType, objectId, customAttributeDefinition));
             }
             return customAttributeValues;
+        }
+        return null;
+    }
+
+    public static Map<Long, List<ICustomAttributeValue>> getOrderedCustomAttributeValuesMappedByGroup(Class<?> objectType, Long objectId) {
+        Map<Long, List<ICustomAttributeValue>> customAttributeValuesMap = new HashMap<>();
+        List<CustomAttributeDefinition> customAttributeDefinitions = getOrderedCustomAttributeDefinitions(objectType);
+        if (customAttributeDefinitions != null) {
+            customAttributeDefinitions.stream().forEach(customAttributeDefinition -> {
+                CustomAttributeGroup group = customAttributeDefinition.customAttributeGroup;
+                if (group == null) {
+                    group = CustomAttributeGroup.createDefaultGroup(objectType.getName());
+                }
+                List<ICustomAttributeValue> values = customAttributeValuesMap.get(group.id);
+                if (values == null) {
+                    values = new ArrayList<>();
+                }
+                values.add(getOrCreateCustomAttributeValue(objectType, objectId, customAttributeDefinition));
+                customAttributeValuesMap.put(group.id, values);
+            });
+            return customAttributeValuesMap;
         }
         return null;
     }
