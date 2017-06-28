@@ -262,6 +262,8 @@ public class Attachment extends Model implements IModel {
      * Framework objects are excluded by default.
      */
     public static ExpressionList<Attachment> getAllBusinessObjectsAttachmentsAsExpression() {
-        return Attachment.find.where().eq("deleted", false).not(Expr.istartsWith("objectType", IFrameworkConstants.FRAMEWORK_OBJECT_TYPE_PREFIX));
+        return Attachment.find.where().eq("deleted", false)
+                .not(Expr.istartsWith("objectType", IFrameworkConstants.FRAMEWORK_OBJECT_TYPE_PREFIX))
+                .not(Expr.eq("objectType", "models.governance.ProcessTransitionRequest"));
     }
 }
