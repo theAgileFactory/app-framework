@@ -164,3 +164,8 @@ fieldset[disabled] .btn-light.active {
 }
 
 .tooltip-wide .tooltip {min-width:150px;}
+
+.wrap-word {
+    word-wrap: break-word;
+    word-break: break-all;
+}
