@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.agifac.lib</groupId>
 	<artifactId>app-framework</artifactId>
-	<version>15.0.3</version>
+	<version>15.0.4-SNAPSHOT</version>
 	<name>BizDock application framework</name>
 	<description>This is the common library which contains the web application framework for BizDock</description>
 	<packaging>play2</packaging>
@@ -81,7 +81,7 @@
 		<json.version>20141113</json.version>
 		<httpclient.version>4.3.6</httpclient.version>
 		<httpcore.version>4.3.3</httpcore.version>
-		<jasperreports.version>6.3.1</jasperreports.version>
+		<jasperreports.version>6.4.1</jasperreports.version>
 		<deadbolt.version>2.4.2</deadbolt.version>
 		<commons-eclipse-jdt.version>3.10.0</commons-eclipse-jdt.version>
 
