@@ -167,5 +167,9 @@ fieldset[disabled] .btn-light.active {
 
 .wrap-word {
     word-wrap: break-word;
-    word-break: break-all;
+    word-break: normal;
+    overflow-wrap: break-word;
+    table-layout: fixed;
+    display: table;
+    width: 100%;
 }
