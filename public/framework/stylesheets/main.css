@@ -166,10 +166,5 @@ fieldset[disabled] .btn-light.active {
 .tooltip-wide .tooltip {min-width:150px;}
 
 .wrap-word {
-    word-wrap: break-word;
-    word-break: normal;
-    overflow-wrap: break-word;
-    table-layout: fixed;
-    display: table;
-    width: 100%;
+
 }

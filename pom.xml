@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.agifac.lib</groupId>
 	<artifactId>app-framework</artifactId>
-	<version>15.0.5</version>
+	<version>15.0.6</version>
 	<name>BizDock application framework</name>
 	<description>This is the common library which contains the web application framework for BizDock</description>
 	<packaging>play2</packaging>
