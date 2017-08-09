@@ -71,6 +71,8 @@ public class FilterConfiguration extends Model implements IModel, ISelectableVal
 
     public String configuration;
 
+    public String initialConfiguration;
+
     public boolean isSelected;
 
     public boolean isDefault;
@@ -254,6 +256,15 @@ public class FilterConfiguration extends Model implements IModel, ISelectableVal
      */
     public static List<FilterConfiguration> getAvailableFilterConfiguration(String principalUid, String dataType) {
         return find.orderBy("isDefault DESC, name ASC").where().eq("deleted", false).eq("principal.uid", principalUid).eq("dataType", dataType).findList();
+    }
+
+    /**
+     * Reset the filter to its initial configuration
+     */
+    public FilterConfiguration reset() {
+        this.configuration = initialConfiguration;
+        save();
+        return this;
     }
 
 }

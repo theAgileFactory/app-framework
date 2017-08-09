@@ -149,6 +149,22 @@ public class FilterConfigController extends Controller {
     }
 
     /**
+     * Clears the current default filter and get back to the initial one
+     */
+    @SubjectPresent
+    public Result filterConfigurationClear() {
+
+        String uid = getUserSessionManagerPlugin().getUserSessionId(ctx());
+        String tableId = request().body().asJson().get("tableId").asText();
+        String route = request().body().asJson().get("route").asText();
+        String dataType = request().body().asJson().get("dataType").asText();
+
+        FilterConfiguration defaultFilterConfiguration = FilterConfiguration.getDefaultFilterConfiguration(uid, dataType).reset();
+
+        return ok(views.html.framework_views.parts.table.filter_configuration_selector.render(tableId, route, defaultFilterConfiguration));
+    }
+
+    /**
      * Change the selected filter configuration.
      * 
      * -Set the isSelected flag to false for the old selected filter<br/>
