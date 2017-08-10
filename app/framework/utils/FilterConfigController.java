@@ -159,6 +159,10 @@ public class FilterConfigController extends Controller {
         String route = request().body().asJson().get("route").asText();
         String dataType = request().body().asJson().get("dataType").asText();
 
+        // Deselect the currently selected filter configuration
+        FilterConfiguration.getSelectedFilterConfiguration(uid, dataType).deselect();
+
+        // Reset the default filter to the initial filter configuration
         FilterConfiguration defaultFilterConfiguration = FilterConfiguration.getDefaultFilterConfiguration(uid, dataType).reset();
 
         return ok(views.html.framework_views.parts.table.filter_configuration_selector.render(tableId, route, defaultFilterConfiguration));
