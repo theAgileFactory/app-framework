@@ -58,6 +58,11 @@
         }
    }
 </tbody>
+<tfoot>
+    @if(table.hasTotal) {
+        @tableview_footer(table.getId, table.getTotalRow)
+    }
+</tfoot>
 </table>
 </div>
 
