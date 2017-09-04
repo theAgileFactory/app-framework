@@ -406,6 +406,15 @@ public class Table<T> {
         }
     }
 
+    public void setColumnHeaderCssClass(String name, String cssClass) {
+        ColumnDef columnDef = getColumnDefsMap().get(name);
+        if (columnDef != null) {
+            columnDef.setHeaderCssClass(cssClass);
+        } else {
+            throw new IllegalArgumentException("Unknown column " + name);
+        }
+    }
+
     /**
      * Set a value CSS class for a specified column
      * 
@@ -480,8 +489,6 @@ public class Table<T> {
      * <br/>
      * A formatting is applied according to FieldDef
      * 
-     * @param values
-     *            a list of objects to be formatted as a table
      * @return a list of Rows (basically a row is a list of String)
      */
     public List<FormattedRow> getFormattedRows() {
@@ -497,8 +504,6 @@ public class Table<T> {
      * <br/>
      * NO formatting is applied.
      * 
-     * @param values
-     *            a list of objects to be formatted as a table
      * @return a list of Rows (basically a row is a list of String)
      */
     public List<NotFormattedRow> getNotFormattedRows() {
@@ -573,11 +578,12 @@ public class Table<T> {
     }
 
     public boolean hasTotal() {
-        return this.columnsWithTotal.size() > 0;
+        return this.columnsWithTotal.stream().anyMatch(column -> !notDisplayedColumns.contains(column));
     }
 
     public FormattedRow getTotalRow() {
         List<String> rowValues = new ArrayList<>(getColumnDefs().size() - getNotDisplayedColumns().size());
+        List<String> rowClasses = new ArrayList<>(getColumnDefs().size() - getNotDisplayedColumns().size());
         getColumnDefs().stream()
                 .filter(def -> !getNotDisplayedColumns().contains(def.getName()))
                 .forEach(def -> {
@@ -585,23 +591,28 @@ public class Table<T> {
                         Number total = 0.0;
                         for (Object value : getValues()) {
                             Object cellValue = getCellValue(def, value);
-                            if (cellValue instanceof Number) {
-                                total = ((Number) cellValue).doubleValue() + total.doubleValue();
-                            } else {
-                                // Non summable value, ignore column and remove from summable columns
-                                this.columnsWithTotal.remove(def.name);
-                                rowValues.add(null);
-                                break;
+                            if (cellValue != null) {
+                                if (cellValue instanceof Number) {
+                                    total = ((Number) cellValue).doubleValue() + total.doubleValue();
+                                } else {
+                                    // Non summable value, ignore column and remove from summable columns
+                                    this.columnsWithTotal.remove(def.name);
+                                    rowValues.add(null);
+                                    rowClasses.add(null);
+                                    break;
+                                }
                             }
                         }
                         @SuppressWarnings("unchecked")
                         String formattedTotal = ((IColumnFormatter) def.formatter).apply(null, total);
                         rowValues.add(formattedTotal);
+                        rowClasses.add("text-right");
                     } else {
                         rowValues.add(null);
+                        rowClasses.add(null);
                     }
                 });
-        return new FormattedRow(rowValues);
+        return new FormattedRow(rowValues, rowClasses, null);
     }
 
     /**
@@ -723,6 +734,7 @@ public class Table<T> {
         private String cssClass;
         private String valueCssClass;
         private boolean summable = false;
+        private String headerCssClass;
 
         public enum Parameter {
             ESCAPE_HTML(Boolean.class), SUMMABLE(Boolean.class);
@@ -917,6 +929,14 @@ public class Table<T> {
 
         public SorterType getSorterType() {
             return sorterType;
+        }
+
+        public void setHeaderCssClass(String headerCssClass) {
+            this.headerCssClass = headerCssClass;
+        }
+
+        public String getHeaderCssClass() {
+            return headerCssClass;
         }
     }
 

@@ -23,10 +23,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.Serializable;
-import java.text.DateFormat;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
+import java.text.*;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -53,6 +50,7 @@ import models.framework_models.parent.IModelConstants;
 import play.Logger;
 import play.Play;
 import play.cache.Cache;
+import play.i18n.Lang;
 import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Http;
@@ -188,8 +186,16 @@ public abstract class Utilities {
 
             numberFormat = (NumberFormat) Cache.get(IFrameworkConstants.FORMATS_CACHE_PREFIX + pattern);
             if (numberFormat == null) {
-                numberFormat = new DecimalFormat(pattern);
-                Cache.set(IFrameworkConstants.FORMATS_CACHE_PREFIX + pattern, numberFormat, FORMATS_CACHING_DURATION);
+                String cacheKey = IFrameworkConstants.FORMATS_CACHE_PREFIX + pattern;
+                if (play.mvc.Http.Context.current.get() != null) {
+                    Lang lang = Context.current().lang();
+                    DecimalFormatSymbols decimalFormatSymbols = DecimalFormatSymbols.getInstance(lang.toLocale());
+                    numberFormat = new DecimalFormat(pattern, decimalFormatSymbols);
+                    cacheKey += "." + lang.code();
+                } else {
+                    numberFormat = new DecimalFormat(pattern);
+                }
+                Cache.set(cacheKey, numberFormat, FORMATS_CACHING_DURATION);
             }
 
         } else if (play.mvc.Http.Context.current.get() != null) {

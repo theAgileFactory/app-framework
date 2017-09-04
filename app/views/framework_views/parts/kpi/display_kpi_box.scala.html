@@ -35,17 +35,17 @@
                         </div>
                         <div class="col-xs-8 value">
                             <span class="small">@parts.Msg(kpiRender.getKpi.getValueName(Kpi.DataType.MAIN))</span>
-                            <p>@kpiRender.getMainValueRender</p>
+                            <p>@Html(kpiRender.getMainValueRender)</p>
                         </div>
                     </div>
                     <div class="row content">
                         <div class="col-xs-offset-1 col-xs-5 value">
                             <span class="small">@parts.Msg(kpiRender.getKpi.getValueName(Kpi.DataType.ADDITIONAL1))</span>
-                            <p>@kpiRender.getAdditional1ValueRender</p>
+                            <p>@Html(kpiRender.getAdditional1ValueRender)</p>
                         </div>
                         <div class="col-xs-6 value">
                             <span class="small">@parts.Msg(kpiRender.getKpi.getValueName(Kpi.DataType.ADDITIONAL2))</span>
-                            <p>@kpiRender.getAdditional2ValueRender</p>
+                            <p>@Html(kpiRender.getAdditional2ValueRender)</p>
                         </div>
                     </div>
                     <div class="row no-padding no-margin">

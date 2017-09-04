@@ -18,7 +18,7 @@
 @(tableId: String, row: framework.utils.Table.FormattedRow)
 <tr>
     @for((column, i) <- row.getValues.zipWithIndex){
-        <td class="active">@Html(column)</td>
+        <td class="active @if(row.getCssClasses.get(i) != null) { @row.getCssClasses.get(i) }"><strong>@Html(column)</strong></td>
     }
 </tr>
 @******************************************************
