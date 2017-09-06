@@ -15,8 +15,11 @@
 * You should have received a copy of the GNU General Public License along with
 * this program. If not, see <http://www.gnu.org/licenses/>.
 *@
-@(tableId: String, row: framework.utils.Table.FormattedRow)
+@(tableId: String, row: framework.utils.Table.FormattedRow, hasRowActions: Boolean)
 <tr>
+    @if(hasRowActions) {
+        <td class="active"></td>
+    }
     @for((column, i) <- row.getValues.zipWithIndex){
         <td class="active @if(row.getCssClasses.get(i) != null) { @row.getCssClasses.get(i) }"><strong>@Html(column)</strong></td>
     }

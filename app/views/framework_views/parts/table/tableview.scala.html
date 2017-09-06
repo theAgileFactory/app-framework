@@ -60,13 +60,11 @@
 </tbody>
 <tfoot>
     @if(table.hasTotal) {
-        @tableview_footer(table.getId, table.getTotalRow)
+        @tableview_footer(table.getId, table.getTotalRow, table.hasRowActions)
     }
 </tfoot>
 </table>
 </div>
-
-@if(table.hasRowActions) { @row_actions_selector(table.getId(), table.getRowActions) }
 
 @if(table.hasValues && table.getLineAction != null) {
     <script>$('#@table.getId() tbody').rowlink()</script>
