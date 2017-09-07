@@ -265,6 +265,7 @@ public class FilterConfig<T> {
         if (defaultFilter == null) {
             defaultFilter = new FilterConfiguration();
             defaultFilter.configuration = this.marshall();
+            defaultFilter.initialConfiguration = defaultFilter.configuration;
             defaultFilter.dataType = dataType;
             defaultFilter.isDefault = true;
             defaultFilter.isSelected = false;
