@@ -367,4 +367,16 @@ public class DynamicSingleItemCustomAttributeValue extends Model implements IMod
     public Long getLinkedObjectId() {
         return objectId;
     }
+
+    public static void cloneInDB(Class<?> objectType, Long oldObjectId, Long newObjectId, CustomAttributeDefinition customAttributeDefinition) {
+        DynamicSingleItemCustomAttributeValue oldCustomAttributeValue = getOrCreateCustomAttributeValueFromObjectReference(objectType, null, oldObjectId, customAttributeDefinition);
+
+        DynamicSingleItemCustomAttributeValue newCustomAttributeValue = new DynamicSingleItemCustomAttributeValue();
+        newCustomAttributeValue.customAttributeDefinition = customAttributeDefinition;
+        newCustomAttributeValue.deleted = oldCustomAttributeValue.deleted;
+        newCustomAttributeValue.objectId = newObjectId;
+        newCustomAttributeValue.objectType = oldCustomAttributeValue.objectType;
+        newCustomAttributeValue.value = oldCustomAttributeValue.value;
+        newCustomAttributeValue.save();
+    }
 }

@@ -292,4 +292,24 @@ public class IntegerCustomAttributeValue extends Model implements IModel, ICusto
     public Long getLinkedObjectId() {
         return objectId;
     }
+
+    /**
+     * Clone an integer custom attribute in DB
+     *
+     * @param objectType
+     * @param oldObjectId
+     * @param newObjectId
+     * @param customAttributeDefinition
+     */
+    public static void cloneInDB(Class<?> objectType, Long oldObjectId, Long newObjectId, CustomAttributeDefinition customAttributeDefinition) {
+        IntegerCustomAttributeValue oldCustomAttributeValue = getOrCreateCustomAttributeValueFromObjectReference(objectType, null, oldObjectId, customAttributeDefinition);
+
+        IntegerCustomAttributeValue newCustomAttributeValue = new IntegerCustomAttributeValue();
+        newCustomAttributeValue.customAttributeDefinition = customAttributeDefinition;
+        newCustomAttributeValue.deleted = oldCustomAttributeValue.deleted;
+        newCustomAttributeValue.objectId = newObjectId;
+        newCustomAttributeValue.objectType = oldCustomAttributeValue.objectType;
+        newCustomAttributeValue.value = oldCustomAttributeValue.value;
+        newCustomAttributeValue.save();
+    }
 }

@@ -32,64 +32,64 @@ import play.twirl.api.Html;
  * @author Pierre-Yves Cloux
  */
 public interface ICustomAttributeValue {
-    public static final char MULTI_VALUE_SEPARATOR = ',';
-    public static final String GENERIC_INVALID_ERROR_MESSAGE = "error.invalid";
+    char MULTI_VALUE_SEPARATOR = ',';
+    String GENERIC_INVALID_ERROR_MESSAGE = "error.invalid";
 
     /**
      * Return the object type to which belongs this custom attribute value
      * 
      * @return a java class name
      */
-    public String getLinkedObjectClassName();
+    String getLinkedObjectClassName();
 
     /**
      * Return the id of the object to which belongs this custom attribute value
      * 
      * @return a java class name
      */
-    public Long getLinkedObjectId();
+    Long getLinkedObjectId();
 
     /**
      * Return false if the attribute has been extracted from the database and
      * true if it is not yet saved
      */
-    public boolean isNotReadFromDb();
+    boolean isNotReadFromDb();
 
     /**
      * Initialze the custom attribute value with the configured default value
      */
-    public void defaults();
+    void defaults();
 
     /**
      * Save the object into the db
      */
-    public void performSave(IUserSessionManagerPlugin userSessionManagerPlugin, IAttachmentManagerPlugin attachmentManagerPlugin, String fieldName);
+    void performSave(IUserSessionManagerPlugin userSessionManagerPlugin, IAttachmentManagerPlugin attachmentManagerPlugin, String fieldName);
 
     /**
      * Return the definition for a custom attribute
      * 
      * @return a custom attribute definition
      */
-    public CustomAttributeDefinition getDefinition();
+    CustomAttributeDefinition getDefinition();
 
     /**
      * Returns the type of the attribute
      * 
      * @return an attribute type
      */
-    public AttributeType getAttributeType();
+    AttributeType getAttributeType();
 
     /**
      * Returns an Object representation of the value
      */
 
-    public Object getValueAsObject();
+    Object getValueAsObject();
 
     /**
      * Update the value for the custom attribute using an object.<br/>
      * If the object is not of a compatible type, an exception is thrown.
      */
-    public void setValueAsObject(Object newValue);
+    void setValueAsObject(Object newValue);
 
     /**
      * Returns a String representation of the value.<br/>
@@ -99,7 +99,7 @@ public interface ICustomAttributeValue {
      * comma separated list of options Ids.
      * </p>
      */
-    public String print();
+    String print();
 
     /**
      * Read the value of the object from the specified String representation
@@ -112,7 +112,7 @@ public interface ICustomAttributeValue {
      * @return true if parsing was successful, false otherwise (this means that
      *         hasError() will return true)
      */
-    public boolean parse(II18nMessagesPlugin i18nMessagesPlugin, String text);
+    boolean parse(II18nMessagesPlugin i18nMessagesPlugin, String text);
 
     /**
      * Read the value of the object from the specified File representation
@@ -120,14 +120,14 @@ public interface ICustomAttributeValue {
      * @return true if parsing was successful, false otherwise (this means that
      *         hasError() will return true)
      */
-    public boolean parseFile(ICustomAttributeManagerService customAttributeManagerService);
+    boolean parseFile(ICustomAttributeManagerService customAttributeManagerService);
 
     /**
      * Return true if the custom attribute is in error
      * 
      * @return a boolean
      */
-    public boolean hasError();
+    boolean hasError();
 
     /**
      * Return the error message associated with the error (if hasError is true).
@@ -136,13 +136,13 @@ public interface ICustomAttributeValue {
      * 
      * @return a String
      */
-    public String getErrorMessage();
+    String getErrorMessage();
 
     /**
      * Reset the transient error variables. This method is called if the data is
      * read from the cache to be sure the error variables are reseted.
      */
-    public void resetError();
+    void resetError();
 
     /**
      * Render a form field.
@@ -154,29 +154,29 @@ public interface ICustomAttributeValue {
      *            exists
      * @return an Html display of the form field attached to the specified value
      */
-    public Html renderFormField(II18nMessagesPlugin i18nMessagesPlugin, IUserSessionManagerPlugin userSessionManagerPlugin,
-            IImplementationDefinedObjectService implementationDefinedObjectService, Field field, boolean displayDescription);
+    Html renderFormField(II18nMessagesPlugin i18nMessagesPlugin, IUserSessionManagerPlugin userSessionManagerPlugin,
+                         IImplementationDefinedObjectService implementationDefinedObjectService, Field field, boolean displayDescription);
 
     /**
      * Render a display.
      * 
      * The description (if it exists) is displayed.
      */
-    public Html renderDisplay(II18nMessagesPlugin i18nMessagesPlugin);
+    Html renderDisplay(II18nMessagesPlugin i18nMessagesPlugin);
 
     /**
      * Render a display.
      * 
      * The description (if it exists) is not displayed.
      */
-    public Html renderDisplayNoDescription(II18nMessagesPlugin i18nMessagesPlugin);
+    Html renderDisplayNoDescription(II18nMessagesPlugin i18nMessagesPlugin);
 
     /**
      * An enumeration which tells about the type of the attribute.
      * 
      * @author Pierre-Yves Cloux
      */
-    public static enum AttributeType {
+    enum AttributeType {
         BOOLEAN, INTEGER, DECIMAL, STRING, TEXT, DATE, SINGLE_ITEM, DYNAMIC_SINGLE_ITEM, DYNAMIC_MULTI_ITEM, IMAGE, MULTI_ITEM, URL;
 
         private boolean isFileType = false;
@@ -202,5 +202,5 @@ public interface ICustomAttributeValue {
 
     }
 
-    public Object getAsSerializableValue();
+    Object getAsSerializableValue();
 }

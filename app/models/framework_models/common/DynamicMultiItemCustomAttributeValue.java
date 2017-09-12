@@ -325,4 +325,15 @@ public class DynamicMultiItemCustomAttributeValue extends Model implements IMode
         return objectId;
     }
 
+    public static void cloneInDB(Class<?> objectType, Long oldObjectId, Long newObjectId, CustomAttributeDefinition customAttributeDefinition) {
+        DynamicMultiItemCustomAttributeValue oldCustomAttributeValue = getOrCreateCustomAttributeValueFromObjectReference(objectType, null, oldObjectId, customAttributeDefinition);
+
+        DynamicMultiItemCustomAttributeValue newCustomAttributeValue = new DynamicMultiItemCustomAttributeValue();
+        newCustomAttributeValue.customAttributeDefinition = customAttributeDefinition;
+        newCustomAttributeValue.deleted = oldCustomAttributeValue.deleted;
+        newCustomAttributeValue.objectId = newObjectId;
+        newCustomAttributeValue.objectType = oldCustomAttributeValue.objectType;
+        newCustomAttributeValue.values = oldCustomAttributeValue.values;
+        newCustomAttributeValue.save();
+    }
 }

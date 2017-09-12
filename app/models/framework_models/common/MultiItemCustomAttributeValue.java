@@ -331,4 +331,16 @@ public class MultiItemCustomAttributeValue extends Model implements IModel, ICus
     public Long getLinkedObjectId() {
         return objectId;
     }
+
+    public static void cloneInDB(Class<?> objectType, Long oldObjectId, Long newObjectId, CustomAttributeDefinition customAttributeDefinition) {
+        MultiItemCustomAttributeValue oldCustomAttributeValue = getOrCreateCustomAttributeValueFromObjectReference(objectType, null, oldObjectId, customAttributeDefinition);
+
+        MultiItemCustomAttributeValue newCustomAttributeValue = new MultiItemCustomAttributeValue();
+        newCustomAttributeValue.customAttributeDefinition = customAttributeDefinition;
+        newCustomAttributeValue.deleted = oldCustomAttributeValue.deleted;
+        newCustomAttributeValue.objectId = newObjectId;
+        newCustomAttributeValue.objectType = oldCustomAttributeValue.objectType;
+        newCustomAttributeValue.values = new ArrayList<>(oldCustomAttributeValue.values);
+        newCustomAttributeValue.save();
+    }
 }
