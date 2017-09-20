@@ -23,6 +23,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.Comparator;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -150,6 +152,16 @@ public class SharedStorageServiceImpl implements ISharedStorageService {
         if (files == null || files.length == 0) {
             return new String[] {};
         }
+
+        // Sort files by last update date then by name
+        Arrays.sort(files, (f1, f2) -> {
+            int compare = Long.compare(f2.lastModified(), f1.lastModified());
+            if (compare == 0) {
+                compare = f1.getName().compareTo(f2.getName());
+            }
+            return compare;
+        });
+
         String[] filesAsString = new String[files.length];
         int count = 0;
         for (File file : files) {
