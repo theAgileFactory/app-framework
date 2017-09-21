@@ -154,13 +154,7 @@ public class SharedStorageServiceImpl implements ISharedStorageService {
         }
 
         // Sort files by last update date then by name
-        Arrays.sort(files, (f1, f2) -> {
-            int compare = Long.compare(f2.lastModified(), f1.lastModified());
-            if (compare == 0) {
-                compare = f1.getName().compareTo(f2.getName());
-            }
-            return compare;
-        });
+        Utilities.sortFiles(files);
 
         String[] filesAsString = new String[files.length];
         int count = 0;

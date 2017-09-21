@@ -164,11 +164,7 @@ public class PersonalStoragePluginImpl implements IPersonalStoragePlugin {
         File personalFolder = new File(getPersonalStorageRootFolder(), getPersonalStorageFolderFromUid(uid));
         createPersonalFolderIfNotExists(uid, personalFolder);
         File[] files = personalFolder.listFiles();
-        Arrays.sort(files, new Comparator<File>() {
-            public int compare(File f1, File f2) {
-                return Long.valueOf(f2.lastModified()).compareTo(f1.lastModified());
-            }
-        });
+        Utilities.sortFiles(files);
         return files;
     }
 

@@ -24,17 +24,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.Serializable;
 import java.text.*;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.ArrayUtils;
@@ -497,6 +487,16 @@ public abstract class Utilities {
                 length += folderSize(file);
         }
         return length;
+    }
+
+    public static void sortFiles(File[] files) {
+        Arrays.sort(files, (f1, f2) -> {
+            int compare = Long.compare(f2.lastModified(), f1.lastModified());
+            if (compare == 0) {
+                compare = f1.getName().compareTo(f2.getName());
+            }
+            return compare;
+        });
     }
 
     /**
