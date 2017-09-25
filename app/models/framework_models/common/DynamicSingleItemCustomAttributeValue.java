@@ -272,7 +272,7 @@ public class DynamicSingleItemCustomAttributeValue extends Model implements IMod
             String uid = userSessionManagerPlugin.getUserSessionId(Controller.ctx());
             return views.html.framework_views.parts.dropdownlist.render(field, Msg.get(customAttributeDefinition.name),
                     customAttributeDefinition.getValueHoldersCollectionFromNameForDynamicSingleItemCustomAttribute(i18nMessagesPlugin, "%", uid), description,
-                    true, customAttributeDefinition.isRequired());
+                    true, customAttributeDefinition.isRequired(), false, false);
         }
         return views.html.framework_views.parts.autocomplete.render(field, Msg.get(customAttributeDefinition.name), description,
                 implementationDefinedObjectService.getRouteForDynamicSingleCustomAttributeApi().url(),

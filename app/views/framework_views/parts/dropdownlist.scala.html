@@ -15,7 +15,16 @@
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  *@
-@(field: Field, fieldLabel: String, selectableValues: framework.utils.ISelectableValueHolderCollection[_], helpLabel: String = null, isDescriptionVisible: Boolean=true, forceRequired: Boolean=false)
+@(
+        field: Field,
+        fieldLabel: String,
+        selectableValues: framework.utils.ISelectableValueHolderCollection[_],
+        helpLabel: String = null,
+        isDescriptionVisible: Boolean=true,
+        forceRequired: Boolean=false,
+        liveSearch: Boolean=false,
+        multiple: Boolean=false
+)
 @import framework_views.parts
 @import commons._
 <div class="form-group @if(field.hasErrors) {has-error}">
@@ -25,9 +34,11 @@
        }
     </label>
     <select
-      class="form-control"
+      class="selectpicker form-control"
       id="@field.id"
-      name="@field.name">
+      name="@field.name@if(multiple){[]}"
+      data-live-search="@liveSearch"
+      @if(multiple){multiple}>
       @if(!isRequired(field) && !forceRequired){
         <option value=""></option>
       }

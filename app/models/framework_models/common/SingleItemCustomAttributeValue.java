@@ -236,7 +236,7 @@ public class SingleItemCustomAttributeValue extends Model implements IModel, ICu
         }
         return views.html.framework_views.parts.dropdownlist.render(field, Msg.get(customAttributeDefinition.name),
                 CustomAttributeItemOption.getSelectableValuesForDefinitionId(customAttributeDefinition.id), description, true,
-                customAttributeDefinition.isRequired());
+                customAttributeDefinition.isRequired(), false, false);
     }
 
     @Override
