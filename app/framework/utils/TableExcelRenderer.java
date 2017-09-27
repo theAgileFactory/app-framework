@@ -57,7 +57,7 @@ import play.Logger;
  * @author Pierre-Yves Cloux
  */
 public class TableExcelRenderer {
-    public static final String DEFAULT_EXCEL_DATE_FORMAT = "m/d/yy h:mm";
+    public static final String DEFAULT_EXCEL_DATE_FORMAT = "m/d/yy";
     private static final char INVISIBLE_BULLET_CHAR = 0xFFFA;
 
     static {
