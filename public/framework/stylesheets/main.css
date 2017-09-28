@@ -168,3 +168,8 @@ fieldset[disabled] .btn-light.active {
 .input-group-addon-multi-language {
     min-width: 80px;
 }
+
+/* Fix display for selector with no label */
+.bootstrap-select.form-control:not([class*="col-"]) {
+    width: auto;
+}
