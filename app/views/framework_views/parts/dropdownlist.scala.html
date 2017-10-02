@@ -28,11 +28,11 @@
 @import framework_views.parts
 @import commons._
 <div class="form-group @if(field.hasErrors) {has-error}">
-    <label class="control-label" for="@field.id">
-       @if(fieldLabel != null && !fieldLabel.equals("")) {
-           @fieldLabel@if(isRequired(field) || forceRequired){&nbsp;<i style="color: red;" class="fa fa-asterisk"></i>}
-       }
-    </label>
+   @if(fieldLabel != null && !fieldLabel.equals("")) {
+        <label class="control-label" for="@field.id">
+               @fieldLabel@if(isRequired(field) || forceRequired){&nbsp;<i style="color: red;" class="fa fa-asterisk"></i>}
+        </label>
+   }
     <select
       class="selectpicker form-control"
       id="@field.id"
