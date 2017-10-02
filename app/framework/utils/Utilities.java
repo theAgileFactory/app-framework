@@ -17,26 +17,15 @@
  */
 package framework.utils;
 
-import java.beans.XMLDecoder;
-import java.beans.XMLEncoder;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.Serializable;
-import java.text.*;
-import java.util.*;
-
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
-
 import com.avaje.ebean.ExpressionList;
 import com.avaje.ebean.OrderBy;
 import com.avaje.ebean.OrderBy.Property;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import framework.commons.IFrameworkConstants;
 import models.framework_models.parent.IModelConstants;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import play.Logger;
 import play.Play;
 import play.cache.Cache;
@@ -45,6 +34,15 @@ import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Http.Context;
+
+import java.beans.XMLDecoder;
+import java.beans.XMLEncoder;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.Serializable;
+import java.text.*;
+import java.util.*;
 
 /**
  * An abstract class which gathers useful features
@@ -604,6 +602,73 @@ public abstract class Utilities {
         }
 
         return id;
+    }
 
+    /**
+     * Get the number of working days between two dates.
+     *
+     * @param start the start date
+     * @param end the end date
+     * @return the number of working days
+     */
+    public static int getWorkingDaysCount(Date start, Date end) {
+
+        Calendar startCalendar = Calendar.getInstance();
+        startCalendar.setTime(start);
+
+        // Calendar'w week starts on sunday but we want it to start on monday.
+        int d = startCalendar.get(Calendar.DAY_OF_WEEK) - 1;
+        if (d == 0) {
+            d = 7;
+        }
+
+        // n is the number of days between the 2 dates
+        int n = getDuration(start, end);
+
+        // q is the total of complete weeks between the 2 dates
+        int q = n / 7;
+        // r is the number of days in addition to the complete weeks
+        int r = n % 7;
+
+        // a is the end date day of the week
+        int a = d + r - 1;
+
+        // w is the number of weekend days, at first the number of complete weeks times 2 weekend days.
+        int w = q * 2;
+
+        // If the start day is a sunday, we must remove one weekend day
+        if (d == 7) {
+            w--;
+        }
+        // if the last day is saturday, we add 1 weekend day
+        if (a == 6) {
+            w++;
+        }
+        // if the last day is over sunday, we add 2 weekend days
+        if (a >= 7) {
+            w += 2;
+        }
+
+        // The result is the total number of days minus the weekend days
+        return n - w;
+    }
+
+    /**
+     * Get the duration between 2 dates.
+     * If one is null, returns -1. If the start date is after the end date, dates are switched.
+     * @param startDate the start date
+     * @param endDate the end date
+     * @return the duration between the 2 dates
+     */
+    public static int getDuration(Date startDate, Date endDate) {
+        if (startDate == null || endDate == null) {
+            return -1;
+        }
+        if (startDate.after(endDate)) {
+            Date tmp = startDate;
+            startDate = endDate;
+            endDate = tmp;
+        }
+        return (int) ((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     }
 }
