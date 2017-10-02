@@ -98,7 +98,7 @@
             'down_error': 'This node is already on the bottom',
             'node_deleted' : 'This entry no longer exists.'
         };
-        __transl['fr'] = {
+        __transl['fr-CH'] = {
             'new' : 'Nouveau',
             'empty' : 'L\'arbre est vide.',
             'error' : 'Une erreur est survenue, veuiller ressayer.',
