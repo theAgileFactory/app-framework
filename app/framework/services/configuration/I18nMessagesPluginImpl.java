@@ -126,7 +126,7 @@ public class I18nMessagesPluginImpl implements II18nMessagesPlugin {
                 Integer c = 1;
                 List<String> languageCodes = getConfiguration().getStringList(Config.LANGUAGE_LIST.getConfigurationKey());
                 for (String l : languageCodes) {
-                    String code = l.trim();
+                    String code = l.trim().toLowerCase();
                     Language language = new Language(code, c);
                     validLanguageList.add(language);
                     this.put(code, language);

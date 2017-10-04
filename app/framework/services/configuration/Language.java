@@ -37,7 +37,7 @@ public class Language implements ISelectableValueHolder<String> {
         private static final long serialVersionUID = 4564564564L;
         {
             put("en", "English");
-            put("fr-CH", "Français");
+            put("fr", "Français");
             put("de", "Deutsch");
             put("it", "Italiano");
             put("es", "Español");
@@ -49,13 +49,13 @@ public class Language implements ISelectableValueHolder<String> {
 
     public Language(String code) {
         if (code != null) {
-            this.setCode(code.trim());
+            this.setCode(code.trim().toLowerCase());
         }
     }
 
     public Language(String code, Integer order) {
         if (code != null && order != null) {
-            this.setCode(code.trim());
+            this.setCode(code.trim().toLowerCase());
             this.setOrder(order);
         }
     }
