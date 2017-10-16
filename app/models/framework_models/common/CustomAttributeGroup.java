@@ -162,9 +162,7 @@ public class CustomAttributeGroup extends Model implements IModel, ISelectableVa
                 definition.customAttributeGroup = group;
                 definition.save();
             });
-        } catch (ClassNotFoundException e) {
-            return null;
-        }
+        } catch (ClassNotFoundException ignored) {}
         group.save();
         return group;
     }

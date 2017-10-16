@@ -5,5 +5,5 @@
 logs/
 sysadmin.*
 target/
-lib/
+/lib/
 .checkstyle

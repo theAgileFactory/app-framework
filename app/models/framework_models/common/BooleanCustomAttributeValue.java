@@ -17,21 +17,7 @@
  */
 package models.framework_models.common;
 
-import java.sql.Timestamp;
-
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.Transient;
-import javax.persistence.Version;
-
-import org.apache.commons.lang3.StringUtils;
-
 import com.avaje.ebean.Model;
-
 import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.configuration.IImplementationDefinedObjectService;
 import framework.services.custom_attribute.ICustomAttributeManagerService;
@@ -40,8 +26,12 @@ import framework.services.storage.IAttachmentManagerPlugin;
 import framework.utils.Msg;
 import models.framework_models.parent.IModel;
 import models.framework_models.parent.IModelConstants;
+import org.apache.commons.lang3.StringUtils;
 import play.api.data.Field;
 import play.twirl.api.Html;
+
+import javax.persistence.*;
+import java.sql.Timestamp;
 
 /**
  * The value for an attribute which can be added to any object in the system.
@@ -56,7 +46,7 @@ import play.twirl.api.Html;
 @Entity
 public class BooleanCustomAttributeValue extends Model implements IModel, ICustomAttributeValue {
 
-    public static Finder<Long, BooleanCustomAttributeValue> find = new Finder<Long, BooleanCustomAttributeValue>(BooleanCustomAttributeValue.class);
+    public static Finder<Long, BooleanCustomAttributeValue> find = new Finder<>(BooleanCustomAttributeValue.class);
 
     @Id
     public Long id;
@@ -236,5 +226,17 @@ public class BooleanCustomAttributeValue extends Model implements IModel, ICusto
     @Override
     public Long getLinkedObjectId() {
         return objectId;
+    }
+
+    public static void cloneInDB(Class<?> objectType, Long oldObjectId, Long newObjectId, CustomAttributeDefinition customAttributeDefinition) {
+        BooleanCustomAttributeValue oldCustomAttributeValue = getOrCreateCustomAttributeValueFromObjectReference(objectType, null, oldObjectId, customAttributeDefinition);
+
+        BooleanCustomAttributeValue newCustomAttributeValue = new BooleanCustomAttributeValue();
+        newCustomAttributeValue.customAttributeDefinition = customAttributeDefinition;
+        newCustomAttributeValue.deleted = oldCustomAttributeValue.deleted;
+        newCustomAttributeValue.objectId = newObjectId;
+        newCustomAttributeValue.objectType = oldCustomAttributeValue.objectType;
+        newCustomAttributeValue.value = oldCustomAttributeValue.value;
+        newCustomAttributeValue.save();
     }
 }

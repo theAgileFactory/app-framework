@@ -297,4 +297,16 @@ public class UrlCustomAttributeValue extends Model implements IModel, ICustomAtt
     public Long getLinkedObjectId() {
         return objectId;
     }
+
+    public static void cloneInDB(Class<?> objectType, Long oldObjectId, Long newObjectId, CustomAttributeDefinition customAttributeDefinition) {
+        UrlCustomAttributeValue oldCustomAttributeValue = getOrCreateCustomAttributeValueFromObjectReference(objectType, null, oldObjectId, customAttributeDefinition);
+
+        UrlCustomAttributeValue newCustomAttributeValue = new UrlCustomAttributeValue();
+        newCustomAttributeValue.customAttributeDefinition = customAttributeDefinition;
+        newCustomAttributeValue.deleted = oldCustomAttributeValue.deleted;
+        newCustomAttributeValue.objectId = newObjectId;
+        newCustomAttributeValue.objectType = oldCustomAttributeValue.objectType;
+        newCustomAttributeValue.value = oldCustomAttributeValue.value;
+        newCustomAttributeValue.save();
+    }
 }

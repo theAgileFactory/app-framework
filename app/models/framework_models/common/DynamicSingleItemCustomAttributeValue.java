@@ -272,7 +272,7 @@ public class DynamicSingleItemCustomAttributeValue extends Model implements IMod
             String uid = userSessionManagerPlugin.getUserSessionId(Controller.ctx());
             return views.html.framework_views.parts.dropdownlist.render(field, Msg.get(customAttributeDefinition.name),
                     customAttributeDefinition.getValueHoldersCollectionFromNameForDynamicSingleItemCustomAttribute(i18nMessagesPlugin, "%", uid), description,
-                    true, customAttributeDefinition.isRequired());
+                    true, customAttributeDefinition.isRequired(), false, false);
         }
         return views.html.framework_views.parts.autocomplete.render(field, Msg.get(customAttributeDefinition.name), description,
                 implementationDefinedObjectService.getRouteForDynamicSingleCustomAttributeApi().url(),
@@ -366,5 +366,17 @@ public class DynamicSingleItemCustomAttributeValue extends Model implements IMod
     @Override
     public Long getLinkedObjectId() {
         return objectId;
+    }
+
+    public static void cloneInDB(Class<?> objectType, Long oldObjectId, Long newObjectId, CustomAttributeDefinition customAttributeDefinition) {
+        DynamicSingleItemCustomAttributeValue oldCustomAttributeValue = getOrCreateCustomAttributeValueFromObjectReference(objectType, null, oldObjectId, customAttributeDefinition);
+
+        DynamicSingleItemCustomAttributeValue newCustomAttributeValue = new DynamicSingleItemCustomAttributeValue();
+        newCustomAttributeValue.customAttributeDefinition = customAttributeDefinition;
+        newCustomAttributeValue.deleted = oldCustomAttributeValue.deleted;
+        newCustomAttributeValue.objectId = newObjectId;
+        newCustomAttributeValue.objectType = oldCustomAttributeValue.objectType;
+        newCustomAttributeValue.value = oldCustomAttributeValue.value;
+        newCustomAttributeValue.save();
     }
 }

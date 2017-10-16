@@ -42,7 +42,7 @@
         @helper.repeat(field("values"), min = _messagesPluginService.getValidLanguageList().size) { vField =>
 
             <div class="input-group">
-                <div class="input-group-addon">@_messagesPluginService.getValidLanguageList().get(count).getCode.toUpperCase</div>
+                <div class="input-group-addon input-group-addon-multi-language">@_messagesPluginService.getValidLanguageList().get(count).getName</div>
                 <input class="form-control" type="text" id="@vField.id" name="@vField.name" value="@vField.value"/>
             </div>
             

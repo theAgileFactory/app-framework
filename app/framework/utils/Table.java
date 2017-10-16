@@ -42,6 +42,7 @@ import framework.utils.formats.CustomAttributeColumnFormatter;
 import framework.utils.formats.KpiColumnFormatter;
 import models.framework_models.common.CustomAttributeDefinition;
 import models.framework_models.common.ICustomAttributeValue;
+import org.apache.commons.lang3.tuple.Pair;
 import play.Logger;
 import scala.Option;
 
@@ -69,6 +70,7 @@ public class Table<T> {
     private Set<String> notDisplayedCustomAttributeColumns;
     private String emptyMessageKey = "table.empty";
     private IColumnFormatter<T> lineAction = null;
+    private Set<String> columnsWithTotal;
 
     /**
      * Attributes to manage the row actions (actions to applied to selected
@@ -83,10 +85,11 @@ public class Table<T> {
 
     public Table() {
         this.id = String.valueOf(hashCode());
-        this.columnDefs = new ArrayList<ColumnDef>();
-        this.columnDefsMap = new HashMap<String, ColumnDef>();
-        this.notDisplayedColumns = new HashSet<String>();
-        this.notDisplayedCustomAttributeColumns = new HashSet<String>();
+        this.columnDefs = new ArrayList<>();
+        this.columnDefsMap = new HashMap<>();
+        this.notDisplayedColumns = new HashSet<>();
+        this.notDisplayedCustomAttributeColumns = new HashSet<>();
+        this.columnsWithTotal = new HashSet<>();
         this.rowActions = new ArrayList<>();
         this.allIdsUrl = null;
     }
@@ -107,6 +110,7 @@ public class Table<T> {
         this.id = sourceTable.getId();
         this.values = values;
         this.notDisplayedColumns = notDisplayedColumns;
+        this.columnsWithTotal = sourceTable.columnsWithTotal;
         this.emptyMessageKey = sourceTable.getEmptyMessageKey();
         this.lineAction = sourceTable.getLineAction();
         this.rowActions = new ArrayList<>();
@@ -122,7 +126,7 @@ public class Table<T> {
      * @return a new Table filled with the values
      */
     public Table<T> fill(List<T> values) {
-        return new Table<T>(this, values, this.notDisplayedCustomAttributeColumns);
+        return new Table<>(this, values, this.notDisplayedCustomAttributeColumns);
     }
 
     /**
@@ -137,7 +141,7 @@ public class Table<T> {
      */
     public Table<T> fill(List<T> values, Set<String> notDisplayedColumns) {
         notDisplayedColumns.addAll(this.notDisplayedCustomAttributeColumns);
-        return new Table<T>(this, values, notDisplayedColumns);
+        return new Table<>(this, values, notDisplayedColumns);
     }
 
     /**
@@ -154,7 +158,7 @@ public class Table<T> {
      * @return a new Table filled with the values
      */
     public Table<T> fillForFilterConfig(List<T> values, Set<String> notDisplayedColumns) {
-        return new Table<T>(this, values, notDisplayedColumns);
+        return new Table<>(this, values, notDisplayedColumns);
     }
 
     public void setLineAction(IColumnFormatter<T> formatter) {
@@ -208,9 +212,16 @@ public class Table<T> {
      *            if true the content is escaped to prevent HTML injection
      */
     public void addColumn(String name, String valueFieldName, String label, SorterType sorterType, boolean escape) {
-        ColumnDef columnDef = new ColumnDef(name, valueFieldName, label, null, sorterType, escape);
+        ColumnDef columnDef = new ColumnDef(name, valueFieldName, label, null, sorterType, escape, false);
         this.columnDefs.add(columnDef);
         this.columnDefsMap.put(name, columnDef);
+    }
+
+    public void addSummableColumn(String name, String valueFieldName, String label, SorterType sorterType) {
+        ColumnDef columnDef = new ColumnDef(name, valueFieldName, label, null, sorterType, true, true);
+        this.columnDefs.add(columnDef);
+        this.columnDefsMap.put(name, columnDef);
+        this.columnsWithTotal.add(name);
     }
 
     /**
@@ -349,7 +360,7 @@ public class Table<T> {
     }
 
     public boolean hasRowActions() {
-        return this.rowActions.size() > 0 && this.allIdsUrl != null ? true : false;
+        return this.rowActions.size() > 0 && this.allIdsUrl != null;
     }
 
     public List<RowAction> getRowActions() {
@@ -390,6 +401,15 @@ public class Table<T> {
         ColumnDef columnDef = getColumnDefsMap().get(name);
         if (columnDef != null) {
             columnDef.setCssClass(cssClass);
+        } else {
+            throw new IllegalArgumentException("Unknown column " + name);
+        }
+    }
+
+    public void setColumnHeaderCssClass(String name, String cssClass) {
+        ColumnDef columnDef = getColumnDefsMap().get(name);
+        if (columnDef != null) {
+            columnDef.setHeaderCssClass(cssClass);
         } else {
             throw new IllegalArgumentException("Unknown column " + name);
         }
@@ -469,8 +489,6 @@ public class Table<T> {
      * <br/>
      * A formatting is applied according to FieldDef
      * 
-     * @param values
-     *            a list of objects to be formatted as a table
      * @return a list of Rows (basically a row is a list of String)
      */
     public List<FormattedRow> getFormattedRows() {
@@ -486,8 +504,6 @@ public class Table<T> {
      * <br/>
      * NO formatting is applied.
      * 
-     * @param values
-     *            a list of objects to be formatted as a table
      * @return a list of Rows (basically a row is a list of String)
      */
     public List<NotFormattedRow> getNotFormattedRows() {
@@ -561,6 +577,44 @@ public class Table<T> {
         }
     }
 
+    public boolean hasTotal() {
+        return this.columnsWithTotal.stream().anyMatch(column -> !notDisplayedColumns.contains(column));
+    }
+
+    public FormattedRow getTotalRow() {
+        List<String> rowValues = new ArrayList<>(getColumnDefs().size() - getNotDisplayedColumns().size());
+        List<String> rowClasses = new ArrayList<>(getColumnDefs().size() - getNotDisplayedColumns().size());
+        getColumnDefs().stream()
+                .filter(def -> !getNotDisplayedColumns().contains(def.getName()))
+                .forEach(def -> {
+                    if (def.summable) {
+                        Number total = 0.0;
+                        for (Object value : getValues()) {
+                            Object cellValue = getCellValue(def, value);
+                            if (cellValue != null) {
+                                if (cellValue instanceof Number) {
+                                    total = ((Number) cellValue).doubleValue() + total.doubleValue();
+                                } else {
+                                    // Non summable value, ignore column and remove from summable columns
+                                    this.columnsWithTotal.remove(def.name);
+                                    rowValues.add(null);
+                                    rowClasses.add(null);
+                                    break;
+                                }
+                            }
+                        }
+                        @SuppressWarnings("unchecked")
+                        String formattedTotal = ((IColumnFormatter) def.formatter).apply(null, total);
+                        rowValues.add(formattedTotal);
+                        rowClasses.add("text-right");
+                    } else {
+                        rowValues.add(null);
+                        rowClasses.add(null);
+                    }
+                });
+        return new FormattedRow(rowValues, rowClasses, null);
+    }
+
     /**
      * Get the attribute value matching the specified ColumnDef from the object
      * passed as a parameter. This cellValue is formatted automatically if a
@@ -592,11 +646,7 @@ public class Table<T> {
     private Object getCellValue(ColumnDef columnDef, Object value) {
         try {
             return PropertyUtils.getProperty(value, columnDef.getFieldName());
-        } catch (IllegalAccessException e) {
-            log.error("Unable to get property " + columnDef.getFieldName() + " from bean " + value);
-        } catch (InvocationTargetException e) {
-            log.error("Unable to get property " + columnDef.getFieldName() + " from bean " + value);
-        } catch (NoSuchMethodException e) {
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
             log.error("Unable to get property " + columnDef.getFieldName() + " from bean " + value);
         }
         return "";
@@ -683,6 +733,22 @@ public class Table<T> {
         private boolean isJavaFormatter = false;
         private String cssClass;
         private String valueCssClass;
+        private boolean summable = false;
+        private String headerCssClass;
+
+        public enum Parameter {
+            ESCAPE_HTML(Boolean.class), SUMMABLE(Boolean.class);
+
+            private Class parameterType;
+
+            Parameter(Class parameterType) {
+                this.parameterType = parameterType;
+            }
+
+            public Class getParameterType() {
+                return parameterType;
+            }
+        }
 
         /**
          * Enum that encapsulate the 3 types of sorter that are allowed for a
@@ -723,7 +789,7 @@ public class Table<T> {
          *            column
          */
         public ColumnDef(String name, String fieldName, String label, String subLabel, SorterType sorterType) {
-            this(name, fieldName, label, subLabel, sorterType, true);
+            this(name, fieldName, label, subLabel, sorterType, true, false);
         }
 
         /**
@@ -741,7 +807,7 @@ public class Table<T> {
          * @param escape
          *            if true the content is escaped to prevent HTML injection
          */
-        public ColumnDef(String name, String fieldName, String label, String subLabel, SorterType sorterType, boolean escape) {
+        public ColumnDef(String name, String fieldName, String label, String subLabel, SorterType sorterType, boolean escape, boolean summable) {
             super();
             this.name = name;
             this.label = label;
@@ -749,7 +815,7 @@ public class Table<T> {
             this.fieldName = fieldName;
             this.sorterType = sorterType;
             this.escape = escape;
-
+            this.summable = summable;
         }
 
         /**
@@ -863,6 +929,14 @@ public class Table<T> {
 
         public SorterType getSorterType() {
             return sorterType;
+        }
+
+        public void setHeaderCssClass(String headerCssClass) {
+            this.headerCssClass = headerCssClass;
+        }
+
+        public String getHeaderCssClass() {
+            return headerCssClass;
         }
     }
 

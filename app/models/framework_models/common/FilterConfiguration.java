@@ -41,6 +41,7 @@ import models.framework_models.account.Principal;
 import models.framework_models.parent.IModel;
 import models.framework_models.parent.IModelConstants;
 import play.Logger;
+import play.api.mvc.Filter;
 
 /**
  * A filter configuration is a stored filter for a user and a data type.
@@ -70,6 +71,8 @@ public class FilterConfiguration extends Model implements IModel, ISelectableVal
     public String name;
 
     public String configuration;
+
+    public String initialConfiguration;
 
     public boolean isSelected;
 
@@ -256,4 +259,23 @@ public class FilterConfiguration extends Model implements IModel, ISelectableVal
         return find.orderBy("isDefault DESC, name ASC").where().eq("deleted", false).eq("principal.uid", principalUid).eq("dataType", dataType).findList();
     }
 
+    /**
+     * Reset the filter to its initial configuration
+     */
+    public FilterConfiguration reset() {
+        this.configuration = initialConfiguration;
+        save();
+        return this;
+    }
+
+    /**
+     * Deselect the filter
+     */
+    public FilterConfiguration deselect() {
+        if (this.isSelected) {
+            this.isSelected = false;
+            save();
+        }
+        return this;
+    }
 }

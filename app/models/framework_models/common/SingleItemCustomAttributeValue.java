@@ -236,7 +236,7 @@ public class SingleItemCustomAttributeValue extends Model implements IModel, ICu
         }
         return views.html.framework_views.parts.dropdownlist.render(field, Msg.get(customAttributeDefinition.name),
                 CustomAttributeItemOption.getSelectableValuesForDefinitionId(customAttributeDefinition.id), description, true,
-                customAttributeDefinition.isRequired());
+                customAttributeDefinition.isRequired(), false, false);
     }
 
     @Override
@@ -276,5 +276,17 @@ public class SingleItemCustomAttributeValue extends Model implements IModel, ICu
     @Override
     public Long getLinkedObjectId() {
         return objectId;
+    }
+
+    public static void cloneInDB(Class<?> objectType, Long oldObjectId, Long newObjectId, CustomAttributeDefinition customAttributeDefinition) {
+        SingleItemCustomAttributeValue oldCustomAttributeValue = getOrCreateCustomAttributeValueFromObjectReference(objectType, null, oldObjectId, customAttributeDefinition);
+
+        SingleItemCustomAttributeValue newCustomAttributeValue = new SingleItemCustomAttributeValue();
+        newCustomAttributeValue.customAttributeDefinition = customAttributeDefinition;
+        newCustomAttributeValue.deleted = oldCustomAttributeValue.deleted;
+        newCustomAttributeValue.objectId = newObjectId;
+        newCustomAttributeValue.objectType = oldCustomAttributeValue.objectType;
+        newCustomAttributeValue.value = oldCustomAttributeValue.value;
+        newCustomAttributeValue.save();
     }
 }

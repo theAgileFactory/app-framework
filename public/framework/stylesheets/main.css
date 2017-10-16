@@ -165,6 +165,6 @@ fieldset[disabled] .btn-light.active {
 
 .tooltip-wide .tooltip {min-width:150px;}
 
-.wrap-word {
-
+.input-group-addon-multi-language {
+    min-width: 80px;
 }

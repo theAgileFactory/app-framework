@@ -36,14 +36,14 @@ public interface IImplementationDefinedObjectService {
      * 
      * @return
      */
-    public String getDefaultCurrencyCode();
+    String getDefaultCurrencyCode();
 
     /**
      * Return the route to the wait ajax image (the animated gif for wait)
      * 
      * @return a route
      */
-    public Call getRouteForAjaxWaitImage();
+    Call getRouteForAjaxWaitImage();
 
     /**
      * Get the routes to the JSON API which is associated with the
@@ -52,64 +52,69 @@ public interface IImplementationDefinedObjectService {
      * 
      * @return a route
      */
-    public Call getRouteForDynamicSingleCustomAttributeApi();
+    Call getRouteForDynamicSingleCustomAttributeApi();
 
     /**
      * Get the route to download an attachment associated with the specified id
      */
-    public Call getRouteForDownloadAttachedFile(Long attachmentId);
+    Call getRouteForDownloadAttachedFile(Long attachmentId);
 
     /**
      * Get the route to delete an attachment associated with the specified id
      */
-    public Call getRouteForDeleteAttachedFile(Long attachmentId);
+    Call getRouteForDeleteAttachedFile(Long attachmentId);
 
     /**
      * Return true if the save capability is active for the filter config tables
      * (the corresponding "getRouteForFilterConfiguration" should return the
      * filterConfigController actions).
      */
-    public boolean isFilterConfigurationActive();
+    boolean isFilterConfigurationActive();
 
     /**
      * Get the route for the create action of filter configuration.
      */
-    public Call getRouteForFilterConfigurationCreate();
+    Call getRouteForFilterConfigurationCreate();
 
     /**
      * Get the route for the save action of filter configuration.
      */
-    public Call getRouteForFilterConfigurationSave();
+    Call getRouteForFilterConfigurationSave();
 
     /**
      * Get the route for the change action of filter configuration.
      */
-    public Call getRouteForFilterConfigurationChange();
+    Call getRouteForFilterConfigurationChange();
 
     /**
      * Get the route for the edit action of filter configuration.
      */
-    public Call getRouteForFilterConfigurationEdit();
+    Call getRouteForFilterConfigurationEdit();
 
     /**
      * Get the route for the delete action of filter configuration.
      */
-    public Call getRouteForFilterConfigurationDelete();
+    Call getRouteForFilterConfigurationDelete();
 
     /**
      * Get the route for the share action of filter configuration.
      */
-    public Call getRouteForFilterConfigurationShare();
+    Call getRouteForFilterConfigurationShare();
 
     /**
      * Get the route for the search principal action of filter configuration.
      */
-    public Call getRouteForFilterConfigurationSearchPrincipal();
+    Call getRouteForFilterConfigurationSearchPrincipal();
+
+    /**
+     * Get the route for the delete action of filter configuration.
+     */
+    Call getRouteForFilterConfigurationClear();
 
     /**
      * Render an object.<br/>
      * This method can make use of advanced rendering (using views parts) or
      * simply a toString
      */
-    public String renderObject(Object object);
+    String renderObject(Object object);
 }

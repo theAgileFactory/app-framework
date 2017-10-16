@@ -6,6 +6,7 @@ import com.google.inject.Inject;
 
 import framework.services.account.IAccountManagerPlugin;
 import framework.services.account.IPreferenceManagerPlugin;
+import framework.services.audit.IAuditLoggerService;
 import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.configuration.IImplementationDefinedObjectService;
 import framework.services.configuration.ITopMenuBarService;
@@ -47,6 +48,8 @@ public class AbstractErrorHandler extends DefaultHttpErrorHandler {
     private IPreferenceManagerPlugin preferenceManagerPlugin;
     @Inject(optional = true)
     private ICustomAttributeManagerService customAttributeManagerService;
+    @Inject(optional = true)
+    private IAuditLoggerService auditLoggerService;
 
     @Inject
     public AbstractErrorHandler(Configuration configuration, Environment environment, OptionalSourceMapper optionalSourceMapper,
@@ -60,13 +63,13 @@ public class AbstractErrorHandler extends DefaultHttpErrorHandler {
      * This method injects the commonly used services in the {@link Context}.
      * These common services can then be access from the "args" variable of the
      * current context in the scala templates.
-     * 
+     *
      * @param context
      */
     protected void injectCommonServicesIncontext(Http.Context context) {
         ContextArgsInjector.injectCommonServicesIncontext(context, getConfiguration(), getMessagesPlugin(), getUserSessionManagerPlugin(),
                 getAttachmentManagerPlugin(), getAccountManagerPlugin(), getCacheApi(), getKpiService(), getImplementationDefinedObjectService(),
-                getTopMenuBarService(), getPreferenceManagerPlugin(), this.getCustomAttributeManagerService());
+                getTopMenuBarService(), getPreferenceManagerPlugin(), this.getCustomAttributeManagerService(), getAuditLoggerService());
     }
 
     protected Configuration getConfiguration() {
@@ -111,5 +114,9 @@ public class AbstractErrorHandler extends DefaultHttpErrorHandler {
 
     private ICustomAttributeManagerService getCustomAttributeManagerService() {
         return this.customAttributeManagerService;
+    }
+
+    public IAuditLoggerService getAuditLoggerService() {
+        return auditLoggerService;
     }
 }

@@ -36,8 +36,8 @@
     <span class="caret"></span>
   </button>
   <ul class="dropdown-menu">
-    
 
+    <li><a href="#" id="_@(tableId)_filter_configuration_clear"><i class="fa fa-eraser"></i>&nbsp; @parts.Msg("object.filter_configuration.action.clear")</a></li>
     @if(!filterConfiguration.isDefault) {
         <li><a href="#" id="_@(tableId)_filter_configuration_reload"><i class="fa fa-refresh"></i>&nbsp; @parts.Msg("object.filter_configuration.action.reload")</a></li>
         <li><a href="#" id="_@(tableId)_filter_configuration_save"><i class="fa fa-floppy-o"></i>&nbsp; @parts.Msg("object.filter_configuration.action.save")</a></li>
@@ -133,7 +133,11 @@
     @* store in a JS array all available configuration, the index represent the ids *@
     var _@(tableId)_filterConfigurations = new Array();
     @for(availableFilterConfiguration <- availableFilterConfigurations) {
-        _@(tableId)_filterConfigurations[@availableFilterConfiguration.id] = @Html(availableFilterConfiguration.configuration);
+        @if(availableFilterConfiguration.isDefault) {
+            _@(tableId)_filterConfigurations[0] = @Html(availableFilterConfiguration.configuration);
+        } else {
+            _@(tableId)_filterConfigurations[@availableFilterConfiguration.id] = @Html(availableFilterConfiguration.configuration);
+        }
     }
     
     @* call when the user changes the selected filter in the list *@
@@ -240,7 +244,7 @@
         
         $("#_@(tableId)_filter_configuration_save_as_editable").editable('toggle');
     })
-    
+
     
     @* call when the user clicks on the reload button *@
     $("#_@(tableId)_filter_configuration_reload").click(function(event) {
@@ -301,7 +305,35 @@
         $("#_@(tableId)_filter_configuration_edit_editable").editable('toggle');
         
     });
-    
+
+    @* call when the user clicks on the clear button *@
+    $("#_@(tableId)_filter_configuration_clear").click(function(event) {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        $("#_@(tableId)_filter_configuration_dropdown").dropdown("toggle");
+
+        //set waiting icon
+        $("#_@(tableId)_filterConfiguration").html('<img src="@_fattach.getAjaxWaitImageUrl()"/>');
+
+        $.ajax({
+            type: 'POST',
+            contentType: "application/json; charset=utf-8",
+            url: '@_implementationDefinedObjectService.getRouteForFilterConfigurationClear.url',
+            data: JSON.stringify({ 'tableId' : '@(tableId)', 'route' : "@route", 'dataType' : "@filterConfiguration.dataType" }),
+            cache : false,
+            error: function(jqXHR, textStatus, errorThrown) {
+                alert("@parts.Msg("filter.table.ajax.error.message")");
+            }
+        }).done(function(result) {
+            $("#_@(tableId)_filterConfiguration").html(result);
+            _@(tableId)_filterConfig=_@(tableId)_filterConfigurations[0];
+            _@(tableId)_fullRefresh();
+        });
+
+    });
+
     @* call when the user clicks on the delete button *@
     $("#_@(tableId)_filter_configuration_delete").click(function(event) {
         

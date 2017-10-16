@@ -98,7 +98,7 @@ public class TextCustomAttributeValue extends Model implements IModel, ICustomAt
      *            the value to set
      */
     public void setValue(String value) {
-        this.value = value.getBytes();
+        this.value = value == null ? null : value.getBytes();
     }
 
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -278,5 +278,17 @@ public class TextCustomAttributeValue extends Model implements IModel, ICustomAt
     @Override
     public Long getLinkedObjectId() {
         return objectId;
+    }
+
+    public static void cloneInDB(Class<?> objectType, Long oldObjectId, Long newObjectId, CustomAttributeDefinition customAttributeDefinition) {
+        TextCustomAttributeValue oldCustomAttributeValue = getOrCreateCustomAttributeValueFromObjectReference(objectType, null, oldObjectId, customAttributeDefinition);
+
+        TextCustomAttributeValue newCustomAttributeValue = new TextCustomAttributeValue();
+        newCustomAttributeValue.customAttributeDefinition = customAttributeDefinition;
+        newCustomAttributeValue.deleted = oldCustomAttributeValue.deleted;
+        newCustomAttributeValue.objectId = newObjectId;
+        newCustomAttributeValue.objectType = oldCustomAttributeValue.objectType;
+        newCustomAttributeValue.setValue(oldCustomAttributeValue.getValue());
+        newCustomAttributeValue.save();
     }
 }

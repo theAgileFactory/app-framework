@@ -2,6 +2,7 @@ package framework.handlers;
 
 import framework.services.account.IAccountManagerPlugin;
 import framework.services.account.IPreferenceManagerPlugin;
+import framework.services.audit.IAuditLoggerService;
 import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.configuration.IImplementationDefinedObjectService;
 import framework.services.configuration.ITopMenuBarService;
@@ -11,7 +12,6 @@ import framework.services.session.IUserSessionManagerPlugin;
 import framework.services.storage.IAttachmentManagerPlugin;
 import play.Configuration;
 import play.cache.CacheApi;
-import play.mvc.Http;
 import play.mvc.Http.Context;
 
 /**
@@ -28,7 +28,7 @@ abstract class ContextArgsInjector {
      * This method injects the commonly used services in the {@link Context}.
      * These common services can then be access from the "args" variable of the
      * current context in the scala templates.
-     * 
+     *
      * @param context
      * @param configuration
      * @param messagesPlugin
@@ -39,13 +39,21 @@ abstract class ContextArgsInjector {
      * @param kpiService
      * @param implementationDefinedObjectService
      * @param topMenuBarService
-     * @param
+     * @param auditLoggerService
      */
-    public static void injectCommonServicesIncontext(Http.Context context, Configuration configuration, II18nMessagesPlugin messagesPlugin,
-            IUserSessionManagerPlugin userSessionManagerPlugin, IAttachmentManagerPlugin attachmentManagerPlugin, IAccountManagerPlugin accountManagerPlugin,
-            CacheApi cacheApi, IKpiService kpiService, IImplementationDefinedObjectService implementationDefinedObjectService,
-            ITopMenuBarService topMenuBarService, IPreferenceManagerPlugin preferenceManagerPlugin,
-            ICustomAttributeManagerService customAttributeManagerService) {
+    public static void injectCommonServicesIncontext(Context context,
+                                                     Configuration configuration,
+                                                     II18nMessagesPlugin messagesPlugin,
+                                                     IUserSessionManagerPlugin userSessionManagerPlugin,
+                                                     IAttachmentManagerPlugin attachmentManagerPlugin,
+                                                     IAccountManagerPlugin accountManagerPlugin,
+                                                     CacheApi cacheApi,
+                                                     IKpiService kpiService,
+                                                     IImplementationDefinedObjectService implementationDefinedObjectService,
+                                                     ITopMenuBarService topMenuBarService,
+                                                     IPreferenceManagerPlugin preferenceManagerPlugin,
+                                                     ICustomAttributeManagerService customAttributeManagerService,
+                                                     IAuditLoggerService auditLoggerService) {
         if (context == null) {
             return;
         }
@@ -81,6 +89,9 @@ abstract class ContextArgsInjector {
         }
         if (customAttributeManagerService != null) {
             context.args.put(ICustomAttributeManagerService.class.getName(), customAttributeManagerService);
+        }
+        if (auditLoggerService != null) {
+            context.args.put(IAuditLoggerService.class.getName(), auditLoggerService);
         }
     }
 }

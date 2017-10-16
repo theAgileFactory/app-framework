@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 
 import framework.services.account.IAccountManagerPlugin;
 import framework.services.account.IPreferenceManagerPlugin;
+import framework.services.audit.IAuditLoggerService;
 import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.configuration.IImplementationDefinedObjectService;
 import framework.services.configuration.ITopMenuBarService;
@@ -51,6 +52,8 @@ public abstract class AbstractRequestHandler extends DefaultHttpRequestHandler {
     private IPreferenceManagerPlugin preferenceManagerPlugin;
     @Inject(optional = true)
     private ICustomAttributeManagerService customAttributeManagerService;
+    @Inject(optional = true)
+    private IAuditLoggerService auditLoggerService;
 
     public AbstractRequestHandler() {
         super();
@@ -67,7 +70,7 @@ public abstract class AbstractRequestHandler extends DefaultHttpRequestHandler {
     protected void injectCommonServicesIncontext(Http.Context context) {
         ContextArgsInjector.injectCommonServicesIncontext(context, getConfiguration(), getMessagesPlugin(), getUserSessionManagerPlugin(),
                 getAttachmentManagerPlugin(), getAccountManagerPlugin(), getCacheApi(), getKpiService(), getImplementationDefinedObjectService(),
-                getTopMenuBarService(), getPreferenceManagerPlugin(), this.getCustomAttributeManagerService());
+                getTopMenuBarService(), getPreferenceManagerPlugin(), getCustomAttributeManagerService(), getAuditLoggerService());
     }
 
     protected Configuration getConfiguration() {
@@ -112,5 +115,9 @@ public abstract class AbstractRequestHandler extends DefaultHttpRequestHandler {
 
     private ICustomAttributeManagerService getCustomAttributeManagerService() {
         return this.customAttributeManagerService;
+    }
+
+    private IAuditLoggerService getAuditLoggerService() {
+        return this.auditLoggerService;
     }
 }

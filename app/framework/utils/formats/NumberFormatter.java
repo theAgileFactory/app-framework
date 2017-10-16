@@ -30,7 +30,10 @@ import framework.utils.IColumnFormatter;
  * @param <T>
  */
 public class NumberFormatter<T> implements IColumnFormatter<T> {
+
     private String pattern;
+
+    public static final String CURRENCY_PATTERN = "#,##0";
 
     public NumberFormatter() {
     }

@@ -1188,4 +1188,56 @@ public class CustomAttributeDefinition extends Model implements IModel {
         }
     }
 
+    /**
+     * Clone custom attributes from one object to the other
+     * @param objectType
+     * @param oldObjectId
+     * @param newObjectId
+     */
+    public static void cloneCustomAttributeValues(Class<?> objectType, Long oldObjectId, Long newObjectId) {
+        List<CustomAttributeDefinition> customAttributeDefinitions = getOrderedCustomAttributeDefinitions(objectType);
+        customAttributeDefinitions.stream().forEach(customAttributeDefinition -> {
+            switch (AttributeType.valueOf(customAttributeDefinition.attributeType)) {
+                case INTEGER:
+                    IntegerCustomAttributeValue.cloneInDB(objectType, oldObjectId, newObjectId, customAttributeDefinition);
+                    break;
+                case DECIMAL:
+                    DecimalCustomAttributeValue.cloneInDB(objectType, oldObjectId, newObjectId, customAttributeDefinition);
+                    break;
+                case BOOLEAN:
+                    BooleanCustomAttributeValue.cloneInDB(objectType, oldObjectId, newObjectId, customAttributeDefinition);
+                    break;
+                case DATE:
+                    DateCustomAttributeValue.cloneInDB(objectType, oldObjectId, newObjectId, customAttributeDefinition);
+                    break;
+                case STRING:
+                    StringCustomAttributeValue.cloneInDB(objectType, oldObjectId, newObjectId, customAttributeDefinition);
+                    break;
+                case TEXT:
+                    TextCustomAttributeValue.cloneInDB(objectType, oldObjectId, newObjectId, customAttributeDefinition);
+                    break;
+                case URL:
+                    UrlCustomAttributeValue.cloneInDB(objectType, oldObjectId, newObjectId, customAttributeDefinition);
+                    break;
+                case SINGLE_ITEM:
+                    SingleItemCustomAttributeValue.cloneInDB(objectType, oldObjectId, newObjectId, customAttributeDefinition);
+                    break;
+                case DYNAMIC_SINGLE_ITEM:
+                    DynamicSingleItemCustomAttributeValue.cloneInDB(objectType, oldObjectId, newObjectId, customAttributeDefinition);
+                    break;
+                case DYNAMIC_MULTI_ITEM:
+                    DynamicMultiItemCustomAttributeValue.cloneInDB(objectType, oldObjectId, newObjectId, customAttributeDefinition);
+                    break;
+                case MULTI_ITEM:
+                    MultiItemCustomAttributeValue.cloneInDB(objectType, oldObjectId, newObjectId, customAttributeDefinition);
+                    break;
+                case IMAGE:
+                    ImageCustomAttributeValue.cloneInDB(objectType, oldObjectId, newObjectId, customAttributeDefinition);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Invalid attribute type : " + customAttributeDefinition.attributeType);
+            }
+        });
+    }
+
 }
