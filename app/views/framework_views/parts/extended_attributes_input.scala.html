@@ -28,6 +28,7 @@
 @if(customAttributeValuesMap!=null) {
 
     @for(customAttributeGroupId <- customAttributeValuesMap.keySet()){
+        @if(!displayAsRow) {
         <div class="panel panel-default">
 
             <div class="panel-heading">
@@ -35,13 +36,13 @@
             </div>
 
             <div class="panel-body">
-
                 <table class="table table-condensed table-hover">
                     <colgroup>
                         <col class="col-md-3">
                         <col class="col-md-9">
                     </colgroup>
                     <tbody>
+        }
                     @for(customAttributeValue <- customAttributeValuesMap.get(customAttributeGroupId)) {
 
                         @if(!onlyDisplayedOrRequired || customAttributeValue.getDefinition.isDisplayed || customAttributeValue.getDefinition.isRequired) {
@@ -179,10 +180,11 @@
                         }
                     }
 
+        @if(!displayAsRow) {
                     </tbody>
                 </table>
-
             </div>
         </div>
+        }
     }
 }
