@@ -2237,7 +2237,7 @@ public class FilterConfig<T> {
                 if (value.contains(JOKER)) {
                     value = value.replaceAll("\\" + JOKER, "%");
                     String sql = String.format(SEARCH_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id,
-                            " like '" + value + "' or " + value + " = ''");
+                            " like '" + value + "' or '" + value + "' = ''");
                     return Expr.raw(sql);
                 } else {
                     String sql = String.format(SEARCH_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id,
