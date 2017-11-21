@@ -2209,11 +2209,9 @@ public class FilterConfig<T> {
                 + "where cust%2$s.deleted=0 and cust%2$s.object_type='%1$s' "
                 + "and cust%2$s.object_id=t0.id and cust%2$s.custom_attribute_definition_id=%2$s and cust%2$s.value%3$s)<>0";
 
-        private static final String SORT_EXPRESSION_TEMPLATE = "(select #value# from string_custom_attribute_value as sortcust%2$s "
+        private static final String SORT_EXPRESSION_TEMPLATE = "(select sortcust%2$s.value from string_custom_attribute_value as sortcust%2$s "
                 + "where sortcust%2$s.deleted=0 "
                 + "and sortcust%2$s.object_type='%1$s' and sortcust%2$s.object_id=t0.id and sortcust%2$s.custom_attribute_definition_id=%2$s)";
-        private static final String SORT_EXPRESSION_TEMPLATE_ASC = "HEX(WEIGHT_STRING(sortcust%2$s.value LEVEL 1))";
-        private static final String SORT_EXPRESSION_TEMPLATE_DESC = "HEX(WEIGHT_STRING(sortcust%2$s.value LEVEL 1 DESC))";
 
         private CustomAttributeDefinition customAttributeDefinition;
 
@@ -2251,13 +2249,12 @@ public class FilterConfig<T> {
         @Override
         public <T> void addEBeanSortExpression(OrderBy<T> orderby, SortStatusType sortStatusType, String fieldName) {
             if (sortStatusType != SortStatusType.NONE && sortStatusType != SortStatusType.UNSORTED) {
-                String template = null;
+                String template = String.format(SORT_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id);
                 if (sortStatusType == SortStatusType.DESC) {
-                    template = SORT_EXPRESSION_TEMPLATE.replace("#value#", SORT_EXPRESSION_TEMPLATE_DESC);
+                    orderby.desc(template);
                 } else {
-                    template = SORT_EXPRESSION_TEMPLATE.replace("#value#", SORT_EXPRESSION_TEMPLATE_ASC);
+                    orderby.asc(template);
                 }
-                orderby.asc(String.format(template, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id));
             }
         }
 
@@ -2280,11 +2277,9 @@ public class FilterConfig<T> {
                 + "where cust%2$s.deleted=0 and cust%2$s.object_type='%1$s' and cust%2$s.object_id=t0.id and cust%2$s.custom_attribute_definition_id=%2$s "
                 + "and CAST(cust%2$s.value AS CHAR(10000) CHARACTER SET utf8)%3$s)<>0";
 
-        private static final String SORT_EXPRESSION_TEMPLATE = "(select #value# from text_custom_attribute_value as sortcust%2$s "
+        private static final String SORT_EXPRESSION_TEMPLATE = "(select sortcust%2$s.value from text_custom_attribute_value as sortcust%2$s "
                 + "where sortcust%2$s.deleted=0 and sortcust%2$s.object_type='%1$s' and sortcust%2$s.object_id=t0.id "
                 + "and sortcust%2$s.custom_attribute_definition_id=%2$s)";
-        private static final String SORT_EXPRESSION_TEMPLATE_ASC = "HEX(WEIGHT_STRING(sortcust%2$s.value LEVEL 1))";
-        private static final String SORT_EXPRESSION_TEMPLATE_DESC = "HEX(WEIGHT_STRING(sortcust%2$s.value LEVEL 1 DESC))";
 
         private CustomAttributeDefinition customAttributeDefinition;
 
@@ -2322,13 +2317,12 @@ public class FilterConfig<T> {
         @Override
         public <T> void addEBeanSortExpression(OrderBy<T> orderby, SortStatusType sortStatusType, String fieldName) {
             if (sortStatusType != SortStatusType.NONE && sortStatusType != SortStatusType.UNSORTED) {
-                String template = null;
+                String template = String.format(SORT_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id);
                 if (sortStatusType == SortStatusType.DESC) {
-                    template = SORT_EXPRESSION_TEMPLATE.replace("#value#", SORT_EXPRESSION_TEMPLATE_DESC);
+                    orderby.desc(template);
                 } else {
-                    template = SORT_EXPRESSION_TEMPLATE.replace("#value#", SORT_EXPRESSION_TEMPLATE_ASC);
+                    orderby.asc(template);
                 }
-                orderby.asc(String.format(template, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id));
             }
         }
 
@@ -2642,8 +2636,6 @@ public class FilterConfig<T> {
                 + " join custom_attribute_item_option as sortcust%2$s_option on sortcust%2$s_option.id=sortcust%2$s.value_id"
                 + " where sortcust%2$s.deleted=0 and sortcust%2$s.object_type='%1$s' and sortcust%2$s.object_id=t0.id "
                 + "and sortcust%2$s.custom_attribute_definition_id=%2$s)";
-        private static final String SORT_EXPRESSION_TEMPLATE_ASC = "sortcust%2$s_option.order";
-        private static final String SORT_EXPRESSION_TEMPLATE_DESC = "(1 - sortcust%2$s_option.order)";
 
         private CustomAttributeDefinition customAttributeDefinition;
 
@@ -2683,13 +2675,12 @@ public class FilterConfig<T> {
         @Override
         public <T> void addEBeanSortExpression(OrderBy<T> orderby, SortStatusType sortStatusType, String fieldName) {
             if (sortStatusType != SortStatusType.NONE && sortStatusType != SortStatusType.UNSORTED) {
-                String template = null;
+                String template = String.format(SORT_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id);
                 if (sortStatusType == SortStatusType.DESC) {
-                    template = SORT_EXPRESSION_TEMPLATE.replace("#value#", SORT_EXPRESSION_TEMPLATE_DESC);
+                    orderby.desc(template);
                 } else {
-                    template = SORT_EXPRESSION_TEMPLATE.replace("#value#", SORT_EXPRESSION_TEMPLATE_ASC);
+                    orderby.asc(template);
                 }
-                orderby.asc(String.format(template, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id));
             }
         }
 
