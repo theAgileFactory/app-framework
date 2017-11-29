@@ -17,14 +17,7 @@
  */
 package framework.utils;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * The default implementation for {@link ISelectableValueHolderCollection}.<br/>
@@ -35,7 +28,7 @@ import java.util.Set;
  * @param <T>
  */
 public class DefaultSelectableValueHolderCollection<T> implements ISelectableValueHolderCollection<T> {
-    private Map<T, ISelectableValueHolder<T>> valueHoldersMap = new HashMap<T, ISelectableValueHolder<T>>();
+    private Map<T, ISelectableValueHolder<T>> valueHoldersMap = new HashMap<>();
 
     /**
      * Default constructor
@@ -52,7 +45,7 @@ public class DefaultSelectableValueHolderCollection<T> implements ISelectableVal
      * <b>WARNING</b>: any later modification of the list will not be taken into
      * account
      * 
-     * @param valueHolderList
+     * @param valueHolderList the source list
      */
     public DefaultSelectableValueHolderCollection(@SuppressWarnings("rawtypes") final Collection valueHolderList) {
         if (valueHolderList != null) {
@@ -68,7 +61,7 @@ public class DefaultSelectableValueHolderCollection<T> implements ISelectableVal
      * Creates a {@link DefaultSelectableValueHolderCollection} with only one
      * value holder.
      * 
-     * @param valueHolder
+     * @param valueHolder the initial value holder
      */
     public DefaultSelectableValueHolderCollection(ISelectableValueHolder<T> valueHolder) {
         if (valueHolder != null) {
@@ -114,6 +107,18 @@ public class DefaultSelectableValueHolderCollection<T> implements ISelectableVal
 
     /*
      * (non-Javadoc)
+     *
+     * @see
+     * framework.utils.ISelectableValueHolderCollection#addAll(framework.utils.
+     * ISelectableValueHolder)
+     */
+    @Override
+    public void addAll(ISelectableValueHolderCollection<T> collection) {
+        collection.getValues().stream().forEach(this::add);
+    }
+
+    /*
+     * (non-Javadoc)
      * 
      * @see framework.utils.ISelectableValueHolderCollection#getValues()
      */
@@ -124,13 +129,8 @@ public class DefaultSelectableValueHolderCollection<T> implements ISelectableVal
 
     @Override
     public synchronized List<ISelectableValueHolder<T>> getSortedValues() {
-        List<ISelectableValueHolder<T>> list = new ArrayList<ISelectableValueHolder<T>>(getValueHoldersMap().values());
-        Collections.sort(list, new Comparator<ISelectableValueHolder<T>>() {
-            @Override
-            public int compare(ISelectableValueHolder<T> o1, ISelectableValueHolder<T> o2) {
-                return o1.compareTo(o2);
-            }
-        });
+        List<ISelectableValueHolder<T>> list = new ArrayList<>(getValueHoldersMap().values());
+        Collections.sort(list, ISelectableValueHolder::compareTo);
         return list;
     }
 
@@ -151,20 +151,16 @@ public class DefaultSelectableValueHolderCollection<T> implements ISelectableVal
 
     @Override
     public synchronized ISelectableValueHolderCollection<T> substract(List<T> values) {
-        ISelectableValueHolderCollection<T> substractCollection = new DefaultSelectableValueHolderCollection<T>();
+        ISelectableValueHolderCollection<T> substractCollection = new DefaultSelectableValueHolderCollection<>();
         if (values != null) {
-            for (ISelectableValueHolder<T> valueHolder : getValues()) {
-                if (!values.contains(valueHolder.getValue())) {
-                    substractCollection.add(valueHolder);
-                }
-            }
+            getValues().stream().filter(valueHolder -> !values.contains(valueHolder.getValue())).forEach(substractCollection::add);
         }
         return substractCollection;
     }
 
     @Override
     public synchronized ISelectableValueHolderCollection<T> getSubCollection(List<T> values) {
-        ISelectableValueHolderCollection<T> subCollection = new DefaultSelectableValueHolderCollection<T>();
+        ISelectableValueHolderCollection<T> subCollection = new DefaultSelectableValueHolderCollection<>();
         if (values != null) {
             for (T value : values) {
                 if (containsValue(value)) {
@@ -184,8 +180,6 @@ public class DefaultSelectableValueHolderCollection<T> implements ISelectableVal
 
     /**
      * A map of {@link ISelectableValueHolder}
-     * 
-     * @return
      */
     private Map<T, ISelectableValueHolder<T>> getValueHoldersMap() {
         return valueHoldersMap;

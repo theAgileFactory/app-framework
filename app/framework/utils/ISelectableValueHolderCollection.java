@@ -38,7 +38,13 @@ public interface ISelectableValueHolderCollection<T> {
      * @param valueHolder
      *            a value holder
      */
-    public abstract void add(ISelectableValueHolder<T> valueHolder);
+    void add(ISelectableValueHolder<T> valueHolder);
+
+    /**
+     * Add all the values of another collection
+     * @param collection the source collection
+     */
+    void addAll(ISelectableValueHolderCollection<T> collection);
 
     /**
      * Remove the specified value holder from the collection
@@ -46,30 +52,30 @@ public interface ISelectableValueHolderCollection<T> {
      * @param valueHolder
      *            a value holder
      */
-    public abstract void remove(ISelectableValueHolder<T> valueHolder);
+    void remove(ISelectableValueHolder<T> valueHolder);
 
     /**
      * Remove the specified value holder associated to the specified value from
      * the collection
      * 
-     * @param valueHolder
-     *            a value holder
+     * @param value
+     *            a value
      */
-    public abstract void remove(T value);
+    void remove(T value);
 
     /**
      * Get the {@link List} of {@link ISelectableValueHolder}
      * 
      * @return a list of value holders
      */
-    public abstract Collection<ISelectableValueHolder<T>> getValues();
+    Collection<ISelectableValueHolder<T>> getValues();
 
     /**
      * Get the {@link List} of {@link ISelectableValueHolder}
      * 
      * @return a sorted list of value holders
      */
-    public abstract List<ISelectableValueHolder<T>> getSortedValues();
+    List<ISelectableValueHolder<T>> getSortedValues();
 
     /**
      * Get the value holder which is specifically associated with this value
@@ -78,7 +84,7 @@ public interface ISelectableValueHolderCollection<T> {
      *            a value
      * @return the corresponding value holder (or null if not found)
      */
-    public abstract ISelectableValueHolder<T> getValueHolder(T value);
+    ISelectableValueHolder<T> getValueHolder(T value);
 
     /**
      * Return a collection created from the current collection which contains
@@ -89,7 +95,7 @@ public interface ISelectableValueHolderCollection<T> {
      *            some values
      * @return a new collection
      */
-    public abstract ISelectableValueHolderCollection<T> getSubCollection(List<T> values);
+    ISelectableValueHolderCollection<T> getSubCollection(List<T> values);
 
     /**
      * Return a collection created from the current collection which contains
@@ -100,7 +106,7 @@ public interface ISelectableValueHolderCollection<T> {
      *            some values
      * @return a new collection
      */
-    public abstract ISelectableValueHolderCollection<T> substract(List<T> values);
+    ISelectableValueHolderCollection<T> substract(List<T> values);
 
     /**
      * Returns true if a {@link ISelectableValueHolder} with the specified value
@@ -110,12 +116,12 @@ public interface ISelectableValueHolderCollection<T> {
      *            a value
      * @return a boolean
      */
-    public abstract boolean containsValue(T value);
+    boolean containsValue(T value);
 
     /**
      * Return a list of values from the {@link ISelectableValueHolder}
      * 
      * @return a list of value from the value holders of the collection
      */
-    public abstract Set<T> getValuesValueSet();
+    Set<T> getValuesValueSet();
 }
