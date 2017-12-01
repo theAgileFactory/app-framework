@@ -43,13 +43,11 @@
         <option value=""></option>
       }
       
-      @for((item, index) <- selectableValues.getSortedValues().zipWithIndex) {
-        <option value="@item.getValue()" @if(field.value!=null && !field.value.isEmpty && field.value.get.equals(item.getValue().toString)){selected="selected"}>
-          @item.getName()
-          @if(isDescriptionVisible && item.getDescription() != null && !item.getDescription().equals("")){
-              (@item.getDescription())
-          }
-        </option>
+      @for((item, index) <- selectableValues.getSortedValues.zipWithIndex) {
+        <option
+            value="@item.getValue"
+            @if(field.value!=null && field.value.isDefined && field.value.get.equals(item.getValue.toString)){selected="selected"}
+        >@item.getName @if(isDescriptionVisible && item.getDescription != null && !item.getDescription.equals("")){(@item.getDescription)}</option>
       }
     </select>
     <span class="help-block">@helpLabel<strong>@{field.error.map { error => parts.Msg(error.message) }}</strong></span>
