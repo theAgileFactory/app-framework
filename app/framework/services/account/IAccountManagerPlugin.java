@@ -19,6 +19,7 @@ package framework.services.account;
 
 import java.util.List;
 
+import framework.utils.ISelectableValueHolderCollection;
 import models.framework_models.account.Principal;
 import framework.services.account.IUserAccount.AccountType;
 
@@ -47,7 +48,7 @@ public interface IAccountManagerPlugin {
      * 
      * @return a boolean
      */
-    public boolean isAuthenticationRepositoryMasterMode();
+    boolean isAuthenticationRepositoryMasterMode();
 
     /**
      * Return true if a user is allowed to change his/her e-mail himself.<br/>
@@ -56,7 +57,7 @@ public interface IAccountManagerPlugin {
      * 
      * @return a boolean
      */
-    public boolean isSelfMailUpdateAllowed();
+    boolean isSelfMailUpdateAllowed();
 
     /**
      * Return true if the e-mail already exists in the database
@@ -66,7 +67,7 @@ public interface IAccountManagerPlugin {
      * @return true if the specified e-mail address already exists
      * @throws AccountManagementException
      */
-    public boolean isMailExistsInAuthenticationBackEnd(String mail) throws AccountManagementException;
+    boolean isMailExistsInAuthenticationBackEnd(String mail) throws AccountManagementException;
 
     /**
      * Return true if the specified user id already exists in the database as
@@ -77,7 +78,7 @@ public interface IAccountManagerPlugin {
      * @return true if the specified uid already exists
      * @throws AccountManagementException
      */
-    public boolean isUserIdExists(String uid) throws AccountManagementException;
+    boolean isUserIdExists(String uid) throws AccountManagementException;
 
     /**
      * Return true if the specified user id already exists in the authentication
@@ -89,7 +90,7 @@ public interface IAccountManagerPlugin {
      * @return true if the specified uid already exists
      * @throws AccountManagementException
      */
-    public boolean isUserIdExistsInAuthenticationBackEnd(String uid) throws AccountManagementException;
+    boolean isUserIdExistsInAuthenticationBackEnd(String uid) throws AccountManagementException;
 
     /**
      * Update the password of the specified user profile
@@ -100,7 +101,7 @@ public interface IAccountManagerPlugin {
      *            the new password
      * @throws AccountManagementException
      */
-    public void updatePassword(String uid, String password) throws AccountManagementException;
+    void updatePassword(String uid, String password) throws AccountManagementException;
 
     /**
      * Add a system level role type to the specified user
@@ -111,7 +112,7 @@ public interface IAccountManagerPlugin {
      *            the name of a system level role
      * @throws AccountManagementException
      */
-    public void addSystemLevelRoleType(String uid, String systemLevelRoleTypeName) throws AccountManagementException;
+    void addSystemLevelRoleType(String uid, String systemLevelRoleTypeName) throws AccountManagementException;
 
     /**
      * Remove a system level role type from the specified user
@@ -122,7 +123,7 @@ public interface IAccountManagerPlugin {
      *            the name of a system level role
      * @throws AccountManagementException
      */
-    public void removeSystemLevelRoleType(String uid, String systemLevelRoleTypeName) throws AccountManagementException;
+    void removeSystemLevelRoleType(String uid, String systemLevelRoleTypeName) throws AccountManagementException;
 
     /**
      * Add a list of system level role type to the specified user
@@ -133,7 +134,7 @@ public interface IAccountManagerPlugin {
      *            a list of system level role type names
      * @throws AccountManagementException
      */
-    public void addSystemLevelRoleTypes(String uid, List<String> systemLevelRoleTypeNames) throws AccountManagementException;
+    void addSystemLevelRoleTypes(String uid, List<String> systemLevelRoleTypeNames) throws AccountManagementException;
 
     /**
      * Remove a list of system level role type from the specified user
@@ -144,7 +145,7 @@ public interface IAccountManagerPlugin {
      *            a list of system level role type names
      * @throws AccountManagementException
      */
-    public void removeSystemLevelRoleTypes(String uid, List<String> systemLevelRoleTypeNames) throws AccountManagementException;
+    void removeSystemLevelRoleTypes(String uid, List<String> systemLevelRoleTypeNames) throws AccountManagementException;
 
     /**
      * Add or remove the system level role type from the user account so that
@@ -157,7 +158,7 @@ public interface IAccountManagerPlugin {
      *            a list of system level role type names
      * @throws AccountManagementException
      */
-    public void overwriteSystemLevelRoleTypes(String uid, List<String> systemLevelRoleTypeNames) throws AccountManagementException;
+    void overwriteSystemLevelRoleTypes(String uid, List<String> systemLevelRoleTypeNames) throws AccountManagementException;
 
     /**
      * Creates a new user account.<br/>
@@ -178,7 +179,7 @@ public interface IAccountManagerPlugin {
      * 
      * @throws AccountManagementException
      */
-    public void createNewUserAccount(String uid, AccountType accountType, String firstName, String lastName, String mail, List<String> systemLevelRoleTypeNames)
+    void createNewUserAccount(String uid, AccountType accountType, String firstName, String lastName, String mail, List<String> systemLevelRoleTypeNames)
             throws AccountManagementException;
 
     /**
@@ -192,7 +193,7 @@ public interface IAccountManagerPlugin {
      *         third party systems
      * @throws AccountManagementException
      */
-    public void resync(String uid) throws AccountManagementException;
+    void resync(String uid) throws AccountManagementException;
 
     /**
      * Update the basic data of a user account.<br/>
@@ -208,7 +209,7 @@ public interface IAccountManagerPlugin {
      *            the user last name
      * @throws AccountManagementException
      */
-    public void updateBasicUserData(String uid, String firstName, String lastName) throws AccountManagementException;
+    void updateBasicUserData(String uid, String firstName, String lastName) throws AccountManagementException;
 
     /**
      * Update the e-mail address of a user account
@@ -219,7 +220,7 @@ public interface IAccountManagerPlugin {
      *            an e-mail address
      * @throws AccountManagementException
      */
-    public void updateMail(String uid, String mail) throws AccountManagementException;
+    void updateMail(String uid, String mail) throws AccountManagementException;
 
     /**
      * Update the activation status for this user.<br/>
@@ -232,7 +233,7 @@ public interface IAccountManagerPlugin {
      *            true if the user is active
      * @throws AccountManagementException
      */
-    public void updateActivationStatus(String uid, boolean isActive) throws AccountManagementException;
+    void updateActivationStatus(String uid, boolean isActive) throws AccountManagementException;
 
     /**
      * Update the user account type for the specified user.<br/>
@@ -244,7 +245,7 @@ public interface IAccountManagerPlugin {
      * 
      * @throws AccountManagementException
      */
-    public void updateUserAccountType(String uid, AccountType accountType) throws AccountManagementException;
+    void updateUserAccountType(String uid, AccountType accountType) throws AccountManagementException;
 
     /**
      * update the preferred language of a user (principal table)
@@ -264,7 +265,7 @@ public interface IAccountManagerPlugin {
      * @param uid
      *            the unique user ID
      */
-    public void deleteAccount(String uid) throws AccountManagementException;
+    void deleteAccount(String uid) throws AccountManagementException;
 
     /**
      * Generate a new validation key stored in the user profile.<br/>
@@ -281,7 +282,7 @@ public interface IAccountManagerPlugin {
      *            validation key
      * @return an uuid
      */
-    public String getValidationKey(String uid, String validationData) throws AccountManagementException;
+    String getValidationKey(String uid, String validationData) throws AccountManagementException;
 
     /**
      * Check if the validation key is valid for the specified user and return
@@ -295,7 +296,7 @@ public interface IAccountManagerPlugin {
      *         valid
      * @throws AccountManagementException
      */
-    public String checkValidationKey(String uid, String validationKey) throws AccountManagementException;
+    String checkValidationKey(String uid, String validationKey) throws AccountManagementException;
 
     /**
      * Reset any existing validation key
@@ -304,7 +305,7 @@ public interface IAccountManagerPlugin {
      *            the unique user ID
      * @throws AccountManagementException
      */
-    public void resetValidationKey(String uid) throws AccountManagementException;
+    void resetValidationKey(String uid) throws AccountManagementException;
 
     /**
      * Retrieve the user profile from the user authentication back-end
@@ -314,7 +315,7 @@ public interface IAccountManagerPlugin {
      * @return a IUserProfile instance
      * @throws AccountManagementException
      */
-    public IUserAccount getUserAccountFromMafUid(Long mafUid) throws AccountManagementException;
+    IUserAccount getUserAccountFromMafUid(Long mafUid) throws AccountManagementException;
 
     /**
      * Retrieve the user profile from the user authentication back-end
@@ -324,7 +325,7 @@ public interface IAccountManagerPlugin {
      * @return a IUserProfile instance
      * @throws AccountManagementException
      */
-    public IUserAccount getUserAccountFromUid(String uid) throws AccountManagementException;
+    IUserAccount getUserAccountFromUid(String uid) throws AccountManagementException;
 
     /**
      * Retrieve the user profile associated with the specified e-mail
@@ -334,7 +335,7 @@ public interface IAccountManagerPlugin {
      * @return a IUserProfile instance
      * @throws AccountManagementException
      */
-    public IUserAccount getUserAccountFromEmail(String mail) throws AccountManagementException;
+    IUserAccount getUserAccountFromEmail(String mail) throws AccountManagementException;
 
     /**
      * Retrieve the user profiles from the name of the user
@@ -344,16 +345,23 @@ public interface IAccountManagerPlugin {
      * @return a IUserProfile instance
      * @throws AccountManagementException
      */
-    public List<IUserAccount> getUserAccountsFromName(String nameCriteria) throws AccountManagementException;
+    List<IUserAccount> getUserAccountsFromName(String nameCriteria) throws AccountManagementException;
+
+    /**
+     * Retrieve user profiles from name as value holder collection
+     *
+     * @param searchString the search string (may use jokers)
+     */
+    ISelectableValueHolderCollection<String> getUserAccountsFromNameAsVH(String searchString);
 
     /**
      * When a modification occurs, invalidate the user account cache
      */
-    public void invalidateUserAccountCache(String uid);
+    void invalidateUserAccountCache(String uid);
 
     /**
      * Invalidate the cache for all the user accounts
      */
-    public void invalidateAllUserAccountsCache() throws AccountManagementException;
+    void invalidateAllUserAccountsCache() throws AccountManagementException;
 
 }
