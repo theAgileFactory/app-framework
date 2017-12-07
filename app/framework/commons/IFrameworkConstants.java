@@ -209,6 +209,11 @@ public interface IFrameworkConstants {
     String SWAGGER_API_BASEPATH_PREFERENCE = "SWAGGER_API_BASEPATH_PREFERENCE";
 
     /**
+     * System preference for the display of milestone names
+     */
+    String GOVERNANCE_MILESTONE_DISPLAY_PREFERENCE = "GOVERNANCE_MILESTONE_DISPLAY_PREFERENCE";
+
+    /**
      * System preference for SMTP
      */
     String SMTP_HOST_PREFERENCE = "SMTP_HOST_PREFERENCE";
