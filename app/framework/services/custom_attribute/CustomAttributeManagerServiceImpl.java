@@ -1,28 +1,21 @@
 package framework.services.custom_attribute;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-import org.apache.commons.lang3.StringUtils;
-
 import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.session.IUserSessionManagerPlugin;
 import framework.services.storage.IAttachmentManagerPlugin;
 import models.framework_models.common.CustomAttributeDefinition;
 import models.framework_models.common.ICustomAttributeValue;
-import play.Configuration;
+import org.apache.commons.lang3.StringUtils;
 import play.Logger;
 import play.data.Form;
 import play.inject.ApplicationLifecycle;
 import play.libs.F.Promise;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * The custom attribute manager service.
@@ -41,8 +34,6 @@ public class CustomAttributeManagerServiceImpl implements ICustomAttributeManage
     /**
      * Creates a new CustomAttributeManagerServiceImpl.
      * 
-     * @param configuration
-     *            the play configuration service
      * @param lifecycle
      *            the play application lifecyle listener
      * @param i18nMessagesPlugin
@@ -53,7 +44,7 @@ public class CustomAttributeManagerServiceImpl implements ICustomAttributeManage
      *            the attachment manager service
      */
     @Inject
-    public CustomAttributeManagerServiceImpl(Configuration configuration, ApplicationLifecycle lifecycle, II18nMessagesPlugin i18nMessagesPlugin,
+    public CustomAttributeManagerServiceImpl(ApplicationLifecycle lifecycle, II18nMessagesPlugin i18nMessagesPlugin,
             IUserSessionManagerPlugin userSessionManagerPlugin, IAttachmentManagerPlugin attachmentManagerPlugin) {
         this.i18nMessagesPlugin = i18nMessagesPlugin;
         this.userSessionManagerPlugin = userSessionManagerPlugin;
@@ -111,7 +102,7 @@ public class CustomAttributeManagerServiceImpl implements ICustomAttributeManage
 
     private <T> void fillWithValues(Form<T> form, Class<?> clazz, String filter, Long objectId, String prefix) {
 
-        List<ICustomAttributeValue> values = null;
+        List<ICustomAttributeValue> values;
         if (filter != null) {
             values = CustomAttributeDefinition.getOrderedCustomAttributeValues(clazz, filter, objectId);
         } else {
@@ -154,14 +145,14 @@ public class CustomAttributeManagerServiceImpl implements ICustomAttributeManage
         // get the indexes to validate
         Map<String, String> data = form.data();
         Set<Integer> indexes = new HashSet<>();
-        for (String key : data.keySet()) {
-            if (key.startsWith(listFieldName + "[")) {
-                final Pattern pattern = Pattern.compile(listFieldName + "\\[(.+?)\\](.*)");
-                final Matcher matcher = pattern.matcher(key);
-                matcher.find();
-                indexes.add(Integer.valueOf(matcher.group(1)));
-            }
-        }
+        data.keySet().stream()
+                .filter(key -> key.startsWith(listFieldName + "["))
+                .forEach(key -> {
+                    final Pattern pattern = Pattern.compile(listFieldName + "\\[(.+?)\\](.*)");
+                    final Matcher matcher = pattern.matcher(key);
+                    matcher.find();
+                    indexes.add(Integer.valueOf(matcher.group(1)));
+                });
 
         boolean result = false;
         for (Integer index : indexes) {
@@ -201,7 +192,7 @@ public class CustomAttributeManagerServiceImpl implements ICustomAttributeManage
         boolean hasErrors = false;
         Map<String, String> data = form.data();
         if (data != null) {
-            List<ICustomAttributeValue> customAttributeValues = null;
+            List<ICustomAttributeValue> customAttributeValues;
             if (filter != null) {
                 customAttributeValues = CustomAttributeDefinition.getOrderedCustomAttributeValues(clazz, filter, objectId);
             } else {
@@ -217,13 +208,13 @@ public class CustomAttributeManagerServiceImpl implements ICustomAttributeManage
                             // Find the multiple values and create a comma
                             // separated
                             // list of values
-                            List<String> stringValues = new ArrayList<String>();
-                            for (String key : data.keySet()) {
-                                if (key.startsWith(prefix + fieldName + "[")) {
-                                    String stringValue = data.get(prefix + key);
-                                    stringValues.add(stringValue);
-                                }
-                            }
+                            List<String> stringValues = new ArrayList<>();
+                            data.keySet().stream()
+                                    .filter(key -> key.startsWith(prefix + fieldName + "["))
+                                    .forEach(key -> {
+                                        String stringValue = data.get(prefix + key);
+                                        stringValues.add(stringValue);
+                                    });
                             customAttributeValue.parse(this.getI18nMessagesPlugin(),
                                     StringUtils.join(stringValues, ICustomAttributeValue.MULTI_VALUE_SEPARATOR));
                         } else {
@@ -247,41 +238,32 @@ public class CustomAttributeManagerServiceImpl implements ICustomAttributeManage
 
     @Override
     public List<CustomAttributeValueObject> getSerializableValues(Class<?> clazz, Long objectId) {
-        List<CustomAttributeValueObject> customAtttributeApiValues = new ArrayList<>();
-
-        for (ICustomAttributeValue iCustomAttributeValue : CustomAttributeDefinition.getOrderedCustomAttributeValues(clazz, objectId)) {
-
-            CustomAttributeValueObject customAttributeApiValue = new CustomAttributeValueObject();
-
-            customAttributeApiValue.uuid = iCustomAttributeValue.getDefinition().uuid;
-            customAttributeApiValue.name = iCustomAttributeValue.getDefinition().getNameLabel();
-            customAttributeApiValue.type = iCustomAttributeValue.getDefinition().attributeType;
-            customAttributeApiValue.value = iCustomAttributeValue.getAsSerializableValue();
-
-            customAtttributeApiValues.add(customAttributeApiValue);
-
-        }
-        return customAtttributeApiValues;
+        return getSerializableValues(clazz, null, objectId);
     }
 
     @Override
     public List<CustomAttributeValueObject> getSerializableValues(Class<?> clazz, String filter, Long objectId) {
 
-        List<CustomAttributeValueObject> customAtttributeApiValues = new ArrayList<>();
+        List<CustomAttributeValueObject> customAttributeApiValues = new ArrayList<>();
 
-        for (ICustomAttributeValue iCustomAttributeValue : CustomAttributeDefinition.getOrderedCustomAttributeValues(clazz, filter, objectId)) {
+        List<ICustomAttributeValue> orderedCustomAttributeValues =
+                filter == null
+                        ? CustomAttributeDefinition.getOrderedCustomAttributeValues(clazz, objectId)
+                        : CustomAttributeDefinition.getOrderedCustomAttributeValues(clazz, filter, objectId);
+        if (orderedCustomAttributeValues != null) {
+            for (ICustomAttributeValue iCustomAttributeValue : orderedCustomAttributeValues) {
 
-            CustomAttributeValueObject customAttributeApiValue = new CustomAttributeValueObject();
+                CustomAttributeValueObject customAttributeApiValue = new CustomAttributeValueObject();
 
-            customAttributeApiValue.uuid = iCustomAttributeValue.getDefinition().uuid;
-            customAttributeApiValue.name = iCustomAttributeValue.getDefinition().getNameLabel();
-            customAttributeApiValue.type = iCustomAttributeValue.getDefinition().attributeType;
-            customAttributeApiValue.value = iCustomAttributeValue.getAsSerializableValue();
+                customAttributeApiValue.uuid = iCustomAttributeValue.getDefinition().uuid;
+                customAttributeApiValue.name = iCustomAttributeValue.getDefinition().getNameLabel();
+                customAttributeApiValue.type = iCustomAttributeValue.getDefinition().attributeType;
+                customAttributeApiValue.value = iCustomAttributeValue.getAsSerializableValue();
 
-            customAtttributeApiValues.add(customAttributeApiValue);
-
+                customAttributeApiValues.add(customAttributeApiValue);
+            }
         }
-        return customAtttributeApiValues;
+        return customAttributeApiValues;
     }
 
     /**

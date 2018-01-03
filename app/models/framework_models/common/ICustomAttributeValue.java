@@ -177,7 +177,7 @@ public interface ICustomAttributeValue {
      * @author Pierre-Yves Cloux
      */
     enum AttributeType {
-        BOOLEAN, INTEGER, DECIMAL, STRING, TEXT, DATE, SINGLE_ITEM, DYNAMIC_SINGLE_ITEM, DYNAMIC_MULTI_ITEM, IMAGE, MULTI_ITEM, URL;
+        BOOLEAN, INTEGER, DECIMAL, STRING, TEXT, DATE, SINGLE_ITEM, DYNAMIC_SINGLE_ITEM, DYNAMIC_MULTI_ITEM, IMAGE, MULTI_ITEM, URL, SCRIPT;
 
         private boolean isFileType = false;
         private boolean isMultiValued = false;

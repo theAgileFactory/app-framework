@@ -1,9 +1,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.agifac.lib</groupId>
+	<groupId>com.sword-group.bizdock.lib</groupId>
 	<artifactId>app-framework</artifactId>
-	<version>16.0.4</version>
+	<version>16.1.0-SNAPSHOT</version>
 	<name>BizDock application framework</name>
 	<description>This is the common library which contains the web application framework for BizDock</description>
 	<packaging>play2</packaging>
@@ -28,6 +28,11 @@
 			<id>pycloux</id>
 			<name>Pierre-Yves Cloux</name>
 			<email>dev@pycloux.com</email>
+		</developer>
+		<developer>
+			<id>gpe</id>
+			<name>Guillaume Petit</name>
+			<email>guillaume.petit@sword-group.com</email>
 		</developer>
 		<developer>
 			<id>mes</id>

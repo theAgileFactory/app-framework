@@ -17,38 +17,31 @@
  */
 package framework.services.account;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
-
-import org.apache.commons.lang3.RandomStringUtils;
-
 import com.avaje.ebean.Ebean;
-
 import framework.commons.DataType;
 import framework.commons.IFrameworkConstants;
 import framework.commons.message.EventMessage;
 import framework.commons.message.UserEventMessage;
 import framework.services.account.IUserAccount.AccountType;
-import framework.services.database.IDatabaseDependencyService;
 import framework.services.plugins.IEventBroadcastingService;
+import framework.utils.DefaultSelectableValueHolder;
+import framework.utils.DefaultSelectableValueHolderCollection;
+import framework.utils.ISelectableValueHolderCollection;
 import models.framework_models.account.Principal;
-import models.framework_models.account.SystemLevelRole;
 import models.framework_models.account.SystemLevelRoleType;
 import models.framework_models.account.SystemPermission;
+import org.apache.commons.lang3.RandomStringUtils;
 import play.Configuration;
 import play.Logger;
 import play.Play;
 import play.cache.CacheApi;
 import play.inject.ApplicationLifecycle;
 import play.libs.F.Promise;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
+import java.util.*;
 
 /**
  * The plugin managing the user accounts.<br/>
@@ -96,7 +89,7 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
 
         private String configurationKey;
 
-        private Config(String configurationKey) {
+        Config(String configurationKey) {
             this.configurationKey = configurationKey;
         }
 
@@ -116,18 +109,19 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
      *            the class to be used for user accounts
      * @param authenticationRepositoryMasterMode
      *            if true the system is in LDAP master mode (LDAP is writable)
-     * @param authenticationAccountWriterPlugin
-     * @param authenticationAccountReaderPlugin
-     * @param eventBroadcastingService
-     * @param databaseDependencyService
+     * @param authenticationAccountWriterPlugin the authentication account writer plugin
+     * @param authenticationAccountReaderPlugin the authentication account reader plugin
      * @throws ClassNotFoundException
      */
     @Inject
-    public AccountManagerPluginImpl(ApplicationLifecycle lifecycle, Configuration configuration,
+    public AccountManagerPluginImpl(
+            ApplicationLifecycle lifecycle,
+            Configuration configuration,
             @Named("UserAccountClassName") String commonUserAccountClassName,
             @Named("AuthenticationRepositoryMasterMode") Boolean authenticationRepositoryMasterMode,
-            IAuthenticationAccountWriterPlugin authenticationAccountWriterPlugin, IAuthenticationAccountReaderPlugin authenticationAccountReaderPlugin,
-            IDatabaseDependencyService databaseDependencyService, CacheApi cacheApi) throws ClassNotFoundException {
+            IAuthenticationAccountWriterPlugin authenticationAccountWriterPlugin,
+            IAuthenticationAccountReaderPlugin authenticationAccountReaderPlugin,
+            CacheApi cacheApi) throws ClassNotFoundException {
         log.info("SERVICE>>> AccountManagerPluginImpl starting...");
         this.authenticationRepositoryMasterMode = authenticationRepositoryMasterMode;
         this.userAccountCacheDurationInSeconds = configuration.getInt(Config.ACCOUNT_CACHE_DURATION.getConfigurationKey());
@@ -154,7 +148,7 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
 
     private boolean hasDefaultConstructor(Class<?> aClass) {
         try {
-            aClass.getConstructor(new Class<?>[] {});
+            aClass.getConstructor();
         } catch (NoSuchMethodException e) {
             return false;
         } catch (SecurityException e) {
@@ -464,7 +458,7 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
         } finally {
             Ebean.endTransaction();
         }
-        log.info(String.format("User groups added for uid %s with groups", uid, systemLevelRoleTypeNames));
+        log.info(String.format("User groups added for uid %s with groups", uid));
     }
 
     @Override
@@ -494,7 +488,7 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
         } finally {
             Ebean.endTransaction();
         }
-        log.info(String.format("User groups removed for uid %s with groups", uid, systemLevelRoleTypeNames));
+        log.info(String.format("User groups removed for uid %s with groups", uid));
     }
 
     @Override
@@ -553,13 +547,11 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
             }
 
             // Check the roles to be deleted
-            for (SystemLevelRole systemLevelRole : userPrincipal.systemLevelRoles) {
-                if (systemLevelRole.systemLevelRoleType != null && !systemLevelRole.systemLevelRoleType.deleted) {
-                    if (!systemLevelRoleTypeNames.contains(systemLevelRole.systemLevelRoleType.getName())) {
-                        userPrincipal.removeSystemLevelRole(systemLevelRole.systemLevelRoleType);
-                    }
-                }
-            }
+            userPrincipal.systemLevelRoles
+                    .stream()
+                    .filter(systemLevelRole -> systemLevelRole.systemLevelRoleType != null && !systemLevelRole.systemLevelRoleType.deleted)
+                    .filter(systemLevelRole -> !systemLevelRoleTypeNames.contains(systemLevelRole.systemLevelRoleType.getName()))
+                    .forEach(systemLevelRole -> userPrincipal.removeSystemLevelRole(systemLevelRole.systemLevelRoleType));
 
             // Notify the MAF modules
             UserEventMessage eventMessage = new UserEventMessage(userPrincipal.id, DataType.getDataType(IFrameworkConstants.User),
@@ -576,7 +568,7 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
         } finally {
             Ebean.endTransaction();
         }
-        log.info(String.format("User groups overwritten for uid %s with groups", uid, systemLevelRoleTypeNames));
+        log.info(String.format("User groups overwritten for uid %s with groups", uid));
     }
 
     @Override
@@ -621,8 +613,7 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
         if (userAuthenticationAccount == null) {
             return null;
         }
-        IUserAccount userAccount = createUserAccountFromAuthenticationAccount(userAuthenticationAccount);
-        return userAccount;
+        return createUserAccountFromAuthenticationAccount(userAuthenticationAccount);
     }
 
     @Override
@@ -630,7 +621,7 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
         if (log.isDebugEnabled()) {
             log.debug("Looking for user account with name pattern " + nameCriteria);
         }
-        List<IUserAccount> userAccounts = new ArrayList<IUserAccount>();
+        List<IUserAccount> userAccounts = new ArrayList<>();
         List<IUserAuthenticationAccount> authenticationAccounts = getAuthenticationAccountReaderPlugin().getAccountsFromName(nameCriteria);
         for (IUserAuthenticationAccount authenticationAccount : authenticationAccounts) {
             IUserAccount userAccount = createUserAccountFromAuthenticationAccount(authenticationAccount);
@@ -642,6 +633,23 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
             log.debug("Found " + userAccounts.size() + " account(s)");
         }
         return userAccounts;
+    }
+
+    @Override
+    public ISelectableValueHolderCollection<String> getUserAccountsFromNameAsVH(String searchString) {
+        ISelectableValueHolderCollection<String> selectableValues = new DefaultSelectableValueHolderCollection<>();
+        try {
+            getUserAccountsFromName(searchString)
+                    .stream()
+                    .filter(IUserAuthenticationAccount::isActive)
+                    .forEach(userAccount -> selectableValues.add(new DefaultSelectableValueHolder<>(
+                        userAccount.getUid(),
+                        String.format("%s %s", userAccount.getFirstName(), userAccount.getLastName())
+                    )));
+        } catch (AccountManagementException e) {
+            log.error("Unable to get a list of users using the specified searchString", e);
+        }
+        return selectableValues;
     }
 
     @Override
@@ -712,16 +720,14 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
         }
         List<SystemLevelRoleType> defaultSystemLevelRoleTypes = SystemLevelRoleType.getDefaultRolesForAccountType(accountType);
         if (defaultSystemLevelRoleTypes != null) {
-            for (SystemLevelRoleType systemLevelRoleType : defaultSystemLevelRoleTypes) {
-                principal.addSystemLevelRole(systemLevelRoleType);
-            }
+            defaultSystemLevelRoleTypes.forEach(principal::addSystemLevelRole);
         }
     }
 
     /**
      * Post an event to the plugin manager
      * 
-     * @param eventMessage
+     * @param eventMessage an event message
      */
     private void postToPlugginManagerService(EventMessage eventMessage) {
         IEventBroadcastingService eventBroadcastingService = Play.application().injector().instanceOf(IEventBroadcastingService.class);
@@ -734,14 +740,12 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
      * Creates a {@link DefaultUserAccount} from a
      * {@link IUserAuthenticationAccount}
      * 
-     * @param userAuthenticationAccount
+     * @param userAuthenticationAccount the user authentication account
      * @return a DefaultUserAccount
-     * @throws IllegalAccessException
-     * @throws InstantiationException
      */
     private ICommonUserAccount createUserAccountFromAuthenticationAccount(IUserAuthenticationAccount userAuthenticationAccount) {
         // Get user Account from cache if available
-        ICommonUserAccount cachedUserAccount = (ICommonUserAccount) getCacheApi()
+        ICommonUserAccount cachedUserAccount = getCacheApi()
                 .get(IFrameworkConstants.USER_ACCOUNT_CACHE_PREFIX + userAuthenticationAccount.getUid());
         if (log.isDebugEnabled()) {
             log.debug("Look for a cached user account associated with uid " + userAuthenticationAccount.getUid() + " "
@@ -772,19 +776,20 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
         userAccount.setActive(userPrincipal.isActive && userAccount.isActive());
 
         if (userPrincipal.systemLevelRoles != null) {
-            Set<String> rolesAsString = new HashSet<String>();
-            Set<String> selectableRolesAsString = new HashSet<String>();
-            for (SystemLevelRole role : userPrincipal.systemLevelRoles) {
-                if (role.systemLevelRoleType != null && !role.systemLevelRoleType.deleted && role.systemLevelRoleType.systemPermissions != null) {
-                    userAccount.addSystemLevelRoleType(role.systemLevelRoleType.getName());
-                    for (SystemPermission systemPermission : role.systemLevelRoleType.systemPermissions) {
-                        rolesAsString.add(systemPermission.name);
-                        if (systemPermission.isSelectable()) {
-                            selectableRolesAsString.add(systemPermission.name);
+            Set<String> rolesAsString = new HashSet<>();
+            Set<String> selectableRolesAsString = new HashSet<>();
+            userPrincipal.systemLevelRoles
+                    .stream()
+                    .filter(role -> role.systemLevelRoleType != null && !role.systemLevelRoleType.deleted && role.systemLevelRoleType.systemPermissions != null)
+                    .forEach(role -> {
+                        userAccount.addSystemLevelRoleType(role.systemLevelRoleType.getName());
+                        for (SystemPermission systemPermission : role.systemLevelRoleType.systemPermissions) {
+                            rolesAsString.add(systemPermission.name);
+                            if (systemPermission.isSelectable()) {
+                                selectableRolesAsString.add(systemPermission.name);
+                            }
                         }
-                    }
-                }
-            }
+                    });
             for (String roleAsString : rolesAsString) {
                 userAccount.addGroup(new DefaultUserAccount.DefaultRole(roleAsString));
             }
@@ -794,13 +799,11 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
             }
         }
 
-        if (userAccount != null) {
-            if (log.isDebugEnabled()) {
-                log.debug("Set user account " + userAuthenticationAccount.getUid() + " in cache");
-            }
-            getCacheApi().set(IFrameworkConstants.USER_ACCOUNT_CACHE_PREFIX + userAuthenticationAccount.getUid(), userAccount,
-                    getUserAccountCacheDurationInSeconds());
+        if (log.isDebugEnabled()) {
+            log.debug("Set user account " + userAuthenticationAccount.getUid() + " in cache");
         }
+        getCacheApi().set(IFrameworkConstants.USER_ACCOUNT_CACHE_PREFIX + userAuthenticationAccount.getUid(), userAccount,
+                getUserAccountCacheDurationInSeconds());
 
         return userAccount;
     }
@@ -814,8 +817,8 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
      * authentication back-end</li>
      * </ul>
      * 
-     * @param uid
-     * @return
+     * @param uid the principal uid
+     * @return the user Principal
      * @throws AccountManagementException
      */
     private Principal findPrincipalAndCheckForAuthenticationBackEndConsistency(String uid) throws AccountManagementException {
@@ -889,7 +892,7 @@ public class AccountManagerPluginImpl implements IAccountManagerPlugin {
      * @return a Map
      */
     private Map<String, SystemLevelRoleType> getAllRoles() {
-        HashMap<String, SystemLevelRoleType> mapOfRoles = new HashMap<String, SystemLevelRoleType>();
+        HashMap<String, SystemLevelRoleType> mapOfRoles = new HashMap<>();
         for (SystemLevelRoleType roleType : SystemLevelRoleType.getAllActiveRoles()) {
             mapOfRoles.put(roleType.getName(), roleType);
         }

@@ -1183,6 +1183,8 @@ public class CustomAttributeDefinition extends Model implements IModel {
             return MultiItemCustomAttributeValue.getOrCreateCustomAttributeValueFromObjectReference(objectType, filter, objectId, customAttributeDefinition);
         case IMAGE:
             return ImageCustomAttributeValue.getOrCreateCustomAttributeValueFromObjectReference(objectType, filter, objectId, customAttributeDefinition);
+        case SCRIPT:
+            return ScriptCustomAttributeValue.getOrCreateCustomAttributeValueFromObjectReference(objectType, filter, objectId, customAttributeDefinition);
         default:
             throw new IllegalArgumentException("Invalid attribute type : " + customAttributeDefinition.attributeType);
         }

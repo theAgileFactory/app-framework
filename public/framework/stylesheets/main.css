@@ -168,3 +168,18 @@ fieldset[disabled] .btn-light.active {
 .input-group-addon-multi-language {
     min-width: 80px;
 }
+
+/* Display multi-select ticks on the left of the selector */
+.bootstrap-select.btn-group.show-tick .dropdown-menu a span.check-mark {
+    position: absolute;
+    left: 5px;
+    margin-top: 5px;
+}
+
+.bootstrap-select.btn-group.show-tick .dropdown-menu a span.text {
+    margin-left: 5px;
+}
+
+.bootstrap-select.btn-group.show-tick {
+    height: auto;
+}

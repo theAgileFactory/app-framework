@@ -17,28 +17,27 @@
  */
 package framework.utils;
 
-import java.io.ByteArrayOutputStream;
-import java.math.BigDecimal;
-import java.util.Date;
-import java.util.Iterator;
-
-import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.Font;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.xssf.usermodel.XSSFCellStyle;
-import org.apache.poi.xssf.usermodel.XSSFDataFormat;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-
+import framework.services.configuration.II18nMessagesPlugin;
 import framework.utils.Table.ColumnDef;
 import framework.utils.Table.FormattedRow;
 import framework.utils.Table.NotFormattedRow;
 import net.htmlparser.jericho.HTMLElementName;
 import net.htmlparser.jericho.Renderer;
 import net.htmlparser.jericho.Source;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFDataFormat;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import play.Logger;
+import play.api.Play;
+
+import java.io.ByteArrayOutputStream;
+import java.math.BigDecimal;
+import java.text.NumberFormat;
+import java.text.ParseException;
+import java.util.Date;
+import java.util.Iterator;
 
 /**
  * This class takes a {@link Table} as a parameter and renders an Excel file.
@@ -76,7 +75,7 @@ public class TableExcelRenderer {
      * Generate an Excel representation of the specified {@link Table}.<br/>
      * Formatting is applied.
      * 
-     * @param table
+     * @param table the table view
      * @return a byte array (Excel file)
      */
     public static byte[] renderFormatted(Table<?> table) {
@@ -87,7 +86,7 @@ public class TableExcelRenderer {
      * Generate an Excel representation of the specified {@link Table}.<br/>
      * No formatting is applied.
      * 
-     * @param table
+     * @param table the table view
      * @return a byte array (Excel file)
      */
     public static byte[] renderNotFormatted(Table<?> table) {
@@ -97,7 +96,7 @@ public class TableExcelRenderer {
     /**
      * Render the specified table
      * 
-     * @param table
+     * @param table the table view
      * @param formatted
      *            true if a formatting must be applied
      * @return a byte array (Excel file)
@@ -132,7 +131,7 @@ public class TableExcelRenderer {
             writeNotFormattedRows(table, sheet, dateCellStyle);
         }
 
-        ByteArrayOutputStream outBuffer = null;
+        ByteArrayOutputStream outBuffer;
         try {
             outBuffer = new ByteArrayOutputStream();
             wb.write(outBuffer);
@@ -148,8 +147,8 @@ public class TableExcelRenderer {
      * Write a NOT formatted row (see the concept of NOT formatted row in
      * {@link Table})
      * 
-     * @param table
-     * @param sheet
+     * @param table the table view
+     * @param sheet the excel sheet
      * @param dateCellStyle
      *            the style to be applied for {@link Date} cell values
      */
@@ -178,7 +177,7 @@ public class TableExcelRenderer {
                                 cell.setCellValue(((BigDecimal) cellValue).doubleValue());
                             } else {
                                 if (cellValue instanceof Iterable<?>) {
-                                    StringBuffer sb = new StringBuffer();
+                                    StringBuilder sb = new StringBuilder();
                                     for (Object item : (Iterable<?>) cellValue) {
                                         sb.append(item).append(',');
                                     }
@@ -201,8 +200,8 @@ public class TableExcelRenderer {
     /**
      * Write a formatted row (see the concept of formatted row in {@link Table})
      * 
-     * @param table
-     * @param sheet
+     * @param table the table view
+     * @param sheet the excel sheet
      */
     private static void writeFormattedRows(Table<?> table, Sheet sheet, XSSFCellStyle dateCellStyle) {
         int rowIndex = 1;
@@ -236,7 +235,7 @@ public class TableExcelRenderer {
                                 // Any other type of column is "rendered"
                                 Source htmlSource = new Source(cellValue);
                                 Renderer renderer = htmlSource.getRenderer();
-                                renderer.setListBullets(new char[] { INVISIBLE_BULLET_CHAR, '-', '#', '*' });
+                                renderer.setListBullets(new char[]{INVISIBLE_BULLET_CHAR, '-', '#', '*'});
                                 renderer.setBlockIndentSize(0);
                                 renderer.setListIndentSize(0);
                                 renderer.setIncludeFirstElementTopMargin(false);
@@ -244,7 +243,7 @@ public class TableExcelRenderer {
                                 if (stringRepresentation.indexOf(INVISIBLE_BULLET_CHAR) != -1) {
                                     // Special action of the content is a
                                     // <UL></UL>
-                                    StringBuffer sb = new StringBuffer();
+                                    StringBuilder sb = new StringBuilder();
                                     String[] lines = stringRepresentation.split("" + INVISIBLE_BULLET_CHAR);
                                     for (String line : lines) {
                                         if (!StringUtils.isBlank(line)) {
@@ -256,6 +255,9 @@ public class TableExcelRenderer {
                                         sb.deleteCharAt(sb.length() - 1);
                                     }
                                     cell.setCellValue(sb.toString());
+                                } else if (isNumericCellValue(stringRepresentation)) {
+                                    cell.setCellType(Cell.CELL_TYPE_NUMERIC);
+                                    cell.setCellValue(getNumericCellValue(stringRepresentation));
                                 } else {
                                     cell.setCellValue(stringRepresentation.trim());
                                 }
@@ -266,5 +268,29 @@ public class TableExcelRenderer {
                 columnIndex++;
             }
         }
+    }
+
+    private static double getNumericCellValue(String stringRepresentation) {
+        NumberFormat nf = NumberFormat.getNumberInstance(getIi18nMessagesPlugin().getCurrentLanguage().getLang().toLocale());
+        stringRepresentation = stringRepresentation.trim();
+        try {
+            return nf.parse(stringRepresentation).doubleValue();
+        } catch (ParseException e) {
+            return 0.0;
+        }
+    }
+
+    private static boolean isNumericCellValue(String stringRepresentation) {
+        NumberFormat nf = NumberFormat.getNumberInstance(getIi18nMessagesPlugin().getCurrentLanguage().getLang().toLocale());
+        stringRepresentation = stringRepresentation.trim();
+        try {
+            return nf.format(nf.parse(stringRepresentation)).equals(stringRepresentation);
+        } catch (ParseException e) {
+            return false;
+        }
+    }
+
+    private static II18nMessagesPlugin getIi18nMessagesPlugin() {
+        return Play.current().injector().instanceOf(II18nMessagesPlugin.class);
     }
 }

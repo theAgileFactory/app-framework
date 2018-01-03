@@ -26,7 +26,9 @@
         multiple: Boolean=false
 )
 @import framework_views.parts
+@import framework_views.parts.commons._
 @import commons._
+
 <div class="form-group @if(field.hasErrors) {has-error}">
    @if(fieldLabel != null && !fieldLabel.equals("")) {
         <label class="control-label" for="@field.id">
@@ -34,24 +36,39 @@
         </label>
    }
     <select
-      class="selectpicker form-control"
+      class="selectpicker form-control @if(multiple){show-tick}"
       id="@field.id"
       name="@field.name@if(multiple){[]}"
-      data-live-search="@liveSearch"
       @if(multiple){multiple}>
-      @if(!isRequired(field) && !forceRequired){
+
+      @if(!isRequired(field) && !forceRequired && !multiple){
         <option value=""></option>
       }
       
-      @for((item, index) <- selectableValues.getSortedValues().zipWithIndex) {
-        <option value="@item.getValue()" @if(field.value!=null && !field.value.isEmpty && field.value.get.equals(item.getValue().toString)){selected="selected"}>
-          @item.getName()
-          @if(isDescriptionVisible && item.getDescription() != null && !item.getDescription().equals("")){
-              (@item.getDescription())
-          }
-        </option>
+      @for((item, index) <- selectableValues.getSortedValues.zipWithIndex) {
+        <option
+            @defining( field.indexes.nonEmpty && multiple match {
+                case true => field.indexes.flatMap(i => field("[%s]".format(i)).value).toSet
+                case _ => field.value.toSet
+            }) { selectedValues =>
+                value="@item.getValue"
+                @if(selectedValues.contains(item.getValue.toString)) {selected="selected"}
+            }
+        >@item.getName @if(isDescriptionVisible && item.getDescription != null && !item.getDescription.equals("")){(@item.getDescription)}</option>
       }
     </select>
     <span class="help-block">@helpLabel<strong>@{field.error.map { error => parts.Msg(error.message) }}</strong></span>
 </div>
 
+<script language="JavaScript">
+    $('#@field.id').selectpicker({
+        @if(multiple) {
+            actionsBox: true,
+            selectAllText: '@parts.Msg("select.select_all")',
+            deselectAllText: '@parts.Msg("select.deselect_all")',
+            multipleSeparator: '<br />',
+        }
+        liveSearch: @liveSearch,
+        noneSelectedText: '@parts.Msg("select.none_selected")'
+    })
+</script>
