@@ -635,6 +635,10 @@ public class FilterConfig<T> {
                 break;
             case IMAGE:
                 break;
+            case SCRIPT:
+                addColumnConfiguration(customAttributeDefinition.uuid, tableIdFieldName, customAttributeDefinition.name,
+                        new NoneFilterComponent(), customAttributeDefinition.isDisplayed, false, SortStatusType.NONE);
+                break;
             default:
                 throw new IllegalArgumentException("Invalid attribute type : " + customAttributeDefinition.attributeType);
             }
