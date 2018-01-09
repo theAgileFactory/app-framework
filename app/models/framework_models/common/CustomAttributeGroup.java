@@ -237,4 +237,12 @@ public class CustomAttributeGroup extends Model implements IModel, ISelectableVa
         return Integer.compare(this.order, c.order);
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || !(o instanceof CustomAttributeGroup)) {
+            return false;
+        }
+        CustomAttributeGroup c = (CustomAttributeGroup) o;
+        return this.id.equals(c.id);
+    }
 }

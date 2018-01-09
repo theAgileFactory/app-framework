@@ -923,8 +923,8 @@ public class CustomAttributeDefinition extends Model implements IModel {
         return null;
     }
 
-    public static Map<Long, List<ICustomAttributeValue>> getOrderedCustomAttributeValuesMappedByGroup(Class<?> objectType, Long objectId) {
-        Map<Long, List<ICustomAttributeValue>> customAttributeValuesMap = new HashMap<>();
+    public static Map<CustomAttributeGroup, List<ICustomAttributeValue>> getOrderedCustomAttributeValuesMappedByGroup(Class<?> objectType, Long objectId) {
+        Map<CustomAttributeGroup, List<ICustomAttributeValue>> customAttributeValuesMap = new TreeMap<>((group1, group2) -> Integer.compare(group1.order, group2.order));
         List<CustomAttributeDefinition> customAttributeDefinitions = getOrderedCustomAttributeDefinitions(objectType);
         if (customAttributeDefinitions != null) {
             customAttributeDefinitions.stream().forEach(customAttributeDefinition -> {
@@ -932,12 +932,12 @@ public class CustomAttributeDefinition extends Model implements IModel {
                 if (group == null) {
                     group = CustomAttributeGroup.getOrCreateDefaultGroup(objectType.getName());
                 }
-                List<ICustomAttributeValue> values = customAttributeValuesMap.get(group.id);
+                List<ICustomAttributeValue> values = customAttributeValuesMap.get(group);
                 if (values == null) {
                     values = new ArrayList<>();
                 }
                 values.add(getOrCreateCustomAttributeValue(objectType, objectId, customAttributeDefinition));
-                customAttributeValuesMap.put(group.id, values);
+                customAttributeValuesMap.put(group, values);
             });
             return customAttributeValuesMap;
         }
