@@ -27,11 +27,11 @@
 
 @if(customAttributeValuesMap!=null){
 
-    @for(customAttributeGroupId <- customAttributeValuesMap.keySet()){
+    @for(customAttributeGroup <- customAttributeValuesMap.keySet()){
         <div class="panel panel-default">
 
             <div class="panel-heading">
-            @parts.Msg(CustomAttributeGroup.getById(customAttributeGroupId).label)
+            @parts.Msg(customAttributeGroup.label)
             </div>
 
             <div class="panel-body">
@@ -42,7 +42,7 @@
                         <col class="col-md-9">
                     </colgroup>
                     <tbody>
-                    @for(customAttributeValue <- customAttributeValuesMap.get(customAttributeGroupId)){
+                    @for(customAttributeValue <- customAttributeValuesMap.get(customAttributeGroup)){
                         @if(customAttributeValue.getDefinition.isDisplayedForConditionalRule(formDataObject, objectId)) {
                             <tr>
                                 <th>

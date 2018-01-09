@@ -15,7 +15,6 @@
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  *@
-@import models.framework_models.common.CustomAttributeGroup
 @(objectForm: Any, objectType: Class[_], objectId: Long, activeConditionalRule: Boolean = true, onlyDisplayedOrRequired: Boolean = false, displayAsRow: Boolean = false)
 
 @import commons._
@@ -27,12 +26,12 @@
 
 @if(customAttributeValuesMap!=null) {
 
-    @for(customAttributeGroupId <- customAttributeValuesMap.keySet()){
+    @for(customAttributeGroup <- customAttributeValuesMap.keySet()){
         @if(!displayAsRow) {
         <div class="panel panel-default">
 
             <div class="panel-heading">
-            @parts.Msg(CustomAttributeGroup.getById(customAttributeGroupId).label)
+            @parts.Msg(customAttributeGroup.label)
             </div>
 
             <div class="panel-body">
@@ -43,11 +42,11 @@
                     </colgroup>
                     <tbody>
         }
-                    @for(customAttributeValue <- customAttributeValuesMap.get(customAttributeGroupId)) {
+                    @for(customAttributeValue <- customAttributeValuesMap.get(customAttributeGroup)) {
 
                         @if(!onlyDisplayedOrRequired || customAttributeValue.getDefinition.isDisplayed || customAttributeValue.getDefinition.isRequired) {
 
-                            @defining(_customAttributeManagerService.getFieldNameFromDefinitionUuid(customAttributeValue.getDefinition().uuid)) { fieldId =>
+                            @defining(_customAttributeManagerService.getFieldNameFromDefinitionUuid(customAttributeValue.getDefinition.uuid)) { fieldId =>
 
                                 @if(displayAsRow) { <td> }
                                     @customAttributeValue.renderFormField(_messagesPluginService, _usession, _implementationDefinedObjectService, if(objectForm.isInstanceOf[Form[_]]) objectForm.asInstanceOf[Form[_]](fieldId) else objectForm.asInstanceOf[Field](fieldId), !displayAsRow)

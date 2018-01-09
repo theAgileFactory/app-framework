@@ -50,6 +50,8 @@ import java.util.Properties;
  * use of the {@link ScriptUtils} object.</li>
  * </ul>
  *
+ * TODO: Voir si on peut mettre des couleurs
+ *
  * @author Guillaume Petit
  */
 public class ScriptCustomAttributeValue implements ICustomAttributeValue {
@@ -223,7 +225,11 @@ public class ScriptCustomAttributeValue implements ICustomAttributeValue {
 
     @Override
     public Html renderFormField(II18nMessagesPlugin i18nMessagesPlugin, IUserSessionManagerPlugin userSessionManagerPlugin, IImplementationDefinedObjectService implementationDefinedObjectService, Field field, boolean displayDescription) {
-        return null;
+        String description = "";
+        if (displayDescription) {
+            description = customAttributeDefinition.description;
+        }
+        return views.html.framework_views.parts.read_only_field.render(field, customAttributeDefinition.name, description);
     }
 
     @Override
