@@ -628,7 +628,12 @@ public class Table<T> {
      *         while introspecting the object)
      */
     private String getFormattedCellValue(ColumnDef columnDef, Object value) {
-        return columnDef.format(value, getCellValue(columnDef, value));
+        String formattedCellValue = "";
+        Object cellValue = getCellValue(columnDef, value);
+        if (cellValue != null) {
+            formattedCellValue = columnDef.format(value, cellValue);
+        }
+        return formattedCellValue;
     }
 
     /**
@@ -649,7 +654,7 @@ public class Table<T> {
         } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
             log.error("Unable to get property " + columnDef.getFieldName() + " from bean " + value);
         }
-        return "";
+        return null;
     }
 
     private ColumnDef getIdColumnDef() {
