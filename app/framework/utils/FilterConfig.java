@@ -2636,7 +2636,7 @@ public class FilterConfig<T> {
                 + "where cust%2$s.deleted=0 and cust%2$s.object_type='%1$s' and cust%2$s.object_id=t0.id and cust%2$s.custom_attribute_definition_id=%2$s "
                 + "and cust%2$s.value_id IS NULL)<>0";
 
-        private static final String SORT_EXPRESSION_TEMPLATE = "(select #value# from single_item_custom_attribute_value as sortcust%2$s"
+        private static final String SORT_EXPRESSION_TEMPLATE = "(select sortcust%2$s_option.order from single_item_custom_attribute_value as sortcust%2$s"
                 + " join custom_attribute_item_option as sortcust%2$s_option on sortcust%2$s_option.id=sortcust%2$s.value_id"
                 + " where sortcust%2$s.deleted=0 and sortcust%2$s.object_type='%1$s' and sortcust%2$s.object_id=t0.id "
                 + "and sortcust%2$s.custom_attribute_definition_id=%2$s)";
