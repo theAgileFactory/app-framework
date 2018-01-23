@@ -17,6 +17,8 @@
  */
 package framework.commons;
 
+import framework.utils.Msg;
+
 public interface IFrameworkConstants {
     // -------------------------------------------------------------------------------------
     // Framework objects type constant
@@ -286,20 +288,20 @@ public interface IFrameworkConstants {
     String LABEL_DANGER_FORMAT = "<span class=\"label label-danger\">%s</span>";
 
     // Common URLs format
-    String DISPLAY_URL_FORMAT = "<a href=\"%s\"><span class=\"fa fa-eye\"></span></a>";
-    String EDIT_URL_FORMAT = "<a href=\"%s\"><span class=\"fa fa-pencil-square-o\"></span></a>";
-    String REQUEST_URL_FORMAT = "<a href=\"%s\"><span class=\"fa fa-arrow-circle-right\"></span></a>";
-    String DELETE_URL_FORMAT = "<a href=\"%s\"><span class=\"fa fa-trash\"></span></a>";
-    String DOWNLOAD_URL_FORMAT = "<a href=\"%s\" target=\"_blank\"><span class=\"fa fa-arrow-circle-o-down\"></span></a>";
-    String CONFIG_URL_FORMAT = "<a href=\"%s\"><span class=\"fa fa-cog\"></span></a>";
-    String ADD_URL_FORMAT = "<a href=\"%s\"><span class=\"fa fa-plus\"></span></a>";
-    String CANCEL_URL_FORMAT = "<a href=\"%s\"><span class=\"fa fa-times-circle-o\"></span></a>";
+    String DISPLAY_URL_FORMAT = "<a data-toggle=\"tooltip\" title=\"" + Msg.get("tooltip.display") + "\" href=\"%s\"><span class=\"fa fa-eye\"></span></a>";
+    String EDIT_URL_FORMAT = "<a data-toggle=\"tooltip\" title=\"" + Msg.get("tooltip.edit") + "\" href=\"%s\"><span class=\"fa fa-pencil-square-o\"></span></a>";
+    String REQUEST_URL_FORMAT = "<a data-toggle=\"tooltip\" title=\"" + Msg.get("tooltip.request") + "\" href=\"%s\"><span class=\"fa fa-arrow-circle-right\"></span></a>";
+    String DELETE_URL_FORMAT = "<a data-toggle=\"tooltip\" title=\"" + Msg.get("tooltip.delete") + "\" href=\"%s\"><span class=\"fa fa-trash\"></span></a>";
+    String DOWNLOAD_URL_FORMAT = "<a data-toggle=\"tooltip\" title=\"" + Msg.get("tooltip.download") + "\" href=\"%s\" target=\"_blank\"><span class=\"fa fa-arrow-circle-o-down\"></span></a>";
+    String CONFIG_URL_FORMAT = "<a data-toggle=\"tooltip\" title=\"" + Msg.get("tooltip.config") + "\" href=\"%s\"><span class=\"fa fa-cog\"></span></a>";
+    String ADD_URL_FORMAT = "<a data-toggle=\"tooltip\" title=\"" + Msg.get("tooltip.add") + "\" href=\"%s\"><span class=\"fa fa-plus\"></span></a>";
+    String CANCEL_URL_FORMAT = "<a data-toggle=\"tooltip\" title=\"" + Msg.get("tooltip.cancel") + "\" href=\"%s\"><span class=\"fa fa-times-circle-o\"></span></a>";
 
     // WARNING this message must be handled by java.text.MessageFormat to
     // specify the error message to be used (default can be
     // Msg.get("default.delete.confirmation.message"))
     String DELETE_URL_FORMAT_WITH_CONFIRMATION = "<a onclick=\"return maf_confirmAction(''{0}'');\" href=\"%s\">"
-            + "<span class=\"fa fa-trash\"></span></a>";
+            + "<span data-toggle=\"tooltip\" title=\"" + Msg.get("tooltip.delete") + "\" class=\"fa fa-trash\"></span></a>";
 
     // Other common formats
     String TITLE_DESCRIPTION_FORMAT = "<dl><dt>%s</dt><dd>%s</dd></dl>";

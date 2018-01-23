@@ -74,23 +74,23 @@
                                 @if(menuItem.hasSubMenuItems()){
                                     <li class="dropdown" id="topmenubar-item-@index">
                                       <a href="#" class="text-center dropdown-toggle @if(menuItem.isImportant()) {bg-success}" style="padding-bottom: 5px; padding-top: 6px;" data-toggle="dropdown">
-                                        <i class="@menuItem.getCssIcon" style="font-size:1.3em;"></i>&nbsp;<b class="caret"></b><br/><small>@parts.Msg(menuItem.getLabel())</small>
+                                        <i data-toggle="tooltip" title="@parts.Msg(menuItem.getLabel)" class="@menuItem.getCssIcon" style="font-size:1.3em;"></i>&nbsp;<b class="caret"></b><br/><small>@parts.Msg(menuItem.getLabel())</small>
                                       </a>
                                       <ul class="dropdown-menu">
                                           @for(subMenuItem <- menuItem.getSubMenuItems()){
                                              @if(subMenuItem.restrict()){
                                              @if(subMenuItem.hasSubMenuItems()){
-                                                 <li class="disabled"><a style="cursor: text;"><i class="@subMenuItem.getCssIcon"></i>&nbsp;@parts.Msg(subMenuItem.getLabel())</a></li>
+                                                 <li class="disabled"><a style="cursor: text;"><i data-toggle="tooltip" title="@parts.Msg(subMenuItem.getLabel)" class="@subMenuItem.getCssIcon"></i>&nbsp;@parts.Msg(subMenuItem.getLabel())</a></li>
                                                  @for(subSubMenuItem <- subMenuItem.getSubMenuItems()){
                                                      @if(subSubMenuItem.restrict()){
                                                          @if(!subSubMenuItem.isSeparator()){
-                                                             <li class="small"><a id="topmenubar-@subSubMenuItem.getUuid()" href="@subSubMenuItem.getActionUrl()"><i class="@subSubMenuItem.getCssIcon"></i>&nbsp;@parts.Msg(subSubMenuItem.getLabel())</a></li>
+                                                             <li class="small"><a id="topmenubar-@subSubMenuItem.getUuid()" href="@subSubMenuItem.getActionUrl()"><i data-toggle="tooltip" title="@parts.Msg(subSubMenuItem.getLabel)" class="@subSubMenuItem.getCssIcon"></i>&nbsp;@parts.Msg(subSubMenuItem.getLabel())</a></li>
                                                          }
                                                      }
                                                  }
                                              }else{
                                                    @if(!subMenuItem.isSeparator()){
-                                                     <li><a id="topmenubar-@subMenuItem.getUuid()" href="@subMenuItem.getActionUrl()"><i class="@subMenuItem.getCssIcon"></i>&nbsp;@parts.Msg(subMenuItem.getLabel())</a></li>
+                                                     <li><a id="topmenubar-@subMenuItem.getUuid()" href="@subMenuItem.getActionUrl()"><i data-toggle="tooltip" title="@parts.Msg(subMenuItem.getLabel)" class="@subMenuItem.getCssIcon"></i>&nbsp;@parts.Msg(subMenuItem.getLabel())</a></li>
                                                  }else{
                                                      <li class="divider"></li>
                                                  }
@@ -102,7 +102,7 @@
                                 }else{
                                     @if(!menuItem.isSeparator()){
                                         <li id="topmenubar-item-@index"><a class="text-center @if(menuItem.isImportant()) {bg-success}" style="padding-bottom: 5px; padding-top: 6px;" id="topmenubar-@menuItem.getUuid()" href="@menuItem.getActionUrl()">
-                                            <i class="@menuItem.getCssIcon" style="font-size:1.3em;"></i><br/><small>@parts.Msg(menuItem.getLabel())</small>
+                                            <i data-toggle="tooltip" title="@parts.Msg(menuItem.getLabel)" class="@menuItem.getCssIcon" style="font-size:1.3em;"></i><br/><small>@parts.Msg(menuItem.getLabel())</small>
                                         </a></li>
                                     }else{
                                         <li class="divider-vertical"></li>
