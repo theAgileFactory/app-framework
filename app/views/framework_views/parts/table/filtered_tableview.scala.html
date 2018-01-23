@@ -124,9 +124,9 @@ function _@table.getId()_drawCurrentFilterConfiguration() {
     $("#_@table.getId()_columnsSelector" + currentIndex).remove();
 
     // draw the new icons
-    $("#_@table.getId()_currentFilterConfiguration").append('<a href="#" class="btn btn-primary" id="_@table.getId()_columnsSelector' + newIndex + '"><i class="fa fa-cog"></i></a>');
+    $("#_@table.getId()_currentFilterConfiguration").append('<a href="#" class="btn btn-primary" id="_@table.getId()_columnsSelector' + newIndex + '"><i class="fa fa-cog" data-toggle="tooltip" title="@parts.Msg("filter.table.column_selector.tooltip")"></i></a>');
     $("#_@table.getId()_currentFilterConfiguration").append(' ');
-    $("#_@table.getId()_currentFilterConfiguration").append('<a href="#" class="btn btn-primary" id="_@table.getId()_filterSelector' + newIndex + '"><i class="fa fa-filter"></i></a>');
+    $("#_@table.getId()_currentFilterConfiguration").append('<a href="#" class="btn btn-primary" id="_@table.getId()_filterSelector' + newIndex + '"><i class="fa fa-filter" data-toggle="tooltip" title="@parts.Msg("filter.table.filter_selector.tooltip")"></i></a>');
 
     // bind new x-editable 
     maf_filter_prepareColumnsSelector('_@table.getId()_filterContainer','_@table.getId()_columnsSelector' + newIndex,'_@table.getId()_filterSelector' + newIndex, _@table.getId()_filterConfig, _@table.getId()_refreshTable);

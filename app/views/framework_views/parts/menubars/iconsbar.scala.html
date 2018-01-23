@@ -21,26 +21,26 @@
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
 
 <div class="btn-group btn-group-vertical hidden-sm hidden-md" style="width: 100%;">
-    @for((menuItem, menuItemIndex) <- sidebarInstance.getMenuItems().zipWithIndex) {
+    @for((menuItem, menuItemIndex) <- sidebarInstance.getMenuItems.zipWithIndex) {
         @if(menuItem.restrict()){
-            @if(menuItem.hasSubMenuItems()){
+            @if(menuItem.hasSubMenuItems){
                 <div class="btn-group">
-                    <button type="button" class="btn dropdown-toggle @if(menuItem.isSelected()){ btn-primary } else { @if(menuItem.isImportant()) { btn-info } else { btn-light } }" data-toggle="dropdown">
-                        <span class="@menuItem.getCssIcon()" style="font-size: 1.6em;"></span><br/>@parts.Msg(menuItem.getLabel()) <span class="caret right-caret"></span>
+                    <button type="button" class="btn dropdown-toggle @if(menuItem.isSelected){ btn-primary } else { @if(menuItem.isImportant) { btn-info } else { btn-light } }" data-toggle="dropdown">
+                        <span data-toggle="tooltip" title="@parts.Msg(menuItem.getLabel)" class="@menuItem.getCssIcon" style="font-size: 1.6em;"></span><br/>@parts.Msg(menuItem.getLabel) <span class="caret right-caret"></span>
                     </button>
                     <ul class="dropdown-menu right-dropdown-menu">
-                        @for(subMenuItem <- menuItem.getSubMenuItems()){
-                            @if(!subMenuItem.isSeparator()){
+                        @for(subMenuItem <- menuItem.getSubMenuItems){
+                            @if(!subMenuItem.isSeparator){
                                  @if(subMenuItem.restrict()){
-                                     <li><a href="@subMenuItem.getActionUrl()"><span class="@subMenuItem.getCssIcon()"></span>&nbsp; @parts.Msg(subMenuItem.getLabel())</a></li>
+                                     <li><a href="@subMenuItem.getActionUrl"><span data-toggle="tooltip" title="@parts.Msg(subMenuItem.getLabel)" class="@subMenuItem.getCssIcon"></span>&nbsp; @parts.Msg(subMenuItem.getLabel)</a></li>
                                  }
                              }
                         }
                     </ul>
                 </div>
             }else{
-                <a href="@menuItem.getActionUrl()" class="btn btn-group-lg @if(menuItem.isSelected()){ btn-primary } else { @if(menuItem.isImportant()) { btn-info } else { btn-light }}" >
-                    <span class="@menuItem.getCssIcon()" style="font-size: 1.6em;"></span><br/>@parts.Msg(menuItem.getLabel())
+                <a href="@menuItem.getActionUrl" class="btn btn-group-lg @if(menuItem.isSelected){ btn-primary } else { @if(menuItem.isImportant) { btn-info } else { btn-light }}" >
+                    <span data-toggle="tooltip" title="@parts.Msg(menuItem.getLabel)" class="@menuItem.getCssIcon" style="font-size: 1.6em;"></span><br/>@parts.Msg(menuItem.getLabel)
                 </a>
             }
         }
@@ -49,26 +49,26 @@
 
 
 <div class="btn-group btn-group-justified hidden-lg hidden-xs" style="width: auto;">
-    @for((menuItem, menuItemIndex) <- sidebarInstance.getMenuItems().zipWithIndex) {
+    @for((menuItem, menuItemIndex) <- sidebarInstance.getMenuItems.zipWithIndex) {
         @if(menuItem.restrict()){
-            @if(menuItem.hasSubMenuItems()){
+            @if(menuItem.hasSubMenuItems){
                 <div class="btn-group">
-                    <a data-toggle="dropdown" class="btn @if(menuItem.isSelected()){ btn-primary } else { @if(menuItem.isImportant()) { btn-info } else { btn-light } } dropdown-toggle" href="#">
-                        <span class="@menuItem.getCssIcon()" style="font-size: 1.6em;"></span> <span class="caret"></span>
+                    <a data-toggle="dropdown" class="btn @if(menuItem.isSelected){ btn-primary } else { @if(menuItem.isImportant) { btn-info } else { btn-light } } dropdown-toggle" href="#">
+                        <span data-toggle="tooltip" title="@parts.Msg(menuItem.getLabel)" class="@menuItem.getCssIcon" style="font-size: 1.6em;"></span> <span class="caret"></span>
                     </a>
                     <ul class="dropdown-menu" style="left: auto;">
-                        @for(subMenuItem <- menuItem.getSubMenuItems()){
-                            @if(!subMenuItem.isSeparator()){
+                        @for(subMenuItem <- menuItem.getSubMenuItems){
+                            @if(!subMenuItem.isSeparator){
                                  @if(subMenuItem.restrict()){
-                                     <li><a href="@subMenuItem.getActionUrl()"><span class="@subMenuItem.getCssIcon()"></span>&nbsp; @parts.Msg(subMenuItem.getLabel())</a></li>
+                                     <li><a href="@subMenuItem.getActionUrl"><span data-toggle="tooltip" title="@parts.Msg(subMenuItem.getLabel)" class="@subMenuItem.getCssIcon"></span>&nbsp; @parts.Msg(subMenuItem.getLabel)</a></li>
                                  }
                              }
                         }
                     </ul>
                 </div>
             }else{
-                <a href="@menuItem.getActionUrl()" class="btn @if(menuItem.isSelected()){ btn-primary } else { @if(menuItem.isImportant()) { btn-info } else { btn-light }}" >
-                    <span class="@menuItem.getCssIcon()" style="font-size: 1.6em;"></span>
+                <a href="@menuItem.getActionUrl" class="btn @if(menuItem.isSelected){ btn-primary } else { @if(menuItem.isImportant) { btn-info } else { btn-light }}" >
+                    <span data-toggle="tooltip" title="@parts.Msg(menuItem.getLabel)" class="@menuItem.getCssIcon" style="font-size: 1.6em;"></span>
                 </a>
             }
         }
