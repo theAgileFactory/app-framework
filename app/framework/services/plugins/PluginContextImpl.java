@@ -98,7 +98,12 @@ public class PluginContextImpl implements IPluginContext {
 
     @Override
     public void sendEmail(final String subject, final String body, final String... to) {
-        getEmailService().sendEmail(subject, getConfiguration().getString("maf.email.from"), body, to);
+        this.sendEmail(subject, body, to, null);
+    }
+
+    @Override
+    public void sendEmail(final String subject, final String body, final String[] to, final String[] cc) {
+        getEmailService().sendEmail(subject, getConfiguration().getString("maf.email.from"), body, to, cc);
     }
 
     @Override

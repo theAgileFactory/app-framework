@@ -49,7 +49,7 @@ public interface IPluginContext {
      * 
      * @author Pierre-Yves Cloux
      */
-    public enum LogLevel {
+    enum LogLevel {
         DEBUG, INFO, ERROR
     }
 
@@ -58,7 +58,7 @@ public interface IPluginContext {
      * 
      * @author Pierre-Yves Cloux
      */
-    public enum HttpMethod {
+    enum HttpMethod {
         GET, POST
     }
 
@@ -67,7 +67,7 @@ public interface IPluginContext {
      * 
      * @return
      */
-    public IPluginDescriptor getPluginDescriptor();
+    IPluginDescriptor getPluginDescriptor();
 
     /**
      * Returns the plugin configuration name (the instance of the plugin
@@ -75,7 +75,7 @@ public interface IPluginContext {
      * 
      * @return a name
      */
-    public String getPluginConfigurationName();
+    String getPluginConfigurationName();
 
     /**
      * The unique id for this instance of plugin.<br/>
@@ -83,7 +83,7 @@ public interface IPluginContext {
      * 
      * @return a long
      */
-    public Long getPluginConfigurationId();
+    Long getPluginConfigurationId();
 
     /**
      * Log a message into the plugin "technical log".<br/>
@@ -95,7 +95,7 @@ public interface IPluginContext {
      * @param message
      *            a text message
      */
-    public void log(LogLevel level, String message);
+    void log(LogLevel level, String message);
 
     /**
      * Log a message into the plugin "technical log".<br/>
@@ -109,7 +109,7 @@ public interface IPluginContext {
      * @param exception
      *            an exception
      */
-    public void log(LogLevel level, String message, Exception exception);
+    void log(LogLevel level, String message, Exception exception);
 
     /**
      * Find the internal Id associated with the specified externalId.
@@ -122,7 +122,7 @@ public interface IPluginContext {
      * @throws RuntimeException
      *             if more than one link is found
      */
-    public Long getUniqueInternalId(String externalId, String linkType);
+    Long getUniqueInternalId(String externalId, String linkType);
 
     /**
      * Find the external id associated with the specified internal id.
@@ -135,7 +135,7 @@ public interface IPluginContext {
      * @throws RuntimeException
      *             if more than one link is found
      */
-    public String getUniqueExternalId(Long internalId, String linkType);
+    String getUniqueExternalId(Long internalId, String linkType);
 
     /**
      * Find the internal Id associated with the specified externalId.
@@ -146,7 +146,7 @@ public interface IPluginContext {
      *            a type of link
      * @return the internal Ids or null if it is not found
      */
-    public List<Long> getMultipleInternalId(String externalId, String linkType);
+    List<Long> getMultipleInternalId(String externalId, String linkType);
 
     /**
      * Find the external id associated with the specified internal id.
@@ -157,7 +157,7 @@ public interface IPluginContext {
      *            a type of link
      * @return the external Ids or null if it is not found
      */
-    public List<String> getMultipleExternalId(Long internalId, String linkType);
+    List<String> getMultipleExternalId(Long internalId, String linkType);
 
     /**
      * Find the internal ID associated with the specified externalId and parent
@@ -174,7 +174,7 @@ public interface IPluginContext {
      * @param parentLinkType
      *            the link type of the parent link
      */
-    public Long getUniqueInternalIdWithParent(String externalId, String linkType, Long parentInternalId, String parentExternalId, String parentLinkType);
+    Long getUniqueInternalIdWithParent(String externalId, String linkType, Long parentInternalId, String parentExternalId, String parentLinkType);
 
     /**
      * Get the internal and external ID of the children of a link.
@@ -187,7 +187,7 @@ public interface IPluginContext {
      *            the link type of the parent link
      * @parm childLinkType the link type
      */
-    public List<Pair<Long, String>> getChildrenIdOfLink(Long internalId, String externalId, String linkType, String childLinkType);
+    List<Pair<Long, String>> getChildrenIdOfLink(Long internalId, String externalId, String linkType, String childLinkType);
 
     /**
      * Create an association between an internal and an external id. Only if
@@ -203,7 +203,7 @@ public interface IPluginContext {
      *             if a link already partially exists : same linkType but
      *             different externalId or internalId
      */
-    public void createOneToOneLink(Long internalId, String externalId, String linkType) throws PluginException;
+    void createOneToOneLink(Long internalId, String externalId, String linkType) throws PluginException;
 
     /**
      * Create an association between an internal and an external id
@@ -218,7 +218,7 @@ public interface IPluginContext {
      *             if a link already partially exists : same linkType but
      *             different externalId or internalId
      */
-    public void createLink(Long internalId, String externalId, String linkType) throws PluginException;
+    void createLink(Long internalId, String externalId, String linkType) throws PluginException;
 
     /**
      * Create an association between an internal and an external id and for
@@ -237,7 +237,7 @@ public interface IPluginContext {
      * @param parentLinkType
      *            the link type of the parent link
      */
-    public void createLink(Long internalId, String externalId, String linkType, Long parentInternalId, String parentExternalId, String parentLinkType)
+    void createLink(Long internalId, String externalId, String linkType, Long parentInternalId, String parentExternalId, String parentLinkType)
             throws PluginException;
 
     /**
@@ -251,7 +251,7 @@ public interface IPluginContext {
      *            a type of link
      * @return false if the link was not found
      */
-    public boolean deleteOneToOneLink(Long internalId, String externalId, String linkType);
+    boolean deleteOneToOneLink(Long internalId, String externalId, String linkType);
 
     /**
      * Delete a unique link.
@@ -263,7 +263,7 @@ public interface IPluginContext {
      * @param linkType
      *            the link type of the unique link
      */
-    public void deleteLink(Long internalId, String externalId, String linkType);
+    void deleteLink(Long internalId, String externalId, String linkType);
 
     /**
      * Report a message at plugin startup
@@ -273,7 +273,7 @@ public interface IPluginContext {
      * @param logMessage
      *            a message
      */
-    public void reportOnStartup(boolean isError, String logMessage);
+    void reportOnStartup(boolean isError, String logMessage);
 
     /**
      * Report a message at plugin startup
@@ -285,7 +285,7 @@ public interface IPluginContext {
      * @param exception
      *            an Exception
      */
-    public void reportOnStartup(boolean isError, String logMessage, Exception exception);
+    void reportOnStartup(boolean isError, String logMessage, Exception exception);
 
     /**
      * Report a message generated when the plugin stopped
@@ -295,7 +295,7 @@ public interface IPluginContext {
      * @param logMessage
      *            a message
      */
-    public void reportOnStop(boolean isError, String logMessage);
+    void reportOnStop(boolean isError, String logMessage);
 
     /**
      * Report a message generated when the plugin stopped
@@ -307,7 +307,7 @@ public interface IPluginContext {
      * @param exception
      *            an Exception
      */
-    public void reportOnStop(boolean isError, String logMessage, Exception exception);
+    void reportOnStop(boolean isError, String logMessage, Exception exception);
 
     /**
      * Report a status about the the handling of an event.<br/>
@@ -326,7 +326,7 @@ public interface IPluginContext {
      * @param logMessage
      *            a text message which will be visible from the end user
      */
-    public void reportOnEventHandling(String transactionId, boolean isError, EventMessage eventMessage, String logMessage);
+    void reportOnEventHandling(String transactionId, boolean isError, EventMessage eventMessage, String logMessage);
 
     /**
      * Report a status about the the handling of an event.<br/>
@@ -347,7 +347,7 @@ public interface IPluginContext {
      * @param exception
      *            an exception
      */
-    public void reportOnEventHandling(String transactionId, boolean isError, EventMessage eventMessage, String logMessage, Exception exception);
+    void reportOnEventHandling(String transactionId, boolean isError, EventMessage eventMessage, String logMessage, Exception exception);
 
     /**
      * Report a message which can be an error or an info
@@ -359,7 +359,7 @@ public interface IPluginContext {
      * @param logMessage
      *            a message
      */
-    public void reportMessage(String transactionId, boolean isError, String logMessage);
+    void reportMessage(String transactionId, boolean isError, String logMessage);
 
     /**
      * Report a message which can be an error or an info
@@ -373,7 +373,7 @@ public interface IPluginContext {
      * @param exception
      *            an exception
      */
-    public void reportMessage(String transactionId, boolean isError, String logMessage, Exception exception);
+    void reportMessage(String transactionId, boolean isError, String logMessage, Exception exception);
 
     /**
      * Store the plugin state into a persistent storage
@@ -381,14 +381,14 @@ public interface IPluginContext {
      * @param stateObject
      *            an object which must be {@link Serializable}
      */
-    public void setState(Object stateObject) throws PluginException;
+    void setState(Object stateObject) throws PluginException;
 
     /**
      * Retrieve the state of the plugin from the persistent storage
      * 
      * @return the state object
      */
-    public Object getState() throws PluginException;
+    Object getState() throws PluginException;
 
     /**
      * Store some data into a persistent storage which is shared 
@@ -399,7 +399,7 @@ public interface IPluginContext {
      * @param stateObject
      *            an object which must be {@link Serializable}
      */
-    public void setSharedRecord(String key, Object stateObject) throws PluginException;
+    void setSharedRecord(String key, Object stateObject) throws PluginException;
 
     /**
      * Retrieve the data associated with the specified key.
@@ -408,14 +408,14 @@ public interface IPluginContext {
      * @param key a unique key identifying the record
      * @return the state object
      */
-    public Object getSharedRecord(String key) throws PluginException;
+    Object getSharedRecord(String key) throws PluginException;
     
     /**
      * Delete the object associated with the specified key
      * 
      * @param key a unique key identifying the record
      */
-    public void deleteSharedRecord(String key) throws PluginException;
+    void deleteSharedRecord(String key) throws PluginException;
 
     /**
      * Return the configuration content associated with the specified
@@ -429,7 +429,7 @@ public interface IPluginContext {
      * @return a Pair of (boolean: true if the version of the stored
      *         configuration is too old, configuration data)
      */
-    public Pair<Boolean, byte[]> getConfiguration(IPluginConfigurationBlockDescriptor configurationBlockDescriptor, boolean defaultIfNull)
+    Pair<Boolean, byte[]> getConfiguration(IPluginConfigurationBlockDescriptor configurationBlockDescriptor, boolean defaultIfNull)
             throws PluginException;
 
     /**
@@ -443,7 +443,7 @@ public interface IPluginContext {
      *            a configuration block descriptor
      * @return configuration data
      */
-    public byte[] getConfigurationAndMergeWithDefault(IPluginConfigurationBlockDescriptor configurationBlockDescriptor) throws PluginException;
+    byte[] getConfigurationAndMergeWithDefault(IPluginConfigurationBlockDescriptor configurationBlockDescriptor) throws PluginException;
 
     /**
      * Save the specified configuration in the database
@@ -452,7 +452,7 @@ public interface IPluginContext {
      * @param configuration
      * @throws PluginException
      */
-    public void setConfiguration(IPluginConfigurationBlockDescriptor configurationBlockDescriptor, byte[] configuration) throws PluginException;
+    void setConfiguration(IPluginConfigurationBlockDescriptor configurationBlockDescriptor, byte[] configuration) throws PluginException;
 
     /**
      * Return true if the specified BizDock object is registered with this
@@ -463,7 +463,7 @@ public interface IPluginContext {
      * @param objectId
      *            the id of an object
      */
-    public boolean isRegistered(DataType dataType, Long objectId);
+    boolean isRegistered(DataType dataType, Long objectId);
 
     /**
      * Remove the registration for a data type and an object id.
@@ -473,7 +473,7 @@ public interface IPluginContext {
      * @param objectId
      *            the object id
      */
-    public void removeRegistration(DataType dataType, Long objectId);
+    void removeRegistration(DataType dataType, Long objectId);
 
     /**
      * Return the registration configuration for the specified object
@@ -484,7 +484,7 @@ public interface IPluginContext {
      *            the id of an object
      * @return
      */
-    public byte[] getRegistrationConfiguration(DataType dataType, Long objectId);
+    byte[] getRegistrationConfiguration(DataType dataType, Long objectId);
 
     /**
      * Set the configuration for a registration for the specified object.
@@ -496,19 +496,19 @@ public interface IPluginContext {
      * @param configuration
      *            the configuration
      */
-    public void setRegistrationConfiguration(DataType dataType, Long objectId, byte[] configuration);
+    void setRegistrationConfiguration(DataType dataType, Long objectId, byte[] configuration);
 
     /**
      * Delete all the links for the specified plugin. WARNING: no recovery for
      * this. Please use only in case resynchronization
      */
-    public void flushAllLinks();
+    void flushAllLinks();
 
     /**
      * To be called if I need to stop.<br/>
      * This method should only be called if the plugin repeatedly fails.
      */
-    public void killMe();
+    void killMe();
 
     /**
      * Post an event to the OUT interface of a plugin (could be the current
@@ -517,7 +517,7 @@ public interface IPluginContext {
      * @param eventMessage
      *            an event message
      */
-    public void postOutMessage(EventMessage eventMessage);
+    void postOutMessage(EventMessage eventMessage);
 
     /**
      * Get a properties object from an array of bytes (probably extracted from a
@@ -528,7 +528,7 @@ public interface IPluginContext {
      * @return a properties object
      * @throws PluginException
      */
-    public PropertiesConfiguration getPropertiesConfigurationFromByteArray(byte[] rawConfigurationBlock) throws PluginException;
+    PropertiesConfiguration getPropertiesConfigurationFromByteArray(byte[] rawConfigurationBlock) throws PluginException;
 
     /**
      * Return an input stream pointing to a file on the local storage (sFTP
@@ -538,7 +538,7 @@ public interface IPluginContext {
      *            the path in the local storage
      * @return an input stream
      */
-    public InputStream getFileFromSharedStorage(String filePath) throws IOException;
+    InputStream getFileFromSharedStorage(String filePath) throws IOException;
 
     /**
      * Get an outputstream to write in.<br/>
@@ -551,7 +551,7 @@ public interface IPluginContext {
      *            exception is thrown)
      * @return an outputstream
      */
-    public OutputStream writeFileInSharedStorage(String filePath, boolean overwrite) throws IOException;
+    OutputStream writeFileInSharedStorage(String filePath, boolean overwrite) throws IOException;
 
     /**
      * Delete the specified file.<br/>
@@ -559,7 +559,7 @@ public interface IPluginContext {
      * @param filePath
      *            the path of the file in the local storage
      */
-    public void deleteFileInSharedStorage(String filePath) throws IOException;
+    void deleteFileInSharedStorage(String filePath) throws IOException;
 
     /**
      * Lists the files in a named folder
@@ -569,7 +569,7 @@ public interface IPluginContext {
      * @return a list of file names
      * @throws IOException
      */
-    public String[] getFileListInSharedStorage(String directoryPath) throws IOException;
+    String[] getFileListInSharedStorage(String directoryPath) throws IOException;
 
     /**
      * Rename a file in one folder to another name.<br/>
@@ -581,7 +581,7 @@ public interface IPluginContext {
      *            the path to the target file
      * @throws IOException
      */
-    public void renameFileInSharedStorage(String sourceFilePath, String targetFilePath) throws IOException;
+    void renameFileInSharedStorage(String sourceFilePath, String targetFilePath) throws IOException;
 
     /**
      * Move a file into a named folder
@@ -591,11 +591,11 @@ public interface IPluginContext {
      * @param targetFolderPath
      *            the path to the target folder
      */
-    public void moveFileInSharedStorage(String sourceFilePath, String targetFolderPath) throws IOException;
+    void moveFileInSharedStorage(String sourceFilePath, String targetFolderPath) throws IOException;
 
     /**
      * Send an e-mail
-     * 
+     *
      * @param subject
      *            the subject of the mail
      * @param body
@@ -603,7 +603,21 @@ public interface IPluginContext {
      * @param to
      *            a table of recipients for this email
      */
-    public void sendEmail(final String subject, final String body, final String... to);
+    void sendEmail(final String subject, final String body, final String... to);
+
+    /**
+     * Send an e-mail
+     *
+     * @param subject
+     *            the subject of the mail
+     * @param body
+     *            the body of the message
+     * @param to
+     *            a table of recipients for this email
+     * @param cc
+     *            a table of copy recipients for this email
+     */
+    void sendEmail(final String subject, final String body, final String[] to, final String[] cc);
 
     /**
      * Send a message to one or many principals.
@@ -617,7 +631,7 @@ public interface IPluginContext {
      * @param uids
      *            the list of principal uid to be notified
      */
-    public void sendNotification(String title, String message, String actionLink, String... uids);
+    void sendNotification(String title, String message, String actionLink, String... uids);
 
     /**
      * Store the widget state into a persistent storage.<br/>
@@ -629,7 +643,7 @@ public interface IPluginContext {
      * @param stateObject
      *            an object which must be {@link Serializable}
      */
-    public void setWidgetState(Long widgetId, Object stateObject) throws PluginException;
+    void setWidgetState(Long widgetId, Object stateObject) throws PluginException;
 
     /**
      * Retrieve the widget state from the persistent storage.<br/>
@@ -640,5 +654,5 @@ public interface IPluginContext {
      *            a unique widget id
      * @return the state object
      */
-    public Object getWidgetState(Long widgetId) throws PluginException;
+    Object getWidgetState(Long widgetId) throws PluginException;
 }
