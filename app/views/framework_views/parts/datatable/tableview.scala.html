@@ -1,0 +1,29 @@
+@import views.html.framework_views.parts
+
+@(
+    id: String,
+    headers: Array[String],
+    url: String
+)
+
+<table id="@(id)" class="table table-striped table-hover">
+    <thead>
+        <tr>
+            @for(header <- headers) {
+                <th>@parts.Msg(header)</th>
+            }
+        </tr>
+    </thead>
+</table>
+
+<script type="application/javascript">
+    $(document).ready(function() {
+        var tableElement = $('@(id)');
+
+        var dataTable = tableElement.DataTable({
+            ajax: {
+                url: '@(url)'
+            }
+        })
+    })
+</script>
