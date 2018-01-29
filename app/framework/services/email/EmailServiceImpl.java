@@ -117,8 +117,10 @@ public class EmailServiceImpl implements IEmailService {
                 for (String recipient : to) {
                     message.addRecipient(Message.RecipientType.TO, InternetAddress.parse(recipient)[0]);
                 }
-                for (String recipient : cc) {
-                    message.addRecipient(Message.RecipientType.CC, InternetAddress.parse(recipient)[0]);
+                if (cc != null) {
+                    for (String recipient : cc) {
+                        message.addRecipient(Message.RecipientType.CC, InternetAddress.parse(recipient)[0]);
+                    }
                 }
                 message.setSubject(subject);
                 message.setContent(body, "text/html; charset=utf-8");
