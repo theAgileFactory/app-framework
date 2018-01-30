@@ -1,16 +1,16 @@
 @import views.html.framework_views.parts
+@import framework.datatable.TableDefinition
+@import play.libs.Json
 
 @(
-    id: String,
-    headers: Array[String],
-    url: String
+    table: TableDefinition
 )
 
-<table id="@(id)" class="table table-striped table-hover">
+<table id="@(table.id)" class="table table-striped table-hover">
     <thead>
         <tr>
-            @for(header <- headers) {
-                <th>@parts.Msg(header)</th>
+            @for(column <- table.configuration.columns) {
+                <th>@parts.Msg(column.header)</th>
             }
         </tr>
     </thead>
@@ -18,12 +18,8 @@
 
 <script type="application/javascript">
     $(document).ready(function() {
-        var tableElement = $('@(id)');
+        var tableElement = $('#@(table.id)');
 
-        var dataTable = tableElement.DataTable({
-            ajax: {
-                url: '@(url)'
-            }
-        })
+        var dataTable = tableElement.DataTable(@Json.toJson(table.configuration));
     })
 </script>
