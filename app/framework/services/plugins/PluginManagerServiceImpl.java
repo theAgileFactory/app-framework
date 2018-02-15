@@ -1544,8 +1544,12 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
                 String pluginIdentifier = getPluginByIds().get(pluginConfigurationId).getDescriptor().getIdentifier();
                 IPluginMenuDescriptor menuDesc = getPluginByIds().get(pluginConfigurationId).getMenuDescriptor();
                 if (menuDesc != null) {
-                    ClickableMenuItem toolMenu = new ClickableMenuItem("_PLUGIN_" + pluginIdentifier + "_" + pluginConfigurationId,
-                            IFrameworkConstants.PLUGIN_MENU_PREFIX + menuDesc.getLabel(), menuDesc.getPath());
+                    ClickableMenuItem toolMenu = new ClickableMenuItem(
+                            "_PLUGIN_" + pluginIdentifier + "_" + pluginConfigurationId,
+                            menuDesc.getLabel(),
+                            menuDesc.getPath(),
+                            IFrameworkConstants.PLUGIN_MENU_ICON,
+                            false);
                     getTopMenuBarService().addToolMenuItem(toolMenu);
                 }
             } catch (Exception e) {

@@ -252,7 +252,7 @@ public interface IFrameworkConstants {
     // -------------------------------------------------------------------------------------
     // Bootstrap classes constants
     // -------------------------------------------------------------------------------------
-    String PLUGIN_MENU_PREFIX = "<i class=\"fa fa-cloud-upload\"></i>&nbsp;";
+    String PLUGIN_MENU_ICON = "fa fa-cloud-upload";
 
     String BOOTSTRAP_COLUMN_1 = "col-md-1";
     String BOOTSTRAP_COLUMN_2 = "col-md-2";
