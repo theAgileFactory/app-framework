@@ -671,4 +671,20 @@ public abstract class Utilities {
         }
         return (int) ((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     }
+
+    /**
+     * Check if two dates are equals (also true if both are null)
+     *
+     * @param a the first date
+     * @param b the second date
+     *
+     * @return true if both dates are null or equal, false instead
+     */
+    public static boolean datesAreEqualsOrNull(Date a, Date b) {
+        return
+            a == null && b == null ||
+            a != null && b != null &&
+            a.compareTo(b) == 0;
+
+    }
 }

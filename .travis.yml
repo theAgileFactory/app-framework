@@ -41,7 +41,7 @@ notifications:
 branches:
   only:
   - master
-  - R17
+  - R16.2.3
 scala:
 - 2.11.8
 cache:
