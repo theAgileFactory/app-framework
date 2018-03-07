@@ -17,23 +17,6 @@
  */
 package framework.utils;
 
-import java.math.BigDecimal;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import org.eclipse.core.resources.IFolder;
-
 import com.avaje.ebean.Expr;
 import com.avaje.ebean.Expression;
 import com.avaje.ebean.ExpressionList;
@@ -43,7 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
+import framework.services.configuration.II18nMessagesPlugin;
 import framework.services.kpi.IKpiService;
 import framework.services.kpi.Kpi;
 import framework.services.kpi.Kpi.DataType;
@@ -52,8 +35,16 @@ import models.framework_models.common.CustomAttributeDefinition;
 import models.framework_models.common.FilterConfiguration;
 import models.framework_models.common.ICustomAttributeValue.AttributeType;
 import play.Logger;
+import play.Play;
 import play.libs.Json;
 import play.mvc.Http.Request;
+
+import java.math.BigDecimal;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * A data structure which contains the configuration for managing advanced table
@@ -265,7 +256,6 @@ public class FilterConfig<T> {
         if (defaultFilter == null) {
             defaultFilter = new FilterConfiguration();
             defaultFilter.configuration = this.marshall();
-            defaultFilter.initialConfiguration = defaultFilter.configuration;
             defaultFilter.dataType = dataType;
             defaultFilter.isDefault = true;
             defaultFilter.isSelected = false;
@@ -308,7 +298,7 @@ public class FilterConfig<T> {
             }
 
             // convert the JSON string to a JSON node.
-            JsonNode json = null;
+            JsonNode json;
             try {
 
                 ObjectMapper mapper = new ObjectMapper();
@@ -359,7 +349,7 @@ public class FilterConfig<T> {
             FilterConfiguration selectedFilter = FilterConfiguration.getSelectedFilterConfiguration(principalUid, dataType);
 
             // convert the JSON string to a JSON node.
-            JsonNode json = null;
+            JsonNode json;
             try {
 
                 ObjectMapper mapper = new ObjectMapper();
@@ -1940,20 +1930,23 @@ public class FilterConfig<T> {
         @Override
         public <T> void addEBeanSortExpression(OrderBy<T> orderby, SortStatusType sortStatusType, String fieldName) {
             if (sortStatusType != SortStatusType.NONE && sortStatusType != SortStatusType.UNSORTED) {
+                String language = Play.application().injector().instanceOf(II18nMessagesPlugin.class).getCurrentLanguage().getCode();
+                String rawSql;
                 if (this.fieldsSort == null) {
+                    rawSql = String.format("(select #value# from i18n_messages m where %s = m.`key` and m.language = '%s')", fieldName, language);
                     if (sortStatusType == SortStatusType.DESC) {
-                        orderby.desc(fieldName);
+                        orderby.asc(rawSql.replace("#value#", "HEX(WEIGHT_STRING(m.value LEVEL 1 DESC))"));
                     } else {
-                        orderby.asc(fieldName);
+                        orderby.asc(rawSql.replace("#value#", "HEX(WEIGHT_STRING(m.value LEVEL 1))"));
                     }
                 } else {
-                    for (String fieldSort : this.fieldsSort) {
+                    for (String fieldSort: this.fieldsSort) {
+                        rawSql = String.format("(select #value# from i18n_messages m where %s = m.`key` and m.language = '%s')", fieldSort, language);
                         if (sortStatusType == SortStatusType.DESC) {
-                            orderby = orderby.desc(fieldSort).order();
+                            orderby.asc(rawSql.replace("#value#", "HEX(WEIGHT_STRING(m.value LEVEL 1 DESC))"));
                         } else {
-                            orderby = orderby.asc(fieldSort).order();
+                            orderby.asc(rawSql.replace("#value#", "HEX(WEIGHT_STRING(m.value LEVEL 1))"));
                         }
-
                     }
                 }
             }
@@ -2113,22 +2106,24 @@ public class FilterConfig<T> {
 
         @Override
         public <T> void addEBeanSortExpression(OrderBy<T> orderby, SortStatusType sortStatusType, String fieldName) {
-
             if (sortStatusType != SortStatusType.NONE && sortStatusType != SortStatusType.UNSORTED) {
+                String language = Play.application().injector().instanceOf(II18nMessagesPlugin.class).getCurrentLanguage().getCode();
+                String rawSql;
                 if (this.fieldsSort == null) {
+                    rawSql = String.format("(select #value# from i18n_messages m where %s = m.`key` and m.language = '%s')", fieldName, language);
                     if (sortStatusType == SortStatusType.DESC) {
-                        orderby.desc(fieldName);
+                        orderby.asc(rawSql.replace("#value#", "HEX(WEIGHT_STRING(m.value LEVEL 1 DESC))"));
                     } else {
-                        orderby.asc(fieldName);
+                        orderby.asc(rawSql.replace("#value#", "HEX(WEIGHT_STRING(m.value LEVEL 1))"));
                     }
                 } else {
-                    for (String fieldSort : this.fieldsSort) {
+                    for (String fieldSort: this.fieldsSort) {
+                        rawSql = String.format("(select #value# from i18n_messages m where %s = m.`key` and m.language = '%s')", fieldSort, language);
                         if (sortStatusType == SortStatusType.DESC) {
-                            orderby = orderby.desc(fieldSort).order();
+                            orderby.asc(rawSql.replace("#value#", "HEX(WEIGHT_STRING(m.value LEVEL 1 DESC))"));
                         } else {
-                            orderby = orderby.asc(fieldSort).order();
+                            orderby.asc(rawSql.replace("#value#", "HEX(WEIGHT_STRING(m.value LEVEL 1))"));
                         }
-
                     }
                 }
             }
