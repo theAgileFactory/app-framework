@@ -17,6 +17,14 @@
  */
 package models.framework_models.common;
 
+import com.avaje.ebean.Model;
+import framework.utils.ISelectableValueHolder;
+import models.framework_models.account.Principal;
+import models.framework_models.parent.IModel;
+import models.framework_models.parent.IModelConstants;
+import play.Logger;
+
+import javax.persistence.*;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -26,23 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.Transient;
-import javax.persistence.Version;
-
-import com.avaje.ebean.Model;
-
-import framework.utils.ISelectableValueHolder;
-import models.framework_models.account.Principal;
-import models.framework_models.parent.IModel;
-import models.framework_models.parent.IModelConstants;
-import play.Logger;
-import play.api.mvc.Filter;
-
 /**
  * A filter configuration is a stored filter for a user and a data type.
  * 
@@ -51,7 +42,7 @@ import play.api.mvc.Filter;
 @Entity
 public class FilterConfiguration extends Model implements IModel, ISelectableValueHolder<Long> {
 
-    public static Finder<Long, FilterConfiguration> find = new Finder<Long, FilterConfiguration>(FilterConfiguration.class);
+    public static Finder<Long, FilterConfiguration> find = new Finder<>(FilterConfiguration.class);
 
     @Id
     public Long id;
@@ -61,7 +52,7 @@ public class FilterConfiguration extends Model implements IModel, ISelectableVal
     @Version
     public Timestamp lastUpdate;
 
-    @ManyToOne(cascade = CascadeType.ALL, optional = true)
+    @ManyToOne(cascade = CascadeType.ALL)
     public Principal principal;
 
     @Column(length = IModelConstants.LARGE_STRING)
@@ -71,8 +62,6 @@ public class FilterConfiguration extends Model implements IModel, ISelectableVal
     public String name;
 
     public String configuration;
-
-    public String initialConfiguration;
 
     public boolean isSelected;
 
@@ -162,7 +151,7 @@ public class FilterConfiguration extends Model implements IModel, ISelectableVal
 
             URI uri = new URI(route);
 
-            Map<String, String> queryPairs = new LinkedHashMap<String, String>();
+            Map<String, String> queryPairs = new LinkedHashMap<>();
             if (uri.getQuery() != null) {
                 String[] pairs = uri.getQuery().split("&");
                 for (String pair : pairs) {
@@ -257,15 +246,6 @@ public class FilterConfiguration extends Model implements IModel, ISelectableVal
      */
     public static List<FilterConfiguration> getAvailableFilterConfiguration(String principalUid, String dataType) {
         return find.orderBy("isDefault DESC, name ASC").where().eq("deleted", false).eq("principal.uid", principalUid).eq("dataType", dataType).findList();
-    }
-
-    /**
-     * Reset the filter to its initial configuration
-     */
-    public FilterConfiguration reset() {
-        this.configuration = initialConfiguration;
-        save();
-        return this;
     }
 
     /**

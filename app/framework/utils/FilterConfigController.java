@@ -162,10 +162,10 @@ public class FilterConfigController extends Controller {
         // Deselect the currently selected filter configuration
         FilterConfiguration.getSelectedFilterConfiguration(uid, dataType).deselect();
 
-        // Reset the default filter to the initial filter configuration
-        FilterConfiguration defaultFilterConfiguration = FilterConfiguration.getDefaultFilterConfiguration(uid, dataType).reset();
+        // Delete the default filter configuration to force the refresh
+        FilterConfiguration.getDefaultFilterConfiguration(uid, dataType).doDelete();
 
-        return ok(views.html.framework_views.parts.table.filter_configuration_selector.render(tableId, route, defaultFilterConfiguration));
+        return ok();
     }
 
     /**

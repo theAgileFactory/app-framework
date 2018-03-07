@@ -327,9 +327,7 @@
                 alert("@parts.Msg("filter.table.ajax.error.message")");
             }
         }).done(function(result) {
-            $("#_@(tableId)_filterConfiguration").html(result);
-            _@(tableId)_filterConfig=_@(tableId)_filterConfigurations[0];
-            _@(tableId)_fullRefresh();
+            location.reload();
         });
 
     });
