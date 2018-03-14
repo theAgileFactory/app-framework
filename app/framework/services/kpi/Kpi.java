@@ -433,6 +433,25 @@ public class Kpi {
     }
 
     /**
+     * Should the column be displayed by default for the given data type ?
+     *
+     * @param dataType the kpi value data type
+     *
+     * @return true is the value should be displayed by default
+     */
+    public boolean isColumnDisplayed(DataType dataType) {
+        switch (dataType) {
+            case MAIN:
+                return kpiDefinition.mainKpiValueDefinition.isDisplayed;
+            case ADDITIONAL1:
+                return kpiDefinition.additional1KpiValueDefinition.isDisplayed;
+            case ADDITIONAL2:
+                return kpiDefinition.additional2KpiValueDefinition.isDisplayed;
+        }
+        return false;
+    }
+
+    /**
      * Return true if the KPI has a link.
      */
     public boolean hasLink() {

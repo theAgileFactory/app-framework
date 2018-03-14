@@ -704,13 +704,13 @@ public class FilterConfig<T> {
             if (kpi.isLabelRenderType(dataType) && kpi.getKpiColorRuleLabels() != null) {
                 ISelectableValueHolderCollection<Long> rules = kpi.getKpiColorRuleLabels();
                 addColumnConfiguration(columnId, tableIdFieldName, kpi.getValueName(DataType.MAIN), subLabel,
-                        new KpiSelectFilterComponent(dataType, rules.getSortedValues().get(0).getValue(), rules, kpi), false, false, SortStatusType.UNSORTED);
+                        new KpiSelectFilterComponent(dataType, rules.getSortedValues().get(0).getValue(), rules, kpi), kpi.isColumnDisplayed(dataType), false, SortStatusType.UNSORTED);
             } else {
                 addColumnConfiguration(columnId, tableIdFieldName, kpi.getValueName(DataType.MAIN), subLabel,
-                        new KpiNumericFilterComponent(dataType, "0", "=", kpi), false, false, SortStatusType.UNSORTED);
+                        new KpiNumericFilterComponent(dataType, "0", "=", kpi), kpi.isColumnDisplayed(dataType), false, SortStatusType.UNSORTED);
             }
         } else {
-            addColumnConfiguration(columnId, tableIdFieldName, kpi.getValueName(DataType.MAIN), subLabel, new KpiNoneFilterComponent(), false, false,
+            addColumnConfiguration(columnId, tableIdFieldName, kpi.getValueName(DataType.MAIN), subLabel, new KpiNoneFilterComponent(), kpi.isColumnDisplayed(dataType), false,
                     SortStatusType.NONE);
         }
     }

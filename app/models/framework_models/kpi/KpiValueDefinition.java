@@ -110,6 +110,12 @@ public class KpiValueDefinition extends Model {
     public String computationJsCode;
 
     /**
+     * Defines if the KPI is by default displayed in entity tables
+     */
+    @Column(nullable = false)
+    public Boolean isDisplayed = false;
+
+    /**
      * The related kpi definition.
      */
     @OneToOne(mappedBy = "mainKpiValueDefinition", optional = true)

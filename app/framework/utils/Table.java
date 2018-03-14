@@ -286,13 +286,13 @@ public class Table<T> {
         List<Kpi> kpis = kpiService.getActiveKpisOfObjectType(objectType);
         if (kpis != null) {
             for (Kpi kpi : kpis) {
-                if (kpi.isTrendDisplayed(DataType.MAIN)) {
+                if (kpi.isTrendDisplayed(DataType.MAIN) && !kpi.isColumnDisplayed(DataType.MAIN)) {
                     notDisplayedCustomAttributeColumns.add(KPI_COLUMN_NAME_PREFIX + DataType.MAIN.name() + kpi.getUid());
                 }
-                if (kpi.isTrendDisplayed(DataType.ADDITIONAL1)) {
+                if (kpi.isTrendDisplayed(DataType.ADDITIONAL1) && !kpi.isColumnDisplayed(DataType.ADDITIONAL1)) {
                     notDisplayedCustomAttributeColumns.add(KPI_COLUMN_NAME_PREFIX + DataType.ADDITIONAL1.name() + kpi.getUid());
                 }
-                if (kpi.isTrendDisplayed(DataType.ADDITIONAL2)) {
+                if (kpi.isTrendDisplayed(DataType.ADDITIONAL2) && !kpi.isColumnDisplayed(DataType.ADDITIONAL2)) {
                     notDisplayedCustomAttributeColumns.add(KPI_COLUMN_NAME_PREFIX + DataType.ADDITIONAL2.name() + kpi.getUid());
                 }
                 addKpi(kpiService, kpi.getUid());
