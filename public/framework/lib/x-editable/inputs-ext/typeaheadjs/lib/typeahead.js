@@ -127,7 +127,7 @@
             return $.trim(str).toLowerCase().split(/[\s]+/);
         },
         tokenizeText: function(str) {
-            return $.trim(str).toLowerCase().split(/[\s\-_]+/);
+            return $.trim(str).toLowerCase().split(/[\s]+/);
         },
         getProtocol: function() {
             return location.protocol;
