@@ -778,26 +778,6 @@ public class FilterConfig<T> {
     }
 
     /**
-     * Return an order by computed from the various available sort component.
-     * 
-     * @param <K>
-     *            the corresponding model object
-     */
-    public synchronized <K> OrderBy<K> getSortExpression() {
-        OrderBy<K> orderby = new OrderBy<K>();
-        for (String columnId : getUserColumnConfigurations().keySet()) {
-            UserColumnConfiguration userColumnConfiguration = getUserColumnConfigurations().get(columnId);
-            SelectableColumn selectableColumn = getSelectableColumns().get(columnId);
-            String fieldName = selectableColumn.getFieldName();
-            selectableColumn.getFilterComponent().addEBeanSortExpression(orderby, userColumnConfiguration.getSortStatusType(), fieldName);
-        }
-        if (log.isDebugEnabled()) {
-            log.debug("Orderby clause : " + orderby.toString());
-        }
-        return orderby;
-    }
-
-    /**
      * Return the list of columns to be hidden in the table (the selectable
      * columns which are not selected).
      * 
@@ -1931,21 +1911,19 @@ public class FilterConfig<T> {
         public <T> void addEBeanSortExpression(OrderBy<T> orderby, SortStatusType sortStatusType, String fieldName) {
             if (sortStatusType != SortStatusType.NONE && sortStatusType != SortStatusType.UNSORTED) {
                 String language = Play.application().injector().instanceOf(II18nMessagesPlugin.class).getCurrentLanguage().getCode();
-                String rawSql;
                 if (this.fieldsSort == null) {
-                    rawSql = String.format("(select #value# from i18n_messages m where %s = m.`key` and m.language = '%s')", fieldName, language);
                     if (sortStatusType == SortStatusType.DESC) {
-                        orderby.asc(rawSql.replace("#value#", "HEX(WEIGHT_STRING(m.value LEVEL 1 DESC))"));
+                        orderby.asc(String.format("coalesce((select HEX(WEIGHT_STRING(m.value LEVEL 1 DESC)) from i18n_messages m where %s = m.`key` and m.language = '%s'), HEX(WEIGHT_STRING(%s LEVEL 1 DESC)))", fieldName, language, fieldName));
                     } else {
-                        orderby.asc(rawSql.replace("#value#", "HEX(WEIGHT_STRING(m.value LEVEL 1))"));
+                        orderby.asc(String.format("coalesce((select HEX(WEIGHT_STRING(m.value LEVEL 1)) from i18n_messages m where %s = m.`key` and m.language = '%s'), HEX(WEIGHT_STRING(%s LEVEL 1)))", fieldName, language, fieldName));
                     }
                 } else {
                     for (String fieldSort: this.fieldsSort) {
-                        rawSql = String.format("(select #value# from i18n_messages m where %s = m.`key` and m.language = '%s')", fieldSort, language);
+                        orderby.getQuery().fetch(fieldSort.lastIndexOf('.') > 0 ? fieldSort.substring(0, fieldSort.lastIndexOf('.')) : fieldSort);
                         if (sortStatusType == SortStatusType.DESC) {
-                            orderby.asc(rawSql.replace("#value#", "HEX(WEIGHT_STRING(m.value LEVEL 1 DESC))"));
+                            orderby.asc(String.format("coalesce((select HEX(WEIGHT_STRING(m.value LEVEL 1 DESC)) from i18n_messages m where %s = m.`key` and m.language = '%s'), HEX(WEIGHT_STRING(%s LEVEL 1 DESC)))", fieldSort, language, fieldSort));
                         } else {
-                            orderby.asc(rawSql.replace("#value#", "HEX(WEIGHT_STRING(m.value LEVEL 1))"));
+                            orderby.asc(String.format("coalesce((select HEX(WEIGHT_STRING(m.value LEVEL 1)) from i18n_messages m where %s = m.`key` and m.language = '%s'), HEX(WEIGHT_STRING(%s LEVEL 1)))", fieldSort, language, fieldSort));
                         }
                     }
                 }
