@@ -1776,6 +1776,8 @@ public class FilterConfig<T> {
         private List<String> defaultValue;
         private ISelectableValueHolderCollection<String> values;
         private String[] fieldsSort;
+        private String i18nPrefix = "";
+        private String i18nSuffix = "";
 
         /**
          * Default constructor for "Long" case.
@@ -1852,6 +1854,12 @@ public class FilterConfig<T> {
             this.fieldsSort = fieldsSort;
         }
 
+        public SelectFilterComponent(String defaultValue, ISelectableValueHolderCollection<String> values, String i18nPrefix, String i18nSuffix) {
+            this(defaultValue, values);
+            this.i18nPrefix = i18nPrefix;
+            this.i18nSuffix = i18nSuffix;
+        }
+
         /**
          * Get the possible values.
          */
@@ -1913,17 +1921,17 @@ public class FilterConfig<T> {
                 String language = Play.application().injector().instanceOf(II18nMessagesPlugin.class).getCurrentLanguage().getCode();
                 if (this.fieldsSort == null) {
                     if (sortStatusType == SortStatusType.DESC) {
-                        orderby.asc(String.format("coalesce((select HEX(WEIGHT_STRING(m.value LEVEL 1 DESC)) from i18n_messages m where %s = m.`key` and m.language = '%s'), HEX(WEIGHT_STRING(%s LEVEL 1 DESC)))", fieldName, language, fieldName));
+                        orderby.asc(String.format("coalesce((select HEX(WEIGHT_STRING(m.value LEVEL 1 DESC)) from i18n_messages m where CONCAT('%s', %s, '%s') = m.`key` and m.language = '%s'), HEX(WEIGHT_STRING(%s LEVEL 1 DESC)))", i18nPrefix, fieldName, i18nSuffix, language, fieldName));
                     } else {
-                        orderby.asc(String.format("coalesce((select HEX(WEIGHT_STRING(m.value LEVEL 1)) from i18n_messages m where %s = m.`key` and m.language = '%s'), HEX(WEIGHT_STRING(%s LEVEL 1)))", fieldName, language, fieldName));
+                        orderby.asc(String.format("coalesce((select HEX(WEIGHT_STRING(m.value LEVEL 1)) from i18n_messages m where CONCAT('%s', %s, '%s') = m.`key` and m.language = '%s'), HEX(WEIGHT_STRING(%s LEVEL 1)))", i18nPrefix, fieldName, i18nSuffix, language, fieldName));
                     }
                 } else {
                     for (String fieldSort: this.fieldsSort) {
                         orderby.getQuery().fetch(fieldSort.lastIndexOf('.') > 0 ? fieldSort.substring(0, fieldSort.lastIndexOf('.')) : fieldSort);
                         if (sortStatusType == SortStatusType.DESC) {
-                            orderby.asc(String.format("coalesce((select HEX(WEIGHT_STRING(m.value LEVEL 1 DESC)) from i18n_messages m where %s = m.`key` and m.language = '%s'), HEX(WEIGHT_STRING(%s LEVEL 1 DESC)))", fieldSort, language, fieldSort));
+                            orderby.asc(String.format("coalesce((select HEX(WEIGHT_STRING(m.value LEVEL 1 DESC)) from i18n_messages m where CONCAT('%s', %s, '%s') = m.`key` and m.language = '%s'), HEX(WEIGHT_STRING(%s LEVEL 1 DESC)))", i18nPrefix, fieldSort, i18nSuffix, language, fieldSort));
                         } else {
-                            orderby.asc(String.format("coalesce((select HEX(WEIGHT_STRING(m.value LEVEL 1)) from i18n_messages m where %s = m.`key` and m.language = '%s'), HEX(WEIGHT_STRING(%s LEVEL 1)))", fieldSort, language, fieldSort));
+                            orderby.asc(String.format("coalesce((select HEX(WEIGHT_STRING(m.value LEVEL 1)) from i18n_messages m where CONCAT('%s', %s, '%s') = m.`key` and m.language = '%s'), HEX(WEIGHT_STRING(%s LEVEL 1)))", i18nPrefix, fieldSort, i18nSuffix, language, fieldSort));
                         }
                     }
                 }
