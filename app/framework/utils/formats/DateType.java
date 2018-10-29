@@ -29,7 +29,7 @@ import play.data.Form;
  * 
  * @author Pierre-Yves Cloux
  */
-@Target({ ElementType.FIELD })
+@Target({ ElementType.FIELD, ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
 @Form.Display(name = "form.input.date.invalid", attributes = { "pattern" })
 public @interface DateType {
