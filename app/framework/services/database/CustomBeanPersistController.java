@@ -28,6 +28,7 @@ import java.util.function.Consumer;
 import com.avaje.ebean.ValuePair;
 import com.avaje.ebean.event.BeanPersistController;
 import com.avaje.ebean.event.BeanPersistRequest;
+import models.framework_models.common.ICustomAttributeValue;
 
 /**
  * Class which acts as a listener of the Ebean server.<br/>
@@ -129,10 +130,18 @@ public class CustomBeanPersistController implements BeanPersistController {
         Map<String, ModificationPair> modifiedAttributes = null;
         if (beanPersistRequest.getUpdatedValues() != null) {
             modifiedAttributes = new HashMap<String, ModificationPair>();
-            for (String key : beanPersistRequest.getUpdatedValues().keySet()) {
-                ValuePair pair = beanPersistRequest.getUpdatedValues().get(key);
+            if (ICustomAttributeValue.class.isAssignableFrom(beanPersistRequest.getBean().getClass())) {
+                ICustomAttributeValue custAttr = (ICustomAttributeValue) beanPersistRequest.getBean();
+                ValuePair pair = beanPersistRequest.getUpdatedValues().get("value");
                 if (pair != null) {
-                    modifiedAttributes.put(key, new ModificationPairImpl(pair));
+                    modifiedAttributes.put(custAttr.getDefinition().uuid, new ModificationPairImpl(pair));
+                }
+            } else {
+                for (String key : beanPersistRequest.getUpdatedValues().keySet()) {
+                    ValuePair pair = beanPersistRequest.getUpdatedValues().get(key);
+                    if (pair != null) {
+                        modifiedAttributes.put(key, new ModificationPairImpl(pair));
+                    }
                 }
             }
         } else {

@@ -41,6 +41,8 @@ import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import com.google.common.collect.ImmutableMap;
+import framework.services.database.ModificationPairImpl;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
@@ -996,6 +998,24 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
             long id = getIdFromBean(bean);
             if (dataType != null && id != -1) {
                 postOutMessage(new EventMessage(getIdFromBean(bean), dataType, MessageType.OBJECT_CREATED));
+            } else {
+                // Custom attributes
+                if (ICustomAttributeValue.class.isAssignableFrom(bean.getClass())) {
+                    ICustomAttributeValue custAttr = (ICustomAttributeValue) bean;
+                    if (log.isDebugEnabled()) {
+                        log.debug("Custom attribute modification detected for " + custAttr.getLinkedObjectClassName() + " with id "
+                                + custAttr.getLinkedObjectId());
+                    }
+                    dataType = DataType.getDataTypeFromClassName(custAttr.getLinkedObjectClassName());
+                    if (dataType != null) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Custom attribute update for data type " + dataType);
+                        }
+                        EventMessage updateEvent = new EventMessage(custAttr.getLinkedObjectId(), dataType, MessageType.OBJECT_UPDATED);
+                        updateEvent.setPayload(ImmutableMap.of(custAttr.getDefinition().uuid, new ModificationPairImpl(null, custAttr.getValueAsObject())));
+                        postOutMessage(updateEvent);
+                    }
+                }
             }
         }
     }
@@ -1051,8 +1071,7 @@ public class PluginManagerServiceImpl implements IPluginManagerService, IEventBr
                             log.debug("Custom attribute update for data type " + dataType);
                         }
                         EventMessage updateEvent = new EventMessage(custAttr.getLinkedObjectId(), dataType, MessageType.OBJECT_UPDATED);
-                        // No details for updated custom attributes
-                        updateEvent.setPayload(new HashMap<String, ModificationPair>());
+                        updateEvent.setPayload(modifiedAttributes);
                         postOutMessage(updateEvent);
                     }
                 }
