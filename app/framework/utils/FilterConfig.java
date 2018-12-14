@@ -226,7 +226,7 @@ public class FilterConfig<T> {
      *            the selected filter configuration
      */
     private synchronized FilterConfig<T> parseResponse(JsonNode json, FilterConfiguration selectedFilterConfiguration) throws FilterConfigException {
-        FilterConfig<T> temp = new FilterConfig<T>(this, selectedFilterConfiguration, false);
+        FilterConfig<T> temp = new FilterConfig<>(this, selectedFilterConfiguration, false);
         temp.unmarshall(json);
         return temp;
     }
