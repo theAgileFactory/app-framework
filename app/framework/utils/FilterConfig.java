@@ -1821,6 +1821,13 @@ public class FilterConfig<T> {
             this.fieldsSort = fieldsSort;
         }
 
+        public SelectFilterComponent(Long defaultValue, ISelectableValueHolderCollection<Long> values, String[] fieldsSort, String i18nPrefix, String i18nSuffix) {
+            this(defaultValue, values);
+            this.fieldsSort = fieldsSort;
+            this.i18nPrefix = i18nPrefix;
+            this.i18nSuffix = i18nSuffix;
+        }
+
         /**
          * Default constructor for "String" case.
          * 
