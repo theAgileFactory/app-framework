@@ -923,21 +923,23 @@ public class CustomAttributeDefinition extends Model implements IModel {
         return null;
     }
 
-    public static Map<CustomAttributeGroup, List<ICustomAttributeValue>> getOrderedCustomAttributeValuesMappedByGroup(Class<?> objectType, Long objectId) {
-        Map<CustomAttributeGroup, List<ICustomAttributeValue>> customAttributeValuesMap = new TreeMap<>((group1, group2) -> Integer.compare(group1.order, group2.order));
+    public static Map<CustomAttributeGroup, List<ICustomAttributeValue>> getOrderedCustomAttributeValuesMappedByGroupForDisplay(Class<?> objectType, Long objectId) {
+        Map<CustomAttributeGroup, List<ICustomAttributeValue>> customAttributeValuesMap = new TreeMap<>(Comparator.comparingInt(group1 -> group1.order));
         List<CustomAttributeDefinition> customAttributeDefinitions = getOrderedCustomAttributeDefinitions(objectType);
         if (customAttributeDefinitions != null) {
-            customAttributeDefinitions.stream().forEach(customAttributeDefinition -> {
+            customAttributeDefinitions.forEach(customAttributeDefinition -> {
                 CustomAttributeGroup group = customAttributeDefinition.customAttributeGroup;
                 if (group == null) {
                     group = CustomAttributeGroup.getOrCreateDefaultGroup(objectType.getName());
                 }
-                List<ICustomAttributeValue> values = customAttributeValuesMap.get(group);
-                if (values == null) {
-                    values = new ArrayList<>();
+                if (group.isDisplayed) {
+                    List<ICustomAttributeValue> values = customAttributeValuesMap.get(group);
+                    if (values == null) {
+                        values = new ArrayList<>();
+                    }
+                    values.add(getOrCreateCustomAttributeValue(objectType, objectId, customAttributeDefinition));
+                    customAttributeValuesMap.put(group, values);
                 }
-                values.add(getOrCreateCustomAttributeValue(objectType, objectId, customAttributeDefinition));
-                customAttributeValuesMap.put(group, values);
             });
             return customAttributeValuesMap;
         }

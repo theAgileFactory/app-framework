@@ -21,7 +21,7 @@
 @import framework_views.parts
 
 @customAttributeValuesMap=@{
-    models.framework_models.common.CustomAttributeDefinition.getOrderedCustomAttributeValuesMappedByGroup(objectType, objectId)
+    models.framework_models.common.CustomAttributeDefinition.getOrderedCustomAttributeValuesMappedByGroupForDisplay(objectType, objectId)
 }
 
 @if(customAttributeValuesMap!=null) {

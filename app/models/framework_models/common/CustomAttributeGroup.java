@@ -62,6 +62,9 @@ public class CustomAttributeGroup extends Model implements IModel, ISelectableVa
     @OneToMany(mappedBy = "customAttributeGroup", cascade = CascadeType.ALL)
     public List<CustomAttributeDefinition> customAttributeDefinitions;
 
+    @Column(name = "is_displayed")
+    public boolean isDisplayed = true;
+
     public static Finder<Long, CustomAttributeGroup> find = new Finder<>(CustomAttributeGroup.class);
 
     public CustomAttributeGroup(String objectType) {
@@ -151,13 +154,13 @@ public class CustomAttributeGroup extends Model implements IModel, ISelectableVa
      */
     public static CustomAttributeGroup getOrCreateDefaultGroup(String objectType) {
         List<CustomAttributeGroup> groups = getOrderedCustomAttributeGroupsByObjectType(objectType);
-        if (groups != null && groups.size() > 0) {
+        if (groups != null && !groups.isEmpty()) {
             return groups.get(0);
         }
         CustomAttributeGroup group = new CustomAttributeGroup(objectType);
         try {
             List<CustomAttributeDefinition> customAttributeDefinitions = CustomAttributeDefinition.getOrderedCustomAttributeDefinitions(Class.forName(objectType));
-            customAttributeDefinitions.stream().forEach(definition -> {
+            customAttributeDefinitions.forEach(definition -> {
                 group.customAttributeDefinitions.add(definition);
                 definition.customAttributeGroup = group;
                 definition.save();
