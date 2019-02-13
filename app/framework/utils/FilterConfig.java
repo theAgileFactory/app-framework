@@ -204,11 +204,11 @@ public class FilterConfig<T> {
      */
     private FilterConfig(FilterConfig<T> template, FilterConfiguration selectedFilterConfiguration, boolean deepCopy) {
         if (deepCopy) {
-            this.selectableColumns = new HashMap<String, FilterConfig.SelectableColumn>(template.getSelectableColumns());
+            this.selectableColumns = new HashMap<>(template.getSelectableColumns());
         } else {
             this.selectableColumns = template.getSelectableColumns();
         }
-        this.userColumnConfigurations = new HashMap<String, FilterConfig.UserColumnConfiguration>();
+        this.userColumnConfigurations = new HashMap<>();
         for (UserColumnConfiguration userColumnConfig : template.getUserColumnConfigurations().values()) {
             this.userColumnConfigurations.put(userColumnConfig.getColumnId(), userColumnConfig.copy());
         }
@@ -784,7 +784,7 @@ public class FilterConfig<T> {
      * @return a list of column Id
      */
     public synchronized Set<String> getColumnsToHide() {
-        Set<String> columnsToHide = new HashSet<String>();
+        Set<String> columnsToHide = new HashSet<>();
         for (String columnId : getUserColumnConfigurations().keySet()) {
             if (!getUserColumnConfigurations().get(columnId).isDisplayed()) {
                 columnsToHide.add(columnId);
@@ -884,7 +884,7 @@ public class FilterConfig<T> {
     /**
      * Get the selectable columns.
      */
-    private Map<String, SelectableColumn> getSelectableColumns() {
+    protected Map<String, SelectableColumn> getSelectableColumns() {
         return selectableColumns;
     }
 

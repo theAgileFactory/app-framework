@@ -17,7 +17,12 @@
  */
 package framework.utils;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.avaje.ebean.ExpressionList;
 
@@ -61,11 +66,13 @@ public class Pagination<T> {
     private boolean hasLess = true;
     private boolean hasMore = true;
     private String pageQueryName = "page";
+    private List<Predicate<T>> postQueryFilters = new ArrayList<>();
+    private Comparator<? super T> postQueryOrderBy = null;
 
     /**
      * Creates a Pagination object using the specified ExpressionList.<br/>
      * 
-     * @param the
+     * @param preferenceManagerPlugin the
      *            preference manager service
      * @param expressionList
      *            an Expression list
@@ -75,11 +82,17 @@ public class Pagination<T> {
                 Play.application().configuration().getInt("maf.number_page_links"));
     }
 
+    public Pagination(IPreferenceManagerPlugin preferenceManagerPlugin, int rowCount, ExpressionList<T> expressionList, List<Predicate<T>> postQueryFilters, Comparator<? super T> postQueryOrderBy) {
+        this(preferenceManagerPlugin, rowCount, expressionList);
+        this.postQueryFilters = postQueryFilters;
+        this.postQueryOrderBy = postQueryOrderBy;
+    }
+
     /**
      * Creates a Pagination object using the specified ExpressionList but by
      * specifying the number of rows
      * 
-     * @param the
+     * @param preferenceManagerPlugin the
      *            preference manager service
      * @param rowCount
      *            the total number of records
@@ -95,7 +108,7 @@ public class Pagination<T> {
     /**
      * Creates a Pagination object using the specified number of row (rowCount)
      * 
-     * @param the
+     * @param preferenceManagerPlugin the
      *            preference manager service
      * @param rowCount
      *            the total number of records
@@ -154,10 +167,6 @@ public class Pagination<T> {
         if ((this.rowCount % pageSize) != 0) {
             this.numberOfPages = this.numberOfPages + 1;
         }
-        /*
-         * if (this.numberOfPages > 0 && (this.rowCount % pageSize) == 0) {
-         * this.numberOfPages = this.numberOfPages - 1; }
-         */
     }
 
     /**
@@ -212,13 +221,39 @@ public class Pagination<T> {
      * @return a list of objects
      */
     public List<T> getListOfObjects() {
+        List<T> listOfObjects;
         if (getExpressionList() == null || getCurrentPage() == null) {
             throw new IllegalStateException("Invalid use of Pagination, no ExpressionList provided in the constructor or no current page specified");
         }
         if (getNumberOfPages() == 0) {
-            return getExpressionList().findList();
+            List<T> list = getExpressionList().findList();
+            listOfObjects = applyPostQueryFilters(list);
+            if (this.postQueryOrderBy != null) {
+                listOfObjects.sort(this.postQueryOrderBy);
+            }
+        } else {
+            int fromIndex = getCurrentPage() * getPageSize();
+            if (this.postQueryFilters.isEmpty() && this.postQueryOrderBy == null) {
+                listOfObjects = getExpressionList().setFirstRow(fromIndex).setMaxRows(getPageSize()).findList();
+            } else {
+                int toIndex = fromIndex + getPageSize();
+                List<T> list = getExpressionList().findList();
+                list = applyPostQueryFilters(list);
+                if (this.postQueryOrderBy != null) {
+                    list.sort(this.postQueryOrderBy);
+                }
+                listOfObjects = list.subList(fromIndex, toIndex > list.size() ? list.size() : toIndex);
+            }
         }
-        return getExpressionList().setFirstRow(getCurrentPage() * getPageSize()).setMaxRows(getPageSize()).findList();
+        return listOfObjects;
+    }
+
+    private List<T> applyPostQueryFilters(List<T> list) {
+        Stream<T> stream = list.stream();
+        for (Predicate<T> predicate : this.postQueryFilters) {
+            stream = stream.filter(predicate);
+        }
+        return stream.collect(Collectors.toList());
     }
 
     /**
