@@ -3,6 +3,8 @@ package framework.utils;
 import com.avaje.ebean.Expression;
 import com.avaje.ebean.ExpressionList;
 import com.avaje.ebean.OrderBy;
+import com.fasterxml.jackson.databind.JsonNode;
+import models.framework_models.common.FilterConfiguration;
 import play.Logger;
 import play.mvc.Http;
 
@@ -21,6 +23,14 @@ public class PostQueryFilterConfig<T, U> extends FilterConfig<T> {
     private List<Predicate<U>> postQueryFilters = new ArrayList<>();
 
     private Comparator postQueryOrderBy;
+
+    public PostQueryFilterConfig() {
+        super();
+    }
+
+    public PostQueryFilterConfig(PostQueryFilterConfig<T, U> template, FilterConfiguration selectedFilterConfiguration, boolean deepCopy) {
+        super(template, selectedFilterConfiguration, deepCopy);
+    }
 
     public List<Predicate<U>> getPostQueryFilters() {
         return postQueryFilters;
@@ -82,6 +92,14 @@ public class PostQueryFilterConfig<T, U> extends FilterConfig<T> {
     @Override
     public synchronized PostQueryFilterConfig<T, U> persistCurrentInDefault(String principalUid, Http.Request request) {
         return (PostQueryFilterConfig<T, U>) super.persistCurrentInDefault(principalUid, request);
+    }
+
+    @Override
+    protected synchronized PostQueryFilterConfig<T, U> parseResponse(JsonNode json, FilterConfiguration selectedFilterConfiguration) throws FilterConfigException {
+        PostQueryFilterConfig<T, U> temp = new PostQueryFilterConfig<>(this, selectedFilterConfiguration, false);
+        temp.unmarshall(json);
+        return temp;
+
     }
 
     public static class PostQueryFilterComponent<K> extends NoDbFilterComponentWrapper {

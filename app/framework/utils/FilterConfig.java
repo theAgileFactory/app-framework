@@ -202,7 +202,7 @@ public class FilterConfig<T> {
      * @param deepCopy
      *            true for a deep copy
      */
-    private FilterConfig(FilterConfig<T> template, FilterConfiguration selectedFilterConfiguration, boolean deepCopy) {
+    protected FilterConfig(FilterConfig<T> template, FilterConfiguration selectedFilterConfiguration, boolean deepCopy) {
         if (deepCopy) {
             this.selectableColumns = new HashMap<>(template.getSelectableColumns());
         } else {
@@ -225,7 +225,7 @@ public class FilterConfig<T> {
      * @param selectedFilterConfiguration
      *            the selected filter configuration
      */
-    private synchronized FilterConfig<T> parseResponse(JsonNode json, FilterConfiguration selectedFilterConfiguration) throws FilterConfigException {
+    protected synchronized FilterConfig<T> parseResponse(JsonNode json, FilterConfiguration selectedFilterConfiguration) throws FilterConfigException {
         FilterConfig<T> temp = new FilterConfig<>(this, selectedFilterConfiguration, false);
         temp.unmarshall(json);
         return temp;
@@ -844,7 +844,7 @@ public class FilterConfig<T> {
      * @param json
      *            the json node to unmarshall
      */
-    private void unmarshall(JsonNode json) throws FilterConfigException {
+    protected void unmarshall(JsonNode json) throws FilterConfigException {
         JsonNode currentPageNode = json.get(JSON_CURRENT_PAGE_FIELD);
         if (currentPageNode != null && currentPageNode.getNodeType() == JsonNodeType.NUMBER) {
             setCurrentPage(((Long) currentPageNode.asLong()).intValue());
