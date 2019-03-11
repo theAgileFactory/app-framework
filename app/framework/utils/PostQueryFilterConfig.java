@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 /**
  * Created by Guillaume Petit on 13.02.2019.
@@ -38,6 +39,21 @@ public class PostQueryFilterConfig<T, U> extends FilterConfig<T> {
 
     public Comparator getPostQueryOrderBy() {
         return postQueryOrderBy;
+    }
+
+    public int getSize(ExpressionList<U> expressionList) {
+        List<U> list = expressionList.findList();
+        int size;
+        if (!this.getPostQueryFilters().isEmpty()) {
+            Stream<U> stream = list.stream();
+            for (Predicate<U> filter : this.getPostQueryFilters()) {
+                stream = stream.filter(filter);
+            }
+            size = (int) stream.count();
+        } else {
+            size = list.size();
+        }
+        return size;
     }
 
     @Override
@@ -73,7 +89,10 @@ public class PostQueryFilterConfig<T, U> extends FilterConfig<T> {
             String fieldName = selectableColumn.getFieldName();
             IFilterComponent filterComponent = selectableColumn.getFilterComponent();
             if (filterComponent instanceof PostQueryFilterComponent) {
-                this.postQueryOrderBy = ((PostQueryFilterComponent) filterComponent).getComparator(userColumnConfiguration.getSortStatusType());
+                Comparator comparator = ((PostQueryFilterComponent) filterComponent).getComparator(userColumnConfiguration.getSortStatusType());
+                if (comparator != null) {
+                    this.postQueryOrderBy = comparator;
+                }
             } else {
                 filterComponent.addEBeanSortExpression(orderby, userColumnConfiguration.getSortStatusType(), fieldName);
             }
