@@ -414,27 +414,35 @@ public class KpiServiceImpl implements IKpiService {
             timestamp = new Date();
         }
 
-        KpiData mainKpiData = new KpiData();
-        mainKpiData.kpiValueDefinition = kpiDefinition.mainKpiValueDefinition;
-        mainKpiData.objectId = objectId;
-        mainKpiData.timestamp = timestamp;
-        mainKpiData.value = mainValue;
-        mainKpiData.save();
+        BigDecimal oldMainData = kpi.getLastKpiData(objectId, DataType.MAIN).value;
+        BigDecimal oldAdd1Data = kpi.getLastKpiData(objectId, DataType.ADDITIONAL1).value;
+        BigDecimal oldAdd2Data = kpi.getLastKpiData(objectId, DataType.ADDITIONAL2).value;
 
-        KpiData additional1KpiData = new KpiData();
-        additional1KpiData.kpiValueDefinition = kpiDefinition.additional1KpiValueDefinition;
-        additional1KpiData.objectId = objectId;
-        additional1KpiData.timestamp = timestamp;
-        additional1KpiData.value = additional1Value;
-        additional1KpiData.save();
+        if (mainValue.doubleValue() != oldMainData.doubleValue() ||
+                additional1Value.doubleValue() != oldAdd1Data.doubleValue() ||
+                additional2Value.doubleValue() != oldAdd2Data.doubleValue()) {
 
-        KpiData additional2KpiData = new KpiData();
-        additional2KpiData.kpiValueDefinition = kpiDefinition.additional2KpiValueDefinition;
-        additional2KpiData.objectId = objectId;
-        additional2KpiData.timestamp = timestamp;
-        additional2KpiData.value = additional2Value;
-        additional2KpiData.save();
+            KpiData mainKpiData = new KpiData();
+            mainKpiData.kpiValueDefinition = kpiDefinition.mainKpiValueDefinition;
+            mainKpiData.objectId = objectId;
+            mainKpiData.timestamp = timestamp;
+            mainKpiData.value = mainValue;
+            mainKpiData.save();
 
+            KpiData additional1KpiData = new KpiData();
+            additional1KpiData.kpiValueDefinition = kpiDefinition.additional1KpiValueDefinition;
+            additional1KpiData.objectId = objectId;
+            additional1KpiData.timestamp = timestamp;
+            additional1KpiData.value = additional1Value;
+            additional1KpiData.save();
+
+            KpiData additional2KpiData = new KpiData();
+            additional2KpiData.kpiValueDefinition = kpiDefinition.additional2KpiValueDefinition;
+            additional2KpiData.objectId = objectId;
+            additional2KpiData.timestamp = timestamp;
+            additional2KpiData.value = additional2Value;
+            additional2KpiData.save();
+        }
     }
 
     /**

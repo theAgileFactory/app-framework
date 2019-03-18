@@ -249,30 +249,38 @@ public class Kpi {
                 BigDecimal additional1 = computeValue(kpiObject.getIdForKpi(), DataType.ADDITIONAL1);
                 BigDecimal additional2 = computeValue(kpiObject.getIdForKpi(), DataType.ADDITIONAL2);
 
-                KpiColorRule colorRule = computeColorRule(main, additional1, additional2);
+                KpiData oldMainData = this.getLastKpiData(kpiObject.getIdForKpi(), DataType.MAIN);
+                KpiData oldAdd1Data = this.getLastKpiData(kpiObject.getIdForKpi(), DataType.ADDITIONAL1);
+                KpiData oldAdd2Data = this.getLastKpiData(kpiObject.getIdForKpi(), DataType.ADDITIONAL2);
 
-                KpiData mainData = new KpiData();
-                mainData.kpiColorRule = colorRule;
-                mainData.kpiValueDefinition = kpiDefinition.mainKpiValueDefinition;
-                mainData.objectId = kpiObject.getIdForKpi();
-                mainData.timestamp = new Date();
-                mainData.value = main;
-                mainData.save();
+                if (oldMainData.value == null || main.doubleValue() != oldMainData.value.doubleValue() ||
+                        oldAdd1Data.value == null || additional1.doubleValue() != oldAdd1Data.value.doubleValue() ||
+                        oldAdd2Data.value == null || additional2.doubleValue() != oldAdd2Data.value.doubleValue()) {
 
-                KpiData additional1Data = new KpiData();
-                additional1Data.kpiValueDefinition = kpiDefinition.additional1KpiValueDefinition;
-                additional1Data.objectId = kpiObject.getIdForKpi();
-                additional1Data.timestamp = new Date();
-                additional1Data.value = additional1;
-                additional1Data.save();
+                    KpiColorRule colorRule = computeColorRule(main, additional1, additional2);
 
-                KpiData additional2Data = new KpiData();
-                additional2Data.kpiValueDefinition = kpiDefinition.additional2KpiValueDefinition;
-                additional2Data.objectId = kpiObject.getIdForKpi();
-                additional2Data.timestamp = new Date();
-                additional2Data.value = additional2;
-                additional2Data.save();
+                    KpiData mainData = new KpiData();
+                    mainData.kpiColorRule = colorRule;
+                    mainData.kpiValueDefinition = kpiDefinition.mainKpiValueDefinition;
+                    mainData.objectId = kpiObject.getIdForKpi();
+                    mainData.timestamp = new Date();
+                    mainData.value = main;
+                    mainData.save();
 
+                    KpiData additional1Data = new KpiData();
+                    additional1Data.kpiValueDefinition = kpiDefinition.additional1KpiValueDefinition;
+                    additional1Data.objectId = kpiObject.getIdForKpi();
+                    additional1Data.timestamp = new Date();
+                    additional1Data.value = additional1;
+                    additional1Data.save();
+
+                    KpiData additional2Data = new KpiData();
+                    additional2Data.kpiValueDefinition = kpiDefinition.additional2KpiValueDefinition;
+                    additional2Data.objectId = kpiObject.getIdForKpi();
+                    additional2Data.timestamp = new Date();
+                    additional2Data.value = additional2;
+                    additional2Data.save();
+                }
             }
 
         }
