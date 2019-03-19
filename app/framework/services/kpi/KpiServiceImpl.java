@@ -414,13 +414,13 @@ public class KpiServiceImpl implements IKpiService {
             timestamp = new Date();
         }
 
-        BigDecimal oldMainData = kpi.getLastKpiData(objectId, DataType.MAIN).value;
-        BigDecimal oldAdd1Data = kpi.getLastKpiData(objectId, DataType.ADDITIONAL1).value;
-        BigDecimal oldAdd2Data = kpi.getLastKpiData(objectId, DataType.ADDITIONAL2).value;
+        KpiData oldMainData = kpi.getLastKpiData(objectId, DataType.MAIN);
+        KpiData oldAdd1Data = kpi.getLastKpiData(objectId, DataType.ADDITIONAL1);
+        KpiData oldAdd2Data = kpi.getLastKpiData(objectId, DataType.ADDITIONAL2);
 
-        if (mainValue.doubleValue() != oldMainData.doubleValue() ||
-                additional1Value.doubleValue() != oldAdd1Data.doubleValue() ||
-                additional2Value.doubleValue() != oldAdd2Data.doubleValue()) {
+        if (oldMainData == null || oldMainData.value == null || mainValue.doubleValue() != oldMainData.value.doubleValue() ||
+                oldAdd1Data == null || oldAdd1Data.value == null || additional1Value.doubleValue() != oldAdd1Data.value.doubleValue() ||
+                oldAdd2Data == null || oldAdd2Data.value == null || additional2Value.doubleValue() != oldAdd2Data.value.doubleValue()) {
 
             KpiData mainKpiData = new KpiData();
             mainKpiData.kpiValueDefinition = kpiDefinition.mainKpiValueDefinition;

@@ -253,9 +253,9 @@ public class Kpi {
                 KpiData oldAdd1Data = this.getLastKpiData(kpiObject.getIdForKpi(), DataType.ADDITIONAL1);
                 KpiData oldAdd2Data = this.getLastKpiData(kpiObject.getIdForKpi(), DataType.ADDITIONAL2);
 
-                if (oldMainData.value == null || main.doubleValue() != oldMainData.value.doubleValue() ||
-                        oldAdd1Data.value == null || additional1.doubleValue() != oldAdd1Data.value.doubleValue() ||
-                        oldAdd2Data.value == null || additional2.doubleValue() != oldAdd2Data.value.doubleValue()) {
+                if (oldMainData == null || oldMainData.value == null || main.doubleValue() != oldMainData.value.doubleValue() ||
+                        oldAdd1Data == null || oldAdd1Data.value == null || additional1.doubleValue() != oldAdd1Data.value.doubleValue() ||
+                        oldAdd2Data == null || oldAdd2Data.value == null || additional2.doubleValue() != oldAdd2Data.value.doubleValue()) {
 
                     KpiColorRule colorRule = computeColorRule(main, additional1, additional2);
 
