@@ -2477,7 +2477,7 @@ public class FilterConfig<T> {
     public static class IntegerCustomAttributeFilterComponent extends NumericFieldFilterComponent {
         private static final String SEARCH_EXPRESSION_TEMPLATE = "(select count(*) from integer_custom_attribute_value as cust%2$s "
                 + "where cust%2$s.deleted=0 and cust%2$s.object_type='%1$s' and cust%2$s.object_id=t0.id and cust%2$s.custom_attribute_definition_id=%2$s "
-                + "and cust%2$s.value %4$s %3$s)<>0 or %3$s = 0";
+                + "and cust%2$s.value %4$s %3$s)<>0";
 
         private static final String SORT_EXPRESSION_TEMPLATE = "(select #value# from integer_custom_attribute_value as sortcust%2$s "
                 + "where sortcust%2$s.deleted=0 and sortcust%2$s.object_type='%1$s' and sortcust%2$s.object_id=t0.id "
@@ -2509,12 +2509,18 @@ public class FilterConfig<T> {
                 BigDecimal value = new BigDecimal(0);
                 String comparator = ((String[]) filterValue)[1];
                 try {
-                    value = new BigDecimal(((String[]) filterValue)[0]);
+                    String s = ((String[]) filterValue)[0];
+                    if (s.equals("")) {
+                        value = null;
+                        comparator = "is null";
+                    } else {
+                        value = new BigDecimal(s);
+                    }
                 } catch (NumberFormatException e) {
                     Logger.warn("impossible to convert '" + filterValue + "' to a BigDecimal");
                 }
                 String sql = String.format(SEARCH_EXPRESSION_TEMPLATE, getCustomAttributeDefinition().objectType, getCustomAttributeDefinition().id,
-                        value.toPlainString(), comparator);
+                        value == null ? "" : value.toPlainString(), comparator);
                 return Expr.raw(sql);
             }
             return null;
@@ -2765,7 +2771,7 @@ public class FilterConfig<T> {
                 + " JOIN kpi_value_definition kvd%1$s ON kdata%1$s.kpi_value_definition_id = kvd%1$s.id"
                 + " JOIN kpi_definition kd%1$s ON kvd%1$s.id = kd%1$s.%4$s"
                 + " WHERE kdata%1$s.deleted = 0 AND kvd%1$s.deleted = 0 AND kd%1$s.deleted = 0 AND"
-                + " kdata%1$s.timestamp = (SELECT MAX(kdata_i%1$s.timestamp) FROM kpi_data kdata_i%1$s"
+                + " kdata%1$s.id = (SELECT MAX(kdata_i%1$s.id) FROM kpi_data kdata_i%1$s"
                 + " WHERE kdata_i%1$s.kpi_value_definition_id = kvd%1$s.id AND kdata_i%1$s.object_id = kdata%1$s.object_id)"
                 + " AND kd%1$s.uid = '%1$s' AND kdata%1$s.object_id = t0.id AND kdata%1$s.value %3$s %2$s)<>0";
 
@@ -2773,7 +2779,7 @@ public class FilterConfig<T> {
                 + " JOIN kpi_value_definition kvdsort%1$s ON kdatasort%1$s.kpi_value_definition_id = kvdsort%1$s.id"
                 + " JOIN kpi_definition kdsort%1$s ON kvdsort%1$s.id = kdsort%1$s.%2$s"
                 + " WHERE kdatasort%1$s.deleted = 0 AND kvdsort%1$s.deleted = 0 AND kdsort%1$s.deleted = 0 AND"
-                + " kdatasort%1$s.timestamp = (SELECT MAX(kdata_isort%1$s.timestamp) FROM kpi_data kdata_isort%1$s"
+                + " kdatasort%1$s.id = (SELECT MAX(kdata_isort%1$s.id) FROM kpi_data kdata_isort%1$s"
                 + " WHERE kdata_isort%1$s.kpi_value_definition_id = kvdsort%1$s.id AND kdata_isort%1$s.object_id = kdatasort%1$s.object_id)"
                 + " AND kdsort%1$s.uid = '%1$s' AND kdatasort%1$s.object_id = t0.id)";
 
