@@ -1,6 +1,6 @@
 language: java
 jdk:
-- oraclejdk9
+- oraclejdk10
 env:
   global:
   - ACTIVATOR_VERSION=1.3.7
@@ -16,7 +16,7 @@ env:
   - secure: fzr6TUy6GRTQTQkq9/LPnnUxIm4dx6sC+AEpQ2Hngw8k0LAVVyL3vZ8YRw3yypHtZVui69an6QRRTOifLl0zyRwCrlkzxK9orCAh1LROZxJzF6h1/tlpdTMd/AUiW6b7zxT5pRCwAzF5gMnVrSdT4O4ovL2N+TQhyzCmNcnLgfknR9EOylzBocgGk2/BLw/ghyj4ufaVUOnmTci/bzqK/CUwKVBB49phbvcV6Pe1BZBqLl5EodZlQt9IadtrCRVAgOwGyeDfrJH3Y/lRTdGYaQuX9OAMxweGrLn2NUyTq3fATjiVK8kIOAjnsaNvPM/vIJltPMYvKep36hRo/DK7Obho7y5JoPMglLfY16iOVflV2O2m85NiWzAXtCxfXmvzPNNW8+lchFPqe2skuz/gK3aM61UfFksuoIlFFo7qt4z9gLtJI3NiolsR8hjHXg3C8f/ey/s/Refk5+4KAqXBOMHAA9MLOW7oyacVKwpPmmQB5cen7H27TQ6tqlflyrCY7V8jXcbdrIHuKpbnlI+V4XJFmd5FvGs3xlX1VUnXpuccy6F8WfDVk5vYsS7WIpjQyhj/MlsC/dnS4Qb2kRk1MQzsMaJcbEbBaqSI1wvNZ7SJXOZRAzWNiuf95RK1nunwd5w95uKeRSi8hOwbS4GPmB/BCeZF/4h+zPKZVDDnXFY=
 before_install:
 - sudo apt-get update
-- sudo apt-get install --only-upgrade -y oracle-java9-installer
+- sudo apt-get install --only-upgrade -y oracle-java10-installer
 - mkdir -p ~/.gnupg
 - openssl aes-256-cbc -pass pass:$ENCRYPTION_PASSWORD -in secring.gpg.enc -out ~/.gnupg/secring.gpg
   -d
