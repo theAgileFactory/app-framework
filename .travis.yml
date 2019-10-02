@@ -1,6 +1,6 @@
 language: java
 jdk:
-- oraclejdk8
+- oraclejdk9
 env:
   global:
   - ACTIVATOR_VERSION=1.3.7
@@ -15,8 +15,6 @@ env:
   - secure: bAopYXbp05m40W07GbvwdDfPtuWVaG76ET1zfnpAAdPCU0VfCJUUXKjmsVvzi4QaqzJvZeGt++kY15ffjLvzRdz9gj/O5LSJCXYmiApQer9466gL3i2XtozpNSSN914PvSgeFQXXZutZpxcfkbAHGru0MJsNRMAdIEM0o54hHcGBUi/3QbmPi+0wXPi33NwVeWKSPyiFfpxQpytBUvEnCIsZ17rG1aDv2P4xYoZ3W2rKMFgE+p+qj/HMH1p2KuB8NTRvTyHcfK2tnNwZcTjP/ePM2GEonOP9J+YtxDon1r6/2CuZFYpNvL0r73/YDnJTtF3bj3JQPEZEitr/cGOgDBVwjt17Ux+XvWC0lFzPd1OT/xUHPoqedY5cdrvMjJW74xa8fb9CCIKm/4o4HJDtjGHCImjCwJc4SDm1I8yFXgyPC7LJMiLLSUHStH+me0oCxD1hBBDId10vhifdY+BZLOBSaEN0FsHxQwGfQNkBupbTAjWUGIbqYae6RvXkEeuzZkRdK2dk/cNUNm2K/OOv6/VO9nNkbOdUoxbjotRQy1BGLcEEc+209zeqgBmp6jJQejnHq6qmBc7Hpbkvg/wHo0huCe+PgNMGItHt/2kNzAiG+NPaX4vorVhPPMTg+AmAt92BSREI+34AGlxXYICA4JvaN2WRBpn9aZG18QXiIyY=
   - secure: fzr6TUy6GRTQTQkq9/LPnnUxIm4dx6sC+AEpQ2Hngw8k0LAVVyL3vZ8YRw3yypHtZVui69an6QRRTOifLl0zyRwCrlkzxK9orCAh1LROZxJzF6h1/tlpdTMd/AUiW6b7zxT5pRCwAzF5gMnVrSdT4O4ovL2N+TQhyzCmNcnLgfknR9EOylzBocgGk2/BLw/ghyj4ufaVUOnmTci/bzqK/CUwKVBB49phbvcV6Pe1BZBqLl5EodZlQt9IadtrCRVAgOwGyeDfrJH3Y/lRTdGYaQuX9OAMxweGrLn2NUyTq3fATjiVK8kIOAjnsaNvPM/vIJltPMYvKep36hRo/DK7Obho7y5JoPMglLfY16iOVflV2O2m85NiWzAXtCxfXmvzPNNW8+lchFPqe2skuz/gK3aM61UfFksuoIlFFo7qt4z9gLtJI3NiolsR8hjHXg3C8f/ey/s/Refk5+4KAqXBOMHAA9MLOW7oyacVKwpPmmQB5cen7H27TQ6tqlflyrCY7V8jXcbdrIHuKpbnlI+V4XJFmd5FvGs3xlX1VUnXpuccy6F8WfDVk5vYsS7WIpjQyhj/MlsC/dnS4Qb2kRk1MQzsMaJcbEbBaqSI1wvNZ7SJXOZRAzWNiuf95RK1nunwd5w95uKeRSi8hOwbS4GPmB/BCeZF/4h+zPKZVDDnXFY=
 before_install:
-- sudo apt-get update
-- sudo apt-get install --only-upgrade -y oracle-java8-installer
 - mkdir -p ~/.gnupg
 - openssl aes-256-cbc -pass pass:$ENCRYPTION_PASSWORD -in secring.gpg.enc -out ~/.gnupg/secring.gpg
   -d
