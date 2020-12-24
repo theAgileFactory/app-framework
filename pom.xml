@@ -73,7 +73,7 @@
 		<pac4j-saml.version>1.7.0</pac4j-saml.version>
 		<swagger-play2.version>1.3.12</swagger-play2.version>
 		<swagger-play2-utils.version>1.3.12</swagger-play2-utils.version>
-		<commons-beanutils.version>1.9.2</commons-beanutils.version>
+		<commons-beanutils.version>1.9.4</commons-beanutils.version>
 		<commons-codec.version>1.10</commons-codec.version>
 		<commons-io.version>2.4</commons-io.version>
 		<poi.version>3.12</poi.version>
