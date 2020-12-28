@@ -299,8 +299,8 @@ public class ApiControllerUtilsServiceImpl implements IApiControllerUtilsService
         try {
             // Look for annotated getters
             for (PropertyDescriptor propertyDescriptor : Introspector.getBeanInfo(beanClass).getPropertyDescriptors()) {
-                if (propertyDescriptor.getReadMethod().isAnnotationPresent(JsonProperty.class)
-                        || propertyDescriptor.getReadMethod().isAnnotationPresent(JsonPropertyLink.class)) {
+                if (propertyDescriptor.getReadMethod() != null && (propertyDescriptor.getReadMethod().isAnnotationPresent(JsonProperty.class)
+                        || propertyDescriptor.getReadMethod().isAnnotationPresent(JsonPropertyLink.class))) {
                     SerializationEntry entry = new SerializationEntry();
                     entry.propertyName = propertyDescriptor.getReadMethod().getName();
                     if (propertyDescriptor.getReadMethod().isAnnotationPresent(JsonProperty.class)
