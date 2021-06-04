@@ -84,7 +84,7 @@
 		<commons-csv.version>1.2</commons-csv.version>
 		<redmine-java-api.version>2.4.0</redmine-java-api.version>
 		<json.version>20141113</json.version>
-		<httpclient.version>4.3.6</httpclient.version>
+		<httpclient.version>4.5.13</httpclient.version>
 		<httpcore.version>4.3.3</httpcore.version>
 		<jasperreports.version>6.4.1</jasperreports.version>
 		<deadbolt.version>2.4.2</deadbolt.version>
