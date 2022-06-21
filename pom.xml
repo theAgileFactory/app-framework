@@ -65,7 +65,7 @@
 		<!-- Dependencies properties -->
 		<javax.mail.version>1.5.3</javax.mail.version>
 		<jcl-core.version>2.7</jcl-core.version>
-		<mysql-connector-java.version>5.1.36</mysql-connector-java.version>
+		<mysql-connector-java.version>8.0.28</mysql-connector-java.version>
 		<play-pac4j-java.version>1.5.0</play-pac4j-java.version>
 		<pac4j-http.version>1.7.0</pac4j-http.version>
 		<pac4j-cas.version>1.7.0</pac4j-cas.version>
