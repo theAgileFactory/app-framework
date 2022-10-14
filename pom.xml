@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sword-group.bizdock.lib</groupId>
 	<artifactId>app-framework</artifactId>
-	<version>17.2.5-SNAPSHOT</version>
+	<version>17.3.0</version>
 	<name>BizDock application framework</name>
 	<description>This is the common library which contains the web application framework for BizDock</description>
 	<packaging>play2</packaging>
@@ -105,7 +105,7 @@
 	<pluginRepositories>
 		<pluginRepository>
 			<id>typesafe-plugin</id>
-			<url>http://repo.typesafe.com/typesafe/repo/</url>
+			<url>https://repo.typesafe.com/typesafe/repo/</url>
 			<releases>
 				<enabled>false</enabled>
 			</releases>
