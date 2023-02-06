@@ -70,7 +70,7 @@
 		<pac4j-http.version>1.7.0</pac4j-http.version>
 		<pac4j-cas.version>1.7.0</pac4j-cas.version>
 		<pac4j-core.version>1.7.0</pac4j-core.version>
-		<pac4j-saml.version>1.7.0</pac4j-saml.version>
+		<pac4j-saml.version>3.8.2</pac4j-saml.version>
 		<swagger-play2.version>1.3.12</swagger-play2.version>
 		<swagger-play2-utils.version>1.3.12</swagger-play2-utils.version>
 		<commons-beanutils.version>1.9.2</commons-beanutils.version>
